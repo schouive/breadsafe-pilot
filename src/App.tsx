@@ -11,6 +11,7 @@ import NonConformities from "./pages/NonConformities";
 import Planning from "./pages/Planning";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
+import StorageTemperatures from "./pages/StorageTemperatures";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
@@ -76,6 +77,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <Reports />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/storage-temperatures"
+        element={
+          <ProtectedRoute>
+            <StorageTemperatures />
           </ProtectedRoute>
         }
       />

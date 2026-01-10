@@ -10,7 +10,8 @@ import {
   Menu,
   X,
   Bell,
-  LogOut
+  LogOut,
+  Thermometer
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -35,6 +36,7 @@ const navigation = [
   { name: 'Tableau de bord', href: '/', icon: LayoutDashboard },
   { name: 'Contrôles', href: '/controls', icon: ClipboardCheck },
   { name: 'Non-conformités', href: '/non-conformities', icon: AlertTriangle, badge: 3 },
+  { name: 'Températures', href: '/storage-temperatures', icon: Thermometer },
   { name: 'Planning', href: '/planning', icon: Calendar },
   { name: 'Rapports', href: '/reports', icon: BarChart3 },
   { name: 'Paramètres', href: '/settings', icon: Settings },

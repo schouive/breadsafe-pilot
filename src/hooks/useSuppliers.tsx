@@ -1,5 +1,6 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 export interface Supplier {
   id: string;
@@ -24,6 +25,14 @@ export interface RawMaterial {
   is_active: boolean;
 }
 
+export interface RawMaterialWithSupplier extends RawMaterial {
+  suppliers: {
+    id: string;
+    name: string;
+  };
+}
+
+// Suppliers hooks
 export function useSuppliers() {
   return useQuery({
     queryKey: ['suppliers'],
@@ -40,6 +49,73 @@ export function useSuppliers() {
   });
 }
 
+export function useAllSuppliers() {
+  return useQuery({
+    queryKey: ['suppliers', 'all'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('suppliers')
+        .select('*')
+        .order('name');
+      
+      if (error) throw error;
+      return data as Supplier[];
+    },
+  });
+}
+
+export function useCreateSupplier() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (supplier: Omit<Supplier, 'id' | 'is_active'>) => {
+      const { data, error } = await supabase
+        .from('suppliers')
+        .insert(supplier)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['suppliers'] });
+      toast.success('Fournisseur ajouté');
+    },
+    onError: (error) => {
+      toast.error('Erreur lors de l\'ajout du fournisseur');
+      console.error(error);
+    },
+  });
+}
+
+export function useUpdateSupplier() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<Supplier> & { id: string }) => {
+      const { data, error } = await supabase
+        .from('suppliers')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['suppliers'] });
+      toast.success('Fournisseur mis à jour');
+    },
+    onError: (error) => {
+      toast.error('Erreur lors de la mise à jour');
+      console.error(error);
+    },
+  });
+}
+
+// Raw Materials hooks
 export function useRawMaterials(supplierId?: string) {
   return useQuery({
     queryKey: ['raw_materials', supplierId],
@@ -63,6 +139,27 @@ export function useRawMaterials(supplierId?: string) {
   });
 }
 
+export function useAllRawMaterials() {
+  return useQuery({
+    queryKey: ['raw_materials', 'all'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('raw_materials')
+        .select(`
+          *,
+          suppliers (
+            id,
+            name
+          )
+        `)
+        .order('name');
+      
+      if (error) throw error;
+      return data as RawMaterialWithSupplier[];
+    },
+  });
+}
+
 export function useRawMaterialsBySupplier() {
   return useQuery({
     queryKey: ['raw_materials_with_suppliers'],
@@ -80,7 +177,58 @@ export function useRawMaterialsBySupplier() {
         .order('name');
       
       if (error) throw error;
+      return data as RawMaterialWithSupplier[];
+    },
+  });
+}
+
+export function useCreateRawMaterial() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (material: Omit<RawMaterial, 'id' | 'is_active'>) => {
+      const { data, error } = await supabase
+        .from('raw_materials')
+        .insert(material)
+        .select()
+        .single();
+      
+      if (error) throw error;
       return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['raw_materials'] });
+      toast.success('Matière première ajoutée');
+    },
+    onError: (error) => {
+      toast.error('Erreur lors de l\'ajout de la matière première');
+      console.error(error);
+    },
+  });
+}
+
+export function useUpdateRawMaterial() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<RawMaterial> & { id: string }) => {
+      const { data, error } = await supabase
+        .from('raw_materials')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['raw_materials'] });
+      toast.success('Matière première mise à jour');
+    },
+    onError: (error) => {
+      toast.error('Erreur lors de la mise à jour');
+      console.error(error);
     },
   });
 }

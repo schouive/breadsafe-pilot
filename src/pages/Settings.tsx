@@ -24,6 +24,8 @@ import {
 } from '@/components/ui/dialog';
 import { useAllColdRooms, useCreateColdRoom, useUpdateColdRoom, ColdRoom } from '@/hooks/useColdRooms';
 import { cn } from '@/lib/utils';
+import { SupplierManagement } from '@/components/settings/SupplierManagement';
+import { RawMaterialManagement } from '@/components/settings/RawMaterialManagement';
 
 export default function Settings() {
   const { data: coldRooms, isLoading: loadingRooms } = useAllColdRooms();
@@ -176,6 +178,12 @@ export default function Settings() {
           )}
         </CardContent>
       </Card>
+
+      {/* Suppliers Management */}
+      <SupplierManagement />
+
+      {/* Raw Materials Management */}
+      <RawMaterialManagement />
 
       {/* Company info */}
       <Card>

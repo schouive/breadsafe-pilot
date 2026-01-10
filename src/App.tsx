@@ -7,6 +7,7 @@ import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { AppLayout } from "@/components/layout/AppLayout";
 import Dashboard from "./pages/Dashboard";
 import Controls from "./pages/Controls";
+import ControlHistory from "./pages/ControlHistory";
 import NonConformities from "./pages/NonConformities";
 import Planning from "./pages/Planning";
 import Reports from "./pages/Reports";
@@ -53,6 +54,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <Controls />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/controls/:code"
+        element={
+          <ProtectedRoute>
+            <ControlHistory />
           </ProtectedRoute>
         }
       />

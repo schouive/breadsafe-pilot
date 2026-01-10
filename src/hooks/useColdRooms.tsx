@@ -55,6 +55,10 @@ export function useAllColdRooms() {
   });
 }
 
+export interface StorageTemperatureRecordWithRoom extends StorageTemperatureRecord {
+  cold_rooms: ColdRoom | null;
+}
+
 export function useStorageTemperatureRecords(coldRoomId?: string, limit?: number) {
   return useQuery({
     queryKey: ['storage_temperature_records', coldRoomId, limit],
@@ -76,6 +80,30 @@ export function useStorageTemperatureRecords(coldRoomId?: string, limit?: number
       
       if (error) throw error;
       return data as StorageTemperatureRecord[];
+    },
+  });
+}
+
+export function useStorageTemperatureRecordsWithRooms(limit?: number) {
+  return useQuery({
+    queryKey: ['storage_temperature_records_with_rooms', limit],
+    queryFn: async () => {
+      let query = supabase
+        .from('storage_temperature_records')
+        .select(`
+          *,
+          cold_rooms (*)
+        `)
+        .order('recorded_at', { ascending: false });
+      
+      if (limit) {
+        query = query.limit(limit);
+      }
+      
+      const { data, error } = await query;
+      
+      if (error) throw error;
+      return data as StorageTemperatureRecordWithRoom[];
     },
   });
 }

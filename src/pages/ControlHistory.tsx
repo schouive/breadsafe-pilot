@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Calendar, User, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Plus, Calendar, User, CheckCircle, XCircle, AlertTriangle, Thermometer, Snowflake } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -10,6 +10,7 @@ import { StorageControlForm, StorageFormData } from '@/components/controls/Stora
 import { CONTROL_POINTS, ControlPoint, ControlStatus } from '@/types/haccp';
 import { useAuth } from '@/hooks/useAuth';
 import { useControlRecordsByCode, useCreateControlRecord, useCreateReceptionControl, ReceptionFormData } from '@/hooks/useControlRecords';
+import { useStorageTemperatureRecordsWithRooms } from '@/hooks/useColdRooms';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
@@ -47,7 +48,14 @@ export default function ControlHistory() {
   const [isStorageFormOpen, setIsStorageFormOpen] = useState(false);
 
   const controlPoint = CONTROL_POINTS.find(cp => cp.code === code);
+  const isStorageControl = code === 'CP_STOCKAGE';
+  
+  // Fetch control records for non-storage controls
   const { data: records, isLoading } = useControlRecordsByCode(code || '');
+  
+  // Fetch storage temperature records for storage control
+  const { data: storageRecords, isLoading: storageLoading } = useStorageTemperatureRecordsWithRooms(50);
+  
   const createControlRecord = useCreateControlRecord();
   const createReceptionControl = useCreateReceptionControl();
 
@@ -96,6 +104,22 @@ export default function ControlHistory() {
     });
   };
 
+  const currentLoading = isStorageControl ? storageLoading : isLoading;
+
+  const getStorageStatus = (isConforme: boolean, temp: number, room: { temp_min: number; temp_max: number } | null): keyof typeof statusConfig => {
+    if (isConforme) return 'conforme';
+    if (!room) return 'nonconforme';
+    
+    const acceptableMin = room.temp_min - 3;
+    const acceptableMax = room.temp_max + 3;
+    
+    if (temp >= acceptableMin && temp <= acceptableMax) {
+      return 'acceptable';
+    }
+    
+    return 'nonconforme';
+  };
+
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
@@ -126,71 +150,140 @@ export default function ControlHistory() {
       <div className="space-y-4">
         <h2 className="text-lg font-semibold text-foreground">Historique des contrôles</h2>
         
-        {isLoading ? (
+        {currentLoading ? (
           <div className="text-center py-12">
             <p className="text-muted-foreground">Chargement...</p>
           </div>
-        ) : records && records.length > 0 ? (
-          <div className="grid gap-3">
-            {records.map((record) => {
-              const status = statusConfig[record.status as keyof typeof statusConfig] || statusConfig.pending;
-              const StatusIcon = status.icon;
-              
-              return (
-                <Card key={record.id} className={cn("p-4 border", status.class)}>
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex items-start gap-3">
-                      <StatusIcon className="h-5 w-5 mt-0.5 shrink-0" />
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <Badge variant="outline" className={status.class}>
-                            {status.label}
-                          </Badge>
-                          {record.temperature !== null && (
-                            <span className="text-sm font-medium">
+        ) : isStorageControl ? (
+          // Storage temperature records display
+          storageRecords && storageRecords.length > 0 ? (
+            <div className="grid gap-3">
+              {storageRecords.map((record) => {
+                const statusKey = getStorageStatus(record.is_conforme, record.temperature, record.cold_rooms);
+                const status = statusConfig[statusKey];
+                const StatusIcon = status.icon;
+                
+                return (
+                  <Card key={record.id} className={cn("p-4 border", status.class)}>
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex items-start gap-3">
+                        <StatusIcon className="h-5 w-5 mt-0.5 shrink-0" />
+                        <div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <Badge variant="outline" className={status.class}>
+                              {status.label}
+                            </Badge>
+                            <span className="text-sm font-medium flex items-center gap-1">
+                              <Thermometer className="h-3.5 w-3.5" />
                               {record.temperature}°C
                             </span>
+                          </div>
+                          {record.cold_rooms && (
+                            <div className="flex items-center gap-1.5 mt-1.5 text-sm">
+                              <Snowflake className={cn(
+                                "h-4 w-4",
+                                record.cold_rooms.type === 'negatif' ? 'text-blue-500' : 'text-cyan-500'
+                              )} />
+                              <span className="font-medium">{record.cold_rooms.name}</span>
+                              <span className="text-muted-foreground">
+                                ({record.cold_rooms.temp_min}°C à {record.cold_rooms.temp_max}°C)
+                              </span>
+                            </div>
+                          )}
+                          {record.notes && (
+                            <p className="text-sm text-muted-foreground mt-1">
+                              {record.notes}
+                            </p>
                           )}
                         </div>
-                        {record.notes && (
-                          <p className="text-sm text-muted-foreground mt-1">
-                            {record.notes}
-                          </p>
-                        )}
-                        {record.product && (
-                          <p className="text-sm text-muted-foreground mt-1">
-                            Produit: {record.product}
-                          </p>
-                        )}
-                        {record.supplier && (
-                          <p className="text-sm text-muted-foreground">
-                            Fournisseur: {record.supplier}
-                          </p>
-                        )}
+                      </div>
+                      <div className="text-right text-sm text-muted-foreground shrink-0">
+                        <div className="flex items-center gap-1">
+                          <Calendar className="h-3.5 w-3.5" />
+                          {format(new Date(record.recorded_at), 'dd MMM yyyy', { locale: fr })}
+                        </div>
+                        <div className="mt-0.5">
+                          {format(new Date(record.recorded_at), 'HH:mm', { locale: fr })}
+                        </div>
                       </div>
                     </div>
-                    <div className="text-right text-sm text-muted-foreground shrink-0">
-                      <div className="flex items-center gap-1">
-                        <Calendar className="h-3.5 w-3.5" />
-                        {format(new Date(record.timestamp), 'dd MMM yyyy', { locale: fr })}
-                      </div>
-                      <div className="mt-0.5">
-                        {format(new Date(record.timestamp), 'HH:mm', { locale: fr })}
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-              );
-            })}
-          </div>
+                  </Card>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="text-center py-12 bg-muted/30 rounded-xl border border-dashed">
+              <p className="text-muted-foreground">Aucun contrôle enregistré</p>
+              <Button onClick={handleNewControl} variant="outline" className="mt-4 gap-2">
+                <Plus className="h-4 w-4" />
+                Effectuer le premier contrôle
+              </Button>
+            </div>
+          )
         ) : (
-          <div className="text-center py-12 bg-muted/30 rounded-xl border border-dashed">
-            <p className="text-muted-foreground">Aucun contrôle enregistré</p>
-            <Button onClick={handleNewControl} variant="outline" className="mt-4 gap-2">
-              <Plus className="h-4 w-4" />
-              Effectuer le premier contrôle
-            </Button>
-          </div>
+          // Standard control records display
+          records && records.length > 0 ? (
+            <div className="grid gap-3">
+              {records.map((record) => {
+                const status = statusConfig[record.status as keyof typeof statusConfig] || statusConfig.pending;
+                const StatusIcon = status.icon;
+                
+                return (
+                  <Card key={record.id} className={cn("p-4 border", status.class)}>
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex items-start gap-3">
+                        <StatusIcon className="h-5 w-5 mt-0.5 shrink-0" />
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className={status.class}>
+                              {status.label}
+                            </Badge>
+                            {record.temperature !== null && (
+                              <span className="text-sm font-medium">
+                                {record.temperature}°C
+                              </span>
+                            )}
+                          </div>
+                          {record.notes && (
+                            <p className="text-sm text-muted-foreground mt-1">
+                              {record.notes}
+                            </p>
+                          )}
+                          {record.product && (
+                            <p className="text-sm text-muted-foreground mt-1">
+                              Produit: {record.product}
+                            </p>
+                          )}
+                          {record.supplier && (
+                            <p className="text-sm text-muted-foreground">
+                              Fournisseur: {record.supplier}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="text-right text-sm text-muted-foreground shrink-0">
+                        <div className="flex items-center gap-1">
+                          <Calendar className="h-3.5 w-3.5" />
+                          {format(new Date(record.timestamp), 'dd MMM yyyy', { locale: fr })}
+                        </div>
+                        <div className="mt-0.5">
+                          {format(new Date(record.timestamp), 'HH:mm', { locale: fr })}
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="text-center py-12 bg-muted/30 rounded-xl border border-dashed">
+              <p className="text-muted-foreground">Aucun contrôle enregistré</p>
+              <Button onClick={handleNewControl} variant="outline" className="mt-4 gap-2">
+                <Plus className="h-4 w-4" />
+                Effectuer le premier contrôle
+              </Button>
+            </div>
+          )
         )}
       </div>
 
@@ -214,7 +307,7 @@ export default function ControlHistory() {
         isOpen={isStorageFormOpen}
         onClose={() => setIsStorageFormOpen(false)}
         onSubmit={(data: StorageFormData) => {
-          console.log('Storage control saved:', data);
+          setIsStorageFormOpen(false);
         }}
       />
     </div>

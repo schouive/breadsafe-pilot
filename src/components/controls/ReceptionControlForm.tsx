@@ -1,10 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ControlPoint, ControlStatus } from '@/types/haccp';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
 import { 
   Dialog, 
@@ -14,6 +13,13 @@ import {
   DialogDescription,
   DialogFooter 
 } from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { 
   Thermometer, 
   Package, 
@@ -30,6 +36,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { PhotoCapture } from './PhotoCapture';
 import { useAuth } from '@/hooks/useAuth';
+import { useSuppliers, useRawMaterials, Supplier, RawMaterial } from '@/hooks/useSuppliers';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Separator } from '@/components/ui/separator';
 
@@ -43,7 +50,9 @@ interface ReceptionControlFormProps {
 export interface ReceptionFormData {
   status: ControlStatus;
   // Product info
+  rawMaterialId?: string;
   product: string;
+  supplierId?: string;
   supplier: string;
   lotNumber: string;
   // CP1 - Temperature
@@ -72,12 +81,16 @@ const statusOptions = [
 
 export function ReceptionControlForm({ controlPoint, isOpen, onClose, onSubmit }: ReceptionControlFormProps) {
   const { user } = useAuth();
+  const { data: suppliers, isLoading: loadingSuppliers } = useSuppliers();
   const [expandedSection, setExpandedSection] = useState<string | null>('cp1');
   
   // Form state
-  const [product, setProduct] = useState('');
-  const [supplier, setSupplier] = useState('');
+  const [selectedSupplierId, setSelectedSupplierId] = useState('');
+  const [selectedRawMaterialId, setSelectedRawMaterialId] = useState('');
   const [lotNumber, setLotNumber] = useState('');
+  
+  // Fetch raw materials for selected supplier
+  const { data: rawMaterials, isLoading: loadingRawMaterials } = useRawMaterials(selectedSupplierId);
   
   // CP1 - Temperature
   const [temperature, setTemperature] = useState('');
@@ -100,6 +113,14 @@ export function ReceptionControlForm({ controlPoint, isOpen, onClose, onSubmit }
   const [notes, setNotes] = useState('');
   const [photos, setPhotos] = useState<string[]>([]);
 
+  // Reset raw material when supplier changes
+  useEffect(() => {
+    setSelectedRawMaterialId('');
+  }, [selectedSupplierId]);
+
+  const selectedSupplier = suppliers?.find(s => s.id === selectedSupplierId);
+  const selectedRawMaterial = rawMaterials?.find(r => r.id === selectedRawMaterialId);
+
   // Calculate overall status
   const calculateStatus = (): ControlStatus => {
     const allConforme = temperatureConforme && integriteConforme && dlcConforme && allergenesConformes;
@@ -113,8 +134,8 @@ export function ReceptionControlForm({ controlPoint, isOpen, onClose, onSubmit }
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!product || !supplier) {
-      toast.error('Veuillez renseigner le produit et le fournisseur');
+    if (!selectedSupplierId || !selectedRawMaterialId) {
+      toast.error('Veuillez sélectionner le fournisseur et le produit');
       return;
     }
 
@@ -122,8 +143,10 @@ export function ReceptionControlForm({ controlPoint, isOpen, onClose, onSubmit }
 
     onSubmit({
       status,
-      product,
-      supplier,
+      rawMaterialId: selectedRawMaterialId,
+      product: selectedRawMaterial?.name || '',
+      supplierId: selectedSupplierId,
+      supplier: selectedSupplier?.name || '',
       lotNumber,
       temperature: temperature ? parseFloat(temperature) : undefined,
       temperatureConforme,
@@ -145,8 +168,8 @@ export function ReceptionControlForm({ controlPoint, isOpen, onClose, onSubmit }
   };
 
   const resetForm = () => {
-    setProduct('');
-    setSupplier('');
+    setSelectedSupplierId('');
+    setSelectedRawMaterialId('');
     setLotNumber('');
     setTemperature('');
     setTemperatureConforme(true);
@@ -186,26 +209,52 @@ export function ReceptionControlForm({ controlPoint, isOpen, onClose, onSubmit }
               <Info className="h-4 w-4 text-primary" />
               Informations Produit
             </h3>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label htmlFor="product">Produit *</Label>
-                <Input
-                  id="product"
-                  placeholder="Ex: Beurre AOP"
-                  value={product}
-                  onChange={(e) => setProduct(e.target.value)}
-                  required
-                />
-              </div>
+            <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="supplier">Fournisseur *</Label>
-                <Input
-                  id="supplier"
-                  placeholder="Ex: Lactalis"
-                  value={supplier}
-                  onChange={(e) => setSupplier(e.target.value)}
-                  required
-                />
+                <Select value={selectedSupplierId} onValueChange={setSelectedSupplierId}>
+                  <SelectTrigger id="supplier">
+                    <SelectValue placeholder="Sélectionner un fournisseur" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {loadingSuppliers ? (
+                      <SelectItem value="loading" disabled>Chargement...</SelectItem>
+                    ) : suppliers?.length === 0 ? (
+                      <SelectItem value="none" disabled>Aucun fournisseur configuré</SelectItem>
+                    ) : (
+                      suppliers?.map((s) => (
+                        <SelectItem key={s.id} value={s.id}>
+                          {s.name}
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="product">Produit *</Label>
+                <Select 
+                  value={selectedRawMaterialId} 
+                  onValueChange={setSelectedRawMaterialId}
+                  disabled={!selectedSupplierId}
+                >
+                  <SelectTrigger id="product">
+                    <SelectValue placeholder={selectedSupplierId ? "Sélectionner un produit" : "Sélectionnez d'abord un fournisseur"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {loadingRawMaterials ? (
+                      <SelectItem value="loading" disabled>Chargement...</SelectItem>
+                    ) : rawMaterials?.length === 0 ? (
+                      <SelectItem value="none" disabled>Aucun produit pour ce fournisseur</SelectItem>
+                    ) : (
+                      rawMaterials?.map((r) => (
+                        <SelectItem key={r.id} value={r.id}>
+                          {r.name} {r.category && `(${r.category})`}
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
             <div className="space-y-2">

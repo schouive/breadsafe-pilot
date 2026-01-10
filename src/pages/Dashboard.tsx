@@ -30,8 +30,8 @@ const mockRecentControls: ControlRecord[] = [
   },
   {
     id: '2',
-    controlPointId: 'cp6',
-    controlPointCode: 'CP6_STOCKAGE_POSITIF',
+    controlPointId: 'cp-stockage',
+    controlPointCode: 'CP_STOCKAGE',
     timestamp: new Date(Date.now() - 1000 * 60 * 120),
     operatorId: 'user2',
     operatorName: 'Jean P.',
@@ -41,8 +41,8 @@ const mockRecentControls: ControlRecord[] = [
   },
   {
     id: '3',
-    controlPointId: 'cp7',
-    controlPointCode: 'CP7_STOCKAGE_NEGATIF',
+    controlPointId: 'cp-stockage',
+    controlPointCode: 'CP_STOCKAGE',
     timestamp: new Date(Date.now() - 1000 * 60 * 180),
     operatorId: 'user2',
     operatorName: 'Jean P.',

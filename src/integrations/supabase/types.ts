@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      cold_rooms: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          temp_max: number
+          temp_min: number
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          temp_max: number
+          temp_min: number
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          temp_max?: number
+          temp_min?: number
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       control_records: {
         Row: {
           allergenes_conformes: boolean | null
@@ -32,6 +65,7 @@ export type Database = {
           operator_id: string
           photos: string[] | null
           product: string | null
+          raw_material_id: string | null
           status: Database["public"]["Enums"]["control_status"]
           supplier: string | null
           temperature: number | null
@@ -56,6 +90,7 @@ export type Database = {
           operator_id: string
           photos?: string[] | null
           product?: string | null
+          raw_material_id?: string | null
           status?: Database["public"]["Enums"]["control_status"]
           supplier?: string | null
           temperature?: number | null
@@ -80,6 +115,7 @@ export type Database = {
           operator_id?: string
           photos?: string[] | null
           product?: string | null
+          raw_material_id?: string | null
           status?: Database["public"]["Enums"]["control_status"]
           supplier?: string | null
           temperature?: number | null
@@ -87,7 +123,15 @@ export type Database = {
           timestamp?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "control_records_raw_material_id_fkey"
+            columns: ["raw_material_id"]
+            isOneToOne: false
+            referencedRelation: "raw_materials"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       non_conformities: {
         Row: {
@@ -175,6 +219,136 @@ export type Database = {
         }
         Relationships: []
       }
+      raw_materials: {
+        Row: {
+          allergens: string[] | null
+          category: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          requires_cold_storage: boolean
+          storage_temp_max: number | null
+          storage_temp_min: number | null
+          supplier_id: string
+          unit: string | null
+          updated_at: string
+        }
+        Insert: {
+          allergens?: string[] | null
+          category?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          requires_cold_storage?: boolean
+          storage_temp_max?: number | null
+          storage_temp_min?: number | null
+          supplier_id: string
+          unit?: string | null
+          updated_at?: string
+        }
+        Update: {
+          allergens?: string[] | null
+          category?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          requires_cold_storage?: boolean
+          storage_temp_max?: number | null
+          storage_temp_min?: number | null
+          supplier_id?: string
+          unit?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "raw_materials_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      storage_temperature_records: {
+        Row: {
+          cold_room_id: string
+          created_at: string
+          id: string
+          is_conforme: boolean
+          notes: string | null
+          operator_id: string
+          recorded_at: string
+          temperature: number
+        }
+        Insert: {
+          cold_room_id: string
+          created_at?: string
+          id?: string
+          is_conforme: boolean
+          notes?: string | null
+          operator_id: string
+          recorded_at?: string
+          temperature: number
+        }
+        Update: {
+          cold_room_id?: string
+          created_at?: string
+          id?: string
+          is_conforme?: boolean
+          notes?: string | null
+          operator_id?: string
+          recorded_at?: string
+          temperature?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "storage_temperature_records_cold_room_id_fkey"
+            columns: ["cold_room_id"]
+            isOneToOne: false
+            referencedRelation: "cold_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      suppliers: {
+        Row: {
+          address: string | null
+          contact_name: string | null
+          created_at: string
+          email: string | null
+          id: string
+          is_active: boolean
+          name: string
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          contact_name?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          contact_name?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
@@ -214,6 +388,7 @@ export type Database = {
         | "CP6_STOCKAGE_POSITIF"
         | "CP7_STOCKAGE_NEGATIF"
         | "CP8_DLC_PERIMEE"
+        | "CP_STOCKAGE"
       control_status: "conforme" | "acceptable" | "nonconforme" | "pending"
       nc_severity: "minor" | "major" | "critical"
       nc_status: "open" | "in_progress" | "resolved" | "validated"
@@ -351,6 +526,7 @@ export const Constants = {
         "CP6_STOCKAGE_POSITIF",
         "CP7_STOCKAGE_NEGATIF",
         "CP8_DLC_PERIMEE",
+        "CP_STOCKAGE",
       ],
       control_status: ["conforme", "acceptable", "nonconforme", "pending"],
       nc_severity: ["minor", "major", "critical"],

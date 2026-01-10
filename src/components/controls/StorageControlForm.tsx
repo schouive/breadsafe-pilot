@@ -3,7 +3,6 @@ import { ControlPoint, ControlStatus } from '@/types/haccp';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { 
   Dialog, 
   DialogContent, 
@@ -18,6 +17,9 @@ import {
   XCircle,
   Snowflake,
   AlertTriangle,
+  Keyboard,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -26,6 +28,8 @@ import { useColdRooms, useRecordTemperature, ColdRoom } from '@/hooks/useColdRoo
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { NumericKeypad } from './NumericKeypad';
+import { Switch } from '@/components/ui/switch';
 
 interface StorageControlFormProps {
   controlPoint: ControlPoint | null;
@@ -55,6 +59,8 @@ export function StorageControlForm({ controlPoint, isOpen, onClose, onSubmit }: 
   
   const [roomInputs, setRoomInputs] = useState<Record<string, RoomTemperatureInput>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [quickMode, setQuickMode] = useState(false);
+  const [currentRoomIndex, setCurrentRoomIndex] = useState(0);
 
   // Initialize room inputs when cold rooms are loaded
   useEffect(() => {
@@ -67,12 +73,18 @@ export function StorageControlForm({ controlPoint, isOpen, onClose, onSubmit }: 
     }
   }, [coldRooms]);
 
+  // Reset current room index when opening
+  useEffect(() => {
+    if (isOpen) {
+      setCurrentRoomIndex(0);
+    }
+  }, [isOpen]);
+
   const checkConformity = (temp: number, room: ColdRoom): { isConforme: boolean; status: ControlStatus } => {
     if (temp >= room.temp_min && temp <= room.temp_max) {
       return { isConforme: true, status: 'conforme' };
     }
     
-    // Vérifier si acceptable (écart de 3°C max)
     const acceptableMin = room.temp_min - 3;
     const acceptableMax = room.temp_max + 3;
     
@@ -116,6 +128,24 @@ export function StorageControlForm({ controlPoint, isOpen, onClose, onSubmit }: 
     }) || [];
   };
 
+  const handleQuickModeConfirm = () => {
+    if (coldRooms && currentRoomIndex < coldRooms.length - 1) {
+      setCurrentRoomIndex(prev => prev + 1);
+    }
+  };
+
+  const goToPreviousRoom = () => {
+    if (currentRoomIndex > 0) {
+      setCurrentRoomIndex(prev => prev - 1);
+    }
+  };
+
+  const goToNextRoom = () => {
+    if (coldRooms && currentRoomIndex < coldRooms.length - 1) {
+      setCurrentRoomIndex(prev => prev + 1);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -134,7 +164,6 @@ export function StorageControlForm({ controlPoint, isOpen, onClose, onSubmit }: 
     setIsSubmitting(true);
 
     try {
-      // Record all temperatures
       for (const room of filledRooms) {
         const input = roomInputs[room.id];
         const tempValue = parseFloat(input.temperature);
@@ -149,7 +178,6 @@ export function StorageControlForm({ controlPoint, isOpen, onClose, onSubmit }: 
         });
       }
 
-      // Notify with first room data for compatibility
       const firstRoom = filledRooms[0];
       const firstInput = roomInputs[firstRoom.id];
       const firstTemp = parseFloat(firstInput.temperature);
@@ -183,139 +211,257 @@ export function StorageControlForm({ controlPoint, isOpen, onClose, onSubmit }: 
       });
       setRoomInputs(initialInputs);
     }
+    setCurrentRoomIndex(0);
   };
 
   if (!controlPoint) return null;
 
   const filledCount = getFilledRooms().length;
   const totalCount = coldRooms?.length || 0;
+  const currentRoom = coldRooms?.[currentRoomIndex];
+  const currentInput = currentRoom ? roomInputs[currentRoom.id] : null;
+  const currentConformity = currentRoom ? getConformityInfo(currentRoom.id) : null;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
+      <DialogContent className={cn(
+        "flex flex-col",
+        quickMode ? "max-w-md max-h-[95vh]" : "max-w-2xl max-h-[90vh]"
+      )}>
         <DialogHeader>
-          <DialogTitle className="text-xl flex items-center gap-2">
-            <Thermometer className="h-5 w-5 text-primary" />
-            {controlPoint.name}
-          </DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle className="text-xl flex items-center gap-2">
+              <Thermometer className="h-5 w-5 text-primary" />
+              {controlPoint.name}
+            </DialogTitle>
+            <div className="flex items-center gap-2">
+              <Keyboard className="h-4 w-4 text-muted-foreground" />
+              <Switch 
+                checked={quickMode} 
+                onCheckedChange={setQuickMode}
+                aria-label="Mode saisie rapide"
+              />
+              <span className="text-sm text-muted-foreground">Rapide</span>
+            </div>
+          </div>
           <DialogDescription>
-            Saisissez les températures relevées pour chaque chambre froide
+            {quickMode 
+              ? "Mode saisie rapide avec clavier numérique" 
+              : "Saisissez les températures pour chaque chambre froide"
+            }
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
-          <ScrollArea className="flex-1 pr-4">
-            <div className="space-y-4">
-              {loadingRooms ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  Chargement des chambres froides...
+          {quickMode && currentRoom && currentInput ? (
+            // Quick mode with numeric keypad
+            <div className="flex flex-col flex-1 space-y-4">
+              {/* Room navigation */}
+              <div className="flex items-center justify-between bg-muted/50 rounded-lg p-3">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={goToPreviousRoom}
+                  disabled={currentRoomIndex === 0}
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                </Button>
+                
+                <div className="text-center flex-1">
+                  <div className="flex items-center justify-center gap-2">
+                    <Snowflake className={cn(
+                      "h-5 w-5",
+                      currentRoom.type === 'negatif' ? 'text-blue-500' : 'text-cyan-500'
+                    )} />
+                    <span className="font-semibold">{currentRoom.name}</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {currentRoom.temp_min}°C à {currentRoom.temp_max}°C
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {currentRoomIndex + 1} / {totalCount}
+                  </p>
                 </div>
-              ) : coldRooms?.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  Aucune chambre froide configurée
+                
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={goToNextRoom}
+                  disabled={!coldRooms || currentRoomIndex >= coldRooms.length - 1}
+                >
+                  <ChevronRight className="h-5 w-5" />
+                </Button>
+              </div>
+
+              {/* Conformity status */}
+              {currentConformity && (
+                <div className={cn(
+                  "flex items-center justify-center gap-2 py-2 px-4 rounded-lg",
+                  currentConformity.status === 'conforme' && "bg-success/10 text-success",
+                  currentConformity.status === 'acceptable' && "bg-warning/10 text-warning",
+                  currentConformity.status === 'nonconforme' && "bg-destructive/10 text-destructive"
+                )}>
+                  {currentConformity.status === 'conforme' && <CheckCircle2 className="h-5 w-5" />}
+                  {currentConformity.status === 'acceptable' && <AlertTriangle className="h-5 w-5" />}
+                  {currentConformity.status === 'nonconforme' && <XCircle className="h-5 w-5" />}
+                  <span className="font-medium">
+                    {currentConformity.status === 'conforme' && 'Conforme'}
+                    {currentConformity.status === 'acceptable' && 'Acceptable'}
+                    {currentConformity.status === 'nonconforme' && 'Non conforme'}
+                  </span>
                 </div>
-              ) : (
-                coldRooms?.map((room) => {
-                  const conformityInfo = getConformityInfo(room.id);
-                  const input = roomInputs[room.id] || { temperature: '', notes: '' };
+              )}
+
+              {/* Numeric keypad */}
+              <NumericKeypad
+                value={currentInput.temperature}
+                onChange={(value) => handleTemperatureChange(currentRoom.id, value)}
+                onConfirm={handleQuickModeConfirm}
+                allowNegative={true}
+                allowDecimal={true}
+              />
+
+              {/* Quick status overview */}
+              <div className="flex flex-wrap gap-2 justify-center pt-2">
+                {coldRooms?.map((room, index) => {
+                  const conformity = getConformityInfo(room.id);
+                  const isFilled = roomInputs[room.id]?.temperature?.trim() !== '';
+                  const isCurrent = index === currentRoomIndex;
                   
                   return (
-                    <Card 
-                      key={room.id} 
+                    <button
+                      key={room.id}
+                      type="button"
+                      onClick={() => setCurrentRoomIndex(index)}
                       className={cn(
-                        "p-4 transition-all",
-                        conformityInfo?.status === 'conforme' && "border-success/50 bg-success/5",
-                        conformityInfo?.status === 'acceptable' && "border-warning/50 bg-warning/5",
-                        conformityInfo?.status === 'nonconforme' && "border-destructive/50 bg-destructive/5"
+                        "w-8 h-8 rounded-full text-xs font-medium transition-all",
+                        isCurrent && "ring-2 ring-primary ring-offset-2",
+                        !isFilled && "bg-muted text-muted-foreground",
+                        conformity?.status === 'conforme' && "bg-success text-success-foreground",
+                        conformity?.status === 'acceptable' && "bg-warning text-warning-foreground",
+                        conformity?.status === 'nonconforme' && "bg-destructive text-destructive-foreground"
                       )}
                     >
-                      {/* Room header */}
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-3">
-                          <div className={cn(
-                            "p-2 rounded-lg",
-                            room.type === 'negatif' ? 'bg-blue-100 dark:bg-blue-900/30' : 'bg-cyan-100 dark:bg-cyan-900/30'
-                          )}>
-                            <Snowflake className={cn(
-                              "h-5 w-5",
-                              room.type === 'negatif' ? 'text-blue-600 dark:text-blue-400' : 'text-cyan-600 dark:text-cyan-400'
-                            )} />
-                          </div>
-                          <div>
-                            <h3 className="font-semibold text-base">{room.name}</h3>
-                            <p className="text-sm text-muted-foreground">
-                              Plage: {room.temp_min}°C à {room.temp_max}°C
-                            </p>
-                          </div>
-                        </div>
-                        
-                        {/* Conformity badge */}
-                        {conformityInfo && (
-                          <Badge 
-                            variant="outline"
-                            className={cn(
-                              "flex items-center gap-1.5",
-                              conformityInfo.status === 'conforme' && "border-success text-success",
-                              conformityInfo.status === 'acceptable' && "border-warning text-warning",
-                              conformityInfo.status === 'nonconforme' && "border-destructive text-destructive"
-                            )}
-                          >
-                            {conformityInfo.status === 'conforme' && <CheckCircle2 className="h-3.5 w-3.5" />}
-                            {conformityInfo.status === 'acceptable' && <AlertTriangle className="h-3.5 w-3.5" />}
-                            {conformityInfo.status === 'nonconforme' && <XCircle className="h-3.5 w-3.5" />}
-                            {conformityInfo.status === 'conforme' && 'Conforme'}
-                            {conformityInfo.status === 'acceptable' && 'Acceptable'}
-                            {conformityInfo.status === 'nonconforme' && 'Non conforme'}
-                          </Badge>
-                        )}
-                      </div>
-
-                      {/* Temperature input */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor={`temp-${room.id}`} className="text-sm">
-                            Température (°C)
-                          </Label>
-                          <div className="relative">
-                            <Input
-                              id={`temp-${room.id}`}
-                              type="number"
-                              step="0.1"
-                              placeholder={`Ex: ${room.type === 'negatif' ? '-18' : '4'}`}
-                              value={input.temperature}
-                              onChange={(e) => handleTemperatureChange(room.id, e.target.value)}
-                              className={cn(
-                                "h-12 text-lg font-medium pr-10",
-                                conformityInfo?.status === 'conforme' && "border-success focus-visible:ring-success",
-                                conformityInfo?.status === 'acceptable' && "border-warning focus-visible:ring-warning",
-                                conformityInfo?.status === 'nonconforme' && "border-destructive focus-visible:ring-destructive"
-                              )}
-                            />
-                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground font-medium">
-                              °C
-                            </span>
-                          </div>
-                        </div>
-                        
-                        <div className="space-y-2">
-                          <Label htmlFor={`notes-${room.id}`} className="text-sm">
-                            Observations
-                          </Label>
-                          <Input
-                            id={`notes-${room.id}`}
-                            placeholder="Remarques..."
-                            value={input.notes}
-                            onChange={(e) => handleNotesChange(room.id, e.target.value)}
-                            className="h-12"
-                          />
-                        </div>
-                      </div>
-                    </Card>
+                      {index + 1}
+                    </button>
                   );
-                })
-              )}
+                })}
+              </div>
             </div>
-          </ScrollArea>
+          ) : (
+            // Standard mode with all rooms
+            <ScrollArea className="flex-1 pr-4">
+              <div className="space-y-4">
+                {loadingRooms ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    Chargement des chambres froides...
+                  </div>
+                ) : coldRooms?.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    Aucune chambre froide configurée
+                  </div>
+                ) : (
+                  coldRooms?.map((room) => {
+                    const conformityInfo = getConformityInfo(room.id);
+                    const input = roomInputs[room.id] || { temperature: '', notes: '' };
+                    
+                    return (
+                      <Card 
+                        key={room.id} 
+                        className={cn(
+                          "p-4 transition-all",
+                          conformityInfo?.status === 'conforme' && "border-success/50 bg-success/5",
+                          conformityInfo?.status === 'acceptable' && "border-warning/50 bg-warning/5",
+                          conformityInfo?.status === 'nonconforme' && "border-destructive/50 bg-destructive/5"
+                        )}
+                      >
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="flex items-center gap-3">
+                            <div className={cn(
+                              "p-2 rounded-lg",
+                              room.type === 'negatif' ? 'bg-blue-100 dark:bg-blue-900/30' : 'bg-cyan-100 dark:bg-cyan-900/30'
+                            )}>
+                              <Snowflake className={cn(
+                                "h-5 w-5",
+                                room.type === 'negatif' ? 'text-blue-600 dark:text-blue-400' : 'text-cyan-600 dark:text-cyan-400'
+                              )} />
+                            </div>
+                            <div>
+                              <h3 className="font-semibold text-base">{room.name}</h3>
+                              <p className="text-sm text-muted-foreground">
+                                Plage: {room.temp_min}°C à {room.temp_max}°C
+                              </p>
+                            </div>
+                          </div>
+                          
+                          {conformityInfo && (
+                            <Badge 
+                              variant="outline"
+                              className={cn(
+                                "flex items-center gap-1.5",
+                                conformityInfo.status === 'conforme' && "border-success text-success",
+                                conformityInfo.status === 'acceptable' && "border-warning text-warning",
+                                conformityInfo.status === 'nonconforme' && "border-destructive text-destructive"
+                              )}
+                            >
+                              {conformityInfo.status === 'conforme' && <CheckCircle2 className="h-3.5 w-3.5" />}
+                              {conformityInfo.status === 'acceptable' && <AlertTriangle className="h-3.5 w-3.5" />}
+                              {conformityInfo.status === 'nonconforme' && <XCircle className="h-3.5 w-3.5" />}
+                              {conformityInfo.status === 'conforme' && 'Conforme'}
+                              {conformityInfo.status === 'acceptable' && 'Acceptable'}
+                              {conformityInfo.status === 'nonconforme' && 'Non conforme'}
+                            </Badge>
+                          )}
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label htmlFor={`temp-${room.id}`} className="text-sm">
+                              Température (°C)
+                            </Label>
+                            <div className="relative">
+                              <Input
+                                id={`temp-${room.id}`}
+                                type="number"
+                                step="0.1"
+                                placeholder={`Ex: ${room.type === 'negatif' ? '-18' : '4'}`}
+                                value={input.temperature}
+                                onChange={(e) => handleTemperatureChange(room.id, e.target.value)}
+                                className={cn(
+                                  "h-12 text-lg font-medium pr-10",
+                                  conformityInfo?.status === 'conforme' && "border-success focus-visible:ring-success",
+                                  conformityInfo?.status === 'acceptable' && "border-warning focus-visible:ring-warning",
+                                  conformityInfo?.status === 'nonconforme' && "border-destructive focus-visible:ring-destructive"
+                                )}
+                              />
+                              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground font-medium">
+                                °C
+                              </span>
+                            </div>
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <Label htmlFor={`notes-${room.id}`} className="text-sm">
+                              Observations
+                            </Label>
+                            <Input
+                              id={`notes-${room.id}`}
+                              placeholder="Remarques..."
+                              value={input.notes}
+                              onChange={(e) => handleNotesChange(room.id, e.target.value)}
+                              className="h-12"
+                            />
+                          </div>
+                        </div>
+                      </Card>
+                    );
+                  })
+                )}
+              </div>
+            </ScrollArea>
+          )}
 
           {/* Summary and actions */}
           <div className="pt-4 mt-4 border-t">

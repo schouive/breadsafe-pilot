@@ -92,6 +92,24 @@ export function useRecentControlRecords() {
   });
 }
 
+export function useControlRecordsByCode(code: string) {
+  return useQuery({
+    queryKey: ['control_records', 'by_code', code],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('control_records')
+        .select('*')
+        .eq('control_point_code', code as ControlPointCode)
+        .order('timestamp', { ascending: false })
+        .limit(50);
+      
+      if (error) throw error;
+      return data as ControlRecordFromDB[];
+    },
+    enabled: !!code,
+  });
+}
+
 export function useCreateControlRecord() {
   const queryClient = useQueryClient();
 

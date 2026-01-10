@@ -2,95 +2,125 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
+/* HACCP Management System - Design System for Breadshop SAS
+   Professional, clean, mobile-first industrial application
+   Color-coded status indicators: Green (conforme) / Orange (acceptable) / Red (non-conforme)
 */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Brand colors based on Breadshop logo */
+    --brand-primary: 209 60% 45%;
+    --brand-primary-light: 209 60% 55%;
+    --brand-primary-dark: 209 60% 35%;
+    
+    /* Status colors - HACCP compliance indicators */
+    --status-conforme: 142 71% 45%;
+    --status-conforme-light: 142 71% 92%;
+    --status-acceptable: 38 92% 50%;
+    --status-acceptable-light: 38 92% 92%;
+    --status-nonconforme: 0 84% 60%;
+    --status-nonconforme-light: 0 84% 95%;
+    
+    /* Core palette */
+    --background: 210 20% 98%;
+    --foreground: 215 25% 15%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 215 25% 15%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 215 25% 15%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 209 60% 45%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 210 20% 95%;
+    --secondary-foreground: 215 25% 25%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 210 15% 93%;
+    --muted-foreground: 215 15% 45%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 209 60% 92%;
+    --accent-foreground: 209 60% 30%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --success: 142 71% 45%;
+    --success-foreground: 0 0% 100%;
 
-    --radius: 0.5rem;
+    --warning: 38 92% 50%;
+    --warning-foreground: 38 92% 15%;
 
-    --sidebar-background: 0 0% 98%;
+    --border: 214 25% 88%;
+    --input: 214 25% 88%;
+    --ring: 209 60% 45%;
 
-    --sidebar-foreground: 240 5.3% 26.1%;
+    --radius: 0.75rem;
 
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Sidebar */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 215 25% 25%;
+    --sidebar-primary: 209 60% 45%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 209 60% 95%;
+    --sidebar-accent-foreground: 209 60% 30%;
+    --sidebar-border: 214 25% 90%;
+    --sidebar-ring: 209 60% 45%;
+    
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 hsl(215 25% 15% / 0.05);
+    --shadow-md: 0 4px 6px -1px hsl(215 25% 15% / 0.1), 0 2px 4px -2px hsl(215 25% 15% / 0.1);
+    --shadow-lg: 0 10px 15px -3px hsl(215 25% 15% / 0.1), 0 4px 6px -4px hsl(215 25% 15% / 0.1);
+    --shadow-card: 0 1px 3px 0 hsl(215 25% 15% / 0.08), 0 1px 2px -1px hsl(215 25% 15% / 0.08);
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    --background: 215 25% 9%;
+    --foreground: 210 20% 95%;
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 215 25% 12%;
+    --card-foreground: 210 20% 95%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 215 25% 12%;
+    --popover-foreground: 210 20% 95%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 209 60% 55%;
+    --primary-foreground: 215 25% 9%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 215 25% 18%;
+    --secondary-foreground: 210 20% 90%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 215 25% 18%;
+    --muted-foreground: 215 15% 60%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 209 45% 22%;
+    --accent-foreground: 209 60% 80%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --success: 142 60% 40%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 38 80% 45%;
+    --warning-foreground: 38 92% 95%;
+
+    --border: 215 25% 22%;
+    --input: 215 25% 22%;
+    --ring: 209 60% 55%;
+
+    --sidebar-background: 215 25% 10%;
+    --sidebar-foreground: 210 20% 90%;
+    --sidebar-primary: 209 60% 55%;
+    --sidebar-primary-foreground: 215 25% 9%;
+    --sidebar-accent: 209 45% 18%;
+    --sidebar-accent-foreground: 209 60% 85%;
+    --sidebar-border: 215 25% 18%;
+    --sidebar-ring: 209 60% 55%;
   }
 }
 
@@ -99,7 +129,81 @@ All colors MUST be HSL.
     @apply border-border;
   }
 
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer components {
+  /* Status badge variants */
+  .status-conforme {
+    @apply bg-[hsl(var(--status-conforme-light))] text-[hsl(142,71%,25%)] border border-[hsl(var(--status-conforme)/0.3)];
+  }
+  
+  .status-acceptable {
+    @apply bg-[hsl(var(--status-acceptable-light))] text-[hsl(38,92%,25%)] border border-[hsl(var(--status-acceptable)/0.3)];
+  }
+  
+  .status-nonconforme {
+    @apply bg-[hsl(var(--status-nonconforme-light))] text-[hsl(0,84%,35%)] border border-[hsl(var(--status-nonconforme)/0.3)];
+  }
+
+  /* Card hover effect */
+  .card-interactive {
+    @apply transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5;
+  }
+
+  /* Touch-friendly button */
+  .touch-target {
+    @apply min-h-[48px] min-w-[48px];
+  }
+
+  /* Glass effect for overlays */
+  .glass {
+    @apply backdrop-blur-md bg-background/80;
+  }
+}
+
+@layer utilities {
+  /* Smooth scrolling */
+  .scroll-smooth {
+    scroll-behavior: smooth;
+  }
+
+  /* Hide scrollbar but allow scroll */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Animated gradient background */
+  .animate-gradient {
+    background-size: 200% 200%;
+    animation: gradient 8s ease infinite;
+  }
+
+  @keyframes gradient {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+
+  /* Pulse animation for alerts */
+  .pulse-alert {
+    animation: pulse-alert 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  @keyframes pulse-alert {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
   }
 }

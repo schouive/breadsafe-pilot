@@ -4,11 +4,9 @@ export type ControlStatus = 'conforme' | 'acceptable' | 'nonconforme' | 'pending
 
 export type UserRole = 'operator' | 'quality_assistant' | 'admin';
 
+// Updated: CP1-4 grouped into CP_RECEPTION
 export type ControlPointType = 
-  | 'CP1_TEMPERATURE_REFRIGERE'
-  | 'CP2_INTEGRITE'
-  | 'CP3_DLC'
-  | 'CP4_ALLERGENES'
+  | 'CP_RECEPTION'
   | 'CP5_CORPS_ETRANGER'
   | 'CP6_STOCKAGE_POSITIF'
   | 'CP7_STOCKAGE_NEGATIF'
@@ -29,6 +27,16 @@ export interface ControlPoint {
   frequency: string;
   supportDocument: string;
   archiveDuration: string;
+  // For grouped control point (CP_RECEPTION)
+  subControls?: SubControl[];
+}
+
+export interface SubControl {
+  id: string;
+  name: string;
+  description: string;
+  conformeCriteria: string;
+  acceptableCriteria?: string;
 }
 
 export interface ControlRecord {
@@ -45,6 +53,16 @@ export interface ControlRecord {
   lotNumber?: string;
   supplier?: string;
   product?: string;
+  photos?: string[];
+  // Reception control specific fields
+  temperatureConforme?: boolean;
+  integriteConforme?: boolean;
+  integriteNotes?: string;
+  dlcDate?: string;
+  dlcConforme?: boolean;
+  dlcNotes?: string;
+  allergenesConformes?: boolean;
+  allergenesNotes?: string;
 }
 
 export interface NonConformity {
@@ -82,69 +100,52 @@ export interface DashboardStats {
 }
 
 // Control Point definitions based on HACCP plan
+// CP1-CP4 grouped into CP_RECEPTION
 export const CONTROL_POINTS: ControlPoint[] = [
   {
-    id: 'cp1',
-    code: 'CP1_TEMPERATURE_REFRIGERE',
-    name: 'CP1 - Température Produits Réfrigérés',
-    description: 'Contrôle température à réception (beurre, œuf, margarine, levure)',
-    dangerType: 'Microorganismes pathogènes ou toxines',
-    conformeCriteria: 'Température mentionnée sur l\'étiquetage respectée',
-    acceptableCriteria: 'Jusqu\'à 3°C de plus en surface pour réfrigéré, jusqu\'à -12°C pour surgelé',
-    nonConformeCriteria: 'Température hors limites acceptables',
-    actionNonConforme: 'Refus de la marchandise',
-    actionAcceptable: 'Avertissement au fournisseur',
+    id: 'cp-reception',
+    code: 'CP_RECEPTION',
+    name: 'Contrôle Réception',
+    description: 'Contrôle complet à réception: température, intégrité, DLC et allergènes',
+    dangerType: 'Microorganismes pathogènes, contamination, allergènes',
+    conformeCriteria: 'Tous les critères respectés: température, emballage, DLC, composition',
+    acceptableCriteria: 'Dérogations mineures acceptables avec action corrective',
+    nonConformeCriteria: 'Un ou plusieurs critères non respectés',
+    actionNonConforme: 'Refus de la marchandise ou traitement spécifique selon le critère',
+    actionAcceptable: 'Avertissement au fournisseur, utilisation prioritaire si validé',
     responsible: 'DG / Assistant Qualité',
     frequency: '1 fois par réception minimum',
     supportDocument: 'Tampon de contrôle sur bon de livraison',
     archiveDuration: '5 ans',
-  },
-  {
-    id: 'cp2',
-    code: 'CP2_INTEGRITE',
-    name: 'CP2 - Intégrité Conditionnement',
-    description: 'Vérification de l\'intégrité des emballages à réception',
-    dangerType: 'Contamination microbiologique',
-    conformeCriteria: 'Emballage propre et non percé',
-    nonConformeCriteria: 'Emballage endommagé ou souillé',
-    actionNonConforme: 'Refus de la marchandise',
-    actionAcceptable: 'Avertissement au fournisseur',
-    responsible: 'DG / Assistant Qualité',
-    frequency: 'Tous les emballages de chaque livraison',
-    supportDocument: 'Fichiers informatiques avec sauvegarde',
-    archiveDuration: '5 ans',
-  },
-  {
-    id: 'cp3',
-    code: 'CP3_DLC',
-    name: 'CP3 - Dates Limites de Consommation',
-    description: 'Vérification DLC des matières premières réfrigérées',
-    dangerType: 'Multiplication microorganismes',
-    conformeCriteria: '≥2 semaines pour œuf/beurre, ≥1 mois pour margarine/levure',
-    acceptableCriteria: 'Voir avec le chef si produit consommé avant péremption',
-    nonConformeCriteria: 'DLC insuffisante sans possibilité d\'utilisation rapide',
-    actionNonConforme: 'Refus de la marchandise',
-    actionAcceptable: 'Utilisation prioritaire si validé par le chef',
-    responsible: 'DG / Assistant Qualité',
-    frequency: 'Tous les étiquetages de chaque livraison',
-    supportDocument: 'Tampon de contrôle sur bon de livraison',
-    archiveDuration: '5 ans',
-  },
-  {
-    id: 'cp4',
-    code: 'CP4_ALLERGENES',
-    name: 'CP4 - Allergènes Margarine',
-    description: 'Vérification composition allergènes sur étiquetage margarine',
-    dangerType: 'Changement intempestif de composition',
-    conformeCriteria: 'Composition égale à la photo de référence',
-    acceptableCriteria: 'Modification de composition avec accord clients',
-    nonConformeCriteria: 'Pas d\'information disponible',
-    actionNonConforme: 'Bloquer ou refuser la marchandise',
-    actionAcceptable: 'Modifier l\'étiquetage et obtenir accord clients',
-    responsible: 'DG / Assistant Qualité',
-    frequency: 'Contrôle 100% des étiquetages',
-    supportDocument: 'Tampon de contrôle sur bon de livraison',
-    archiveDuration: '5 ans',
+    subControls: [
+      {
+        id: 'cp1',
+        name: 'CP1 - Température',
+        description: 'Contrôle température à réception (beurre, œuf, margarine, levure)',
+        conformeCriteria: 'Température mentionnée sur l\'étiquetage respectée',
+        acceptableCriteria: 'Jusqu\'à 3°C de plus en surface pour réfrigéré, jusqu\'à -12°C pour surgelé',
+      },
+      {
+        id: 'cp2',
+        name: 'CP2 - Intégrité',
+        description: 'Vérification de l\'intégrité des emballages',
+        conformeCriteria: 'Emballage propre et non percé',
+      },
+      {
+        id: 'cp3',
+        name: 'CP3 - DLC',
+        description: 'Vérification DLC des matières premières',
+        conformeCriteria: '≥2 semaines pour œuf/beurre, ≥1 mois pour margarine/levure',
+        acceptableCriteria: 'Voir avec le chef si produit consommé avant péremption',
+      },
+      {
+        id: 'cp4',
+        name: 'CP4 - Allergènes',
+        description: 'Vérification composition allergènes sur étiquetage',
+        conformeCriteria: 'Composition égale à la photo de référence',
+        acceptableCriteria: 'Modification de composition avec accord clients',
+      },
+    ],
   },
   {
     id: 'cp5',

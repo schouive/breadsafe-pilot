@@ -18,8 +18,8 @@ import { CONTROL_POINTS, ControlPoint, ControlRecord, NonConformity, ControlStat
 const mockRecentControls: ControlRecord[] = [
   {
     id: '1',
-    controlPointId: 'cp1',
-    controlPointCode: 'CP1_TEMPERATURE_REFRIGERE',
+    controlPointId: 'cp-reception',
+    controlPointCode: 'CP_RECEPTION',
     timestamp: new Date(Date.now() - 1000 * 60 * 30),
     operatorId: 'user1',
     operatorName: 'Marie D.',
@@ -30,16 +30,6 @@ const mockRecentControls: ControlRecord[] = [
   },
   {
     id: '2',
-    controlPointId: 'cp2',
-    controlPointCode: 'CP2_INTEGRITE',
-    timestamp: new Date(Date.now() - 1000 * 60 * 45),
-    operatorId: 'user1',
-    operatorName: 'Marie D.',
-    status: 'conforme',
-    product: 'Farine T55',
-  },
-  {
-    id: '3',
     controlPointId: 'cp6',
     controlPointCode: 'CP6_STOCKAGE_POSITIF',
     timestamp: new Date(Date.now() - 1000 * 60 * 120),
@@ -50,7 +40,7 @@ const mockRecentControls: ControlRecord[] = [
     notes: 'Légèrement au-dessus, surveillance renforcée',
   },
   {
-    id: '4',
+    id: '3',
     controlPointId: 'cp7',
     controlPointCode: 'CP7_STOCKAGE_NEGATIF',
     timestamp: new Date(Date.now() - 1000 * 60 * 180),
@@ -65,7 +55,7 @@ const mockNonConformities: NonConformity[] = [
   {
     id: 'nc1',
     controlRecordId: 'ctrl5',
-    controlPointCode: 'CP1_TEMPERATURE_REFRIGERE',
+    controlPointCode: 'CP_RECEPTION',
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2),
     description: 'Température à réception: 8.5°C - Dépassement limite acceptable',
     severity: 'major',
@@ -76,18 +66,6 @@ const mockNonConformities: NonConformity[] = [
   {
     id: 'nc2',
     controlRecordId: 'ctrl6',
-    controlPointCode: 'CP4_ALLERGENES',
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 5),
-    description: 'Nouvelle composition margarine non conforme à la référence',
-    severity: 'critical',
-    status: 'in_progress',
-    assignedTo: 'Assistant Qualité',
-    correctiveAction: 'Contact fournisseur en cours pour obtenir la nouvelle fiche technique',
-    photos: [],
-  },
-  {
-    id: 'nc3',
-    controlRecordId: 'ctrl7',
     controlPointCode: 'CP5_CORPS_ETRANGER',
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24),
     description: 'Détection corps étranger métallique - Lot éjecté',

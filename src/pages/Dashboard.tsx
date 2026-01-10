@@ -12,45 +12,15 @@ import { RecentControls } from '@/components/dashboard/RecentControls';
 import { NonConformityAlert } from '@/components/dashboard/NonConformityAlert';
 import { ConformityChart } from '@/components/dashboard/ConformityChart';
 import { ControlForm } from '@/components/controls/ControlForm';
+import { ReceptionControlForm } from '@/components/controls/ReceptionControlForm';
+import { StorageControlForm, StorageFormData } from '@/components/controls/StorageControlForm';
 import { CONTROL_POINTS, ControlPoint, ControlRecord, NonConformity, ControlStatus } from '@/types/haccp';
+import { useRecentControlRecords, useCreateControlRecord, useCreateReceptionControl, ReceptionFormData } from '@/hooks/useControlRecords';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
+import { useQuery } from '@tanstack/react-query';
 
-// Mock data for demonstration
-const mockRecentControls: ControlRecord[] = [
-  {
-    id: '1',
-    controlPointId: 'cp-reception',
-    controlPointCode: 'CP_RECEPTION',
-    timestamp: new Date(Date.now() - 1000 * 60 * 30),
-    operatorId: 'user1',
-    operatorName: 'Marie D.',
-    status: 'conforme',
-    value: 3.2,
-    product: 'Beurre AOP',
-    supplier: 'Lactalis',
-  },
-  {
-    id: '2',
-    controlPointId: 'cp-stockage',
-    controlPointCode: 'CP_STOCKAGE',
-    timestamp: new Date(Date.now() - 1000 * 60 * 120),
-    operatorId: 'user2',
-    operatorName: 'Jean P.',
-    status: 'acceptable',
-    value: 5.8,
-    notes: 'Légèrement au-dessus, surveillance renforcée',
-  },
-  {
-    id: '3',
-    controlPointId: 'cp-stockage',
-    controlPointCode: 'CP_STOCKAGE',
-    timestamp: new Date(Date.now() - 1000 * 60 * 180),
-    operatorId: 'user2',
-    operatorName: 'Jean P.',
-    status: 'conforme',
-    value: -19.5,
-  },
-];
-
+// Mock non-conformities for now (to be replaced with real data later)
 const mockNonConformities: NonConformity[] = [
   {
     id: 'nc1',
@@ -63,33 +33,76 @@ const mockNonConformities: NonConformity[] = [
     assignedTo: 'DG',
     photos: [],
   },
-  {
-    id: 'nc2',
-    controlRecordId: 'ctrl6',
-    controlPointCode: 'CP5_CORPS_ETRANGER',
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24),
-    description: 'Détection corps étranger métallique - Lot éjecté',
-    severity: 'critical',
-    status: 'open',
-    assignedTo: 'DG',
-    photos: [],
-  },
 ];
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [selectedCP, setSelectedCP] = useState<ControlPoint | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [controls, setControls] = useState<ControlRecord[]>(mockRecentControls);
+  const [isReceptionFormOpen, setIsReceptionFormOpen] = useState(false);
+  const [isStorageFormOpen, setIsStorageFormOpen] = useState(false);
+
+  // Fetch real control records from database
+  const { data: recentRecords, isLoading } = useRecentControlRecords();
+  const createControlRecord = useCreateControlRecord();
+  const createReceptionControl = useCreateReceptionControl();
+
+  // Fetch non-conformities
+  const { data: nonConformities } = useQuery({
+    queryKey: ['non_conformities', 'open'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('non_conformities')
+        .select('*')
+        .in('status', ['open', 'in_progress'])
+        .order('created_at', { ascending: false })
+        .limit(5);
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Transform DB records to ControlRecord format for RecentControls
+  const controls: ControlRecord[] = recentRecords?.map(record => ({
+    id: record.id,
+    controlPointId: record.control_point_code,
+    controlPointCode: record.control_point_code as any,
+    timestamp: new Date(record.timestamp),
+    operatorId: record.operator_id,
+    operatorName: (record as any).profiles?.full_name || 'Opérateur',
+    status: record.status as ControlStatus,
+    value: record.temperature,
+    notes: record.notes,
+    supplier: record.supplier,
+    product: record.product,
+  })) || [];
+
+  // Calculate stats
+  const todayControls = controls.filter(c => {
+    const today = new Date();
+    return c.timestamp.toDateString() === today.toDateString();
+  });
+
+  const weekControls = controls.filter(c => {
+    const weekAgo = new Date();
+    weekAgo.setDate(weekAgo.getDate() - 7);
+    return c.timestamp >= weekAgo;
+  });
+
+  const conformeCount = weekControls.filter(c => c.status === 'conforme').length;
+  const acceptableCount = weekControls.filter(c => c.status === 'acceptable').length;
+  const nonConformeCount = weekControls.filter(c => c.status === 'nonconforme').length;
+  const total = conformeCount + acceptableCount + nonConformeCount;
 
   const stats = {
     totalControlsToday: 12,
-    completedControlsToday: 8,
-    conformeCount: 15,
-    acceptableCount: 3,
-    nonConformeCount: 2,
-    openNonConformities: mockNonConformities.filter(nc => nc.status === 'open' || nc.status === 'in_progress').length,
-    conformityRate: 75,
+    completedControlsToday: todayControls.length,
+    conformeCount,
+    acceptableCount,
+    nonConformeCount,
+    openNonConformities: nonConformities?.length || 0,
+    conformityRate: total > 0 ? Math.round((conformeCount / total) * 100) : 100,
   };
 
   const getLastStatusForCP = (cpCode: string): ControlStatus => {
@@ -108,36 +121,52 @@ export default function Dashboard() {
 
   const handleStartControl = (cp: ControlPoint) => {
     setSelectedCP(cp);
-    setIsFormOpen(true);
+    if (cp.code === 'CP_RECEPTION') {
+      setIsReceptionFormOpen(true);
+    } else if (cp.code === 'CP_STOCKAGE') {
+      setIsStorageFormOpen(true);
+    } else {
+      setIsFormOpen(true);
+    }
   };
 
-  const handleSubmitControl = (data: {
+  const handleSubmitControl = async (data: {
     status: ControlStatus;
     value?: number;
     notes?: string;
-    lotNumber?: string;
-    supplier?: string;
-    product?: string;
   }) => {
-    if (!selectedCP) return;
+    if (!user || !selectedCP) return;
 
-    const newControl: ControlRecord = {
-      id: `ctrl-${Date.now()}`,
-      controlPointId: selectedCP.id,
-      controlPointCode: selectedCP.code,
-      timestamp: new Date(),
-      operatorId: 'current-user',
-      operatorName: 'Assistant Qualité',
+    createControlRecord.mutate({
+      control_point_code: selectedCP.code as any,
+      operator_id: user.id,
       status: data.status,
-      value: data.value,
+      temperature: data.value,
       notes: data.notes,
-      lotNumber: data.lotNumber,
-      supplier: data.supplier,
-      product: data.product,
-    };
-
-    setControls([newControl, ...controls]);
+    });
   };
+
+  const handleSubmitReceptionControl = async (data: ReceptionFormData) => {
+    if (!user) return;
+
+    createReceptionControl.mutate({
+      userId: user.id,
+      data,
+    });
+  };
+
+  // Transform non-conformities for the alert component
+  const transformedNonConformities: NonConformity[] = nonConformities?.map(nc => ({
+    id: nc.id,
+    controlRecordId: nc.control_record_id,
+    controlPointCode: nc.control_point_code as any,
+    createdAt: new Date(nc.created_at),
+    description: nc.description,
+    severity: nc.severity as any,
+    status: nc.status as any,
+    assignedTo: nc.assigned_to || '',
+    photos: nc.photos || [],
+  })) || mockNonConformities;
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -182,7 +211,7 @@ export default function Dashboard() {
 
       {/* Non-conformity Alert */}
       <NonConformityAlert 
-        nonConformities={mockNonConformities} 
+        nonConformities={transformedNonConformities} 
         onViewAll={() => navigate('/non-conformities')}
       />
 
@@ -215,7 +244,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Control Form Dialog */}
+      {/* Control Form Dialog - Standard */}
       <ControlForm
         controlPoint={selectedCP}
         isOpen={isFormOpen}
@@ -224,6 +253,31 @@ export default function Dashboard() {
           setSelectedCP(null);
         }}
         onSubmit={handleSubmitControl}
+      />
+
+      {/* Reception Control Form Dialog */}
+      <ReceptionControlForm
+        controlPoint={selectedCP}
+        isOpen={isReceptionFormOpen}
+        onClose={() => {
+          setIsReceptionFormOpen(false);
+          setSelectedCP(null);
+        }}
+        onSubmit={handleSubmitReceptionControl}
+      />
+
+      {/* Storage Control Form Dialog */}
+      <StorageControlForm
+        controlPoint={selectedCP}
+        isOpen={isStorageFormOpen}
+        onClose={() => {
+          setIsStorageFormOpen(false);
+          setSelectedCP(null);
+        }}
+        onSubmit={(data: StorageFormData) => {
+          // Storage temp already saved by the form
+          console.log('Storage control saved:', data);
+        }}
       />
     </div>
   );

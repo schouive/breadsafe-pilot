@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Badge } from '@/components/ui/badge';
 import { 
   Dialog, 
   DialogContent, 
@@ -30,15 +31,17 @@ import {
   XCircle,
   Info,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  X
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { PhotoCapture } from './PhotoCapture';
 import { useAuth } from '@/hooks/useAuth';
-import { useSuppliers, useRawMaterials, Supplier, RawMaterial } from '@/hooks/useSuppliers';
+import { useSuppliers, useRawMaterials, RawMaterial } from '@/hooks/useSuppliers';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Separator } from '@/components/ui/separator';
+import { ReceptionFormData } from '@/hooks/useControlRecords';
 
 interface ReceptionControlFormProps {
   controlPoint: ControlPoint | null;
@@ -47,38 +50,6 @@ interface ReceptionControlFormProps {
   onSubmit: (data: ReceptionFormData) => void;
 }
 
-export interface ReceptionFormData {
-  status: ControlStatus;
-  // Product info
-  rawMaterialId?: string;
-  product: string;
-  supplierId?: string;
-  supplier: string;
-  lotNumber: string;
-  // CP1 - Temperature
-  temperature?: number;
-  temperatureConforme: boolean;
-  // CP2 - Integrity
-  integriteConforme: boolean;
-  integriteNotes?: string;
-  // CP3 - DLC
-  dlcDate?: string;
-  dlcConforme: boolean;
-  dlcNotes?: string;
-  // CP4 - Allergens
-  allergenesConformes: boolean;
-  allergenesNotes?: string;
-  // Common
-  notes?: string;
-  photos: string[];
-}
-
-const statusOptions = [
-  { value: 'conforme', label: 'Conforme', icon: CheckCircle2, color: 'text-success', bgColor: 'bg-success/10 border-success/30' },
-  { value: 'acceptable', label: 'Acceptable', icon: AlertCircle, color: 'text-warning', bgColor: 'bg-warning/10 border-warning/30' },
-  { value: 'nonconforme', label: 'Non-conforme', icon: XCircle, color: 'text-destructive', bgColor: 'bg-destructive/10 border-destructive/30' },
-];
-
 export function ReceptionControlForm({ controlPoint, isOpen, onClose, onSubmit }: ReceptionControlFormProps) {
   const { user } = useAuth();
   const { data: suppliers, isLoading: loadingSuppliers } = useSuppliers();
@@ -86,8 +57,7 @@ export function ReceptionControlForm({ controlPoint, isOpen, onClose, onSubmit }
   
   // Form state
   const [selectedSupplierId, setSelectedSupplierId] = useState('');
-  const [selectedRawMaterialId, setSelectedRawMaterialId] = useState('');
-  const [lotNumber, setLotNumber] = useState('');
+  const [selectedRawMaterialIds, setSelectedRawMaterialIds] = useState<string[]>([]);
   
   // Fetch raw materials for selected supplier
   const { data: rawMaterials, isLoading: loadingRawMaterials } = useRawMaterials(selectedSupplierId);
@@ -113,13 +83,23 @@ export function ReceptionControlForm({ controlPoint, isOpen, onClose, onSubmit }
   const [notes, setNotes] = useState('');
   const [photos, setPhotos] = useState<string[]>([]);
 
-  // Reset raw material when supplier changes
+  // Reset raw materials when supplier changes
   useEffect(() => {
-    setSelectedRawMaterialId('');
+    setSelectedRawMaterialIds([]);
   }, [selectedSupplierId]);
 
   const selectedSupplier = suppliers?.find(s => s.id === selectedSupplierId);
-  const selectedRawMaterial = rawMaterials?.find(r => r.id === selectedRawMaterialId);
+  const selectedRawMaterials = rawMaterials?.filter(r => selectedRawMaterialIds.includes(r.id)) || [];
+
+  const handleAddRawMaterial = (rawMaterialId: string) => {
+    if (!selectedRawMaterialIds.includes(rawMaterialId)) {
+      setSelectedRawMaterialIds([...selectedRawMaterialIds, rawMaterialId]);
+    }
+  };
+
+  const handleRemoveRawMaterial = (rawMaterialId: string) => {
+    setSelectedRawMaterialIds(selectedRawMaterialIds.filter(id => id !== rawMaterialId));
+  };
 
   // Calculate overall status
   const calculateStatus = (): ControlStatus => {
@@ -134,8 +114,8 @@ export function ReceptionControlForm({ controlPoint, isOpen, onClose, onSubmit }
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!selectedSupplierId || !selectedRawMaterialId) {
-      toast.error('Veuillez sélectionner le fournisseur et le produit');
+    if (!selectedSupplierId || selectedRawMaterialIds.length === 0) {
+      toast.error('Veuillez sélectionner le fournisseur et au moins un produit');
       return;
     }
 
@@ -143,11 +123,10 @@ export function ReceptionControlForm({ controlPoint, isOpen, onClose, onSubmit }
 
     onSubmit({
       status,
-      rawMaterialId: selectedRawMaterialId,
-      product: selectedRawMaterial?.name || '',
+      rawMaterialIds: selectedRawMaterialIds,
+      products: selectedRawMaterials.map(r => r.name),
       supplierId: selectedSupplierId,
       supplier: selectedSupplier?.name || '',
-      lotNumber,
       temperature: temperature ? parseFloat(temperature) : undefined,
       temperatureConforme,
       integriteConforme,
@@ -163,14 +142,12 @@ export function ReceptionControlForm({ controlPoint, isOpen, onClose, onSubmit }
 
     // Reset form
     resetForm();
-    toast.success('Contrôle réception enregistré');
     onClose();
   };
 
   const resetForm = () => {
     setSelectedSupplierId('');
-    setSelectedRawMaterialId('');
-    setLotNumber('');
+    setSelectedRawMaterialIds([]);
     setTemperature('');
     setTemperatureConforme(true);
     setIntegriteConforme(true);
@@ -186,8 +163,6 @@ export function ReceptionControlForm({ controlPoint, isOpen, onClose, onSubmit }
   };
 
   if (!controlPoint) return null;
-
-  const subControls = controlPoint.subControls || [];
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -231,15 +206,16 @@ export function ReceptionControlForm({ controlPoint, isOpen, onClose, onSubmit }
                   </SelectContent>
                 </Select>
               </div>
+              
               <div className="space-y-2">
-                <Label htmlFor="product">Produit *</Label>
+                <Label htmlFor="product">Produits * (sélection multiple)</Label>
                 <Select 
-                  value={selectedRawMaterialId} 
-                  onValueChange={setSelectedRawMaterialId}
+                  value="" 
+                  onValueChange={handleAddRawMaterial}
                   disabled={!selectedSupplierId}
                 >
                   <SelectTrigger id="product">
-                    <SelectValue placeholder={selectedSupplierId ? "Sélectionner un produit" : "Sélectionnez d'abord un fournisseur"} />
+                    <SelectValue placeholder={selectedSupplierId ? "Ajouter un produit" : "Sélectionnez d'abord un fournisseur"} />
                   </SelectTrigger>
                   <SelectContent>
                     {loadingRawMaterials ? (
@@ -247,7 +223,7 @@ export function ReceptionControlForm({ controlPoint, isOpen, onClose, onSubmit }
                     ) : rawMaterials?.length === 0 ? (
                       <SelectItem value="none" disabled>Aucun produit pour ce fournisseur</SelectItem>
                     ) : (
-                      rawMaterials?.map((r) => (
+                      rawMaterials?.filter(r => !selectedRawMaterialIds.includes(r.id)).map((r) => (
                         <SelectItem key={r.id} value={r.id}>
                           {r.name} {r.category && `(${r.category})`}
                         </SelectItem>
@@ -255,16 +231,29 @@ export function ReceptionControlForm({ controlPoint, isOpen, onClose, onSubmit }
                     )}
                   </SelectContent>
                 </Select>
+                
+                {/* Selected products */}
+                {selectedRawMaterials.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {selectedRawMaterials.map((rm) => (
+                      <Badge 
+                        key={rm.id} 
+                        variant="secondary" 
+                        className="flex items-center gap-1 pr-1"
+                      >
+                        {rm.name}
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveRawMaterial(rm.id)}
+                          className="ml-1 hover:bg-muted rounded-full p-0.5"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
+                )}
               </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="lot">N° de lot</Label>
-              <Input
-                id="lot"
-                placeholder="Ex: LOT2025-0704"
-                value={lotNumber}
-                onChange={(e) => setLotNumber(e.target.value)}
-              />
             </div>
           </div>
 

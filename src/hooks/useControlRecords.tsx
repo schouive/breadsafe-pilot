@@ -80,8 +80,7 @@ export function useRecentControlRecords() {
           temperature,
           notes,
           supplier,
-          product,
-          profiles!control_records_operator_id_fkey(full_name)
+          product
         `)
         .order('timestamp', { ascending: false })
         .limit(10);

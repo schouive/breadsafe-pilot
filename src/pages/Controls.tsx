@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { ControlPointCard } from '@/components/dashboard/ControlPointCard';
 import { ControlForm } from '@/components/controls/ControlForm';
 import { ReceptionControlForm, ReceptionFormData } from '@/components/controls/ReceptionControlForm';
+import { StorageControlForm, StorageFormData } from '@/components/controls/StorageControlForm';
 import { CONTROL_POINTS, ControlPoint, ControlStatus } from '@/types/haccp';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -16,6 +17,7 @@ export default function Controls() {
   const [selectedCP, setSelectedCP] = useState<ControlPoint | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isReceptionFormOpen, setIsReceptionFormOpen] = useState(false);
+  const [isStorageFormOpen, setIsStorageFormOpen] = useState(false);
 
   const filteredControlPoints = CONTROL_POINTS.filter(cp =>
     cp.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -26,6 +28,8 @@ export default function Controls() {
     setSelectedCP(cp);
     if (cp.code === 'CP_RECEPTION') {
       setIsReceptionFormOpen(true);
+    } else if (cp.code === 'CP_STOCKAGE') {
+      setIsStorageFormOpen(true);
     } else {
       setIsFormOpen(true);
     }
@@ -181,6 +185,20 @@ export default function Controls() {
           setSelectedCP(null);
         }}
         onSubmit={handleSubmitReceptionControl}
+      />
+
+      {/* Storage Control Form Dialog */}
+      <StorageControlForm
+        controlPoint={selectedCP}
+        isOpen={isStorageFormOpen}
+        onClose={() => {
+          setIsStorageFormOpen(false);
+          setSelectedCP(null);
+        }}
+        onSubmit={(data: StorageFormData) => {
+          // Storage temp already saved by the form
+          console.log('Storage control saved:', data);
+        }}
       />
     </div>
   );

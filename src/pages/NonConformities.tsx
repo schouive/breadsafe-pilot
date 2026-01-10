@@ -15,12 +15,12 @@ import { formatDistanceToNow, format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 
-// Mock data
+// Mock data - updated to use valid ControlPointType values
 const mockNonConformities: NonConformity[] = [
   {
     id: 'nc1',
     controlRecordId: 'ctrl5',
-    controlPointCode: 'CP1_TEMPERATURE_REFRIGERE',
+    controlPointCode: 'CP_RECEPTION',
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2),
     description: 'Température à réception: 8.5°C - Dépassement limite acceptable pour le lot de beurre',
     severity: 'major',
@@ -31,7 +31,7 @@ const mockNonConformities: NonConformity[] = [
   {
     id: 'nc2',
     controlRecordId: 'ctrl6',
-    controlPointCode: 'CP4_ALLERGENES',
+    controlPointCode: 'CP_RECEPTION',
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 5),
     description: 'Nouvelle composition margarine non conforme à la référence - Présence lait non déclarée',
     severity: 'critical',
@@ -54,7 +54,7 @@ const mockNonConformities: NonConformity[] = [
   {
     id: 'nc4',
     controlRecordId: 'ctrl8',
-    controlPointCode: 'CP2_INTEGRITE',
+    controlPointCode: 'CP_RECEPTION',
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 48),
     description: 'Emballage percé sur 3 sacs de farine - Lot refusé',
     severity: 'minor',
@@ -67,7 +67,7 @@ const mockNonConformities: NonConformity[] = [
   {
     id: 'nc5',
     controlRecordId: 'ctrl9',
-    controlPointCode: 'CP7_STOCKAGE_NEGATIF',
+    controlPointCode: 'CP_STOCKAGE',
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 72),
     description: 'Température chambre froide: -10°C pendant 6h suite à panne compresseur',
     severity: 'major',

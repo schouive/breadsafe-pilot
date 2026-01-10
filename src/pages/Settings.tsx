@@ -1,4 +1,5 @@
-import { User, Bell, Shield, Database, Users, Building } from 'lucide-react';
+import { useState } from 'react';
+import { User, Bell, Shield, Database, Users, Building, Snowflake, Plus, Trash2, Edit2, X, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -6,8 +7,80 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { useAllColdRooms, useCreateColdRoom, useUpdateColdRoom, ColdRoom } from '@/hooks/useColdRooms';
+import { cn } from '@/lib/utils';
 
 export default function Settings() {
+  const { data: coldRooms, isLoading: loadingRooms } = useAllColdRooms();
+  const createColdRoom = useCreateColdRoom();
+  const updateColdRoom = useUpdateColdRoom();
+  
+  const [isAddRoomOpen, setIsAddRoomOpen] = useState(false);
+  const [editingRoom, setEditingRoom] = useState<ColdRoom | null>(null);
+  
+  // New room form state
+  const [newRoomName, setNewRoomName] = useState('');
+  const [newRoomType, setNewRoomType] = useState('refrigere');
+  const [newRoomTempMin, setNewRoomTempMin] = useState('');
+  const [newRoomTempMax, setNewRoomTempMax] = useState('');
+
+  const handleAddRoom = async () => {
+    if (!newRoomName || !newRoomTempMin || !newRoomTempMax) return;
+    
+    await createColdRoom.mutateAsync({
+      name: newRoomName,
+      type: newRoomType,
+      temp_min: parseFloat(newRoomTempMin),
+      temp_max: parseFloat(newRoomTempMax),
+    });
+    
+    setIsAddRoomOpen(false);
+    resetNewRoomForm();
+  };
+
+  const handleUpdateRoom = async () => {
+    if (!editingRoom) return;
+    
+    await updateColdRoom.mutateAsync({
+      id: editingRoom.id,
+      name: editingRoom.name,
+      type: editingRoom.type,
+      temp_min: editingRoom.temp_min,
+      temp_max: editingRoom.temp_max,
+    });
+    
+    setEditingRoom(null);
+  };
+
+  const handleToggleRoomActive = async (room: ColdRoom) => {
+    await updateColdRoom.mutateAsync({
+      id: room.id,
+      is_active: !room.is_active,
+    });
+  };
+
+  const resetNewRoomForm = () => {
+    setNewRoomName('');
+    setNewRoomType('refrigere');
+    setNewRoomTempMin('');
+    setNewRoomTempMax('');
+  };
+
   return (
     <div className="space-y-6 animate-fade-in max-w-4xl">
       {/* Header */}
@@ -17,6 +90,92 @@ export default function Settings() {
           Configuration de l'application HACCP
         </p>
       </div>
+
+      {/* Cold Rooms Management */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Snowflake className="h-5 w-5 text-primary" />
+              <div>
+                <CardTitle>Chambres Froides</CardTitle>
+                <CardDescription>Gérez les équipements de stockage réfrigéré</CardDescription>
+              </div>
+            </div>
+            <Button size="sm" onClick={() => setIsAddRoomOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Ajouter
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {loadingRooms ? (
+            <p className="text-muted-foreground">Chargement...</p>
+          ) : coldRooms?.length === 0 ? (
+            <div className="text-center py-8">
+              <Snowflake className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground">Aucune chambre froide configurée</p>
+              <Button 
+                variant="outline" 
+                className="mt-4"
+                onClick={() => setIsAddRoomOpen(true)}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Ajouter une chambre
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {coldRooms?.map((room) => (
+                <div 
+                  key={room.id} 
+                  className={cn(
+                    "flex items-center justify-between p-4 rounded-lg border",
+                    room.is_active ? "bg-card" : "bg-muted/50 opacity-60"
+                  )}
+                >
+                  <div className="flex items-center gap-4">
+                    <div className={cn(
+                      "h-10 w-10 rounded-full flex items-center justify-center",
+                      room.type === 'negatif' ? 'bg-blue-100 text-blue-600' : 'bg-cyan-100 text-cyan-600'
+                    )}>
+                      <Snowflake className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="font-medium">{room.name}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {room.type === 'negatif' ? 'Stockage négatif' : 'Stockage réfrigéré'} • {room.temp_min}°C à {room.temp_max}°C
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge 
+                      variant="outline" 
+                      className={room.is_active ? 'bg-success/10 text-success border-success/30' : ''}
+                    >
+                      {room.is_active ? 'Active' : 'Inactive'}
+                    </Badge>
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      onClick={() => setEditingRoom(room)}
+                    >
+                      <Edit2 className="h-4 w-4" />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      onClick={() => handleToggleRoomActive(room)}
+                    >
+                      {room.is_active ? <X className="h-4 w-4" /> : <Check className="h-4 w-4" />}
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Company info */}
       <Card>
@@ -190,6 +349,148 @@ export default function Settings() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Add Cold Room Dialog */}
+      <Dialog open={isAddRoomOpen} onOpenChange={setIsAddRoomOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Ajouter une chambre froide</DialogTitle>
+            <DialogDescription>
+              Configurez une nouvelle chambre froide pour le suivi des températures
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="room-name">Nom *</Label>
+              <Input
+                id="room-name"
+                placeholder="Ex: Chambre froide principale"
+                value={newRoomName}
+                onChange={(e) => setNewRoomName(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="room-type">Type</Label>
+              <Select value={newRoomType} onValueChange={setNewRoomType}>
+                <SelectTrigger id="room-type">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="refrigere">Stockage réfrigéré (positif)</SelectItem>
+                  <SelectItem value="negatif">Stockage négatif (congélateur)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="temp-min">Température min (°C) *</Label>
+                <Input
+                  id="temp-min"
+                  type="number"
+                  step="0.5"
+                  placeholder={newRoomType === 'negatif' ? '-22' : '0'}
+                  value={newRoomTempMin}
+                  onChange={(e) => setNewRoomTempMin(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="temp-max">Température max (°C) *</Label>
+                <Input
+                  id="temp-max"
+                  type="number"
+                  step="0.5"
+                  placeholder={newRoomType === 'negatif' ? '-18' : '4'}
+                  value={newRoomTempMax}
+                  onChange={(e) => setNewRoomTempMax(e.target.value)}
+                />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsAddRoomOpen(false)}>
+              Annuler
+            </Button>
+            <Button 
+              onClick={handleAddRoom}
+              disabled={createColdRoom.isPending || !newRoomName || !newRoomTempMin || !newRoomTempMax}
+            >
+              {createColdRoom.isPending ? 'Ajout...' : 'Ajouter'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Cold Room Dialog */}
+      <Dialog open={!!editingRoom} onOpenChange={(open) => !open && setEditingRoom(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Modifier la chambre froide</DialogTitle>
+            <DialogDescription>
+              Modifiez les paramètres de cette chambre froide
+            </DialogDescription>
+          </DialogHeader>
+          {editingRoom && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-room-name">Nom *</Label>
+                <Input
+                  id="edit-room-name"
+                  value={editingRoom.name}
+                  onChange={(e) => setEditingRoom({ ...editingRoom, name: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-room-type">Type</Label>
+                <Select 
+                  value={editingRoom.type} 
+                  onValueChange={(value) => setEditingRoom({ ...editingRoom, type: value })}
+                >
+                  <SelectTrigger id="edit-room-type">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="refrigere">Stockage réfrigéré (positif)</SelectItem>
+                    <SelectItem value="negatif">Stockage négatif (congélateur)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-temp-min">Température min (°C) *</Label>
+                  <Input
+                    id="edit-temp-min"
+                    type="number"
+                    step="0.5"
+                    value={editingRoom.temp_min}
+                    onChange={(e) => setEditingRoom({ ...editingRoom, temp_min: parseFloat(e.target.value) })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-temp-max">Température max (°C) *</Label>
+                  <Input
+                    id="edit-temp-max"
+                    type="number"
+                    step="0.5"
+                    value={editingRoom.temp_max}
+                    onChange={(e) => setEditingRoom({ ...editingRoom, temp_max: parseFloat(e.target.value) })}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingRoom(null)}>
+              Annuler
+            </Button>
+            <Button 
+              onClick={handleUpdateRoom}
+              disabled={updateColdRoom.isPending}
+            >
+              {updateColdRoom.isPending ? 'Mise à jour...' : 'Enregistrer'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

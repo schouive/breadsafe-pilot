@@ -4,12 +4,11 @@ export type ControlStatus = 'conforme' | 'acceptable' | 'nonconforme' | 'pending
 
 export type UserRole = 'operator' | 'quality_assistant' | 'admin';
 
-// Updated: CP1-4 grouped into CP_RECEPTION
+// Updated: CP1-4 grouped into CP_RECEPTION, CP6-7 merged into CP_STOCKAGE
 export type ControlPointType = 
   | 'CP_RECEPTION'
   | 'CP5_CORPS_ETRANGER'
-  | 'CP6_STOCKAGE_POSITIF'
-  | 'CP7_STOCKAGE_NEGATIF'
+  | 'CP_STOCKAGE'
   | 'CP8_DLC_PERIMEE';
 
 export interface ControlPoint {
@@ -163,34 +162,19 @@ export const CONTROL_POINTS: ControlPoint[] = [
     archiveDuration: '5 ans',
   },
   {
-    id: 'cp6',
-    code: 'CP6_STOCKAGE_POSITIF',
-    name: 'CP6 - Températures Stockage Positif',
-    description: 'Surveillance température stockage réfrigéré',
+    id: 'cp-stockage',
+    code: 'CP_STOCKAGE',
+    name: 'CP - Températures Stockage',
+    description: 'Surveillance des températures des chambres froides (positif et négatif)',
     dangerType: 'Multiplication bactéries pathogènes par rupture chaîne du froid',
-    conformeCriteria: 'Température dans la fourchette de l\'étiquetage',
-    acceptableCriteria: 'Jusqu\'à 3°C de plus pendant 24h',
+    conformeCriteria: 'Température dans les limites définies pour chaque chambre',
+    acceptableCriteria: 'Écart temporaire limité (3°C max pour 24h)',
     nonConformeCriteria: 'Au-delà des limites acceptables',
-    actionNonConforme: 'Jeter',
-    actionAcceptable: 'Utiliser immédiatement ou stocker en volume conforme',
+    actionNonConforme: 'Jeter ou traiter selon protocole',
+    actionAcceptable: 'Utiliser immédiatement ou ajuster stockage',
     responsible: 'DG / Assistant Qualité',
-    frequency: 'Enregistrement manuel quotidien',
-    supportDocument: 'Check-list hygiène scannée',
-    archiveDuration: '5 ans',
-  },
-  {
-    id: 'cp7',
-    code: 'CP7_STOCKAGE_NEGATIF',
-    name: 'CP7 - Températures Stockage Négatif',
-    description: 'Surveillance température stockage surgelé',
-    dangerType: 'Multiplication bactéries par rupture chaîne du froid',
-    conformeCriteria: 'Entre -18°C et -22°C',
-    acceptableCriteria: '-18°C à -12°C pendant 1 semaine max',
-    nonConformeCriteria: 'Au-delà des limites acceptables',
-    actionNonConforme: 'Jeter ou traiter comme produit décongelé',
-    responsible: 'DG / Assistant Qualité',
-    frequency: 'Enregistrement manuel quotidien',
-    supportDocument: 'Check-list hygiène scannée',
+    frequency: 'Enregistrement quotidien',
+    supportDocument: 'Relevés température archivés',
     archiveDuration: '5 ans',
   },
   {

@@ -3,7 +3,16 @@ import { cn } from '@/lib/utils';
 import { ControlRecord, CONTROL_POINTS } from '@/types/haccp';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { CheckCircle2, AlertCircle, XCircle, ChevronRight } from 'lucide-react';
+import { 
+  CheckCircle2, 
+  AlertCircle, 
+  XCircle, 
+  ChevronRight,
+  Truck,
+  Thermometer,
+  Search,
+  Factory
+} from 'lucide-react';
 import { ControlDetailModal } from '@/components/controls/ControlDetailModal';
 import { ControlRecordFromDB } from '@/hooks/useControlRecords';
 import { supabase } from '@/integrations/supabase/client';
@@ -24,6 +33,17 @@ const statusStyles = {
   acceptable: 'text-warning bg-warning/10',
   nonconforme: 'text-destructive bg-destructive/10',
   pending: 'text-muted-foreground bg-muted',
+};
+
+// Icônes par type de contrôle
+const controlTypeIcons = {
+  CP_RECEPTION: Truck,
+  CP_STOCKAGE: Thermometer,
+  CP6_STOCKAGE_POSITIF: Thermometer,
+  CP7_STOCKAGE_NEGATIF: Thermometer,
+  CP5_CORPS_ETRANGER: Search,
+  CP_PRODUCTION: Factory,
+  CP8_DLC_PERIMEE: AlertCircle,
 };
 
 export function RecentControls({ controls }: RecentControlsProps) {
@@ -83,6 +103,8 @@ export function RecentControls({ controls }: RecentControlsProps) {
                 ? `Stockage - ${control.coldRoomName}`
                 : (cp?.name || control.controlPointCode);
               
+              const ControlTypeIcon = controlTypeIcons[control.controlPointCode as keyof typeof controlTypeIcons] || AlertCircle;
+              
               return (
                 <div 
                   key={control.id} 
@@ -94,11 +116,17 @@ export function RecentControls({ controls }: RecentControlsProps) {
                       : "hover:bg-muted/30"
                   )}
                 >
+                  {/* Icône du type de contrôle */}
+                  <div className="flex items-center justify-center h-10 w-10 rounded-lg flex-shrink-0 bg-muted">
+                    <ControlTypeIcon className="h-5 w-5 text-foreground" />
+                  </div>
+
+                  {/* Icône de statut */}
                   <div className={cn(
-                    "flex items-center justify-center h-10 w-10 rounded-lg flex-shrink-0",
+                    "flex items-center justify-center h-6 w-6 rounded-full flex-shrink-0 -ml-6 mt-5",
                     statusStyles[control.status]
                   )}>
-                    <StatusIcon className="h-5 w-5" />
+                    <StatusIcon className="h-3.5 w-3.5" />
                   </div>
                   
                   <div className="flex-1 min-w-0">

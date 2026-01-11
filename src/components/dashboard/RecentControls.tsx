@@ -9,9 +9,10 @@ import {
   XCircle, 
   ChevronRight,
   Truck,
-  Thermometer,
-  Search,
-  Factory
+  Snowflake,
+  Magnet,
+  Clock,
+  Camera
 } from 'lucide-react';
 import { ControlDetailModal } from '@/components/controls/ControlDetailModal';
 import { ControlRecordFromDB } from '@/hooks/useControlRecords';
@@ -35,15 +36,15 @@ const statusStyles = {
   pending: 'text-muted-foreground bg-muted',
 };
 
-// Icônes par type de contrôle
-const controlTypeIcons = {
+// Icônes par type de contrôle (identiques à ControlPointButton)
+const controlTypeIcons: Record<string, React.ElementType> = {
   CP_RECEPTION: Truck,
-  CP_STOCKAGE: Thermometer,
-  CP6_STOCKAGE_POSITIF: Thermometer,
-  CP7_STOCKAGE_NEGATIF: Thermometer,
-  CP5_CORPS_ETRANGER: Search,
-  CP_PRODUCTION: Factory,
-  CP8_DLC_PERIMEE: AlertCircle,
+  CP5_CORPS_ETRANGER: Magnet,
+  CP_STOCKAGE: Snowflake,
+  CP6_STOCKAGE_POSITIF: Snowflake,
+  CP7_STOCKAGE_NEGATIF: Snowflake,
+  CP8_DLC_PERIMEE: Clock,
+  CP_PRODUCTION: Camera,
 };
 
 export function RecentControls({ controls }: RecentControlsProps) {

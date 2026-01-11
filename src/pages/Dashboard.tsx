@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   ClipboardCheck, 
@@ -7,16 +6,12 @@ import {
   TrendingUp
 } from 'lucide-react';
 import { StatCard } from '@/components/dashboard/StatCard';
-import { ControlPointCard } from '@/components/dashboard/ControlPointCard';
 import { RecentControls } from '@/components/dashboard/RecentControls';
 import { NonConformityAlert } from '@/components/dashboard/NonConformityAlert';
 import { ConformityChart } from '@/components/dashboard/ConformityChart';
-import { ControlForm } from '@/components/controls/ControlForm';
-import { ReceptionControlForm } from '@/components/controls/ReceptionControlForm';
-import { StorageControlForm, StorageFormData } from '@/components/controls/StorageControlForm';
-import { CONTROL_POINTS, ControlPoint, ControlRecord, NonConformity, ControlStatus } from '@/types/haccp';
-import { useRecentControlRecords, useCreateControlRecord, useCreateReceptionControl, ReceptionFormData } from '@/hooks/useControlRecords';
-import { useAuth } from '@/hooks/useAuth';
+import { ControlRecord, NonConformity, ControlStatus } from '@/types/haccp';
+import { useRecentControlRecords } from '@/hooks/useControlRecords';
+import { useStorageTemperatureRecordsWithRooms } from '@/hooks/useColdRooms';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 
@@ -37,16 +32,12 @@ const mockNonConformities: NonConformity[] = [
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const [selectedCP, setSelectedCP] = useState<ControlPoint | null>(null);
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [isReceptionFormOpen, setIsReceptionFormOpen] = useState(false);
-  const [isStorageFormOpen, setIsStorageFormOpen] = useState(false);
 
   // Fetch real control records from database
-  const { data: recentRecords, isLoading } = useRecentControlRecords();
-  const createControlRecord = useCreateControlRecord();
-  const createReceptionControl = useCreateReceptionControl();
+  const { data: recentRecords } = useRecentControlRecords();
+  
+  // Fetch storage temperature records
+  const { data: storageRecords } = useStorageTemperatureRecordsWithRooms(10);
 
   // Fetch non-conformities
   const { data: nonConformities } = useQuery({
@@ -64,7 +55,7 @@ export default function Dashboard() {
   });
 
   // Transform DB records to ControlRecord format for RecentControls
-  const controls: ControlRecord[] = recentRecords?.map(record => ({
+  const controlRecords: ControlRecord[] = recentRecords?.map(record => ({
     id: record.id,
     controlPointId: record.control_point_code,
     controlPointCode: record.control_point_code as any,
@@ -77,6 +68,25 @@ export default function Dashboard() {
     supplier: record.supplier,
     product: record.product,
   })) || [];
+
+  // Transform storage temperature records to ControlRecord format
+  const storageControls: ControlRecord[] = storageRecords?.map(record => ({
+    id: record.id,
+    controlPointId: 'CP_STOCKAGE',
+    controlPointCode: 'CP_STOCKAGE' as any,
+    timestamp: new Date(record.recorded_at),
+    operatorId: record.operator_id,
+    operatorName: 'Opérateur',
+    status: record.is_conforme ? 'conforme' as ControlStatus : 'nonconforme' as ControlStatus,
+    value: record.temperature,
+    notes: record.notes,
+    coldRoomName: record.cold_rooms?.name,
+  })) || [];
+
+  // Combine and sort all controls by timestamp
+  const controls: ControlRecord[] = [...controlRecords, ...storageControls]
+    .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
+    .slice(0, 10);
 
   // Calculate stats
   const todayControls = controls.filter(c => {
@@ -103,56 +113,6 @@ export default function Dashboard() {
     nonConformeCount,
     openNonConformities: nonConformities?.length || 0,
     conformityRate: total > 0 ? Math.round((conformeCount / total) * 100) : 100,
-  };
-
-  const getLastStatusForCP = (cpCode: string): ControlStatus => {
-    const lastControl = controls.find(c => c.controlPointCode === cpCode);
-    return lastControl?.status || 'pending';
-  };
-
-  const getLastControlTimeForCP = (cpCode: string): string | undefined => {
-    const lastControl = controls.find(c => c.controlPointCode === cpCode);
-    if (!lastControl) return undefined;
-    return new Intl.DateTimeFormat('fr-FR', { 
-      hour: '2-digit', 
-      minute: '2-digit' 
-    }).format(lastControl.timestamp);
-  };
-
-  const handleStartControl = (cp: ControlPoint) => {
-    setSelectedCP(cp);
-    if (cp.code === 'CP_RECEPTION') {
-      setIsReceptionFormOpen(true);
-    } else if (cp.code === 'CP_STOCKAGE') {
-      setIsStorageFormOpen(true);
-    } else {
-      setIsFormOpen(true);
-    }
-  };
-
-  const handleSubmitControl = async (data: {
-    status: ControlStatus;
-    value?: number;
-    notes?: string;
-  }) => {
-    if (!user || !selectedCP) return;
-
-    createControlRecord.mutate({
-      control_point_code: selectedCP.code as any,
-      operator_id: user.id,
-      status: data.status,
-      temperature: data.value,
-      notes: data.notes,
-    });
-  };
-
-  const handleSubmitReceptionControl = async (data: ReceptionFormData) => {
-    if (!user) return;
-
-    createReceptionControl.mutate({
-      userId: user.id,
-      data,
-    });
   };
 
   // Transform non-conformities for the alert component
@@ -216,69 +176,17 @@ export default function Dashboard() {
       />
 
       {/* Main content grid */}
-      <div className="grid lg:grid-cols-3 gap-6">
-        {/* Control Points */}
-        <div className="lg:col-span-2 space-y-4">
-          <h2 className="text-lg font-semibold text-foreground">Points de Contrôle (CP)</h2>
-          <div className="grid sm:grid-cols-2 gap-4">
-            {CONTROL_POINTS.slice(0, 4).map((cp) => (
-              <ControlPointCard
-                key={cp.id}
-                controlPoint={cp}
-                lastStatus={getLastStatusForCP(cp.code)}
-                lastControlTime={getLastControlTimeForCP(cp.code)}
-                onStartControl={handleStartControl}
-              />
-            ))}
-          </div>
-        </div>
-
-        {/* Sidebar */}
-        <div className="space-y-6">
-          <ConformityChart
-            conforme={stats.conformeCount}
-            acceptable={stats.acceptableCount}
-            nonconforme={stats.nonConformeCount}
-          />
-          <RecentControls controls={controls} />
-        </div>
+      <div className="grid lg:grid-cols-2 gap-6">
+        {/* Chart */}
+        <ConformityChart
+          conforme={stats.conformeCount}
+          acceptable={stats.acceptableCount}
+          nonconforme={stats.nonConformeCount}
+        />
+        
+        {/* Recent Controls */}
+        <RecentControls controls={controls} />
       </div>
-
-      {/* Control Form Dialog - Standard */}
-      <ControlForm
-        controlPoint={selectedCP}
-        isOpen={isFormOpen}
-        onClose={() => {
-          setIsFormOpen(false);
-          setSelectedCP(null);
-        }}
-        onSubmit={handleSubmitControl}
-      />
-
-      {/* Reception Control Form Dialog */}
-      <ReceptionControlForm
-        controlPoint={selectedCP}
-        isOpen={isReceptionFormOpen}
-        onClose={() => {
-          setIsReceptionFormOpen(false);
-          setSelectedCP(null);
-        }}
-        onSubmit={handleSubmitReceptionControl}
-      />
-
-      {/* Storage Control Form Dialog */}
-      <StorageControlForm
-        controlPoint={selectedCP}
-        isOpen={isStorageFormOpen}
-        onClose={() => {
-          setIsStorageFormOpen(false);
-          setSelectedCP(null);
-        }}
-        onSubmit={(data: StorageFormData) => {
-          // Storage temp already saved by the form
-          console.log('Storage control saved:', data);
-        }}
-      />
     </div>
   );
 }

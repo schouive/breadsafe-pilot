@@ -38,6 +38,11 @@ export function RecentControls({ controls }: RecentControlsProps) {
             const cp = CONTROL_POINTS.find(c => c.code === control.controlPointCode);
             const StatusIcon = statusIcons[control.status];
             
+            // Display name: for storage controls show cold room name, otherwise control point name
+            const displayName = control.coldRoomName 
+              ? `Stockage - ${control.coldRoomName}`
+              : (cp?.name || control.controlPointCode);
+            
             return (
               <div key={control.id} className="px-5 py-4 flex items-center gap-4 hover:bg-muted/50 transition-colors">
                 <div className={cn(
@@ -49,7 +54,7 @@ export function RecentControls({ controls }: RecentControlsProps) {
                 
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-sm truncate">
-                    {cp?.name || control.controlPointCode}
+                    {displayName}
                   </p>
                   <p className="text-xs text-muted-foreground mt-0.5">
                     {control.operatorName} • {formatDistanceToNow(control.timestamp, { 

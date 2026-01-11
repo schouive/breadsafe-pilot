@@ -188,6 +188,66 @@ export function StorageControlForm({ controlPoint, isOpen, onClose, onSubmit }: 
   const activeInput = activeRoomId ? roomInputs[activeRoomId] : null;
   const activeConformity = activeRoomId ? getConformityInfo(activeRoomId) : null;
 
+  // Count filled rooms for validation button
+  const filledRoomsCount = Object.entries(roomInputs).filter(
+    ([_, input]) => input.temperature && input.temperature.trim() !== ''
+  ).length;
+
+  const handleSubmitAll = async () => {
+    if (!user) {
+      toast.error('Vous devez être connecté');
+      return;
+    }
+
+    const filledRooms = coldRooms?.filter(room => {
+      const input = roomInputs[room.id];
+      return input?.temperature && input.temperature.trim() !== '';
+    }) || [];
+
+    if (filledRooms.length === 0) {
+      toast.error('Veuillez saisir au moins une température');
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      for (const room of filledRooms) {
+        const input = roomInputs[room.id];
+        const tempValue = parseFloat(input.temperature);
+        
+        if (isNaN(tempValue)) continue;
+
+        const { isConforme, status } = checkConformity(tempValue, room);
+
+        await recordTemperature.mutateAsync({
+          cold_room_id: room.id,
+          operator_id: user.id,
+          temperature: tempValue,
+          is_conforme: isConforme,
+          notes: input.notes || undefined,
+        });
+
+        onSubmit({
+          status,
+          coldRoomId: room.id,
+          coldRoomName: room.name,
+          temperature: tempValue,
+          isConforme,
+          notes: input.notes || undefined,
+        });
+      }
+
+      toast.success(`${filledRooms.length} température(s) enregistrée(s)`);
+      resetForm();
+      onClose();
+    } catch (error) {
+      // Error handled by mutation
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-lg max-h-[95vh] flex flex-col p-0 gap-0 overflow-hidden">
@@ -249,7 +309,7 @@ export function StorageControlForm({ controlPoint, isOpen, onClose, onSubmit }: 
             <NumericKeypad
               value={activeInput.temperature}
               onChange={(value) => handleTemperatureChange(activeRoomId, value)}
-              onConfirm={() => handleSingleRoomSubmit(activeRoom)}
+              onConfirm={() => setActiveRoomId(null)}
               allowNegative={activeRoom.type === 'negatif'}
               allowDecimal={true}
             />
@@ -260,147 +320,167 @@ export function StorageControlForm({ controlPoint, isOpen, onClose, onSubmit }: 
                 type="button" 
                 variant="outline" 
                 className="flex-1"
-                onClick={() => setActiveRoomId(null)}
+                onClick={() => {
+                  // Clear this room's temperature if cancelled
+                  setRoomInputs(prev => ({
+                    ...prev,
+                    [activeRoomId]: { temperature: '', notes: '' }
+                  }));
+                  setActiveRoomId(null);
+                }}
               >
-                Retour
+                Annuler
               </Button>
               <Button 
                 type="button"
                 className="flex-1"
-                disabled={isSubmitting || !activeInput.temperature}
-                onClick={() => handleSingleRoomSubmit(activeRoom)}
+                disabled={!activeInput.temperature}
+                onClick={() => setActiveRoomId(null)}
               >
-                {isSubmitting ? 'Enregistrement...' : 'Valider'}
+                Confirmer
               </Button>
             </div>
           </div>
         ) : (
           // Room list mode
-          <ScrollArea className="flex-1">
-            <div className="p-4 space-y-4">
-              {loadingRooms ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  Chargement des chambres froides...
-                </div>
-              ) : coldRooms?.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  Aucune chambre froide configurée
-                </div>
-              ) : (
-                coldRooms?.map((room) => {
-                  const conformityInfo = getConformityInfo(room.id);
-                  const input = roomInputs[room.id] || { temperature: '', notes: '' };
-                  const hasTemp = input.temperature && input.temperature.trim() !== '';
-                  
-                  return (
-                    <Card 
-                      key={room.id} 
-                      className="p-5 border-2 border-dashed rounded-2xl"
-                    >
-                      {/* Room header with icon and type badge */}
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-2">
-                          <Snowflake className={cn(
-                            "h-5 w-5",
-                            room.type === 'negatif' ? 'text-blue-500' : 'text-cyan-500'
-                          )} />
-                          <span className="font-semibold text-lg">{room.name}</span>
-                        </div>
-                        <Badge 
-                          variant="outline"
-                          className="text-primary border-primary rounded-full px-3"
-                        >
-                          {room.type === 'negatif' ? 'Négatif' : 'Positif'}
-                        </Badge>
-                      </div>
-
-                      {/* Temperature display and status */}
-                      <div className="flex items-center justify-between mb-5">
-                        <div className="flex items-center gap-3">
-                          <Thermometer className="h-8 w-8 text-muted-foreground" />
-                          <div>
-                            <div className="text-4xl font-light tracking-tight">
-                              {hasTemp ? (
-                                <span className={cn(
-                                  conformityInfo?.status === 'conforme' && "text-success",
-                                  conformityInfo?.status === 'acceptable' && "text-warning",
-                                  conformityInfo?.status === 'nonconforme' && "text-destructive"
-                                )}>
-                                  {input.temperature}°C
-                                </span>
-                              ) : (
-                                <span className="text-muted-foreground">--°C</span>
-                              )}
-                            </div>
-                            <div className="text-sm text-muted-foreground">
-                              Max: {room.temp_max}°C
-                            </div>
+          <>
+            <ScrollArea className="flex-1">
+              <div className="p-4 space-y-4">
+                {loadingRooms ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    Chargement des chambres froides...
+                  </div>
+                ) : coldRooms?.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    Aucune chambre froide configurée
+                  </div>
+                ) : (
+                  coldRooms?.map((room) => {
+                    const conformityInfo = getConformityInfo(room.id);
+                    const input = roomInputs[room.id] || { temperature: '', notes: '' };
+                    const hasTemp = input.temperature && input.temperature.trim() !== '';
+                    
+                    return (
+                      <Card 
+                        key={room.id} 
+                        className="p-5 border-2 border-dashed rounded-2xl"
+                      >
+                        {/* Room header with icon and type badge */}
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="flex items-center gap-2">
+                            <Snowflake className={cn(
+                              "h-5 w-5",
+                              room.type === 'negatif' ? 'text-blue-500' : 'text-cyan-500'
+                            )} />
+                            <span className="font-semibold text-lg">{room.name}</span>
                           </div>
+                          <Badge 
+                            variant="outline"
+                            className="text-primary border-primary rounded-full px-3"
+                          >
+                            {room.type === 'negatif' ? 'Négatif' : 'Positif'}
+                          </Badge>
                         </div>
 
-                        {/* Status badge */}
-                        {hasTemp && conformityInfo ? (
-                          <Badge 
-                            variant="outline"
-                            className={cn(
-                              "flex items-center gap-1.5 rounded-full px-3 py-1",
-                              conformityInfo.status === 'conforme' && "border-success text-success bg-success/10",
-                              conformityInfo.status === 'acceptable' && "border-warning text-warning bg-warning/10",
-                              conformityInfo.status === 'nonconforme' && "border-destructive text-destructive bg-destructive/10"
-                            )}
-                          >
-                            {conformityInfo.status === 'conforme' && <CheckCircle2 className="h-3.5 w-3.5" />}
-                            {conformityInfo.status === 'acceptable' && <AlertTriangle className="h-3.5 w-3.5" />}
-                            {conformityInfo.status === 'nonconforme' && <XCircle className="h-3.5 w-3.5" />}
-                            {conformityInfo.status === 'conforme' && 'Conforme'}
-                            {conformityInfo.status === 'acceptable' && 'Acceptable'}
-                            {conformityInfo.status === 'nonconforme' && 'Non conforme'}
-                          </Badge>
-                        ) : (
-                          <Badge 
-                            variant="outline"
-                            className="flex items-center gap-1.5 rounded-full px-3 py-1 border-warning text-warning bg-warning/10"
-                          >
-                            <AlertTriangle className="h-3.5 w-3.5" />
-                            Aucun relevé
-                          </Badge>
-                        )}
-                      </div>
-
-                      {/* Action buttons */}
-                      <div className="flex gap-3">
-                        <Button 
-                          type="button"
-                          className="flex-1 h-11"
+                        {/* Temperature display - clickable to enter temperature */}
+                        <div 
+                          className={cn(
+                            "flex items-center justify-between mb-5 p-4 rounded-xl cursor-pointer transition-all",
+                            "hover:bg-muted/50 active:bg-muted",
+                            hasTemp ? "bg-muted/30" : "bg-muted/10 border-2 border-dashed border-muted-foreground/30"
+                          )}
                           onClick={() => setActiveRoomId(room.id)}
                         >
-                          Saisir température
-                        </Button>
+                          <div className="flex items-center gap-3">
+                            <Thermometer className="h-8 w-8 text-muted-foreground" />
+                            <div>
+                              <div className="text-4xl font-light tracking-tight">
+                                {hasTemp ? (
+                                  <span className={cn(
+                                    conformityInfo?.status === 'conforme' && "text-success",
+                                    conformityInfo?.status === 'acceptable' && "text-warning",
+                                    conformityInfo?.status === 'nonconforme' && "text-destructive"
+                                  )}>
+                                    {input.temperature}°C
+                                  </span>
+                                ) : (
+                                  <span className="text-muted-foreground">Appuyer pour saisir</span>
+                                )}
+                              </div>
+                              <div className="text-sm text-muted-foreground">
+                                Max: {room.temp_max}°C
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Status badge */}
+                          {hasTemp && conformityInfo ? (
+                            <Badge 
+                              variant="outline"
+                              className={cn(
+                                "flex items-center gap-1.5 rounded-full px-3 py-1",
+                                conformityInfo.status === 'conforme' && "border-success text-success bg-success/10",
+                                conformityInfo.status === 'acceptable' && "border-warning text-warning bg-warning/10",
+                                conformityInfo.status === 'nonconforme' && "border-destructive text-destructive bg-destructive/10"
+                              )}
+                            >
+                              {conformityInfo.status === 'conforme' && <CheckCircle2 className="h-3.5 w-3.5" />}
+                              {conformityInfo.status === 'acceptable' && <AlertTriangle className="h-3.5 w-3.5" />}
+                              {conformityInfo.status === 'nonconforme' && <XCircle className="h-3.5 w-3.5" />}
+                              {conformityInfo.status === 'conforme' && 'Conforme'}
+                              {conformityInfo.status === 'acceptable' && 'Acceptable'}
+                              {conformityInfo.status === 'nonconforme' && 'Non conforme'}
+                            </Badge>
+                          ) : (
+                            <Badge 
+                              variant="outline"
+                              className="flex items-center gap-1.5 rounded-full px-3 py-1 border-muted-foreground/50 text-muted-foreground"
+                            >
+                              <AlertTriangle className="h-3.5 w-3.5" />
+                              À saisir
+                            </Badge>
+                          )}
+                        </div>
+
+                        {/* History button */}
                         <Button 
                           type="button"
                           variant="outline"
-                          className="flex-1 h-11"
+                          className="w-full h-11"
                           onClick={() => handleHistoryClick(room)}
                         >
                           <History className="h-4 w-4 mr-2" />
                           Historique
                         </Button>
-                      </div>
-                    </Card>
-                  );
-                })
-              )}
-            </div>
-          </ScrollArea>
-        )}
+                      </Card>
+                    );
+                  })
+                )}
+              </div>
+            </ScrollArea>
 
-        {/* Footer */}
-        {!activeRoomId && (
-          <DialogFooter className="px-6 py-4 border-t">
-            <Button type="button" variant="outline" onClick={onClose} className="w-full">
-              Fermer
-            </Button>
-          </DialogFooter>
+            {/* Footer with validation button */}
+            <DialogFooter className="px-6 py-4 border-t flex-col gap-3">
+              <Button 
+                type="button" 
+                className="w-full h-12 text-base"
+                disabled={filledRoomsCount === 0 || isSubmitting}
+                onClick={handleSubmitAll}
+              >
+                {isSubmitting ? (
+                  'Enregistrement...'
+                ) : (
+                  <>
+                    <CheckCircle2 className="h-5 w-5 mr-2" />
+                    Valider {filledRoomsCount > 0 && `(${filledRoomsCount} relevé${filledRoomsCount > 1 ? 's' : ''})`}
+                  </>
+                )}
+              </Button>
+              <Button type="button" variant="ghost" onClick={onClose} className="w-full">
+                Fermer
+              </Button>
+            </DialogFooter>
+          </>
         )}
       </DialogContent>
     </Dialog>

@@ -61,17 +61,17 @@ export const NumericKeypad = ({
   ];
 
   return (
-    <div className="bg-background border-2 border-border rounded-xl shadow-xl p-4 w-full max-w-sm">
+    <div className="bg-background border-2 border-border rounded-2xl shadow-2xl p-6 w-full max-w-md">
       {/* Display */}
-      <div className="bg-muted rounded-lg px-5 py-4 mb-4 text-right border border-border">
-        <span className="text-3xl font-mono font-bold text-foreground tracking-wide">
+      <div className="bg-muted rounded-xl px-6 py-5 mb-6 text-right border border-border">
+        <span className="text-4xl font-mono font-bold text-foreground tracking-wide">
           {value || "0"}
         </span>
-        <span className="text-muted-foreground ml-2 text-lg">°C</span>
+        <span className="text-muted-foreground ml-3 text-xl">°C</span>
       </div>
 
       {/* Keypad Grid */}
-      <div className="grid grid-cols-4 gap-3">
+      <div className="grid grid-cols-4 gap-4">
         {keys.map((row, rowIndex) =>
           row.map((key, colIndex) => (
             <Button
@@ -79,7 +79,7 @@ export const NumericKeypad = ({
               type="button"
               variant={key === "-" ? "secondary" : "outline"}
               className={`
-                h-16 text-2xl font-bold rounded-lg
+                h-20 text-3xl font-bold rounded-xl
                 transition-all duration-100 ease-out
                 active:scale-95 active:shadow-inner
                 ${key === "-" 
@@ -100,15 +100,15 @@ export const NumericKeypad = ({
         <Button
           type="button"
           variant="outline"
-          className="h-16 row-start-1 rounded-lg transition-all duration-100 ease-out active:scale-95 active:shadow-inner hover:bg-destructive/10 hover:border-destructive/50 hover:text-destructive active:bg-destructive/20"
+          className="h-20 row-start-1 rounded-xl transition-all duration-100 ease-out active:scale-95 active:shadow-inner hover:bg-destructive/10 hover:border-destructive/50 hover:text-destructive active:bg-destructive/20"
           onClick={handleDelete}
         >
-          <Delete className="h-6 w-6" />
+          <Delete className="h-7 w-7" />
         </Button>
         <Button
           type="button"
           variant="outline"
-          className="h-16 row-start-2 text-base font-bold rounded-lg transition-all duration-100 ease-out active:scale-95 active:shadow-inner hover:bg-warning/10 hover:border-warning/50 hover:text-warning active:bg-warning/20"
+          className="h-20 row-start-2 text-xl font-bold rounded-xl transition-all duration-100 ease-out active:scale-95 active:shadow-inner hover:bg-warning/10 hover:border-warning/50 hover:text-warning active:bg-warning/20"
           onClick={handleClear}
         >
           C
@@ -116,10 +116,10 @@ export const NumericKeypad = ({
         <Button
           type="button"
           variant="default"
-          className="h-16 row-start-3 row-span-2 rounded-lg bg-primary hover:bg-primary/90 transition-all duration-100 ease-out active:scale-95 active:shadow-inner active:bg-primary/80"
+          className="h-20 row-start-3 row-span-2 rounded-xl bg-primary hover:bg-primary/90 transition-all duration-100 ease-out active:scale-95 active:shadow-inner active:bg-primary/80"
           onClick={onClose}
         >
-          <Check className="h-7 w-7" />
+          <Check className="h-8 w-8" />
         </Button>
       </div>
     </div>

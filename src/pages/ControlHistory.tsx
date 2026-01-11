@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Calendar, User, CheckCircle, XCircle, AlertTriangle, Thermometer, Snowflake, Camera } from 'lucide-react';
+import { ArrowLeft, Plus, Calendar, User, CheckCircle, XCircle, AlertTriangle, Thermometer, Snowflake, Camera, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -8,9 +8,10 @@ import { ControlForm } from '@/components/controls/ControlForm';
 import { ReceptionControlForm } from '@/components/controls/ReceptionControlForm';
 import { StorageControlForm, StorageFormData } from '@/components/controls/StorageControlForm';
 import { ProductionControlForm } from '@/components/controls/ProductionControlForm';
+import { ControlDetailModal } from '@/components/controls/ControlDetailModal';
 import { CONTROL_POINTS, ControlPoint, ControlStatus } from '@/types/haccp';
 import { useAuth } from '@/hooks/useAuth';
-import { useControlRecordsByCode, useCreateControlRecord, useCreateReceptionControl, ReceptionFormData } from '@/hooks/useControlRecords';
+import { useControlRecordsByCode, useCreateControlRecord, useCreateReceptionControl, ReceptionFormData, ControlRecordFromDB } from '@/hooks/useControlRecords';
 import { useStorageTemperatureRecordsWithRooms } from '@/hooks/useColdRooms';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -48,6 +49,7 @@ export default function ControlHistory() {
   const [isReceptionFormOpen, setIsReceptionFormOpen] = useState(false);
   const [isStorageFormOpen, setIsStorageFormOpen] = useState(false);
   const [isProductionFormOpen, setIsProductionFormOpen] = useState(false);
+  const [selectedRecord, setSelectedRecord] = useState<ControlRecordFromDB | null>(null);
 
   const controlPoint = CONTROL_POINTS.find(cp => cp.code === code);
   const isStorageControl = code === 'CP_STOCKAGE';
@@ -234,7 +236,11 @@ export default function ControlHistory() {
                 const StatusIcon = status.icon;
                 
                 return (
-                  <Card key={record.id} className={cn("p-4 border", status.class)}>
+                  <Card 
+                    key={record.id} 
+                    onClick={() => setSelectedRecord(record)}
+                    className={cn("p-4 border cursor-pointer hover:shadow-md transition-shadow", status.class)}
+                  >
                     <div className="space-y-3">
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex items-start gap-3">
@@ -244,48 +250,32 @@ export default function ControlHistory() {
                               {status.label}
                             </Badge>
                             {record.notes && (
-                              <p className="text-sm text-muted-foreground mt-1">
+                              <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
                                 {record.notes}
                               </p>
                             )}
                           </div>
                         </div>
-                        <div className="text-right text-sm text-muted-foreground shrink-0">
-                          <div className="flex items-center gap-1">
-                            <Calendar className="h-3.5 w-3.5" />
-                            {format(new Date(record.timestamp), 'dd MMM yyyy', { locale: fr })}
+                        <div className="flex items-center gap-2">
+                          <div className="text-right text-sm text-muted-foreground shrink-0">
+                            <div className="flex items-center gap-1">
+                              <Calendar className="h-3.5 w-3.5" />
+                              {format(new Date(record.timestamp), 'dd MMM yyyy', { locale: fr })}
+                            </div>
+                            <div className="mt-0.5">
+                              {format(new Date(record.timestamp), 'HH:mm', { locale: fr })}
+                            </div>
                           </div>
-                          <div className="mt-0.5">
-                            {format(new Date(record.timestamp), 'HH:mm', { locale: fr })}
-                          </div>
+                          <ChevronRight className="h-4 w-4 text-muted-foreground" />
                         </div>
                       </div>
-                      {/* Photos grid */}
+                      {/* Photos preview */}
                       {record.photos && record.photos.length > 0 && (
                         <div className="flex items-center gap-2 flex-wrap">
                           <Camera className="h-4 w-4 text-muted-foreground" />
                           <span className="text-sm text-muted-foreground">
                             {record.photos.length} photo{record.photos.length > 1 ? 's' : ''} de lot
                           </span>
-                        </div>
-                      )}
-                      {record.photos && record.photos.length > 0 && (
-                        <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                          {record.photos.map((photo, idx) => (
-                            <a 
-                              key={idx} 
-                              href={photo} 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              className="aspect-square rounded-lg overflow-hidden border hover:opacity-90 transition-opacity"
-                            >
-                              <img 
-                                src={photo} 
-                                alt={`Lot ${idx + 1}`}
-                                className="w-full h-full object-cover"
-                              />
-                            </a>
-                          ))}
                         </div>
                       )}
                     </div>
@@ -311,7 +301,11 @@ export default function ControlHistory() {
                 const StatusIcon = status.icon;
                 
                 return (
-                  <Card key={record.id} className={cn("p-4 border", status.class)}>
+                  <Card 
+                    key={record.id} 
+                    onClick={() => setSelectedRecord(record)}
+                    className={cn("p-4 border cursor-pointer hover:shadow-md transition-shadow", status.class)}
+                  >
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex items-start gap-3">
                         <StatusIcon className="h-5 w-5 mt-0.5 shrink-0" />
@@ -327,7 +321,7 @@ export default function ControlHistory() {
                             )}
                           </div>
                           {record.notes && (
-                            <p className="text-sm text-muted-foreground mt-1">
+                            <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
                               {record.notes}
                             </p>
                           )}
@@ -343,14 +337,17 @@ export default function ControlHistory() {
                           )}
                         </div>
                       </div>
-                      <div className="text-right text-sm text-muted-foreground shrink-0">
-                        <div className="flex items-center gap-1">
-                          <Calendar className="h-3.5 w-3.5" />
-                          {format(new Date(record.timestamp), 'dd MMM yyyy', { locale: fr })}
+                      <div className="flex items-center gap-2">
+                        <div className="text-right text-sm text-muted-foreground shrink-0">
+                          <div className="flex items-center gap-1">
+                            <Calendar className="h-3.5 w-3.5" />
+                            {format(new Date(record.timestamp), 'dd MMM yyyy', { locale: fr })}
+                          </div>
+                          <div className="mt-0.5">
+                            {format(new Date(record.timestamp), 'HH:mm', { locale: fr })}
+                          </div>
                         </div>
-                        <div className="mt-0.5">
-                          {format(new Date(record.timestamp), 'HH:mm', { locale: fr })}
-                        </div>
+                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
                       </div>
                     </div>
                   </Card>
@@ -404,6 +401,13 @@ export default function ControlHistory() {
           </div>
         </div>
       )}
+
+      {/* Control Detail Modal */}
+      <ControlDetailModal
+        record={selectedRecord}
+        isOpen={selectedRecord !== null}
+        onClose={() => setSelectedRecord(null)}
+      />
     </div>
   );
 }

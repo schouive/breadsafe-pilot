@@ -381,11 +381,16 @@ export function StorageControlForm({ controlPoint, isOpen, onClose, onSubmit }: 
                             <div>
                               <div className="flex items-center text-4xl font-light tracking-tight">
                                 <Input
-                                  type="number"
-                                  step="0.1"
+                                  type="text"
+                                  inputMode="decimal"
                                   placeholder="--"
                                   value={input.temperature}
-                                  onChange={(e) => handleTemperatureChange(room.id, e.target.value)}
+                                  onChange={(e) => {
+                                    const val = e.target.value;
+                                    if (val === '' || val === '-' || /^-?\d*\.?\d*$/.test(val)) {
+                                      handleTemperatureChange(room.id, val);
+                                    }
+                                  }}
                                   className={cn(
                                     "w-24 h-14 text-4xl font-light text-center border-2 rounded-xl p-0",
                                     hasTemp && conformityInfo?.status === 'conforme' && "text-success border-success",

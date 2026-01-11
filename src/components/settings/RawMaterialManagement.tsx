@@ -29,6 +29,7 @@ import {
   RawMaterial 
 } from '@/hooks/useSuppliers';
 import { cn } from '@/lib/utils';
+import { TemperatureInput } from '@/components/ui/TemperatureInput';
 
 const ALLERGEN_LIST = [
   'Gluten', 'Œufs', 'Lait', 'Fruits à coque', 'Arachides', 
@@ -330,76 +331,20 @@ export function RawMaterialManagement() {
             {formData.requires_cold_storage && (
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="temp-min">Temp. min (°C)</Label>
-                  <div className="flex gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      className="shrink-0"
-                      onClick={() => {
-                        const val = formData.storage_temp_min;
-                        if (val.startsWith('-')) {
-                          setFormData({ ...formData, storage_temp_min: val.slice(1) });
-                        } else if (val) {
-                          setFormData({ ...formData, storage_temp_min: '-' + val });
-                        } else {
-                          setFormData({ ...formData, storage_temp_min: '-' });
-                        }
-                      }}
-                    >
-                      ±
-                    </Button>
-                    <Input
-                      id="temp-min"
-                      type="text"
-                      inputMode="decimal"
-                      placeholder="0"
-                      value={formData.storage_temp_min}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        if (val === '' || val === '-' || /^-?\d*\.?\d*$/.test(val)) {
-                          setFormData({ ...formData, storage_temp_min: val });
-                        }
-                      }}
-                    />
-                  </div>
+                  <Label>Temp. min (°C)</Label>
+                  <TemperatureInput
+                    value={formData.storage_temp_min}
+                    onChange={(val) => setFormData({ ...formData, storage_temp_min: val })}
+                    placeholder="0"
+                  />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="temp-max">Temp. max (°C)</Label>
-                  <div className="flex gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      className="shrink-0"
-                      onClick={() => {
-                        const val = formData.storage_temp_max;
-                        if (val.startsWith('-')) {
-                          setFormData({ ...formData, storage_temp_max: val.slice(1) });
-                        } else if (val) {
-                          setFormData({ ...formData, storage_temp_max: '-' + val });
-                        } else {
-                          setFormData({ ...formData, storage_temp_max: '-' });
-                        }
-                      }}
-                    >
-                      ±
-                    </Button>
-                    <Input
-                      id="temp-max"
-                      type="text"
-                      inputMode="decimal"
-                      placeholder="4"
-                      value={formData.storage_temp_max}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        if (val === '' || val === '-' || /^-?\d*\.?\d*$/.test(val)) {
-                          setFormData({ ...formData, storage_temp_max: val });
-                        }
-                      }}
-                    />
-                  </div>
+                  <Label>Temp. max (°C)</Label>
+                  <TemperatureInput
+                    value={formData.storage_temp_max}
+                    onChange={(val) => setFormData({ ...formData, storage_temp_max: val })}
+                    placeholder="4"
+                  />
                 </div>
               </div>
             )}
@@ -530,78 +475,28 @@ export function RawMaterialManagement() {
               {editingMaterial.requires_cold_storage && (
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="edit-temp-min">Temp. min (°C)</Label>
-                    <div className="flex gap-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="icon"
-                        className="shrink-0"
-                        onClick={() => {
-                          const currentVal = editingMaterial.storage_temp_min;
-                          if (currentVal !== null && currentVal !== undefined) {
-                            setEditingMaterial({ 
-                              ...editingMaterial, 
-                              storage_temp_min: -currentVal 
-                            });
-                          }
-                        }}
-                      >
-                        ±
-                      </Button>
-                      <Input
-                        id="edit-temp-min"
-                        type="text"
-                        inputMode="decimal"
-                        value={editingMaterial.storage_temp_min ?? ''}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          if (val === '' || val === '-' || /^-?\d*\.?\d*$/.test(val)) {
-                            setEditingMaterial({ 
-                              ...editingMaterial, 
-                              storage_temp_min: val === '' ? null : parseFloat(val) 
-                            });
-                          }
-                        }}
-                      />
-                    </div>
+                    <Label>Temp. min (°C)</Label>
+                    <TemperatureInput
+                      value={editingMaterial.storage_temp_min?.toString() ?? ''}
+                      onChange={(val) => {
+                        setEditingMaterial({ 
+                          ...editingMaterial, 
+                          storage_temp_min: val === '' ? null : parseFloat(val) 
+                        });
+                      }}
+                    />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="edit-temp-max">Temp. max (°C)</Label>
-                    <div className="flex gap-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="icon"
-                        className="shrink-0"
-                        onClick={() => {
-                          const currentVal = editingMaterial.storage_temp_max;
-                          if (currentVal !== null && currentVal !== undefined) {
-                            setEditingMaterial({ 
-                              ...editingMaterial, 
-                              storage_temp_max: -currentVal 
-                            });
-                          }
-                        }}
-                      >
-                        ±
-                      </Button>
-                      <Input
-                        id="edit-temp-max"
-                        type="text"
-                        inputMode="decimal"
-                        value={editingMaterial.storage_temp_max ?? ''}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          if (val === '' || val === '-' || /^-?\d*\.?\d*$/.test(val)) {
-                            setEditingMaterial({ 
-                              ...editingMaterial, 
-                              storage_temp_max: val === '' ? null : parseFloat(val) 
-                            });
-                          }
-                        }}
-                      />
-                    </div>
+                    <Label>Temp. max (°C)</Label>
+                    <TemperatureInput
+                      value={editingMaterial.storage_temp_max?.toString() ?? ''}
+                      onChange={(val) => {
+                        setEditingMaterial({ 
+                          ...editingMaterial, 
+                          storage_temp_max: val === '' ? null : parseFloat(val) 
+                        });
+                      }}
+                    />
                   </div>
                 </div>
               )}

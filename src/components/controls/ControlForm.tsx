@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { TemperatureInput } from '@/components/ui/TemperatureInput';
 
 interface ControlFormProps {
   controlPoint: ControlPoint | null;
@@ -120,23 +121,15 @@ export function ControlForm({ controlPoint, isOpen, onClose, onSubmit }: Control
           {/* Temperature input */}
           {isTemperatureControl && (
             <div className="space-y-2">
-              <Label htmlFor="temperature" className="flex items-center gap-2">
+              <Label className="flex items-center gap-2">
                 <Thermometer className="h-4 w-4" />
                 Température mesurée (°C)
               </Label>
-              <Input
-                id="temperature"
-                type="text"
-                inputMode="decimal"
-                placeholder="Ex: -18.5"
+              <TemperatureInput
                 value={temperature}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  if (val === '' || val === '-' || /^-?\d*\.?\d*$/.test(val)) {
-                    setTemperature(val);
-                  }
-                }}
-                className="text-lg h-12"
+                onChange={setTemperature}
+                placeholder="Ex: -18.5"
+                inputClassName="text-lg h-12"
               />
             </div>
           )}

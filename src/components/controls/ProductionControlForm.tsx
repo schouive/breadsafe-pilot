@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -30,6 +31,7 @@ interface ProductionControlFormProps {
 export function ProductionControlForm({ onSuccess, onCancel }: ProductionControlFormProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [photos, setPhotos] = useState<string[]>([]);
 
@@ -64,6 +66,9 @@ export function ProductionControlForm({ onSuccess, onCancel }: ProductionControl
       });
 
       if (error) throw error;
+
+      // Invalidate cache to refresh the list
+      await queryClient.invalidateQueries({ queryKey: ['control_records'] });
 
       toast.success('Contrôle de production enregistré');
       onSuccess?.();

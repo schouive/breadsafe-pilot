@@ -115,7 +115,8 @@ export function RecentControls({ controls }: RecentControlsProps) {
 
                   {control.value !== undefined && (
                     <span className="text-sm font-medium">
-                      {control.value}°C
+                      {control.value}
+                      {(control.controlPointCode === 'CP_STOCKAGE' || control.controlPointCode === 'CP_RECEPTION') && '°C'}
                     </span>
                   )}
 

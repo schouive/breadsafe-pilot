@@ -62,6 +62,8 @@ export interface ControlRecord {
   dlcNotes?: string;
   allergenesConformes?: boolean;
   allergenesNotes?: string;
+  // Storage temperature specific field
+  coldRoomName?: string;
 }
 
 export interface NonConformity {

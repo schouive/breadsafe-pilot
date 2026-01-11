@@ -382,32 +382,29 @@ export function StorageControlForm({ controlPoint, isOpen, onClose, onSubmit }: 
                           </Badge>
                         </div>
 
-                        {/* Temperature display - clickable to enter temperature */}
-                        <div 
-                          className={cn(
-                            "flex items-center justify-between mb-5 p-4 rounded-xl cursor-pointer transition-all",
-                            "hover:bg-muted/50 active:bg-muted",
-                            hasTemp ? "bg-muted/30" : "bg-muted/10 border-2 border-dashed border-muted-foreground/30"
-                          )}
-                          onClick={() => setActiveRoomId(room.id)}
-                        >
+                        {/* Temperature display and input */}
+                        <div className="flex items-center justify-between mb-5">
                           <div className="flex items-center gap-3">
                             <Thermometer className="h-8 w-8 text-muted-foreground" />
                             <div>
-                              <div className="text-4xl font-light tracking-tight">
-                                {hasTemp ? (
-                                  <span className={cn(
-                                    conformityInfo?.status === 'conforme' && "text-success",
-                                    conformityInfo?.status === 'acceptable' && "text-warning",
-                                    conformityInfo?.status === 'nonconforme' && "text-destructive"
-                                  )}>
-                                    {input.temperature}°C
-                                  </span>
-                                ) : (
-                                  <span className="text-muted-foreground">Appuyer pour saisir</span>
-                                )}
+                              <div className="flex items-center text-4xl font-light tracking-tight">
+                                <Input
+                                  type="number"
+                                  step="0.1"
+                                  placeholder="--"
+                                  value={input.temperature}
+                                  onChange={(e) => handleTemperatureChange(room.id, e.target.value)}
+                                  className={cn(
+                                    "w-24 h-14 text-4xl font-light text-center border-2 rounded-xl p-0",
+                                    !hasTemp && "border-dashed",
+                                    hasTemp && conformityInfo?.status === 'conforme' && "text-success border-success",
+                                    hasTemp && conformityInfo?.status === 'acceptable' && "text-warning border-warning",
+                                    hasTemp && conformityInfo?.status === 'nonconforme' && "text-destructive border-destructive"
+                                  )}
+                                />
+                                <span className="ml-1 text-muted-foreground">°C</span>
                               </div>
-                              <div className="text-sm text-muted-foreground">
+                              <div className="text-sm text-muted-foreground mt-1">
                                 Max: {room.temp_max}°C
                               </div>
                             </div>
@@ -434,10 +431,10 @@ export function StorageControlForm({ controlPoint, isOpen, onClose, onSubmit }: 
                           ) : (
                             <Badge 
                               variant="outline"
-                              className="flex items-center gap-1.5 rounded-full px-3 py-1 border-muted-foreground/50 text-muted-foreground"
+                              className="flex items-center gap-1.5 rounded-full px-3 py-1 border-warning text-warning bg-warning/10"
                             >
                               <AlertTriangle className="h-3.5 w-3.5" />
-                              À saisir
+                              Aucun relevé
                             </Badge>
                           )}
                         </div>

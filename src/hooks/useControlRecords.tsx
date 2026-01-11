@@ -214,3 +214,73 @@ export function useCreateReceptionControl() {
     },
   });
 }
+
+export function useDeleteControlRecord() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (recordId: string) => {
+      // First delete any related non-conformities
+      await supabase
+        .from('non_conformities')
+        .delete()
+        .eq('control_record_id', recordId);
+
+      const { error } = await supabase
+        .from('control_records')
+        .delete()
+        .eq('id', recordId);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['control_records'] });
+      toast.success('Contrôle supprimé');
+    },
+    onError: (error) => {
+      console.error('Error deleting control:', error);
+      toast.error('Erreur lors de la suppression');
+    },
+  });
+}
+
+export function useUpdateControlRecord() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ 
+      recordId, 
+      data 
+    }: { 
+      recordId: string; 
+      data: Partial<{
+        status: ControlStatus;
+        temperature: number | null;
+        notes: string | null;
+        temperature_conforme: boolean | null;
+        integrite_conforme: boolean | null;
+        integrite_notes: string | null;
+        dlc_date: string | null;
+        dlc_conforme: boolean | null;
+        dlc_notes: string | null;
+        allergenes_conformes: boolean | null;
+        allergenes_notes: string | null;
+      }>;
+    }) => {
+      const { error } = await supabase
+        .from('control_records')
+        .update(data)
+        .eq('id', recordId);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['control_records'] });
+      toast.success('Contrôle mis à jour');
+    },
+    onError: (error) => {
+      console.error('Error updating control:', error);
+      toast.error('Erreur lors de la mise à jour');
+    },
+  });
+}

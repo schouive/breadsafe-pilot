@@ -1,5 +1,15 @@
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -17,17 +27,21 @@ import {
   ShieldCheck,
   ChevronLeft,
   ChevronRight,
-  X
+  X,
+  Trash2,
+  Pencil
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { ControlRecordFromDB } from '@/hooks/useControlRecords';
-import { CONTROL_POINTS } from '@/types/haccp';
+import { ControlRecordFromDB, useDeleteControlRecord } from '@/hooks/useControlRecords';
+import { CONTROL_POINTS
+ } from '@/types/haccp';
 import { Button } from '@/components/ui/button';
 
 interface ControlDetailModalProps {
   record: ControlRecordFromDB | null;
   isOpen: boolean;
   onClose: () => void;
+  onEdit?: (record: ControlRecordFromDB) => void;
 }
 
 const statusConfig = {
@@ -53,9 +67,12 @@ const statusConfig = {
   },
 };
 
-export function ControlDetailModal({ record, isOpen, onClose }: ControlDetailModalProps) {
+export function ControlDetailModal({ record, isOpen, onClose, onEdit }: ControlDetailModalProps) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  const deleteRecord = useDeleteControlRecord();
   
   if (!record) return null;
 
@@ -107,15 +124,48 @@ export function ControlDetailModal({ record, isOpen, onClose }: ControlDetailMod
     }
   };
 
+  const handleDelete = async () => {
+    await deleteRecord.mutateAsync(record.id);
+    setShowDeleteConfirm(false);
+    onClose();
+  };
+
+  const handleEdit = () => {
+    if (onEdit) {
+      onEdit(record);
+      onClose();
+    }
+  };
+
   return (
     <>
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+        <DialogHeader className="flex-row items-center justify-between pr-8">
           <DialogTitle className="flex items-center gap-2">
             <StatusIcon className={cn("h-5 w-5", status.class.split(' ')[1])} />
             {controlPoint?.name || record.control_point_code}
           </DialogTitle>
+          <div className="flex items-center gap-1">
+            {onEdit && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={handleEdit}
+              >
+                <Pencil className="h-4 w-4" />
+              </Button>
+            )}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-destructive hover:text-destructive"
+              onClick={() => setShowDeleteConfirm(true)}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -306,6 +356,27 @@ export function ControlDetailModal({ record, isOpen, onClose }: ControlDetailMod
         )}
       </div>
     )}
+
+    {/* Confirmation de suppression */}
+    <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Supprimer ce contrôle ?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Cette action est irréversible. Le contrôle et toutes les données associées seront définitivement supprimés.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Annuler</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={handleDelete}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          >
+            {deleteRecord.isPending ? 'Suppression...' : 'Supprimer'}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
     </>
   );
 }

@@ -360,30 +360,22 @@ export function StorageControlForm({ controlPoint, isOpen, onClose, onSubmit }: 
                     const input = roomInputs[room.id] || { temperature: '', notes: '' };
                     const hasTemp = input.temperature && input.temperature.trim() !== '';
                     
-                    return (
+                      return (
                       <Card 
                         key={room.id} 
-                        className="p-5 border-2 border-dashed rounded-2xl"
+                        className="p-5 border-2 rounded-2xl"
                       >
-                        {/* Room header with icon and type badge */}
-                        <div className="flex items-center justify-between mb-4">
-                          <div className="flex items-center gap-2">
-                            <Snowflake className={cn(
-                              "h-5 w-5",
-                              room.type === 'negatif' ? 'text-blue-500' : 'text-cyan-500'
-                            )} />
-                            <span className="font-semibold text-lg">{room.name}</span>
-                          </div>
-                          <Badge 
-                            variant="outline"
-                            className="text-primary border-primary rounded-full px-3"
-                          >
-                            {room.type === 'negatif' ? 'Négatif' : 'Positif'}
-                          </Badge>
+                        {/* Room header with icon */}
+                        <div className="flex items-center gap-2 mb-4">
+                          <Snowflake className={cn(
+                            "h-5 w-5",
+                            room.type === 'negatif' ? 'text-blue-500' : 'text-cyan-500'
+                          )} />
+                          <span className="font-semibold text-lg">{room.name}</span>
                         </div>
 
                         {/* Temperature display and input */}
-                        <div className="flex items-center justify-between mb-5">
+                        <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
                             <Thermometer className="h-8 w-8 text-muted-foreground" />
                             <div>
@@ -396,7 +388,6 @@ export function StorageControlForm({ controlPoint, isOpen, onClose, onSubmit }: 
                                   onChange={(e) => handleTemperatureChange(room.id, e.target.value)}
                                   className={cn(
                                     "w-24 h-14 text-4xl font-light text-center border-2 rounded-xl p-0",
-                                    !hasTemp && "border-dashed",
                                     hasTemp && conformityInfo?.status === 'conforme' && "text-success border-success",
                                     hasTemp && conformityInfo?.status === 'acceptable' && "text-warning border-warning",
                                     hasTemp && conformityInfo?.status === 'nonconforme' && "text-destructive border-destructive"
@@ -410,8 +401,8 @@ export function StorageControlForm({ controlPoint, isOpen, onClose, onSubmit }: 
                             </div>
                           </div>
 
-                          {/* Status badge */}
-                          {hasTemp && conformityInfo ? (
+                          {/* Status badge - only show when temperature is entered */}
+                          {hasTemp && conformityInfo && (
                             <Badge 
                               variant="outline"
                               className={cn(
@@ -428,27 +419,8 @@ export function StorageControlForm({ controlPoint, isOpen, onClose, onSubmit }: 
                               {conformityInfo.status === 'acceptable' && 'Acceptable'}
                               {conformityInfo.status === 'nonconforme' && 'Non conforme'}
                             </Badge>
-                          ) : (
-                            <Badge 
-                              variant="outline"
-                              className="flex items-center gap-1.5 rounded-full px-3 py-1 border-warning text-warning bg-warning/10"
-                            >
-                              <AlertTriangle className="h-3.5 w-3.5" />
-                              Aucun relevé
-                            </Badge>
                           )}
                         </div>
-
-                        {/* History button */}
-                        <Button 
-                          type="button"
-                          variant="outline"
-                          className="w-full h-11"
-                          onClick={() => handleHistoryClick(room)}
-                        >
-                          <History className="h-4 w-4 mr-2" />
-                          Historique
-                        </Button>
                       </Card>
                     );
                   })

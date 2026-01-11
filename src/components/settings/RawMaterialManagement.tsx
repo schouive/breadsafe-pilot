@@ -331,35 +331,75 @@ export function RawMaterialManagement() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="temp-min">Temp. min (°C)</Label>
-                  <Input
-                    id="temp-min"
-                    type="text"
-                    inputMode="decimal"
-                    placeholder="0"
-                    value={formData.storage_temp_min}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      if (val === '' || val === '-' || /^-?\d*\.?\d*$/.test(val)) {
-                        setFormData({ ...formData, storage_temp_min: val });
-                      }
-                    }}
-                  />
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="shrink-0"
+                      onClick={() => {
+                        const val = formData.storage_temp_min;
+                        if (val.startsWith('-')) {
+                          setFormData({ ...formData, storage_temp_min: val.slice(1) });
+                        } else if (val) {
+                          setFormData({ ...formData, storage_temp_min: '-' + val });
+                        } else {
+                          setFormData({ ...formData, storage_temp_min: '-' });
+                        }
+                      }}
+                    >
+                      ±
+                    </Button>
+                    <Input
+                      id="temp-min"
+                      type="text"
+                      inputMode="decimal"
+                      placeholder="0"
+                      value={formData.storage_temp_min}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === '' || val === '-' || /^-?\d*\.?\d*$/.test(val)) {
+                          setFormData({ ...formData, storage_temp_min: val });
+                        }
+                      }}
+                    />
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="temp-max">Temp. max (°C)</Label>
-                  <Input
-                    id="temp-max"
-                    type="text"
-                    inputMode="decimal"
-                    placeholder="4"
-                    value={formData.storage_temp_max}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      if (val === '' || val === '-' || /^-?\d*\.?\d*$/.test(val)) {
-                        setFormData({ ...formData, storage_temp_max: val });
-                      }
-                    }}
-                  />
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="shrink-0"
+                      onClick={() => {
+                        const val = formData.storage_temp_max;
+                        if (val.startsWith('-')) {
+                          setFormData({ ...formData, storage_temp_max: val.slice(1) });
+                        } else if (val) {
+                          setFormData({ ...formData, storage_temp_max: '-' + val });
+                        } else {
+                          setFormData({ ...formData, storage_temp_max: '-' });
+                        }
+                      }}
+                    >
+                      ±
+                    </Button>
+                    <Input
+                      id="temp-max"
+                      type="text"
+                      inputMode="decimal"
+                      placeholder="4"
+                      value={formData.storage_temp_max}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === '' || val === '-' || /^-?\d*\.?\d*$/.test(val)) {
+                          setFormData({ ...formData, storage_temp_max: val });
+                        }
+                      }}
+                    />
+                  </div>
                 </div>
               </div>
             )}
@@ -491,39 +531,77 @@ export function RawMaterialManagement() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="edit-temp-min">Temp. min (°C)</Label>
-                    <Input
-                      id="edit-temp-min"
-                      type="text"
-                      inputMode="decimal"
-                      value={editingMaterial.storage_temp_min ?? ''}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        if (val === '' || val === '-' || /^-?\d*\.?\d*$/.test(val)) {
-                          setEditingMaterial({ 
-                            ...editingMaterial, 
-                            storage_temp_min: val === '' ? null : parseFloat(val) 
-                          });
-                        }
-                      }}
-                    />
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        className="shrink-0"
+                        onClick={() => {
+                          const currentVal = editingMaterial.storage_temp_min;
+                          if (currentVal !== null && currentVal !== undefined) {
+                            setEditingMaterial({ 
+                              ...editingMaterial, 
+                              storage_temp_min: -currentVal 
+                            });
+                          }
+                        }}
+                      >
+                        ±
+                      </Button>
+                      <Input
+                        id="edit-temp-min"
+                        type="text"
+                        inputMode="decimal"
+                        value={editingMaterial.storage_temp_min ?? ''}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val === '' || val === '-' || /^-?\d*\.?\d*$/.test(val)) {
+                            setEditingMaterial({ 
+                              ...editingMaterial, 
+                              storage_temp_min: val === '' ? null : parseFloat(val) 
+                            });
+                          }
+                        }}
+                      />
+                    </div>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="edit-temp-max">Temp. max (°C)</Label>
-                    <Input
-                      id="edit-temp-max"
-                      type="text"
-                      inputMode="decimal"
-                      value={editingMaterial.storage_temp_max ?? ''}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        if (val === '' || val === '-' || /^-?\d*\.?\d*$/.test(val)) {
-                          setEditingMaterial({ 
-                            ...editingMaterial, 
-                            storage_temp_max: val === '' ? null : parseFloat(val) 
-                          });
-                        }
-                      }}
-                    />
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        className="shrink-0"
+                        onClick={() => {
+                          const currentVal = editingMaterial.storage_temp_max;
+                          if (currentVal !== null && currentVal !== undefined) {
+                            setEditingMaterial({ 
+                              ...editingMaterial, 
+                              storage_temp_max: -currentVal 
+                            });
+                          }
+                        }}
+                      >
+                        ±
+                      </Button>
+                      <Input
+                        id="edit-temp-max"
+                        type="text"
+                        inputMode="decimal"
+                        value={editingMaterial.storage_temp_max ?? ''}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val === '' || val === '-' || /^-?\d*\.?\d*$/.test(val)) {
+                            setEditingMaterial({ 
+                              ...editingMaterial, 
+                              storage_temp_max: val === '' ? null : parseFloat(val) 
+                            });
+                          }
+                        }}
+                      />
+                    </div>
                   </div>
                 </div>
               )}

@@ -392,35 +392,73 @@ export default function Settings() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="temp-min">Température min (°C) *</Label>
-                <Input
-                  id="temp-min"
-                  type="text"
-                  inputMode="decimal"
-                  placeholder={newRoomType === 'negatif' ? '-22' : '0'}
-                  value={newRoomTempMin}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    if (val === '' || val === '-' || /^-?\d*\.?\d*$/.test(val)) {
-                      setNewRoomTempMin(val);
-                    }
-                  }}
-                />
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="shrink-0"
+                    onClick={() => {
+                      if (newRoomTempMin.startsWith('-')) {
+                        setNewRoomTempMin(newRoomTempMin.slice(1));
+                      } else if (newRoomTempMin) {
+                        setNewRoomTempMin('-' + newRoomTempMin);
+                      } else {
+                        setNewRoomTempMin('-');
+                      }
+                    }}
+                  >
+                    ±
+                  </Button>
+                  <Input
+                    id="temp-min"
+                    type="text"
+                    inputMode="decimal"
+                    placeholder={newRoomType === 'negatif' ? '-22' : '0'}
+                    value={newRoomTempMin}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === '' || val === '-' || /^-?\d*\.?\d*$/.test(val)) {
+                        setNewRoomTempMin(val);
+                      }
+                    }}
+                  />
+                </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="temp-max">Température max (°C) *</Label>
-                <Input
-                  id="temp-max"
-                  type="text"
-                  inputMode="decimal"
-                  placeholder={newRoomType === 'negatif' ? '-18' : '4'}
-                  value={newRoomTempMax}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    if (val === '' || val === '-' || /^-?\d*\.?\d*$/.test(val)) {
-                      setNewRoomTempMax(val);
-                    }
-                  }}
-                />
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="shrink-0"
+                    onClick={() => {
+                      if (newRoomTempMax.startsWith('-')) {
+                        setNewRoomTempMax(newRoomTempMax.slice(1));
+                      } else if (newRoomTempMax) {
+                        setNewRoomTempMax('-' + newRoomTempMax);
+                      } else {
+                        setNewRoomTempMax('-');
+                      }
+                    }}
+                  >
+                    ±
+                  </Button>
+                  <Input
+                    id="temp-max"
+                    type="text"
+                    inputMode="decimal"
+                    placeholder={newRoomType === 'negatif' ? '-18' : '4'}
+                    value={newRoomTempMax}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === '' || val === '-' || /^-?\d*\.?\d*$/.test(val)) {
+                        setNewRoomTempMax(val);
+                      }
+                    }}
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -475,33 +513,69 @@ export default function Settings() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="edit-temp-min">Température min (°C) *</Label>
-                  <Input
-                    id="edit-temp-min"
-                    type="text"
-                    inputMode="decimal"
-                    value={editingRoom.temp_min}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      if (val === '' || val === '-' || /^-?\d*\.?\d*$/.test(val)) {
-                        setEditingRoom({ ...editingRoom, temp_min: val === '' || val === '-' ? 0 : parseFloat(val) });
-                      }
-                    }}
-                  />
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="shrink-0"
+                      onClick={() => {
+                        const currentVal = String(editingRoom.temp_min);
+                        if (currentVal.startsWith('-')) {
+                          setEditingRoom({ ...editingRoom, temp_min: parseFloat(currentVal.slice(1)) || 0 });
+                        } else {
+                          setEditingRoom({ ...editingRoom, temp_min: -editingRoom.temp_min });
+                        }
+                      }}
+                    >
+                      ±
+                    </Button>
+                    <Input
+                      id="edit-temp-min"
+                      type="text"
+                      inputMode="decimal"
+                      value={editingRoom.temp_min}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === '' || val === '-' || /^-?\d*\.?\d*$/.test(val)) {
+                          setEditingRoom({ ...editingRoom, temp_min: val === '' || val === '-' ? 0 : parseFloat(val) });
+                        }
+                      }}
+                    />
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="edit-temp-max">Température max (°C) *</Label>
-                  <Input
-                    id="edit-temp-max"
-                    type="text"
-                    inputMode="decimal"
-                    value={editingRoom.temp_max}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      if (val === '' || val === '-' || /^-?\d*\.?\d*$/.test(val)) {
-                        setEditingRoom({ ...editingRoom, temp_max: val === '' || val === '-' ? 0 : parseFloat(val) });
-                      }
-                    }}
-                  />
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="shrink-0"
+                      onClick={() => {
+                        const currentVal = String(editingRoom.temp_max);
+                        if (currentVal.startsWith('-')) {
+                          setEditingRoom({ ...editingRoom, temp_max: parseFloat(currentVal.slice(1)) || 0 });
+                        } else {
+                          setEditingRoom({ ...editingRoom, temp_max: -editingRoom.temp_max });
+                        }
+                      }}
+                    >
+                      ±
+                    </Button>
+                    <Input
+                      id="edit-temp-max"
+                      type="text"
+                      inputMode="decimal"
+                      value={editingRoom.temp_max}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === '' || val === '-' || /^-?\d*\.?\d*$/.test(val)) {
+                          setEditingRoom({ ...editingRoom, temp_max: val === '' || val === '-' ? 0 : parseFloat(val) });
+                        }
+                      }}
+                    />
+                  </div>
                 </div>
               </div>
             </div>

@@ -217,7 +217,24 @@ export function StorageControlForm({ controlPoint, isOpen, onClose, onSubmit }: 
                     {/* Temperature display and input */}
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <Thermometer className="h-8 w-8 text-muted-foreground" />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          className="h-14 w-10 shrink-0"
+                          onClick={() => {
+                            const currentVal = input.temperature;
+                            if (currentVal.startsWith('-')) {
+                              handleTemperatureChange(room.id, currentVal.slice(1));
+                            } else if (currentVal) {
+                              handleTemperatureChange(room.id, '-' + currentVal);
+                            } else {
+                              handleTemperatureChange(room.id, '-');
+                            }
+                          }}
+                        >
+                          ±
+                        </Button>
                         <div>
                           <div className="flex items-center text-4xl font-light tracking-tight">
                             <Input

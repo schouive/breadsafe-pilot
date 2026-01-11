@@ -1,7 +1,5 @@
-import { useState, useRef, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { NumericKeypad } from '@/components/ui/NumericKeypad';
 import { cn } from '@/lib/utils';
 
 interface TemperatureInputProps {
@@ -23,54 +21,50 @@ export function TemperatureInput({
   showUnit = false,
   disabled = false,
 }: TemperatureInputProps) {
-  const [showKeypad, setShowKeypad] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  // Close keypad when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setShowKeypad(false);
-      }
-    };
-
-    if (showKeypad) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
+  const handleToggleSign = () => {
+    if (value.startsWith("-")) {
+      onChange(value.substring(1));
+    } else if (value && value !== "0") {
+      onChange("-" + value);
+    } else if (value === "") {
+      onChange("-");
     }
-  }, [showKeypad]);
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+    // Allow empty, minus sign, numbers, and decimal point
+    if (/^-?\d*\.?\d*$/.test(newValue) || newValue === "-") {
+      onChange(newValue);
+    }
+  };
 
   return (
-    <div ref={containerRef} className={cn("relative", className)}>
-      <div className="flex items-center gap-1">
+    <div className={cn("relative", className)}>
+      <div className="flex items-center gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          onClick={handleToggleSign}
+          disabled={disabled}
+          className="shrink-0 h-10 w-10 text-lg font-bold"
+        >
+          ±
+        </Button>
         <Input
           type="text"
-          readOnly
+          inputMode="decimal"
           placeholder={placeholder}
           value={value}
-          onClick={() => !disabled && setShowKeypad(true)}
-          className={cn(
-            "cursor-pointer text-center",
-            inputClassName
-          )}
+          onChange={handleInputChange}
+          className={cn("text-center", inputClassName)}
           disabled={disabled}
         />
         {showUnit && (
           <span className="text-muted-foreground shrink-0">°C</span>
         )}
       </div>
-
-      {showKeypad && (
-        <div className="absolute z-50 top-full left-1/2 -translate-x-1/2 mt-2">
-          <NumericKeypad
-            value={value}
-            onChange={onChange}
-            onClose={() => setShowKeypad(false)}
-            allowNegative={true}
-            allowDecimal={true}
-          />
-        </div>
-      )}
     </div>
   );
 }

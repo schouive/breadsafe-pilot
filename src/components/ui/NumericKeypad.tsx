@@ -61,26 +61,34 @@ export const NumericKeypad = ({
   ];
 
   return (
-    <div className="bg-background border rounded-lg shadow-lg p-3 w-full max-w-xs">
+    <div className="bg-background border-2 border-border rounded-xl shadow-xl p-4 w-full max-w-sm">
       {/* Display */}
-      <div className="bg-muted rounded-md px-4 py-3 mb-3 text-right">
-        <span className="text-2xl font-mono font-semibold text-foreground">
+      <div className="bg-muted rounded-lg px-5 py-4 mb-4 text-right border border-border">
+        <span className="text-3xl font-mono font-bold text-foreground tracking-wide">
           {value || "0"}
         </span>
-        <span className="text-muted-foreground ml-1">°C</span>
+        <span className="text-muted-foreground ml-2 text-lg">°C</span>
       </div>
 
       {/* Keypad Grid */}
-      <div className="grid grid-cols-4 gap-2">
+      <div className="grid grid-cols-4 gap-3">
         {keys.map((row, rowIndex) =>
           row.map((key, colIndex) => (
             <Button
               key={`${rowIndex}-${colIndex}`}
               type="button"
               variant={key === "-" ? "secondary" : "outline"}
-              className={`h-12 text-xl font-semibold ${
-                key === "-" ? "text-blue-600 font-bold" : ""
-              } ${key === "" ? "invisible" : ""}`}
+              className={`
+                h-16 text-2xl font-bold rounded-lg
+                transition-all duration-100 ease-out
+                active:scale-95 active:shadow-inner
+                ${key === "-" 
+                  ? "bg-secondary text-primary hover:bg-secondary/80 active:bg-secondary/60" 
+                  : "hover:bg-accent active:bg-accent/80"
+                }
+                ${key === "" ? "invisible" : ""}
+                ${key === "." ? "text-muted-foreground" : ""}
+              `}
               onClick={() => key && handleKeyPress(key)}
               disabled={key === ""}
             >
@@ -92,15 +100,15 @@ export const NumericKeypad = ({
         <Button
           type="button"
           variant="outline"
-          className="h-12 row-start-1"
+          className="h-16 row-start-1 rounded-lg transition-all duration-100 ease-out active:scale-95 active:shadow-inner hover:bg-destructive/10 hover:border-destructive/50 hover:text-destructive active:bg-destructive/20"
           onClick={handleDelete}
         >
-          <Delete className="h-5 w-5" />
+          <Delete className="h-6 w-6" />
         </Button>
         <Button
           type="button"
           variant="outline"
-          className="h-12 row-start-2 text-xs"
+          className="h-16 row-start-2 text-base font-bold rounded-lg transition-all duration-100 ease-out active:scale-95 active:shadow-inner hover:bg-warning/10 hover:border-warning/50 hover:text-warning active:bg-warning/20"
           onClick={handleClear}
         >
           C
@@ -108,10 +116,10 @@ export const NumericKeypad = ({
         <Button
           type="button"
           variant="default"
-          className="h-12 row-start-3 row-span-2 bg-primary hover:bg-primary/90"
+          className="h-16 row-start-3 row-span-2 rounded-lg bg-primary hover:bg-primary/90 transition-all duration-100 ease-out active:scale-95 active:shadow-inner active:bg-primary/80"
           onClick={onClose}
         >
-          <Check className="h-5 w-5" />
+          <Check className="h-7 w-7" />
         </Button>
       </div>
     </div>

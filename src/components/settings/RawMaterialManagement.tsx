@@ -333,22 +333,32 @@ export function RawMaterialManagement() {
                   <Label htmlFor="temp-min">Temp. min (°C)</Label>
                   <Input
                     id="temp-min"
-                    type="number"
-                    step="0.5"
+                    type="text"
+                    inputMode="decimal"
                     placeholder="0"
                     value={formData.storage_temp_min}
-                    onChange={(e) => setFormData({ ...formData, storage_temp_min: e.target.value })}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === '' || val === '-' || /^-?\d*\.?\d*$/.test(val)) {
+                        setFormData({ ...formData, storage_temp_min: val });
+                      }
+                    }}
                   />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="temp-max">Temp. max (°C)</Label>
                   <Input
                     id="temp-max"
-                    type="number"
-                    step="0.5"
+                    type="text"
+                    inputMode="decimal"
                     placeholder="4"
                     value={formData.storage_temp_max}
-                    onChange={(e) => setFormData({ ...formData, storage_temp_max: e.target.value })}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === '' || val === '-' || /^-?\d*\.?\d*$/.test(val)) {
+                        setFormData({ ...formData, storage_temp_max: val });
+                      }
+                    }}
                   />
                 </div>
               </div>
@@ -483,26 +493,36 @@ export function RawMaterialManagement() {
                     <Label htmlFor="edit-temp-min">Temp. min (°C)</Label>
                     <Input
                       id="edit-temp-min"
-                      type="number"
-                      step="0.5"
+                      type="text"
+                      inputMode="decimal"
                       value={editingMaterial.storage_temp_min ?? ''}
-                      onChange={(e) => setEditingMaterial({ 
-                        ...editingMaterial, 
-                        storage_temp_min: e.target.value ? parseFloat(e.target.value) : null 
-                      })}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === '' || val === '-' || /^-?\d*\.?\d*$/.test(val)) {
+                          setEditingMaterial({ 
+                            ...editingMaterial, 
+                            storage_temp_min: val === '' ? null : parseFloat(val) 
+                          });
+                        }
+                      }}
                     />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="edit-temp-max">Temp. max (°C)</Label>
                     <Input
                       id="edit-temp-max"
-                      type="number"
-                      step="0.5"
+                      type="text"
+                      inputMode="decimal"
                       value={editingMaterial.storage_temp_max ?? ''}
-                      onChange={(e) => setEditingMaterial({ 
-                        ...editingMaterial, 
-                        storage_temp_max: e.target.value ? parseFloat(e.target.value) : null 
-                      })}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === '' || val === '-' || /^-?\d*\.?\d*$/.test(val)) {
+                          setEditingMaterial({ 
+                            ...editingMaterial, 
+                            storage_temp_max: val === '' ? null : parseFloat(val) 
+                          });
+                        }
+                      }}
                     />
                   </div>
                 </div>

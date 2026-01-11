@@ -126,11 +126,16 @@ export function ControlForm({ controlPoint, isOpen, onClose, onSubmit }: Control
               </Label>
               <Input
                 id="temperature"
-                type="number"
-                step="0.1"
+                type="text"
+                inputMode="decimal"
                 placeholder="Ex: -18.5"
                 value={temperature}
-                onChange={(e) => setTemperature(e.target.value)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === '' || val === '-' || /^-?\d*\.?\d*$/.test(val)) {
+                    setTemperature(val);
+                  }
+                }}
                 className="text-lg h-12"
               />
             </div>

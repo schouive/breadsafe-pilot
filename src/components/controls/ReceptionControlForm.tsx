@@ -42,6 +42,7 @@ import { useSuppliers, useRawMaterials, RawMaterial } from '@/hooks/useSuppliers
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Separator } from '@/components/ui/separator';
 import { ReceptionFormData } from '@/hooks/useControlRecords';
+import { TemperatureInput } from '@/components/ui/TemperatureInput';
 
 interface ReceptionControlFormProps {
   controlPoint: ControlPoint | null;
@@ -283,20 +284,12 @@ export function ReceptionControlForm({ controlPoint, isOpen, onClose, onSubmit }
             </CollapsibleTrigger>
             <CollapsibleContent className="pt-4 space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="temperature">Température mesurée (°C)</Label>
-                <Input
-                  id="temperature"
-                  type="text"
-                  inputMode="decimal"
-                  placeholder="Ex: 3.5"
+                <Label>Température mesurée (°C)</Label>
+                <TemperatureInput
                   value={temperature}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    if (val === '' || val === '-' || /^-?\d*\.?\d*$/.test(val)) {
-                      setTemperature(val);
-                    }
-                  }}
-                  className="text-lg h-12"
+                  onChange={setTemperature}
+                  placeholder="Ex: 3.5"
+                  inputClassName="text-lg h-12"
                 />
               </div>
               <div className="flex items-center space-x-3 p-3 rounded-lg border">

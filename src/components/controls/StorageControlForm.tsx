@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { ControlPoint, ControlStatus } from '@/types/haccp';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { 
   Dialog, 
   DialogContent, 
@@ -24,6 +23,7 @@ import { useColdRooms, useRecordTemperature, ColdRoom } from '@/hooks/useColdRoo
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { TemperatureInput } from '@/components/ui/TemperatureInput';
 
 interface StorageControlFormProps {
   controlPoint: ControlPoint | null;
@@ -216,50 +216,23 @@ export function StorageControlForm({ controlPoint, isOpen, onClose, onSubmit }: 
 
                     {/* Temperature display and input */}
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="icon"
-                          className="h-14 w-10 shrink-0"
-                          onClick={() => {
-                            const currentVal = input.temperature;
-                            if (currentVal.startsWith('-')) {
-                              handleTemperatureChange(room.id, currentVal.slice(1));
-                            } else if (currentVal) {
-                              handleTemperatureChange(room.id, '-' + currentVal);
-                            } else {
-                              handleTemperatureChange(room.id, '-');
-                            }
-                          }}
-                        >
-                          ±
-                        </Button>
-                        <div>
-                          <div className="flex items-center text-4xl font-light tracking-tight">
-                            <Input
-                              type="text"
-                              inputMode="decimal"
-                              placeholder="--"
-                              value={input.temperature}
-                              onChange={(e) => {
-                                const val = e.target.value;
-                                if (val === '' || val === '-' || /^-?\d*\.?\d*$/.test(val)) {
-                                  handleTemperatureChange(room.id, val);
-                                }
-                              }}
-                              className={cn(
-                                "w-24 h-14 text-4xl font-light text-center border-2 rounded-xl p-0",
-                                hasTemp && conformityInfo?.status === 'conforme' && "text-success border-success",
-                                hasTemp && conformityInfo?.status === 'acceptable' && "text-warning border-warning",
-                                hasTemp && conformityInfo?.status === 'nonconforme' && "text-destructive border-destructive"
-                              )}
-                            />
-                            <span className="ml-1 text-muted-foreground">°C</span>
-                          </div>
-                          <div className="text-sm text-muted-foreground mt-1">
-                            Max: {room.temp_max}°C
-                          </div>
+                      <div>
+                        <div className="flex items-center text-4xl font-light tracking-tight">
+                          <TemperatureInput
+                            value={input.temperature}
+                            onChange={(val) => handleTemperatureChange(room.id, val)}
+                            placeholder="--"
+                            inputClassName={cn(
+                              "w-28 h-14 text-4xl font-light border-2 rounded-xl",
+                              hasTemp && conformityInfo?.status === 'conforme' && "text-success border-success",
+                              hasTemp && conformityInfo?.status === 'acceptable' && "text-warning border-warning",
+                              hasTemp && conformityInfo?.status === 'nonconforme' && "text-destructive border-destructive"
+                            )}
+                            showUnit
+                          />
+                        </div>
+                        <div className="text-sm text-muted-foreground mt-1">
+                          Max: {room.temp_max}°C
                         </div>
                       </div>
 

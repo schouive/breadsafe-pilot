@@ -9,7 +9,8 @@ import {
   Snowflake,
   ThermometerSnowflake,
   Clock,
-  Truck
+  Truck,
+  Camera
 } from 'lucide-react';
 
 interface ControlPointButtonProps {
@@ -28,6 +29,7 @@ const iconMap: Record<string, React.ElementType> = {
   'CP7_STOCKAGE_NEGATIF': ThermometerSnowflake,
   'CP8_DLC_PERIMEE': Clock,
   'CP_STOCKAGE': Snowflake,
+  'CP_PRODUCTION': Camera,
 };
 
 const colorMap: Record<string, string> = {
@@ -37,6 +39,7 @@ const colorMap: Record<string, string> = {
   'CP6_STOCKAGE_POSITIF': 'bg-teal-500/10 text-teal-600 hover:bg-teal-500/20 border-teal-500/20',
   'CP7_STOCKAGE_NEGATIF': 'bg-indigo-500/10 text-indigo-600 hover:bg-indigo-500/20 border-indigo-500/20',
   'CP8_DLC_PERIMEE': 'bg-orange-500/10 text-orange-600 hover:bg-orange-500/20 border-orange-500/20',
+  'CP_PRODUCTION': 'bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 border-emerald-500/20',
 };
 
 export function ControlPointButton({ controlPoint, onClick }: ControlPointButtonProps) {

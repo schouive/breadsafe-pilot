@@ -389,6 +389,7 @@ export type Database = {
         | "CP7_STOCKAGE_NEGATIF"
         | "CP8_DLC_PERIMEE"
         | "CP_STOCKAGE"
+        | "CP_PRODUCTION"
       control_status: "conforme" | "acceptable" | "nonconforme" | "pending"
       nc_severity: "minor" | "major" | "critical"
       nc_status: "open" | "in_progress" | "resolved" | "validated"
@@ -527,6 +528,7 @@ export const Constants = {
         "CP7_STOCKAGE_NEGATIF",
         "CP8_DLC_PERIMEE",
         "CP_STOCKAGE",
+        "CP_PRODUCTION",
       ],
       control_status: ["conforme", "acceptable", "nonconforme", "pending"],
       nc_severity: ["minor", "major", "critical"],

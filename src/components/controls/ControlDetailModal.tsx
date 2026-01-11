@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
@@ -13,11 +14,15 @@ import {
   Truck,
   FileText,
   AlertCircle,
-  ShieldCheck
+  ShieldCheck,
+  ChevronLeft,
+  ChevronRight,
+  X
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ControlRecordFromDB } from '@/hooks/useControlRecords';
 import { CONTROL_POINTS } from '@/types/haccp';
+import { Button } from '@/components/ui/button';
 
 interface ControlDetailModalProps {
   record: ControlRecordFromDB | null;
@@ -49,6 +54,9 @@ const statusConfig = {
 };
 
 export function ControlDetailModal({ record, isOpen, onClose }: ControlDetailModalProps) {
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
+  
   if (!record) return null;
 
   const status = statusConfig[record.status as keyof typeof statusConfig] || statusConfig.pending;
@@ -78,7 +86,29 @@ export function ControlDetailModal({ record, isOpen, onClose }: ControlDetailMod
     );
   };
 
+  const openLightbox = (index: number) => {
+    setCurrentPhotoIndex(index);
+    setLightboxOpen(true);
+  };
+
+  const closeLightbox = () => {
+    setLightboxOpen(false);
+  };
+
+  const goToPrevious = () => {
+    if (record.photos && record.photos.length > 0) {
+      setCurrentPhotoIndex((prev) => (prev === 0 ? record.photos!.length - 1 : prev - 1));
+    }
+  };
+
+  const goToNext = () => {
+    if (record.photos && record.photos.length > 0) {
+      setCurrentPhotoIndex((prev) => (prev === record.photos!.length - 1 ? 0 : prev + 1));
+    }
+  };
+
   return (
+    <>
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
@@ -191,19 +221,17 @@ export function ControlDetailModal({ record, isOpen, onClose }: ControlDetailMod
               </div>
               <div className="grid grid-cols-3 gap-2">
                 {record.photos.map((photo, idx) => (
-                  <a
+                  <button
                     key={idx}
-                    href={photo}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="aspect-square rounded-lg overflow-hidden border hover:opacity-90 transition-opacity"
+                    onClick={() => openLightbox(idx)}
+                    className="aspect-square rounded-lg overflow-hidden border hover:opacity-90 transition-opacity cursor-pointer"
                   >
                     <img
                       src={photo}
                       alt={`Photo ${idx + 1}`}
                       className="w-full h-full object-cover"
                     />
-                  </a>
+                  </button>
                 ))}
               </div>
             </div>
@@ -211,5 +239,73 @@ export function ControlDetailModal({ record, isOpen, onClose }: ControlDetailMod
         </div>
       </DialogContent>
     </Dialog>
+
+    {/* Lightbox plein écran */}
+    {lightboxOpen && record.photos && record.photos.length > 0 && (
+      <div 
+        className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center"
+        onClick={closeLightbox}
+      >
+        {/* Bouton fermer */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="absolute top-4 right-4 text-white hover:bg-white/20 z-10"
+          onClick={closeLightbox}
+        >
+          <X className="h-6 w-6" />
+        </Button>
+
+        {/* Navigation précédent */}
+        {record.photos.length > 1 && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute left-4 text-white hover:bg-white/20 z-10"
+            onClick={(e) => {
+              e.stopPropagation();
+              goToPrevious();
+            }}
+          >
+            <ChevronLeft className="h-8 w-8" />
+          </Button>
+        )}
+
+        {/* Image */}
+        <div 
+          className="max-w-[90vw] max-h-[90vh] flex items-center justify-center"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <img
+            src={record.photos[currentPhotoIndex]}
+            alt={`Photo ${currentPhotoIndex + 1}`}
+            className="max-w-full max-h-[90vh] object-contain rounded-lg"
+          />
+        </div>
+
+        {/* Navigation suivant */}
+        {record.photos.length > 1 && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute right-4 text-white hover:bg-white/20 z-10"
+            onClick={(e) => {
+              e.stopPropagation();
+              goToNext();
+            }}
+          >
+            <ChevronRight className="h-8 w-8" />
+          </Button>
+        )}
+
+        {/* Indicateur de position */}
+        {record.photos.length > 1 && (
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white text-sm">
+            {currentPhotoIndex + 1} / {record.photos.length}
+          </div>
+        )}
+      </div>
+    )}
+    </>
   );
 }

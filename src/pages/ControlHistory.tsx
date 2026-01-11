@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Calendar, User, CheckCircle, XCircle, AlertTriangle, Thermometer, Snowflake } from 'lucide-react';
+import { ArrowLeft, Plus, Calendar, User, CheckCircle, XCircle, AlertTriangle, Thermometer, Snowflake, Camera } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ControlForm } from '@/components/controls/ControlForm';
 import { ReceptionControlForm } from '@/components/controls/ReceptionControlForm';
 import { StorageControlForm, StorageFormData } from '@/components/controls/StorageControlForm';
+import { ProductionControlForm } from '@/components/controls/ProductionControlForm';
 import { CONTROL_POINTS, ControlPoint, ControlStatus } from '@/types/haccp';
 import { useAuth } from '@/hooks/useAuth';
 import { useControlRecordsByCode, useCreateControlRecord, useCreateReceptionControl, ReceptionFormData } from '@/hooks/useControlRecords';
@@ -46,9 +47,11 @@ export default function ControlHistory() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isReceptionFormOpen, setIsReceptionFormOpen] = useState(false);
   const [isStorageFormOpen, setIsStorageFormOpen] = useState(false);
+  const [isProductionFormOpen, setIsProductionFormOpen] = useState(false);
 
   const controlPoint = CONTROL_POINTS.find(cp => cp.code === code);
   const isStorageControl = code === 'CP_STOCKAGE';
+  const isProductionControl = code === 'CP_PRODUCTION';
   
   // Fetch control records for non-storage controls
   const { data: records, isLoading } = useControlRecordsByCode(code || '');
@@ -75,6 +78,8 @@ export default function ControlHistory() {
       setIsReceptionFormOpen(true);
     } else if (controlPoint.code === 'CP_STOCKAGE') {
       setIsStorageFormOpen(true);
+    } else if (controlPoint.code === 'CP_PRODUCTION') {
+      setIsProductionFormOpen(true);
     } else {
       setIsFormOpen(true);
     }
@@ -220,6 +225,83 @@ export default function ControlHistory() {
               </Button>
             </div>
           )
+        ) : isProductionControl ? (
+          // Production control records display with photos
+          records && records.length > 0 ? (
+            <div className="grid gap-4">
+              {records.map((record) => {
+                const status = statusConfig[record.status as keyof typeof statusConfig] || statusConfig.conforme;
+                const StatusIcon = status.icon;
+                
+                return (
+                  <Card key={record.id} className={cn("p-4 border", status.class)}>
+                    <div className="space-y-3">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex items-start gap-3">
+                          <StatusIcon className="h-5 w-5 mt-0.5 shrink-0" />
+                          <div>
+                            <Badge variant="outline" className={status.class}>
+                              {status.label}
+                            </Badge>
+                            {record.notes && (
+                              <p className="text-sm text-muted-foreground mt-1">
+                                {record.notes}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="text-right text-sm text-muted-foreground shrink-0">
+                          <div className="flex items-center gap-1">
+                            <Calendar className="h-3.5 w-3.5" />
+                            {format(new Date(record.timestamp), 'dd MMM yyyy', { locale: fr })}
+                          </div>
+                          <div className="mt-0.5">
+                            {format(new Date(record.timestamp), 'HH:mm', { locale: fr })}
+                          </div>
+                        </div>
+                      </div>
+                      {/* Photos grid */}
+                      {record.photos && record.photos.length > 0 && (
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <Camera className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm text-muted-foreground">
+                            {record.photos.length} photo{record.photos.length > 1 ? 's' : ''} de lot
+                          </span>
+                        </div>
+                      )}
+                      {record.photos && record.photos.length > 0 && (
+                        <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                          {record.photos.map((photo, idx) => (
+                            <a 
+                              key={idx} 
+                              href={photo} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="aspect-square rounded-lg overflow-hidden border hover:opacity-90 transition-opacity"
+                            >
+                              <img 
+                                src={photo} 
+                                alt={`Lot ${idx + 1}`}
+                                className="w-full h-full object-cover"
+                              />
+                            </a>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="text-center py-12 bg-muted/30 rounded-xl border border-dashed">
+              <p className="text-muted-foreground">Aucun contrôle enregistré</p>
+              <Button onClick={handleNewControl} variant="outline" className="mt-4 gap-2">
+                <Plus className="h-4 w-4" />
+                Effectuer le premier contrôle
+              </Button>
+            </div>
+          )
         ) : (
           // Standard control records display
           records && records.length > 0 ? (
@@ -310,6 +392,18 @@ export default function ControlHistory() {
           setIsStorageFormOpen(false);
         }}
       />
+
+      {/* Production Form - Full page modal */}
+      {isProductionFormOpen && (
+        <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm overflow-y-auto">
+          <div className="container max-w-2xl mx-auto py-6 px-4">
+            <ProductionControlForm
+              onSuccess={() => setIsProductionFormOpen(false)}
+              onCancel={() => setIsProductionFormOpen(false)}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

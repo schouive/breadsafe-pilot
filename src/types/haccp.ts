@@ -4,12 +4,13 @@ export type ControlStatus = 'conforme' | 'acceptable' | 'nonconforme' | 'pending
 
 export type UserRole = 'operator' | 'quality_assistant' | 'admin';
 
-// Updated: CP1-4 grouped into CP_RECEPTION, CP6-7 merged into CP_STOCKAGE
+// Updated: CP1-4 grouped into CP_RECEPTION, CP6-7 merged into CP_STOCKAGE, CP_PRODUCTION added
 export type ControlPointType = 
   | 'CP_RECEPTION'
   | 'CP5_CORPS_ETRANGER'
   | 'CP_STOCKAGE'
-  | 'CP8_DLC_PERIMEE';
+  | 'CP8_DLC_PERIMEE'
+  | 'CP_PRODUCTION';
 
 export interface ControlPoint {
   id: string;
@@ -192,6 +193,20 @@ export const CONTROL_POINTS: ControlPoint[] = [
     responsible: 'DG / Assistant Qualité',
     frequency: 'Vérification avant utilisation',
     supportDocument: 'Check-list hygiène',
+    archiveDuration: '5 ans',
+  },
+  {
+    id: 'cp-production',
+    code: 'CP_PRODUCTION',
+    name: 'Production',
+    description: 'Traçabilité des numéros de lot des matières premières utilisées en fabrication',
+    dangerType: 'Défaut de traçabilité',
+    conformeCriteria: 'Photos des numéros de lot prises quotidiennement',
+    nonConformeCriteria: 'Photos manquantes ou illisibles',
+    actionNonConforme: 'Reprendre les photos, documenter les lots manquants',
+    responsible: 'Chef de Production',
+    frequency: 'Quotidien',
+    supportDocument: 'Photos des étiquettes de lot',
     archiveDuration: '5 ans',
   },
 ];

@@ -139,7 +139,7 @@ export default function Settings() {
                   <div className="flex items-center gap-4">
                     <div className={cn(
                       "h-10 w-10 rounded-full flex items-center justify-center",
-                      room.type === 'negatif' ? 'bg-blue-100 text-blue-600' : 'bg-cyan-100 text-cyan-600'
+                      room.type === 'negatif' ? 'bg-cyan-100 text-cyan-500' : 'bg-blue-100 text-blue-600'
                     )}>
                       <Snowflake className="h-5 w-5" />
                     </div>
@@ -394,22 +394,32 @@ export default function Settings() {
                 <Label htmlFor="temp-min">Température min (°C) *</Label>
                 <Input
                   id="temp-min"
-                  type="number"
-                  step="0.5"
+                  type="text"
+                  inputMode="decimal"
                   placeholder={newRoomType === 'negatif' ? '-22' : '0'}
                   value={newRoomTempMin}
-                  onChange={(e) => setNewRoomTempMin(e.target.value)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === '' || val === '-' || /^-?\d*\.?\d*$/.test(val)) {
+                      setNewRoomTempMin(val);
+                    }
+                  }}
                 />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="temp-max">Température max (°C) *</Label>
                 <Input
                   id="temp-max"
-                  type="number"
-                  step="0.5"
+                  type="text"
+                  inputMode="decimal"
                   placeholder={newRoomType === 'negatif' ? '-18' : '4'}
                   value={newRoomTempMax}
-                  onChange={(e) => setNewRoomTempMax(e.target.value)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === '' || val === '-' || /^-?\d*\.?\d*$/.test(val)) {
+                      setNewRoomTempMax(val);
+                    }
+                  }}
                 />
               </div>
             </div>
@@ -467,20 +477,30 @@ export default function Settings() {
                   <Label htmlFor="edit-temp-min">Température min (°C) *</Label>
                   <Input
                     id="edit-temp-min"
-                    type="number"
-                    step="0.5"
+                    type="text"
+                    inputMode="decimal"
                     value={editingRoom.temp_min}
-                    onChange={(e) => setEditingRoom({ ...editingRoom, temp_min: parseFloat(e.target.value) })}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === '' || val === '-' || /^-?\d*\.?\d*$/.test(val)) {
+                        setEditingRoom({ ...editingRoom, temp_min: val === '' || val === '-' ? 0 : parseFloat(val) });
+                      }
+                    }}
                   />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="edit-temp-max">Température max (°C) *</Label>
                   <Input
                     id="edit-temp-max"
-                    type="number"
-                    step="0.5"
+                    type="text"
+                    inputMode="decimal"
                     value={editingRoom.temp_max}
-                    onChange={(e) => setEditingRoom({ ...editingRoom, temp_max: parseFloat(e.target.value) })}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === '' || val === '-' || /^-?\d*\.?\d*$/.test(val)) {
+                        setEditingRoom({ ...editingRoom, temp_max: val === '' || val === '-' ? 0 : parseFloat(val) });
+                      }
+                    }}
                   />
                 </div>
               </div>

@@ -29,11 +29,23 @@ const statusIcons = {
   pending: AlertCircle,
 };
 
-const statusStyles = {
-  conforme: 'text-success bg-success/10',
-  acceptable: 'text-warning bg-warning/10',
-  nonconforme: 'text-destructive bg-destructive/10',
-  pending: 'text-muted-foreground bg-muted',
+const statusConfig = {
+  conforme: {
+    label: 'Conforme',
+    class: 'bg-success/10 text-success border-success/20',
+  },
+  acceptable: {
+    label: 'Acceptable',
+    class: 'bg-warning/10 text-warning border-warning/20',
+  },
+  nonconforme: {
+    label: 'Non-conforme',
+    class: 'bg-destructive/10 text-destructive border-destructive/20',
+  },
+  pending: {
+    label: 'En attente',
+    class: 'bg-muted text-muted-foreground border-muted',
+  },
 };
 
 // Icônes par type de contrôle (identiques à ControlPointButton)
@@ -97,6 +109,7 @@ export function RecentControls({ controls }: RecentControlsProps) {
             controls.slice(0, 5).map((control) => {
               const cp = CONTROL_POINTS.find(c => c.code === control.controlPointCode);
               const StatusIcon = statusIcons[control.status];
+              const status = statusConfig[control.status];
               const isClickable = control.controlPointCode !== 'CP_STOCKAGE';
               
               // Display name: for storage controls show cold room name, otherwise control point name
@@ -111,30 +124,24 @@ export function RecentControls({ controls }: RecentControlsProps) {
                   key={control.id} 
                   onClick={() => isClickable && handleControlClick(control)}
                   className={cn(
-                    "px-5 py-4 flex items-center gap-4 transition-colors",
-                    isClickable 
-                      ? "cursor-pointer hover:bg-muted/50" 
-                      : "hover:bg-muted/30"
+                    "px-4 py-3 flex items-center gap-3 transition-all rounded-lg mx-2 my-1 border",
+                    status.class,
+                    isClickable && "cursor-pointer hover:shadow-md"
                   )}
                 >
-                  {/* Icône du type de contrôle */}
-                  <div className="flex items-center justify-center h-10 w-10 rounded-lg flex-shrink-0 bg-muted">
-                    <ControlTypeIcon className="h-5 w-5 text-foreground" />
-                  </div>
-
                   {/* Icône de statut */}
-                  <div className={cn(
-                    "flex items-center justify-center h-6 w-6 rounded-full flex-shrink-0 -ml-6 mt-5",
-                    statusStyles[control.status]
-                  )}>
-                    <StatusIcon className="h-3.5 w-3.5" />
+                  <StatusIcon className="h-5 w-5 shrink-0" />
+                  
+                  {/* Icône du type de contrôle */}
+                  <div className="flex items-center justify-center h-8 w-8 rounded-lg flex-shrink-0 bg-background/50">
+                    <ControlTypeIcon className="h-4 w-4" />
                   </div>
                   
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-sm truncate">
                       {displayName}
                     </p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
+                    <p className="text-xs opacity-70 mt-0.5">
                       {control.operatorName} • {formatDistanceToNow(control.timestamp, { 
                         addSuffix: true, 
                         locale: fr 
@@ -150,7 +157,7 @@ export function RecentControls({ controls }: RecentControlsProps) {
                   )}
 
                   {isClickable && (
-                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                    <ChevronRight className="h-4 w-4 opacity-70" />
                   )}
                 </div>
               );

@@ -54,7 +54,7 @@ export function TemperatureInput({
         </Button>
         <Input
           type="text"
-          inputMode="decimal"
+          inputMode="text"
           placeholder={placeholder}
           value={value}
           onChange={handleInputChange}

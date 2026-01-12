@@ -1,5 +1,5 @@
-import { useState, useRef, useCallback, useEffect } from 'react';
-import { X, Check, Trash2 } from 'lucide-react';
+import { useState, useRef, useCallback, useEffect, forwardRef } from 'react';
+import { X, Check, Trash2, Camera } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -18,20 +18,22 @@ interface CapturedPhoto {
   blob: Blob;
 }
 
-export function CameraCapture({
+export const CameraCapture = forwardRef<HTMLDivElement, CameraCaptureProps>(({
   onPhotosConfirmed,
   onClose,
   userId,
   maxPhotos = 5,
   existingPhotosCount = 0
-}: CameraCaptureProps) {
+}, ref) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [stream, setStream] = useState<MediaStream | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
   const [capturedPhotos, setCapturedPhotos] = useState<CapturedPhoto[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [cameraReady, setCameraReady] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
+  const [useFallback, setUseFallback] = useState(false);
 
   const remainingSlots = maxPhotos - existingPhotosCount;
 
@@ -40,6 +42,14 @@ export function CameraCapture({
     let mounted = true;
 
     const startCamera = async () => {
+      // Check if getUserMedia is available
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        console.log('getUserMedia not available, using fallback');
+        setUseFallback(true);
+        setCameraReady(true);
+        return;
+      }
+
       try {
         const mediaStream = await navigator.mediaDevices.getUserMedia({
           video: {
@@ -55,17 +65,24 @@ export function CameraCapture({
           return;
         }
 
-        setStream(mediaStream);
+        streamRef.current = mediaStream;
         if (videoRef.current) {
           videoRef.current.srcObject = mediaStream;
           videoRef.current.onloadedmetadata = () => {
-            videoRef.current?.play();
-            setCameraReady(true);
+            videoRef.current?.play().then(() => {
+              setCameraReady(true);
+            }).catch(err => {
+              console.error('Video play error:', err);
+              setUseFallback(true);
+              setCameraReady(true);
+            });
           };
         }
       } catch (error) {
         console.error('Camera error:', error);
-        setCameraError('Impossible d\'accéder à la caméra. Vérifiez les permissions.');
+        // Fallback to file input on error
+        setUseFallback(true);
+        setCameraReady(true);
       }
     };
 
@@ -73,22 +90,52 @@ export function CameraCapture({
 
     return () => {
       mounted = false;
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
       }
     };
   }, []);
 
-  // Cleanup stream on unmount
-  useEffect(() => {
-    return () => {
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-      }
+  // Handle file input for fallback mode
+  const handleFileChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+
+    const file = files[0];
+    
+    if (capturedPhotos.length >= remainingSlots) {
+      toast.error(`Maximum ${maxPhotos} photos autorisées`);
+      event.target.value = '';
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const dataUrl = e.target?.result as string;
+      
+      // Convert data URL to blob
+      fetch(dataUrl)
+        .then(res => res.blob())
+        .then(blob => {
+          const newPhoto: CapturedPhoto = {
+            id: `${Date.now()}-${Math.random().toString(36).substring(7)}`,
+            dataUrl,
+            blob
+          };
+          setCapturedPhotos(prev => [...prev, newPhoto]);
+        });
     };
-  }, [stream]);
+    reader.readAsDataURL(file);
+    event.target.value = '';
+  }, [capturedPhotos.length, remainingSlots, maxPhotos]);
 
   const capturePhoto = useCallback(() => {
+    if (useFallback) {
+      // Trigger file input for fallback
+      fileInputRef.current?.click();
+      return;
+    }
+
     if (!videoRef.current || !canvasRef.current || !cameraReady) return;
 
     if (capturedPhotos.length >= remainingSlots) {
@@ -122,7 +169,7 @@ export function CameraCapture({
 
       setCapturedPhotos(prev => [...prev, newPhoto]);
     }, 'image/jpeg', 0.85);
-  }, [cameraReady, capturedPhotos.length, remainingSlots, maxPhotos]);
+  }, [useFallback, cameraReady, capturedPhotos.length, remainingSlots, maxPhotos]);
 
   const removePhoto = useCallback((id: string) => {
     setCapturedPhotos(prev => prev.filter(p => p.id !== id));
@@ -184,8 +231,8 @@ export function CameraCapture({
     }
 
     // Stop camera before closing
-    if (stream) {
-      stream.getTracks().forEach(track => track.stop());
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
     }
 
     onPhotosConfirmed(uploadedUrls);
@@ -193,22 +240,34 @@ export function CameraCapture({
   };
 
   const handleClose = () => {
-    if (stream) {
-      stream.getTracks().forEach(track => track.stop());
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
     }
     onClose();
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black flex flex-col">
+    <div ref={ref} className="fixed inset-0 z-50 bg-black flex flex-col">
       {/* Hidden canvas for capturing */}
       <canvas ref={canvasRef} className="hidden" />
+      
+      {/* Hidden file input for fallback */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        onChange={handleFileChange}
+        className="hidden"
+      />
 
       {/* Camera view */}
       <div className="flex-1 relative overflow-hidden">
-        {cameraError ? (
-          <div className="absolute inset-0 flex items-center justify-center text-white text-center p-4">
-            <p>{cameraError}</p>
+        {useFallback ? (
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-white text-center p-4 bg-gray-900">
+            <Camera className="h-16 w-16 mb-4 opacity-50" />
+            <p className="text-lg mb-2">Mode capture photo</p>
+            <p className="text-sm opacity-70">Appuyez sur le bouton ci-dessous pour prendre une photo</p>
           </div>
         ) : (
           <video
@@ -297,4 +356,6 @@ export function CameraCapture({
       </div>
     </div>
   );
-}
+});
+
+CameraCapture.displayName = 'CameraCapture';

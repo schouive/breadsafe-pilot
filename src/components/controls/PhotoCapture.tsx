@@ -33,24 +33,38 @@ export function PhotoCapture({
     if (!file) return null;
 
     try {
-      // Create unique filename
-      const fileExt = file.name.split('.').pop();
+      // Create unique filename - handle cases where file.name might not have extension
+      let fileExt = file.name.split('.').pop();
+      if (!fileExt || fileExt === file.name) {
+        // Try to get extension from MIME type
+        const mimeExt = file.type.split('/')[1];
+        fileExt = mimeExt === 'jpeg' ? 'jpg' : (mimeExt || 'jpg');
+      }
       const fileName = `${userId}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+      
+      console.log('Uploading file:', fileName, 'type:', file.type);
 
-      const { error: uploadError } = await supabase.storage
+      const { error: uploadError, data } = await supabase.storage
         .from('control-photos')
         .upload(fileName, file, {
           cacheControl: '3600',
-          upsert: false
+          upsert: false,
+          contentType: file.type || 'image/jpeg'
         });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        throw uploadError;
+      }
+      
+      console.log('Upload success:', data);
 
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
         .from('control-photos')
         .getPublicUrl(fileName);
 
+      console.log('Public URL:', publicUrl);
       return publicUrl;
     } catch (error) {
       console.error('Error uploading photo:', error);
@@ -58,39 +72,52 @@ export function PhotoCapture({
     }
   }, [userId]);
 
-  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
-    if (!files || files.length === 0) return;
+    console.log('Files selected:', files);
+    if (!files || files.length === 0) {
+      console.log('No files in input');
+      return;
+    }
 
     const totalPhotos = photos.length + pendingPhotos.length;
     if (totalPhotos >= maxPhotos) {
       toast.error(`Maximum ${maxPhotos} photos autorisées`);
+      event.target.value = '';
       return;
     }
 
     const file = files[0];
+    console.log('File info:', { name: file.name, type: file.type, size: file.size });
     
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
+    // Validate file type - also accept if type is empty (some mobile cameras)
+    if (file.type && !file.type.startsWith('image/')) {
       toast.error('Seules les images sont acceptées');
+      event.target.value = '';
       return;
     }
 
     // Validate file size (max 10MB)
     if (file.size > 10 * 1024 * 1024) {
       toast.error('La photo ne doit pas dépasser 10 Mo');
+      event.target.value = '';
       return;
     }
 
     // Create a preview URL for the pending photo
     const preview = URL.createObjectURL(file);
+    console.log('Preview URL created:', preview);
+    
     const newPendingPhoto: PendingPhoto = {
       id: `${Date.now()}-${Math.random().toString(36).substring(7)}`,
       file,
       preview
     };
 
-    setPendingPhotos(prev => [...prev, newPendingPhoto]);
+    setPendingPhotos(prev => {
+      console.log('Adding pending photo, current count:', prev.length);
+      return [...prev, newPendingPhoto];
+    });
 
     // Reset input
     event.target.value = '';

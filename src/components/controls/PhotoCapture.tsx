@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { Camera, X, Upload, Image as ImageIcon } from 'lucide-react';
+import { Camera, X, Image as ImageIcon, Check, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -12,6 +12,12 @@ interface PhotoCaptureProps {
   userId: string;
 }
 
+interface PendingPhoto {
+  id: string;
+  file: File;
+  preview: string;
+}
+
 export function PhotoCapture({ 
   photos, 
   onPhotosChange, 
@@ -19,14 +25,13 @@ export function PhotoCapture({
   userId 
 }: PhotoCaptureProps) {
   const [uploading, setUploading] = useState(false);
+  const [pendingPhotos, setPendingPhotos] = useState<PendingPhoto[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
   const uploadPhoto = useCallback(async (file: File) => {
     if (!file) return null;
 
-    setUploading(true);
-    
     try {
       // Create unique filename
       const fileExt = file.name.split('.').pop();
@@ -49,10 +54,7 @@ export function PhotoCapture({
       return publicUrl;
     } catch (error) {
       console.error('Error uploading photo:', error);
-      toast.error('Erreur lors de l\'upload de la photo');
       return null;
-    } finally {
-      setUploading(false);
     }
   }, [userId]);
 
@@ -60,7 +62,8 @@ export function PhotoCapture({
     const files = event.target.files;
     if (!files || files.length === 0) return;
 
-    if (photos.length >= maxPhotos) {
+    const totalPhotos = photos.length + pendingPhotos.length;
+    if (totalPhotos >= maxPhotos) {
       toast.error(`Maximum ${maxPhotos} photos autorisées`);
       return;
     }
@@ -79,20 +82,65 @@ export function PhotoCapture({
       return;
     }
 
-    const url = await uploadPhoto(file);
-    if (url) {
-      onPhotosChange([...photos, url]);
-      toast.success('Photo ajoutée');
-    }
+    // Create a preview URL for the pending photo
+    const preview = URL.createObjectURL(file);
+    const newPendingPhoto: PendingPhoto = {
+      id: `${Date.now()}-${Math.random().toString(36).substring(7)}`,
+      file,
+      preview
+    };
+
+    setPendingPhotos(prev => [...prev, newPendingPhoto]);
 
     // Reset input
     event.target.value = '';
   };
 
-  const handleRemovePhoto = (index: number) => {
+  const handleRemovePendingPhoto = (id: string) => {
+    setPendingPhotos(prev => {
+      const photo = prev.find(p => p.id === id);
+      if (photo) {
+        URL.revokeObjectURL(photo.preview);
+      }
+      return prev.filter(p => p.id !== id);
+    });
+  };
+
+  const handleRemoveUploadedPhoto = (index: number) => {
     const newPhotos = photos.filter((_, i) => i !== index);
     onPhotosChange(newPhotos);
     toast.success('Photo supprimée');
+  };
+
+  const handleConfirmPhotos = async () => {
+    if (pendingPhotos.length === 0) return;
+
+    setUploading(true);
+    const uploadedUrls: string[] = [];
+    let failedCount = 0;
+
+    for (const pending of pendingPhotos) {
+      const url = await uploadPhoto(pending.file);
+      if (url) {
+        uploadedUrls.push(url);
+      } else {
+        failedCount++;
+      }
+      // Clean up preview URL
+      URL.revokeObjectURL(pending.preview);
+    }
+
+    if (uploadedUrls.length > 0) {
+      onPhotosChange([...photos, ...uploadedUrls]);
+      toast.success(`${uploadedUrls.length} photo(s) ajoutée(s)`);
+    }
+
+    if (failedCount > 0) {
+      toast.error(`${failedCount} photo(s) n'ont pas pu être envoyée(s)`);
+    }
+
+    setPendingPhotos([]);
+    setUploading(false);
   };
 
   const openCamera = () => {
@@ -103,35 +151,92 @@ export function PhotoCapture({
     fileInputRef.current?.click();
   };
 
+  const totalPhotos = photos.length + pendingPhotos.length;
+  const canAddMore = totalPhotos < maxPhotos;
+
   return (
     <div className="space-y-4">
-      {/* Photo preview grid */}
+      {/* Already uploaded photos */}
       {photos.length > 0 && (
-        <div className="grid grid-cols-3 gap-2">
-          {photos.map((photo, index) => (
-            <div 
-              key={index}
-              className="relative aspect-square rounded-lg overflow-hidden bg-muted group"
-            >
-              <img
-                src={photo}
-                alt={`Photo ${index + 1}`}
-                className="w-full h-full object-cover"
-              />
-              <button
-                type="button"
-                onClick={() => handleRemovePhoto(index)}
-                className="absolute top-1 right-1 p-1 bg-destructive text-destructive-foreground rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+        <div className="space-y-2">
+          <p className="text-xs text-muted-foreground font-medium">Photos enregistrées</p>
+          <div className="grid grid-cols-3 gap-2">
+            {photos.map((photo, index) => (
+              <div 
+                key={index}
+                className="relative aspect-square rounded-lg overflow-hidden bg-muted group"
               >
-                <X className="h-3 w-3" />
-              </button>
+                <img
+                  src={photo}
+                  alt={`Photo ${index + 1}`}
+                  className="w-full h-full object-cover"
+                />
+                <button
+                  type="button"
+                  onClick={() => handleRemoveUploadedPhoto(index)}
+                  className="absolute top-1 right-1 p-1 bg-destructive text-destructive-foreground rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Pending photos (not yet uploaded) */}
+      {pendingPhotos.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-xs text-muted-foreground font-medium">En attente d'envoi</p>
+          <div className="bg-muted/50 rounded-lg p-3 space-y-3">
+            <div className="grid grid-cols-3 gap-2">
+              {pendingPhotos.map((photo) => (
+                <div 
+                  key={photo.id}
+                  className="relative aspect-square rounded-lg overflow-hidden bg-muted border-2 border-dashed border-primary/30"
+                >
+                  <img
+                    src={photo.preview}
+                    alt="Aperçu"
+                    className="w-full h-full object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleRemovePendingPhoto(photo.id)}
+                    className="absolute top-1 right-1 p-1.5 bg-destructive text-destructive-foreground rounded-full shadow-md"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              ))}
             </div>
-          ))}
+            
+            {/* Confirm button */}
+            <Button
+              type="button"
+              onClick={handleConfirmPhotos}
+              disabled={uploading}
+              className="w-full"
+              size="sm"
+            >
+              {uploading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Envoi en cours...
+                </>
+              ) : (
+                <>
+                  <Check className="mr-2 h-4 w-4" />
+                  Valider {pendingPhotos.length} photo(s)
+                </>
+              )}
+            </Button>
+          </div>
         </div>
       )}
 
       {/* Upload buttons */}
-      {photos.length < maxPhotos && (
+      {canAddMore && (
         <div className="flex gap-2">
           {/* Camera button (mobile) */}
           <Button
@@ -142,7 +247,7 @@ export function PhotoCapture({
             disabled={uploading}
           >
             <Camera className="mr-2 h-5 w-5" />
-            {uploading ? 'Envoi...' : 'Appareil photo'}
+            Appareil photo
           </Button>
           
           {/* Gallery button */}
@@ -178,7 +283,8 @@ export function PhotoCapture({
 
       {/* Photo count */}
       <p className="text-xs text-muted-foreground text-center">
-        {photos.length} / {maxPhotos} photos
+        {photos.length} / {maxPhotos} photos enregistrées
+        {pendingPhotos.length > 0 && ` (+${pendingPhotos.length} en attente)`}
       </p>
     </div>
   );

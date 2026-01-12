@@ -92,6 +92,9 @@ export function ReceptionControlForm({ controlPoint, isOpen, onClose, onSubmit }
   const selectedSupplier = suppliers?.find(s => s.id === selectedSupplierId);
   const selectedRawMaterials = rawMaterials?.filter(r => selectedRawMaterialIds.includes(r.id)) || [];
 
+  // Check if any selected raw material requires cold storage
+  const requiresTemperatureControl = selectedRawMaterials.some(rm => rm.requires_cold_storage);
+
   const handleAddRawMaterial = (rawMaterialId: string) => {
     if (!selectedRawMaterialIds.includes(rawMaterialId)) {
       setSelectedRawMaterialIds([...selectedRawMaterialIds, rawMaterialId]);
@@ -102,10 +105,11 @@ export function ReceptionControlForm({ controlPoint, isOpen, onClose, onSubmit }
     setSelectedRawMaterialIds(selectedRawMaterialIds.filter(id => id !== rawMaterialId));
   };
 
-  // Calculate overall status
+  // Calculate overall status - only consider temperature if required
   const calculateStatus = (): ControlStatus => {
-    const allConforme = temperatureConforme && integriteConforme && dlcConforme && allergenesConformes;
-    const anyNonConforme = !temperatureConforme || !integriteConforme || !dlcConforme || !allergenesConformes;
+    const tempOk = requiresTemperatureControl ? temperatureConforme : true;
+    const allConforme = tempOk && integriteConforme && dlcConforme && allergenesConformes;
+    const anyNonConforme = (requiresTemperatureControl && !temperatureConforme) || !integriteConforme || !dlcConforme || !allergenesConformes;
     
     if (allConforme) return 'conforme';
     if (anyNonConforme) return 'nonconforme';
@@ -260,53 +264,55 @@ export function ReceptionControlForm({ controlPoint, isOpen, onClose, onSubmit }
 
           <Separator />
 
-          {/* CP1 - Temperature */}
-          <Collapsible 
-            open={expandedSection === 'cp1'} 
-            onOpenChange={() => setExpandedSection(expandedSection === 'cp1' ? null : 'cp1')}
-          >
-            <CollapsibleTrigger className="flex items-center justify-between w-full p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors">
-              <div className="flex items-center gap-3">
-                <Thermometer className="h-5 w-5 text-primary" />
-                <div className="text-left">
-                  <p className="font-medium">CP1 - Température</p>
-                  <p className="text-xs text-muted-foreground">Contrôle température à réception</p>
+          {/* CP1 - Temperature - Only show if raw materials require cold storage */}
+          {requiresTemperatureControl && (
+            <Collapsible 
+              open={expandedSection === 'cp1'} 
+              onOpenChange={() => setExpandedSection(expandedSection === 'cp1' ? null : 'cp1')}
+            >
+              <CollapsibleTrigger className="flex items-center justify-between w-full p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors">
+                <div className="flex items-center gap-3">
+                  <Thermometer className="h-5 w-5 text-primary" />
+                  <div className="text-left">
+                    <p className="font-medium">CP1 - Température</p>
+                    <p className="text-xs text-muted-foreground">Contrôle température à réception</p>
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-center gap-2">
-                {temperatureConforme ? (
-                  <CheckCircle2 className="h-5 w-5 text-success" />
-                ) : (
-                  <XCircle className="h-5 w-5 text-destructive" />
-                )}
-                {expandedSection === 'cp1' ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-              </div>
-            </CollapsibleTrigger>
-            <CollapsibleContent className="pt-4 space-y-4">
-              <div className="space-y-2">
-                <Label>Température mesurée (°C)</Label>
-                <TemperatureInput
-                  value={temperature}
-                  onChange={setTemperature}
-                  placeholder="Ex: 3.5"
-                  inputClassName="text-lg h-12"
-                />
-              </div>
-              <div className="flex items-center space-x-3 p-3 rounded-lg border">
-                <Checkbox 
-                  id="temp-conforme"
-                  checked={temperatureConforme}
-                  onCheckedChange={(checked) => setTemperatureConforme(checked as boolean)}
-                />
-                <Label htmlFor="temp-conforme" className="flex-1 cursor-pointer">
-                  Température conforme à l'étiquetage
-                </Label>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Acceptable: jusqu'à 3°C de plus en surface pour réfrigéré
-              </p>
-            </CollapsibleContent>
-          </Collapsible>
+                <div className="flex items-center gap-2">
+                  {temperatureConforme ? (
+                    <CheckCircle2 className="h-5 w-5 text-success" />
+                  ) : (
+                    <XCircle className="h-5 w-5 text-destructive" />
+                  )}
+                  {expandedSection === 'cp1' ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                </div>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="pt-4 space-y-4">
+                <div className="space-y-2">
+                  <Label>Température mesurée (°C)</Label>
+                  <TemperatureInput
+                    value={temperature}
+                    onChange={setTemperature}
+                    placeholder="Ex: 3.5"
+                    inputClassName="text-lg h-12"
+                  />
+                </div>
+                <div className="flex items-center space-x-3 p-3 rounded-lg border">
+                  <Checkbox 
+                    id="temp-conforme"
+                    checked={temperatureConforme}
+                    onCheckedChange={(checked) => setTemperatureConforme(checked as boolean)}
+                  />
+                  <Label htmlFor="temp-conforme" className="flex-1 cursor-pointer">
+                    Température conforme à l'étiquetage
+                  </Label>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Acceptable: jusqu'à 3°C de plus en surface pour réfrigéré
+                </p>
+              </CollapsibleContent>
+            </Collapsible>
+          )}
 
           {/* CP2 - Integrity */}
           <Collapsible 

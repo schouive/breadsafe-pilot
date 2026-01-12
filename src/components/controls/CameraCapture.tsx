@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect, forwardRef } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { X, Check, Trash2, Camera } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -18,13 +18,13 @@ interface CapturedPhoto {
   blob: Blob;
 }
 
-export const CameraCapture = forwardRef<HTMLDivElement, CameraCaptureProps>(({
+export function CameraCapture({
   onPhotosConfirmed,
   onClose,
   userId,
   maxPhotos = 5,
   existingPhotosCount = 0
-}, ref) => {
+}: CameraCaptureProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -32,7 +32,6 @@ export const CameraCapture = forwardRef<HTMLDivElement, CameraCaptureProps>(({
   const [capturedPhotos, setCapturedPhotos] = useState<CapturedPhoto[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [cameraReady, setCameraReady] = useState(false);
-  const [cameraError, setCameraError] = useState<string | null>(null);
   const [useFallback, setUseFallback] = useState(false);
 
   const remainingSlots = maxPhotos - existingPhotosCount;
@@ -247,7 +246,7 @@ export const CameraCapture = forwardRef<HTMLDivElement, CameraCaptureProps>(({
   };
 
   return (
-    <div ref={ref} className="fixed inset-0 z-50 bg-black flex flex-col">
+    <div className="fixed inset-0 z-50 bg-black flex flex-col">
       {/* Hidden canvas for capturing */}
       <canvas ref={canvasRef} className="hidden" />
       
@@ -356,6 +355,4 @@ export const CameraCapture = forwardRef<HTMLDivElement, CameraCaptureProps>(({
       </div>
     </div>
   );
-});
-
-CameraCapture.displayName = 'CameraCapture';
+}

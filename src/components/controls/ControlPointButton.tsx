@@ -9,16 +9,16 @@ import {
   Snowflake,
   ThermometerSnowflake,
   Clock,
-  Truck,
-  Camera
+  Truck
 } from 'lucide-react';
+import iconBread from '@/assets/icon-bread.jpeg';
 
 interface ControlPointButtonProps {
   controlPoint: ControlPoint;
   onClick: (cp: ControlPoint) => void;
 }
 
-const iconMap: Record<string, React.ElementType> = {
+const iconMap: Record<string, React.ElementType | null> = {
   'CP_RECEPTION': Truck,
   'CP1_TEMPERATURE_REFRIGERE': Thermometer,
   'CP2_INTEGRITE': Package,
@@ -29,7 +29,7 @@ const iconMap: Record<string, React.ElementType> = {
   'CP7_STOCKAGE_NEGATIF': ThermometerSnowflake,
   'CP8_DLC_PERIMEE': Clock,
   'CP_STOCKAGE': Snowflake,
-  'CP_PRODUCTION': Camera,
+  'CP_PRODUCTION': null, // Use custom bread icon
 };
 
 const colorMap: Record<string, string> = {
@@ -43,8 +43,9 @@ const colorMap: Record<string, string> = {
 };
 
 export function ControlPointButton({ controlPoint, onClick }: ControlPointButtonProps) {
-  const Icon = iconMap[controlPoint.code] || AlertCircle;
+  const Icon = iconMap[controlPoint.code];
   const colorClass = colorMap[controlPoint.code] || 'bg-primary/10 text-primary hover:bg-primary/20 border-primary/20';
+  const isProduction = controlPoint.code === 'CP_PRODUCTION';
 
   return (
     <button
@@ -58,7 +59,13 @@ export function ControlPointButton({ controlPoint, onClick }: ControlPointButton
       )}
     >
       <div className="p-3 rounded-xl bg-background/50">
-        <Icon className="h-8 w-8" />
+        {isProduction ? (
+          <img src={iconBread} alt="Production" className="h-8 w-8 object-contain" />
+        ) : Icon ? (
+          <Icon className="h-8 w-8" />
+        ) : (
+          <AlertCircle className="h-8 w-8" />
+        )}
       </div>
       <span className="text-sm font-semibold text-center leading-tight">
         {controlPoint.name}

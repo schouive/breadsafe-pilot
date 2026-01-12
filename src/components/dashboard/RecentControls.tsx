@@ -11,12 +11,12 @@ import {
   Truck,
   Snowflake,
   Magnet,
-  Clock
+  Clock,
+  Camera
 } from 'lucide-react';
 import { ControlDetailModal } from '@/components/controls/ControlDetailModal';
 import { ControlRecordFromDB } from '@/hooks/useControlRecords';
 import { supabase } from '@/integrations/supabase/client';
-import iconBread from '@/assets/icon-bread.jpeg';
 
 interface RecentControlsProps {
   controls: ControlRecord[];
@@ -49,14 +49,14 @@ const statusConfig = {
 };
 
 // Icônes par type de contrôle (identiques à ControlPointButton)
-const controlTypeIcons: Record<string, React.ElementType | null> = {
+const controlTypeIcons: Record<string, React.ElementType> = {
   CP_RECEPTION: Truck,
   CP5_CORPS_ETRANGER: Magnet,
   CP_STOCKAGE: Snowflake,
   CP6_STOCKAGE_POSITIF: Snowflake,
   CP7_STOCKAGE_NEGATIF: Snowflake,
   CP8_DLC_PERIMEE: Clock,
-  CP_PRODUCTION: null, // Use custom bread icon
+  CP_PRODUCTION: Camera,
 };
 
 export function RecentControls({ controls }: RecentControlsProps) {
@@ -117,8 +117,7 @@ export function RecentControls({ controls }: RecentControlsProps) {
                 ? `Stockage - ${control.coldRoomName}`
                 : (cp?.name || control.controlPointCode);
               
-              const ControlTypeIcon = controlTypeIcons[control.controlPointCode as keyof typeof controlTypeIcons];
-              const isProduction = control.controlPointCode === 'CP_PRODUCTION';
+              const ControlTypeIcon = controlTypeIcons[control.controlPointCode as keyof typeof controlTypeIcons] || AlertCircle;
               
               return (
                 <div 
@@ -135,13 +134,7 @@ export function RecentControls({ controls }: RecentControlsProps) {
                   
                   {/* Icône du type de contrôle */}
                   <div className="flex items-center justify-center h-8 w-8 rounded-lg flex-shrink-0 bg-background/50">
-                    {isProduction ? (
-                      <img src={iconBread} alt="Production" className="h-4 w-4 object-contain" />
-                    ) : ControlTypeIcon ? (
-                      <ControlTypeIcon className="h-4 w-4" />
-                    ) : (
-                      <AlertCircle className="h-4 w-4" />
-                    )}
+                    <ControlTypeIcon className="h-4 w-4" />
                   </div>
                   
                   <div className="flex-1 min-w-0">

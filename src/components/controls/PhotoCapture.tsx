@@ -1,15 +1,21 @@
 import { useState, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { Camera, X, Image as ImageIcon, Loader2, Trash2 } from 'lucide-react';
+import { Camera, X, Image as ImageIcon, Check, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { CameraCapture } from './CameraCapture';
+import { cn } from '@/lib/utils';
 
 interface PhotoCaptureProps {
   photos: string[];
   onPhotosChange: (photos: string[]) => void;
   maxPhotos?: number;
   userId: string;
+}
+
+interface PendingPhoto {
+  id: string;
+  file: File;
+  preview: string;
 }
 
 export function PhotoCapture({ 
@@ -19,44 +25,26 @@ export function PhotoCapture({
   userId 
 }: PhotoCaptureProps) {
   const [uploading, setUploading] = useState(false);
-  const [cameraOpen, setCameraOpen] = useState(false);
+  const [pendingPhotos, setPendingPhotos] = useState<PendingPhoto[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
 
-  const uploadBlob = useCallback(async (blob: Blob, index: number) => {
+  const uploadPhoto = useCallback(async (file: File) => {
+    if (!file) return null;
+
     try {
-      const fileName = `${userId}/${Date.now()}-${index}-${Math.random().toString(36).substring(7)}.jpg`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('control-photos')
-        .upload(fileName, blob, {
-          cacheControl: '3600',
-          upsert: false,
-          contentType: 'image/jpeg'
-        });
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('control-photos')
-        .getPublicUrl(fileName);
-
-      return publicUrl;
-    } catch (error) {
-      console.error('Error uploading photo:', error);
-      return null;
-    }
-  }, [userId]);
-
-  const uploadFile = useCallback(async (file: File) => {
-    try {
+      // Create unique filename - handle cases where file.name might not have extension
       let fileExt = file.name.split('.').pop();
       if (!fileExt || fileExt === file.name) {
+        // Try to get extension from MIME type
         const mimeExt = file.type.split('/')[1];
         fileExt = mimeExt === 'jpeg' ? 'jpg' : (mimeExt || 'jpg');
       }
       const fileName = `${userId}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+      
+      console.log('Uploading file:', fileName, 'type:', file.type);
 
-      const { error: uploadError } = await supabase.storage
+      const { error: uploadError, data } = await supabase.storage
         .from('control-photos')
         .upload(fileName, file, {
           cacheControl: '3600',
@@ -64,12 +52,19 @@ export function PhotoCapture({
           contentType: file.type || 'image/jpeg'
         });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        throw uploadError;
+      }
+      
+      console.log('Upload success:', data);
 
+      // Get public URL
       const { data: { publicUrl } } = supabase.storage
         .from('control-photos')
         .getPublicUrl(fileName);
 
+      console.log('Public URL:', publicUrl);
       return publicUrl;
     } catch (error) {
       console.error('Error uploading photo:', error);
@@ -77,20 +72,89 @@ export function PhotoCapture({
     }
   }, [userId]);
 
-  const handleCameraConfirm = async (blobs: Blob[]) => {
-    if (blobs.length === 0) return;
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    console.log('Files selected:', files);
+    if (!files || files.length === 0) {
+      console.log('No files in input');
+      return;
+    }
+
+    const totalPhotos = photos.length + pendingPhotos.length;
+    if (totalPhotos >= maxPhotos) {
+      toast.error(`Maximum ${maxPhotos} photos autorisées`);
+      event.target.value = '';
+      return;
+    }
+
+    const file = files[0];
+    console.log('File info:', { name: file.name, type: file.type, size: file.size });
+    
+    // Validate file type - also accept if type is empty (some mobile cameras)
+    if (file.type && !file.type.startsWith('image/')) {
+      toast.error('Seules les images sont acceptées');
+      event.target.value = '';
+      return;
+    }
+
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('La photo ne doit pas dépasser 10 Mo');
+      event.target.value = '';
+      return;
+    }
+
+    // Create a preview URL for the pending photo
+    const preview = URL.createObjectURL(file);
+    console.log('Preview URL created:', preview);
+    
+    const newPendingPhoto: PendingPhoto = {
+      id: `${Date.now()}-${Math.random().toString(36).substring(7)}`,
+      file,
+      preview
+    };
+
+    setPendingPhotos(prev => {
+      console.log('Adding pending photo, current count:', prev.length);
+      return [...prev, newPendingPhoto];
+    });
+
+    // Reset input
+    event.target.value = '';
+  };
+
+  const handleRemovePendingPhoto = (id: string) => {
+    setPendingPhotos(prev => {
+      const photo = prev.find(p => p.id === id);
+      if (photo) {
+        URL.revokeObjectURL(photo.preview);
+      }
+      return prev.filter(p => p.id !== id);
+    });
+  };
+
+  const handleRemoveUploadedPhoto = (index: number) => {
+    const newPhotos = photos.filter((_, i) => i !== index);
+    onPhotosChange(newPhotos);
+    toast.success('Photo supprimée');
+  };
+
+  const handleConfirmPhotos = async () => {
+    if (pendingPhotos.length === 0) return;
 
     setUploading(true);
     const uploadedUrls: string[] = [];
     let failedCount = 0;
 
-    for (let i = 0; i < blobs.length; i++) {
-      const url = await uploadBlob(blobs[i], i);
+    for (const pending of pendingPhotos) {
+      const url = await uploadPhoto(pending.file);
       if (url) {
         uploadedUrls.push(url);
       } else {
         failedCount++;
       }
+      // Clean up preview URL
+      URL.revokeObjectURL(pending.preview);
     }
 
     if (uploadedUrls.length > 0) {
@@ -102,61 +166,24 @@ export function PhotoCapture({
       toast.error(`${failedCount} photo(s) n'ont pas pu être envoyée(s)`);
     }
 
+    setPendingPhotos([]);
     setUploading(false);
   };
 
-  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
-    if (!files || files.length === 0) return;
-
-    if (photos.length >= maxPhotos) {
-      toast.error(`Maximum ${maxPhotos} photos autorisées`);
-      event.target.value = '';
-      return;
-    }
-
-    const file = files[0];
-    
-    if (file.type && !file.type.startsWith('image/')) {
-      toast.error('Seules les images sont acceptées');
-      event.target.value = '';
-      return;
-    }
-
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error('La photo ne doit pas dépasser 10 Mo');
-      event.target.value = '';
-      return;
-    }
-
-    setUploading(true);
-    const url = await uploadFile(file);
-    if (url) {
-      onPhotosChange([...photos, url]);
-      toast.success('Photo ajoutée');
-    } else {
-      toast.error('Erreur lors de l\'upload');
-    }
-    setUploading(false);
-    event.target.value = '';
-  };
-
-  const handleRemovePhoto = (index: number) => {
-    const newPhotos = photos.filter((_, i) => i !== index);
-    onPhotosChange(newPhotos);
-    toast.success('Photo supprimée');
+  const openCamera = () => {
+    cameraInputRef.current?.click();
   };
 
   const openGallery = () => {
     fileInputRef.current?.click();
   };
 
-  const canAddMore = photos.length < maxPhotos;
-  const remainingPhotos = maxPhotos - photos.length;
+  const totalPhotos = photos.length + pendingPhotos.length;
+  const canAddMore = totalPhotos < maxPhotos;
 
   return (
     <div className="space-y-4">
-      {/* Uploaded photos */}
+      {/* Already uploaded photos */}
       {photos.length > 0 && (
         <div className="space-y-2">
           <p className="text-xs text-muted-foreground font-medium">Photos enregistrées</p>
@@ -173,10 +200,10 @@ export function PhotoCapture({
                 />
                 <button
                   type="button"
-                  onClick={() => handleRemovePhoto(index)}
-                  className="absolute top-1 right-1 p-1.5 bg-destructive text-destructive-foreground rounded-full shadow-md opacity-0 group-hover:opacity-100 md:opacity-100 transition-opacity"
+                  onClick={() => handleRemoveUploadedPhoto(index)}
+                  className="absolute top-1 right-1 p-1 bg-destructive text-destructive-foreground rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
                 >
-                  <Trash2 className="h-3 w-3" />
+                  <X className="h-3 w-3" />
                 </button>
               </div>
             ))}
@@ -184,20 +211,73 @@ export function PhotoCapture({
         </div>
       )}
 
+      {/* Pending photos (not yet uploaded) */}
+      {pendingPhotos.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-xs text-muted-foreground font-medium">En attente d'envoi</p>
+          <div className="bg-muted/50 rounded-lg p-3 space-y-3">
+            <div className="grid grid-cols-3 gap-2">
+              {pendingPhotos.map((photo) => (
+                <div 
+                  key={photo.id}
+                  className="relative aspect-square rounded-lg overflow-hidden bg-muted border-2 border-dashed border-primary/30"
+                >
+                  <img
+                    src={photo.preview}
+                    alt="Aperçu"
+                    className="w-full h-full object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleRemovePendingPhoto(photo.id)}
+                    className="absolute top-1 right-1 p-1.5 bg-destructive text-destructive-foreground rounded-full shadow-md"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              ))}
+            </div>
+            
+            {/* Confirm button */}
+            <Button
+              type="button"
+              onClick={handleConfirmPhotos}
+              disabled={uploading}
+              className="w-full"
+              size="sm"
+            >
+              {uploading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Envoi en cours...
+                </>
+              ) : (
+                <>
+                  <Check className="mr-2 h-4 w-4" />
+                  Valider {pendingPhotos.length} photo(s)
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Upload buttons */}
       {canAddMore && (
         <div className="flex gap-2">
+          {/* Camera button (mobile) */}
           <Button
             type="button"
             variant="outline"
             className="flex-1 touch-target"
-            onClick={() => setCameraOpen(true)}
+            onClick={openCamera}
             disabled={uploading}
           >
             <Camera className="mr-2 h-5 w-5" />
             Appareil photo
           </Button>
           
+          {/* Gallery button */}
           <Button
             type="button"
             variant="outline"
@@ -205,17 +285,21 @@ export function PhotoCapture({
             onClick={openGallery}
             disabled={uploading}
           >
-            {uploading ? (
-              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-            ) : (
-              <ImageIcon className="mr-2 h-5 w-5" />
-            )}
+            <ImageIcon className="mr-2 h-5 w-5" />
             Galerie
           </Button>
         </div>
       )}
 
-      {/* Hidden file input for gallery */}
+      {/* Hidden file inputs */}
+      <input
+        ref={cameraInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        onChange={handleFileSelect}
+        className="hidden"
+      />
       <input
         ref={fileInputRef}
         type="file"
@@ -226,16 +310,9 @@ export function PhotoCapture({
 
       {/* Photo count */}
       <p className="text-xs text-muted-foreground text-center">
-        {photos.length} / {maxPhotos} photos
+        {photos.length} / {maxPhotos} photos enregistrées
+        {pendingPhotos.length > 0 && ` (+${pendingPhotos.length} en attente)`}
       </p>
-
-      {/* Full-screen camera capture */}
-      <CameraCapture
-        isOpen={cameraOpen}
-        onClose={() => setCameraOpen(false)}
-        onConfirm={handleCameraConfirm}
-        maxPhotos={remainingPhotos}
-      />
     </div>
   );
 }

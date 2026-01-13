@@ -88,7 +88,30 @@ export function ReceptionControlForm({ controlPoint, isOpen, onClose, onSubmit }
   const [notes, setNotes] = useState('');
   const [photos, setPhotos] = useState<string[]>([]);
   const [showCamera, setShowCamera] = useState(false);
+  const [dialogHiddenForCamera, setDialogHiddenForCamera] = useState(false);
   const [uploading, setUploading] = useState(false);
+
+  // Handle camera open - hide dialog first to avoid focus trap interference
+  const handleOpenCamera = () => {
+    setDialogHiddenForCamera(true);
+    // Small delay to let dialog close animation complete
+    setTimeout(() => {
+      setShowCamera(true);
+    }, 50);
+  };
+
+  // Handle camera close - restore dialog
+  const handleCloseCamera = () => {
+    setShowCamera(false);
+    setDialogHiddenForCamera(false);
+  };
+
+  // Handle photos confirmed
+  const handlePhotosConfirmed = (urls: string[]) => {
+    setPhotos([...photos, ...urls]);
+    setShowCamera(false);
+    setDialogHiddenForCamera(false);
+  };
 
   // Reset raw materials when supplier changes
   useEffect(() => {
@@ -177,7 +200,8 @@ export function ReceptionControlForm({ controlPoint, isOpen, onClose, onSubmit }
 
   return (
     <>
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    {/* Dialog is hidden when camera is open to avoid focus trap interference */}
+    <Dialog open={isOpen && !dialogHiddenForCamera} onOpenChange={onClose}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl flex items-center gap-2">
@@ -307,7 +331,7 @@ export function ReceptionControlForm({ controlPoint, isOpen, onClose, onSubmit }
                     type="button"
                     variant="outline"
                     className="flex-1 touch-target"
-                    onClick={() => setShowCamera(true)}
+                    onClick={handleOpenCamera}
                     disabled={uploading}
                   >
                     <Camera className="mr-2 h-5 w-5" />
@@ -577,14 +601,11 @@ export function ReceptionControlForm({ controlPoint, isOpen, onClose, onSubmit }
       </DialogContent>
     </Dialog>
 
-    {/* Fullscreen camera - rendered OUTSIDE Dialog for proper z-index */}
+    {/* Fullscreen camera - rendered OUTSIDE Dialog, Dialog is hidden when camera is active */}
     {showCamera && user && (
       <CameraCapture
-        onPhotosConfirmed={(urls) => {
-          setPhotos([...photos, ...urls]);
-          setShowCamera(false);
-        }}
-        onClose={() => setShowCamera(false)}
+        onPhotosConfirmed={handlePhotosConfirmed}
+        onClose={handleCloseCamera}
         userId={user.id}
         maxPhotos={5}
         existingPhotosCount={photos.length}

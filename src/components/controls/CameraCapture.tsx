@@ -35,6 +35,7 @@ export function CameraCapture({
   const [cameraReady, setCameraReady] = useState(false);
   const [useFallback, setUseFallback] = useState(false);
   const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment');
+  const [isInitializing, setIsInitializing] = useState(true);
 
   const remainingSlots = maxPhotos - existingPhotosCount;
 
@@ -52,6 +53,7 @@ export function CameraCapture({
       console.log('getUserMedia not available, using fallback');
       setUseFallback(true);
       setCameraReady(true);
+      setIsInitializing(false);
       return;
     }
 
@@ -71,10 +73,12 @@ export function CameraCapture({
         videoRef.current.onloadedmetadata = () => {
           videoRef.current?.play().then(() => {
             setCameraReady(true);
+            setIsInitializing(false);
           }).catch(err => {
             console.error('Video play error:', err);
             setUseFallback(true);
             setCameraReady(true);
+            setIsInitializing(false);
           });
         };
       }
@@ -83,6 +87,7 @@ export function CameraCapture({
       // Fallback to file input on error
       setUseFallback(true);
       setCameraReady(true);
+      setIsInitializing(false);
     }
   }, [facingMode]);
 
@@ -279,6 +284,15 @@ export function CameraCapture({
       onPointerMove={(e) => e.stopPropagation()}
       onPointerUp={(e) => e.stopPropagation()}
     >
+      {/* Loading overlay - shown during initialization */}
+      {isInitializing && (
+        <div className="absolute inset-0 z-20 bg-black flex items-center justify-center">
+          <div className="flex flex-col items-center gap-4">
+            <div className="w-12 h-12 border-4 border-white/30 border-t-white rounded-full animate-spin" />
+            <p className="text-white text-sm">Initialisation de la caméra...</p>
+          </div>
+        </div>
+      )}
       {/* Hidden canvas for capturing */}
       <canvas ref={canvasRef} className="hidden" />
       

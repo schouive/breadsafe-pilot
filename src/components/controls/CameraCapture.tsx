@@ -250,8 +250,25 @@ export function CameraCapture({
     onClose();
   };
 
+  // Prevent background scrolling when camera is open
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    document.body.style.touchAction = 'none';
+    return () => {
+      document.body.style.overflow = '';
+      document.body.style.touchAction = '';
+    };
+  }, []);
+
   return (
-    <div className="fixed inset-0 z-[100] bg-black flex flex-col">
+    <div 
+      className="fixed inset-0 z-[9999] bg-black flex flex-col"
+      style={{ touchAction: 'none' }}
+      onClick={(e) => e.stopPropagation()}
+      onTouchStart={(e) => e.stopPropagation()}
+      onTouchMove={(e) => e.stopPropagation()}
+      onTouchEnd={(e) => e.stopPropagation()}
+    >
       {/* Hidden canvas for capturing */}
       <canvas ref={canvasRef} className="hidden" />
       

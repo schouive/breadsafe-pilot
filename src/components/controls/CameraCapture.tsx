@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Check, Trash2, Camera, SwitchCamera } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -260,14 +261,23 @@ export function CameraCapture({
     };
   }, []);
 
-  return (
+  return createPortal(
     <div 
       className="fixed inset-0 z-[9999] bg-black flex flex-col"
-      style={{ touchAction: 'none' }}
-      onClick={(e) => e.stopPropagation()}
+      style={{ touchAction: 'none', isolation: 'isolate' }}
+      onClick={(e) => {
+        e.stopPropagation();
+        e.preventDefault();
+      }}
       onTouchStart={(e) => e.stopPropagation()}
-      onTouchMove={(e) => e.stopPropagation()}
+      onTouchMove={(e) => {
+        e.stopPropagation();
+        e.preventDefault();
+      }}
       onTouchEnd={(e) => e.stopPropagation()}
+      onPointerDown={(e) => e.stopPropagation()}
+      onPointerMove={(e) => e.stopPropagation()}
+      onPointerUp={(e) => e.stopPropagation()}
     >
       {/* Hidden canvas for capturing */}
       <canvas ref={canvasRef} className="hidden" />
@@ -391,6 +401,7 @@ export function CameraCapture({
           {isUploading && ' - Envoi en cours...'}
         </p>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

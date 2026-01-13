@@ -269,6 +269,60 @@ export function ReceptionControlForm({ controlPoint, isOpen, onClose, onSubmit }
             </div>
           </div>
 
+          {/* Photo capture - moved here after product info */}
+          {user && (
+            <div className="space-y-4">
+              {/* Already uploaded photos */}
+              {photos.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-xs text-muted-foreground font-medium">Photos enregistrées</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {photos.map((photo, index) => (
+                      <div 
+                        key={index}
+                        className="relative aspect-square rounded-lg overflow-hidden bg-muted group"
+                      >
+                        <img
+                          src={photo}
+                          alt={`Photo ${index + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setPhotos(photos.filter((_, i) => i !== index))}
+                          className="absolute top-1 right-1 p-1 bg-destructive text-destructive-foreground rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Upload buttons */}
+              {photos.length < 5 && (
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="flex-1 touch-target"
+                    onClick={() => setShowCamera(true)}
+                    disabled={uploading}
+                  >
+                    <Camera className="mr-2 h-5 w-5" />
+                    Appareil photo
+                  </Button>
+                </div>
+              )}
+
+              {/* Photo count */}
+              <p className="text-xs text-muted-foreground text-center">
+                {photos.length} / 5 photos enregistrées
+              </p>
+            </div>
+          )}
+
           <Separator />
 
           {/* CP1 - Temperature - Only show if raw materials require cold storage */}
@@ -485,59 +539,6 @@ export function ReceptionControlForm({ controlPoint, isOpen, onClose, onSubmit }
             />
           </div>
 
-          {/* Photo capture */}
-          {user && (
-            <div className="space-y-4">
-              {/* Already uploaded photos */}
-              {photos.length > 0 && (
-                <div className="space-y-2">
-                  <p className="text-xs text-muted-foreground font-medium">Photos enregistrées</p>
-                  <div className="grid grid-cols-3 gap-2">
-                    {photos.map((photo, index) => (
-                      <div 
-                        key={index}
-                        className="relative aspect-square rounded-lg overflow-hidden bg-muted group"
-                      >
-                        <img
-                          src={photo}
-                          alt={`Photo ${index + 1}`}
-                          className="w-full h-full object-cover"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setPhotos(photos.filter((_, i) => i !== index))}
-                          className="absolute top-1 right-1 p-1 bg-destructive text-destructive-foreground rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Upload buttons */}
-              {photos.length < 5 && (
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="flex-1 touch-target"
-                    onClick={() => setShowCamera(true)}
-                    disabled={uploading}
-                  >
-                    <Camera className="mr-2 h-5 w-5" />
-                    Appareil photo
-                  </Button>
-                </div>
-              )}
-
-              {/* Photo count */}
-              <p className="text-xs text-muted-foreground text-center">
-                {photos.length} / 5 photos enregistrées
-              </p>
-            </div>
-          )}
 
           {/* Status summary */}
           <div className={cn(

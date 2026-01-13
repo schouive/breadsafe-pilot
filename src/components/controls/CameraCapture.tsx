@@ -251,7 +251,7 @@ export function CameraCapture({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black flex flex-col">
+    <div className="fixed inset-0 z-[100] bg-black flex flex-col">
       {/* Hidden canvas for capturing */}
       <canvas ref={canvasRef} className="hidden" />
       

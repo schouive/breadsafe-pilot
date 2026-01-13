@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { X, Check, Trash2, Camera } from 'lucide-react';
+import { X, Check, Trash2, Camera, SwitchCamera } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -33,66 +33,71 @@ export function CameraCapture({
   const [isUploading, setIsUploading] = useState(false);
   const [cameraReady, setCameraReady] = useState(false);
   const [useFallback, setUseFallback] = useState(false);
+  const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment');
 
   const remainingSlots = maxPhotos - existingPhotosCount;
 
   // Initialize camera
+  const startCamera = useCallback(async () => {
+    // Stop existing stream
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+    }
+    
+    setCameraReady(false);
+
+    // Check if getUserMedia is available
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      console.log('getUserMedia not available, using fallback');
+      setUseFallback(true);
+      setCameraReady(true);
+      return;
+    }
+
+    try {
+      const mediaStream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: facingMode,
+          width: { ideal: 1920 },
+          height: { ideal: 1080 }
+        },
+        audio: false
+      });
+
+      streamRef.current = mediaStream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = mediaStream;
+        videoRef.current.onloadedmetadata = () => {
+          videoRef.current?.play().then(() => {
+            setCameraReady(true);
+          }).catch(err => {
+            console.error('Video play error:', err);
+            setUseFallback(true);
+            setCameraReady(true);
+          });
+        };
+      }
+    } catch (error) {
+      console.error('Camera error:', error);
+      // Fallback to file input on error
+      setUseFallback(true);
+      setCameraReady(true);
+    }
+  }, [facingMode]);
+
   useEffect(() => {
-    let mounted = true;
-
-    const startCamera = async () => {
-      // Check if getUserMedia is available
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        console.log('getUserMedia not available, using fallback');
-        setUseFallback(true);
-        setCameraReady(true);
-        return;
-      }
-
-      try {
-        const mediaStream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            facingMode: 'environment',
-            width: { ideal: 1920 },
-            height: { ideal: 1080 }
-          },
-          audio: false
-        });
-
-        if (!mounted) {
-          mediaStream.getTracks().forEach(track => track.stop());
-          return;
-        }
-
-        streamRef.current = mediaStream;
-        if (videoRef.current) {
-          videoRef.current.srcObject = mediaStream;
-          videoRef.current.onloadedmetadata = () => {
-            videoRef.current?.play().then(() => {
-              setCameraReady(true);
-            }).catch(err => {
-              console.error('Video play error:', err);
-              setUseFallback(true);
-              setCameraReady(true);
-            });
-          };
-        }
-      } catch (error) {
-        console.error('Camera error:', error);
-        // Fallback to file input on error
-        setUseFallback(true);
-        setCameraReady(true);
-      }
-    };
-
     startCamera();
 
     return () => {
-      mounted = false;
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(track => track.stop());
       }
     };
+  }, [startCamera]);
+
+  // Toggle between front and rear camera
+  const toggleCamera = useCallback(() => {
+    setFacingMode(prev => prev === 'environment' ? 'user' : 'environment');
   }, []);
 
   // Handle file input for fallback mode
@@ -303,8 +308,12 @@ export function CameraCapture({
 
       {/* Bottom section with capture button and thumbnails */}
       <div className="bg-black/80 backdrop-blur-sm pb-safe">
-        {/* Capture button */}
-        <div className="flex justify-center py-4">
+        {/* Capture button row */}
+        <div className="flex items-center justify-center gap-8 py-4">
+          {/* Empty space for balance */}
+          <div className="w-12 h-12" />
+          
+          {/* Capture button */}
           <button
             type="button"
             onClick={capturePhoto}
@@ -316,6 +325,18 @@ export function CameraCapture({
           >
             <div className="w-16 h-16 rounded-full bg-white" />
           </button>
+
+          {/* Camera toggle button */}
+          {!useFallback && (
+            <button
+              type="button"
+              onClick={toggleCamera}
+              className="w-12 h-12 rounded-full bg-white/20 text-white flex items-center justify-center hover:bg-white/30 transition-colors active:scale-95"
+            >
+              <SwitchCamera className="h-6 w-6" />
+            </button>
+          )}
+          {useFallback && <div className="w-12 h-12" />}
         </div>
 
         {/* Thumbnails */}

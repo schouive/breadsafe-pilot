@@ -11,10 +11,10 @@
 
 @layer base {
   :root {
-    /* Brand colors based on Breadshop logo */
-    --brand-primary: 209 60% 45%;
-    --brand-primary-light: 209 60% 55%;
-    --brand-primary-dark: 209 60% 35%;
+    /* Brand colors based on Breadshop logo - Slate Blue (#4A5D73) */
+    --brand-primary: 212 23% 37%;
+    --brand-primary-light: 212 23% 47%;
+    --brand-primary-dark: 212 23% 27%;
     
     /* Status colors - HACCP compliance indicators */
     --status-conforme: 142 71% 45%;
@@ -34,7 +34,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 215 25% 15%;
 
-    --primary: 209 60% 45%;
+    --primary: 212 23% 37%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 210 20% 95%;
@@ -43,8 +43,8 @@
     --muted: 210 15% 93%;
     --muted-foreground: 215 15% 45%;
 
-    --accent: 209 60% 92%;
-    --accent-foreground: 209 60% 30%;
+    --accent: 212 23% 92%;
+    --accent-foreground: 212 23% 30%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
@@ -57,19 +57,19 @@
 
     --border: 214 25% 88%;
     --input: 214 25% 88%;
-    --ring: 209 60% 45%;
+    --ring: 212 23% 37%;
 
     --radius: 0.75rem;
 
     /* Sidebar */
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 215 25% 25%;
-    --sidebar-primary: 209 60% 45%;
+    --sidebar-primary: 212 23% 37%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 209 60% 95%;
-    --sidebar-accent-foreground: 209 60% 30%;
+    --sidebar-accent: 212 23% 95%;
+    --sidebar-accent-foreground: 212 23% 30%;
     --sidebar-border: 214 25% 90%;
-    --sidebar-ring: 209 60% 45%;
+    --sidebar-ring: 212 23% 37%;
     
     /* Shadows */
     --shadow-sm: 0 1px 2px 0 hsl(215 25% 15% / 0.05);
@@ -88,7 +88,7 @@
     --popover: 215 25% 12%;
     --popover-foreground: 210 20% 95%;
 
-    --primary: 209 60% 55%;
+    --primary: 212 23% 47%;
     --primary-foreground: 215 25% 9%;
 
     --secondary: 215 25% 18%;
@@ -97,8 +97,8 @@
     --muted: 215 25% 18%;
     --muted-foreground: 215 15% 60%;
 
-    --accent: 209 45% 22%;
-    --accent-foreground: 209 60% 80%;
+    --accent: 212 23% 22%;
+    --accent-foreground: 212 23% 80%;
 
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
@@ -111,16 +111,16 @@
 
     --border: 215 25% 22%;
     --input: 215 25% 22%;
-    --ring: 209 60% 55%;
+    --ring: 212 23% 47%;
 
     --sidebar-background: 215 25% 10%;
     --sidebar-foreground: 210 20% 90%;
-    --sidebar-primary: 209 60% 55%;
+    --sidebar-primary: 212 23% 47%;
     --sidebar-primary-foreground: 215 25% 9%;
-    --sidebar-accent: 209 45% 18%;
-    --sidebar-accent-foreground: 209 60% 85%;
+    --sidebar-accent: 212 23% 18%;
+    --sidebar-accent-foreground: 212 23% 85%;
     --sidebar-border: 215 25% 18%;
-    --sidebar-ring: 209 60% 55%;
+    --sidebar-ring: 212 23% 47%;
   }
 }
 

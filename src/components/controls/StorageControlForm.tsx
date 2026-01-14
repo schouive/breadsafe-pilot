@@ -104,33 +104,21 @@ export function StorageControlForm({ controlPoint, isOpen, onClose, onSubmit }: 
   };
 
   const handleTemperatureChange = (roomId: string, value: string) => {
-    const room = coldRooms?.find(r => r.id === roomId);
-    
     setRoomInputs(prev => ({
       ...prev,
       [roomId]: { ...prev[roomId], temperature: value, correctiveAction: undefined }
     }));
-    
-    // Check if we need to show corrective action modal
-    if (room && value && value.trim() !== '') {
-      const temp = parseFloat(value);
-      if (!isNaN(temp)) {
-        const { status } = checkConformity(temp, room);
-        if (status === 'nonconforme') {
-          // Show corrective action modal
-          setCorrectiveActionModal({
-            isOpen: true,
-            roomId: room.id,
-            roomName: room.name,
-            temperature: temp,
-          });
-        }
-      }
-    }
   };
+
+  // Queue of non-conforming rooms that need corrective actions
+  const [pendingCorrectiveRooms, setPendingCorrectiveRooms] = useState<Array<{
+    room: ColdRoom;
+    temperature: number;
+  }>>([]);
   
   const handleCorrectiveActionConfirm = (actionId: string, actionLabel: string) => {
     if (correctiveActionModal) {
+      // Save the corrective action
       setRoomInputs(prev => ({
         ...prev,
         [correctiveActionModal.roomId]: { 
@@ -139,48 +127,45 @@ export function StorageControlForm({ controlPoint, isOpen, onClose, onSubmit }: 
         }
       }));
       setCorrectiveActionModal(null);
+      
+      // Process next room or complete submission
+      setTimeout(() => {
+        processNextCorrectiveRoom();
+      }, 100);
     }
   };
   
   const handleCorrectiveActionClose = () => {
+    // User cancelled - abort the entire submission
     setCorrectiveActionModal(null);
+    setPendingCorrectiveRooms([]);
+    setIsSubmitting(false);
+    toast.error('Validation annulée');
   };
 
-  const resetForm = () => {
-    if (coldRooms) {
-      const initialInputs: Record<string, RoomTemperatureInput> = {};
-      coldRooms.forEach(room => {
-        initialInputs[room.id] = { temperature: '', notes: '', correctiveAction: undefined };
+  const processNextCorrectiveRoom = () => {
+    if (pendingCorrectiveRooms.length > 0) {
+      const [next, ...remaining] = pendingCorrectiveRooms;
+      setPendingCorrectiveRooms(remaining);
+      setCorrectiveActionModal({
+        isOpen: true,
+        roomId: next.room.id,
+        roomName: next.room.name,
+        temperature: next.temperature,
       });
-      setRoomInputs(initialInputs);
+    } else {
+      // All corrective actions collected, proceed with actual submission
+      completeSubmission();
     }
-    setCorrectiveActionModal(null);
   };
 
-  if (!controlPoint) return null;
+  const completeSubmission = async () => {
+    if (!user || !coldRooms) return;
 
-  // Count filled rooms for validation button
-  const filledRoomsCount = Object.entries(roomInputs).filter(
-    ([_, input]) => input.temperature && input.temperature.trim() !== ''
-  ).length;
-
-  const handleSubmitAll = async () => {
-    if (!user) {
-      toast.error('Vous devez être connecté');
-      return;
-    }
-
-    const filledRooms = coldRooms?.filter(room => {
+    const filledRooms = coldRooms.filter(room => {
       const input = roomInputs[room.id];
       return input?.temperature && input.temperature.trim() !== '';
-    }) || [];
-
-    if (filledRooms.length === 0) {
-      toast.error('Veuillez saisir au moins une température');
-      return;
-    }
-
-    setIsSubmitting(true);
+    });
 
     try {
       for (const room of filledRooms) {
@@ -222,6 +207,76 @@ export function StorageControlForm({ controlPoint, isOpen, onClose, onSubmit }: 
       // Error handled by mutation
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const resetForm = () => {
+    if (coldRooms) {
+      const initialInputs: Record<string, RoomTemperatureInput> = {};
+      coldRooms.forEach(room => {
+        initialInputs[room.id] = { temperature: '', notes: '', correctiveAction: undefined };
+      });
+      setRoomInputs(initialInputs);
+    }
+    setCorrectiveActionModal(null);
+    setPendingCorrectiveRooms([]);
+  };
+
+  if (!controlPoint) return null;
+
+  // Count filled rooms for validation button
+  const filledRoomsCount = Object.entries(roomInputs).filter(
+    ([_, input]) => input.temperature && input.temperature.trim() !== ''
+  ).length;
+
+  const handleSubmitAll = async () => {
+    if (!user) {
+      toast.error('Vous devez être connecté');
+      return;
+    }
+
+    const filledRooms = coldRooms?.filter(room => {
+      const input = roomInputs[room.id];
+      return input?.temperature && input.temperature.trim() !== '';
+    }) || [];
+
+    if (filledRooms.length === 0) {
+      toast.error('Veuillez saisir au moins une température');
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    // Check for non-conforming temperatures that need corrective actions
+    const nonConformingRooms: Array<{ room: ColdRoom; temperature: number }> = [];
+    
+    for (const room of filledRooms) {
+      const input = roomInputs[room.id];
+      const tempValue = parseFloat(input.temperature);
+      
+      if (isNaN(tempValue)) continue;
+
+      const { status } = checkConformity(tempValue, room);
+      
+      // Only ask for corrective action if non-conforme AND no action already selected
+      if (status === 'nonconforme' && !input.correctiveAction) {
+        nonConformingRooms.push({ room, temperature: tempValue });
+      }
+    }
+
+    if (nonConformingRooms.length > 0) {
+      // Store pending rooms and show first corrective action modal
+      const [first, ...remaining] = nonConformingRooms;
+      setPendingCorrectiveRooms(remaining);
+      setCorrectiveActionModal({
+        isOpen: true,
+        roomId: first.room.id,
+        roomName: first.room.name,
+        temperature: first.temperature,
+      });
+    } else {
+      // No corrective actions needed, submit directly
+      await completeSubmission();
     }
   };
 

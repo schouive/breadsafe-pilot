@@ -106,6 +106,37 @@ export function CorrectiveActionSheet({
     }
   };
 
+  const handleUpdateAction = async () => {
+    if (!correctiveAction.trim()) return;
+    
+    setIsSubmitting(true);
+    try {
+      await updateNC.mutateAsync({
+        id: nonConformity.id,
+        corrective_action: correctiveAction,
+        assigned_to: assignedTo || user?.email || 'Non assigné',
+      });
+      
+      // Log the update
+      await createAuditLog.mutateAsync({
+        non_conformity_id: nonConformity.id,
+        action: 'action_updated',
+        old_values: { 
+          corrective_action: nonConformity.corrective_action,
+          assigned_to: nonConformity.assigned_to,
+        },
+        new_values: { 
+          corrective_action: correctiveAction,
+          assigned_to: assignedTo || user?.email || 'Non assigné',
+        },
+      });
+      
+      onClose();
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleResolve = async () => {
     if (!correctiveAction.trim()) return;
     
@@ -449,14 +480,24 @@ export function CorrectiveActionSheet({
           )}
 
           {nonConformity.status === 'in_progress' && (
-            <Button 
-              className="w-full"
-              onClick={handleResolve}
-              disabled={!correctiveAction.trim() || isSubmitting}
-            >
-              <CheckCircle2 className="h-4 w-4 mr-2" />
-              Marquer comme résolue
-            </Button>
+            <>
+              <Button 
+                className="w-full"
+                onClick={handleUpdateAction}
+                disabled={!correctiveAction.trim() || isSubmitting}
+              >
+                Enregistrer les modifications
+              </Button>
+              <Button 
+                variant="outline"
+                className="w-full"
+                onClick={handleResolve}
+                disabled={!correctiveAction.trim() || isSubmitting}
+              >
+                <CheckCircle2 className="h-4 w-4 mr-2" />
+                Marquer comme résolue
+              </Button>
+            </>
           )}
 
           {nonConformity.status === 'resolved' && (

@@ -133,6 +133,44 @@ export type Database = {
           },
         ]
       }
+      nc_audit_logs: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          new_values: Json | null
+          non_conformity_id: string
+          old_values: Json | null
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          new_values?: Json | null
+          non_conformity_id: string
+          old_values?: Json | null
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          new_values?: Json | null
+          non_conformity_id?: string
+          old_values?: Json | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nc_audit_logs_non_conformity_id_fkey"
+            columns: ["non_conformity_id"]
+            isOneToOne: false
+            referencedRelation: "non_conformities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       non_conformities: {
         Row: {
           assigned_to: string | null

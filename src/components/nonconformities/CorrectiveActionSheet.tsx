@@ -21,17 +21,21 @@ import {
   ClipboardList,
   XCircle,
   CheckCircle,
+  History,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useUpdateNonConformity, NonConformityFromDB } from '@/hooks/useNonConformities';
+import { useCreateNCAuditLog } from '@/hooks/useNCAuditLogs';
 import { useAuth } from '@/hooks/useAuth';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { CONTROL_POINTS } from '@/types/haccp';
 import { Separator } from '@/components/ui/separator';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { NCAuditHistory } from './NCAuditHistory';
 
 const severityConfig = {
   minor: { label: 'Mineur', class: 'bg-warning/10 text-warning border-warning/30' },
@@ -52,10 +56,12 @@ export function CorrectiveActionSheet({
 }: CorrectiveActionSheetProps) {
   const { user } = useAuth();
   const updateNC = useUpdateNonConformity();
+  const createAuditLog = useCreateNCAuditLog();
   
   const [correctiveAction, setCorrectiveAction] = useState('');
   const [assignedTo, setAssignedTo] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
 
   // Reset form when nonConformity changes
   useState(() => {
@@ -81,6 +87,19 @@ export function CorrectiveActionSheet({
         corrective_action: correctiveAction,
         assigned_to: assignedTo || user?.email || 'Non assigné',
       });
+      
+      // Log the status change
+      await createAuditLog.mutateAsync({
+        non_conformity_id: nonConformity.id,
+        action: 'status_change',
+        old_values: { status: nonConformity.status },
+        new_values: { 
+          status: 'in_progress',
+          corrective_action: correctiveAction,
+          assigned_to: assignedTo || user?.email || 'Non assigné',
+        },
+      });
+      
       onClose();
     } finally {
       setIsSubmitting(false);
@@ -99,6 +118,19 @@ export function CorrectiveActionSheet({
         corrective_action_date: new Date().toISOString(),
         assigned_to: assignedTo || user?.email || 'Non assigné',
       });
+      
+      // Log the status change
+      await createAuditLog.mutateAsync({
+        non_conformity_id: nonConformity.id,
+        action: 'status_change',
+        old_values: { status: nonConformity.status },
+        new_values: { 
+          status: 'resolved',
+          corrective_action: correctiveAction,
+          corrective_action_date: new Date().toISOString(),
+        },
+      });
+      
       onClose();
     } finally {
       setIsSubmitting(false);
@@ -114,6 +146,19 @@ export function CorrectiveActionSheet({
         validated_by: user?.id,
         validated_at: new Date().toISOString(),
       });
+      
+      // Log the validation
+      await createAuditLog.mutateAsync({
+        non_conformity_id: nonConformity.id,
+        action: 'validated',
+        old_values: { status: nonConformity.status },
+        new_values: { 
+          status: 'validated',
+          validated_by: user?.email,
+          validated_at: new Date().toISOString(),
+        },
+      });
+      
       onClose();
     } finally {
       setIsSubmitting(false);
@@ -361,6 +406,24 @@ export function CorrectiveActionSheet({
               )}
             </div>
           )}
+
+          {/* Audit History */}
+          <Collapsible open={isHistoryOpen} onOpenChange={setIsHistoryOpen}>
+            <CollapsibleTrigger asChild>
+              <Button variant="ghost" className="w-full justify-between px-0 hover:bg-transparent">
+                <span className="flex items-center gap-2 text-sm font-medium">
+                  <History className="h-4 w-4" />
+                  Historique des modifications
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {isHistoryOpen ? 'Masquer' : 'Afficher'}
+                </span>
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="pt-3">
+              <NCAuditHistory nonConformityId={nonConformity.id} />
+            </CollapsibleContent>
+          </Collapsible>
         </div>
 
         <SheetFooter className="flex-col gap-2">

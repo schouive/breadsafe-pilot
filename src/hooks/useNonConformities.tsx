@@ -6,6 +6,27 @@ import { Database } from '@/integrations/supabase/types';
 type NCStatus = Database['public']['Enums']['nc_status'];
 type NCSeverity = Database['public']['Enums']['nc_severity'];
 
+export interface ControlRecordDetails {
+  id: string;
+  timestamp: string;
+  temperature: number | null;
+  temperature_conforme: boolean | null;
+  product: string | null;
+  supplier: string | null;
+  lot_number: string | null;
+  notes: string | null;
+  status: string;
+  integrite_conforme: boolean | null;
+  integrite_notes: string | null;
+  dlc_date: string | null;
+  dlc_conforme: boolean | null;
+  dlc_notes: string | null;
+  allergenes_conformes: boolean | null;
+  allergenes_notes: string | null;
+  corps_etranger_detecte: boolean | null;
+  raw_material_id: string | null;
+}
+
 export interface NonConformityFromDB {
   id: string;
   control_record_id: string;
@@ -21,6 +42,7 @@ export interface NonConformityFromDB {
   validated_at: string | null;
   photos: string[] | null;
   updated_at: string;
+  control_record?: ControlRecordDetails;
 }
 
 export function useNonConformities(statusFilter?: NCStatus | 'all') {
@@ -29,7 +51,29 @@ export function useNonConformities(statusFilter?: NCStatus | 'all') {
     queryFn: async () => {
       let query = supabase
         .from('non_conformities')
-        .select('*')
+        .select(`
+          *,
+          control_record:control_records(
+            id,
+            timestamp,
+            temperature,
+            temperature_conforme,
+            product,
+            supplier,
+            lot_number,
+            notes,
+            status,
+            integrite_conforme,
+            integrite_notes,
+            dlc_date,
+            dlc_conforme,
+            dlc_notes,
+            allergenes_conformes,
+            allergenes_notes,
+            corps_etranger_detecte,
+            raw_material_id
+          )
+        `)
         .order('created_at', { ascending: false });
       
       if (statusFilter && statusFilter !== 'all') {
@@ -49,7 +93,29 @@ export function useOpenNonConformities() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('non_conformities')
-        .select('*')
+        .select(`
+          *,
+          control_record:control_records(
+            id,
+            timestamp,
+            temperature,
+            temperature_conforme,
+            product,
+            supplier,
+            lot_number,
+            notes,
+            status,
+            integrite_conforme,
+            integrite_notes,
+            dlc_date,
+            dlc_conforme,
+            dlc_notes,
+            allergenes_conformes,
+            allergenes_notes,
+            corps_etranger_detecte,
+            raw_material_id
+          )
+        `)
         .in('status', ['open', 'in_progress'])
         .order('created_at', { ascending: false });
       

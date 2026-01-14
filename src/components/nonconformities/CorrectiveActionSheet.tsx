@@ -329,6 +329,7 @@ export function CorrectiveActionSheet({
                 placeholder="Nom du responsable"
                 value={assignedTo}
                 onChange={(e) => setAssignedTo(e.target.value)}
+                autoFocus={false}
               />
             </div>
 
@@ -343,6 +344,7 @@ export function CorrectiveActionSheet({
                 value={correctiveAction}
                 onChange={(e) => setCorrectiveAction(e.target.value)}
                 rows={4}
+                autoFocus={false}
               />
             </div>
           </div>

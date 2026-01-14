@@ -32,14 +32,11 @@ import {
   Info,
   ChevronDown,
   ChevronUp,
-  X,
-  Camera,
-  Image as ImageIcon,
-  Loader2
+  X
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { CameraCapture } from './CameraCapture';
+import { PhotoCapture } from './PhotoCapture';
 import { useAuth } from '@/hooks/useAuth';
 import { useSuppliers, useRawMaterials, RawMaterial } from '@/hooks/useSuppliers';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -87,30 +84,9 @@ export function ReceptionControlForm({ controlPoint, isOpen, onClose, onSubmit }
   // Common
   const [notes, setNotes] = useState('');
   const [photos, setPhotos] = useState<string[]>([]);
-  const [showCamera, setShowCamera] = useState(false);
-  const [dialogHiddenForCamera, setDialogHiddenForCamera] = useState(false);
-  const [uploading, setUploading] = useState(false);
-
-  // Handle camera open - hide dialog first to avoid focus trap interference
-  const handleOpenCamera = () => {
-    setDialogHiddenForCamera(true);
-    // Small delay to let dialog close animation complete
-    setTimeout(() => {
-      setShowCamera(true);
-    }, 50);
-  };
-
-  // Handle camera close - restore dialog
-  const handleCloseCamera = () => {
-    setShowCamera(false);
-    setDialogHiddenForCamera(false);
-  };
-
-  // Handle photos confirmed
-  const handlePhotosConfirmed = (urls: string[]) => {
-    setPhotos([...photos, ...urls]);
-    setShowCamera(false);
-    setDialogHiddenForCamera(false);
+  // Handle photos change from PhotoCapture component
+  const handlePhotosChange = (newPhotos: string[]) => {
+    setPhotos(newPhotos);
   };
 
   // Reset raw materials when supplier changes
@@ -199,9 +175,7 @@ export function ReceptionControlForm({ controlPoint, isOpen, onClose, onSubmit }
   if (!controlPoint) return null;
 
   return (
-    <>
-    {/* Dialog is hidden when camera is open to avoid focus trap interference */}
-    <Dialog open={isOpen && !dialogHiddenForCamera} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl flex items-center gap-2">
@@ -293,58 +267,14 @@ export function ReceptionControlForm({ controlPoint, isOpen, onClose, onSubmit }
             </div>
           </div>
 
-          {/* Photo capture - moved here after product info */}
+          {/* Photo capture using PhotoCapture component */}
           {user && (
-            <div className="space-y-4">
-              {/* Already uploaded photos */}
-              {photos.length > 0 && (
-                <div className="space-y-2">
-                  <p className="text-xs text-muted-foreground font-medium">Photos enregistrées</p>
-                  <div className="grid grid-cols-3 gap-2">
-                    {photos.map((photo, index) => (
-                      <div 
-                        key={index}
-                        className="relative aspect-square rounded-lg overflow-hidden bg-muted group"
-                      >
-                        <img
-                          src={photo}
-                          alt={`Photo ${index + 1}`}
-                          className="w-full h-full object-cover"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setPhotos(photos.filter((_, i) => i !== index))}
-                          className="absolute top-1 right-1 p-1 bg-destructive text-destructive-foreground rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Upload buttons */}
-              {photos.length < 5 && (
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="flex-1 touch-target"
-                    onClick={handleOpenCamera}
-                    disabled={uploading}
-                  >
-                    <Camera className="mr-2 h-5 w-5" />
-                    Appareil photo
-                  </Button>
-                </div>
-              )}
-
-              {/* Photo count */}
-              <p className="text-xs text-muted-foreground text-center">
-                {photos.length} / 5 photos enregistrées
-              </p>
-            </div>
+            <PhotoCapture
+              photos={photos}
+              onPhotosChange={handlePhotosChange}
+              maxPhotos={5}
+              userId={user.id}
+            />
           )}
 
           <Separator />
@@ -600,17 +530,5 @@ export function ReceptionControlForm({ controlPoint, isOpen, onClose, onSubmit }
         </form>
       </DialogContent>
     </Dialog>
-
-    {/* Fullscreen camera - rendered OUTSIDE Dialog, Dialog is hidden when camera is active */}
-    {showCamera && user && (
-      <CameraCapture
-        onPhotosConfirmed={handlePhotosConfirmed}
-        onClose={handleCloseCamera}
-        userId={user.id}
-        maxPhotos={5}
-        existingPhotosCount={photos.length}
-      />
-    )}
-  </>
   );
 }

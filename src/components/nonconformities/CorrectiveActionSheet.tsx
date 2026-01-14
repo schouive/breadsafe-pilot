@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { 
@@ -64,12 +64,12 @@ export function CorrectiveActionSheet({
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
 
   // Reset form when nonConformity changes
-  useState(() => {
+  useEffect(() => {
     if (nonConformity) {
       setCorrectiveAction(nonConformity.corrective_action || '');
       setAssignedTo(nonConformity.assigned_to || '');
     }
-  });
+  }, [nonConformity]);
 
   if (!nonConformity) return null;
 

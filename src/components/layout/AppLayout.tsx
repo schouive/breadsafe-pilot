@@ -127,15 +127,13 @@ export function AppLayout({ children }: AppLayoutProps) {
                       : "text-foreground/70 hover:bg-accent hover:text-accent-foreground"
                   )}
                 >
+                  <item.icon className="h-5 w-5 flex-shrink-0" />
+                  <span className="flex-1">{item.name}</span>
                   {item.badgeKey === 'nc_count' && ncCount > 0 && (
-                    <Badge variant="destructive" className="h-5 w-5 flex-shrink-0 flex items-center justify-center p-0 text-xs">
+                    <Badge variant="destructive" className="ml-auto">
                       {ncCount}
                     </Badge>
                   )}
-                  {!(item.badgeKey === 'nc_count' && ncCount > 0) && (
-                    <item.icon className="h-5 w-5 flex-shrink-0" />
-                  )}
-                  <span className="flex-1">{item.name}</span>
                 </Link>
               );
             })}

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Search, Filter, Plus, ArrowRight } from 'lucide-react';
+import { Search, ArrowRight } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -10,76 +10,13 @@ import {
   SelectTrigger, 
   SelectValue 
 } from '@/components/ui/select';
-import { NonConformity, CONTROL_POINTS } from '@/types/haccp';
+import { CONTROL_POINTS } from '@/types/haccp';
 import { formatDistanceToNow, format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
-
-// Mock data - updated to use valid ControlPointType values
-const mockNonConformities: NonConformity[] = [
-  {
-    id: 'nc1',
-    controlRecordId: 'ctrl5',
-    controlPointCode: 'CP_RECEPTION',
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2),
-    description: 'Température à réception: 8.5°C - Dépassement limite acceptable pour le lot de beurre',
-    severity: 'major',
-    status: 'open',
-    assignedTo: 'DG',
-    photos: [],
-  },
-  {
-    id: 'nc2',
-    controlRecordId: 'ctrl6',
-    controlPointCode: 'CP_RECEPTION',
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 5),
-    description: 'Nouvelle composition margarine non conforme à la référence - Présence lait non déclarée',
-    severity: 'critical',
-    status: 'in_progress',
-    assignedTo: 'Assistant Qualité',
-    correctiveAction: 'Contact fournisseur en cours pour obtenir la nouvelle fiche technique',
-    photos: [],
-  },
-  {
-    id: 'nc3',
-    controlRecordId: 'ctrl7',
-    controlPointCode: 'CP5_CORPS_ETRANGER',
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24),
-    description: 'Détection corps étranger métallique lors du contrôle final - Lot LT2025-0703 éjecté',
-    severity: 'critical',
-    status: 'open',
-    assignedTo: 'DG',
-    photos: [],
-  },
-  {
-    id: 'nc4',
-    controlRecordId: 'ctrl8',
-    controlPointCode: 'CP_RECEPTION',
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 48),
-    description: 'Emballage percé sur 3 sacs de farine - Lot refusé',
-    severity: 'minor',
-    status: 'resolved',
-    assignedTo: 'Assistant Qualité',
-    correctiveAction: 'Marchandise refusée, fournisseur averti',
-    correctiveActionDate: new Date(Date.now() - 1000 * 60 * 60 * 24),
-    photos: [],
-  },
-  {
-    id: 'nc5',
-    controlRecordId: 'ctrl9',
-    controlPointCode: 'CP_STOCKAGE',
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 72),
-    description: 'Température chambre froide: -10°C pendant 6h suite à panne compresseur',
-    severity: 'major',
-    status: 'validated',
-    assignedTo: 'DG',
-    correctiveAction: 'Réparation compresseur, stock vérifié et partiellement détruit',
-    correctiveActionDate: new Date(Date.now() - 1000 * 60 * 60 * 60),
-    validatedBy: 'Direction Générale',
-    validatedAt: new Date(Date.now() - 1000 * 60 * 60 * 48),
-    photos: [],
-  },
-];
+import { useNonConformities, NonConformityFromDB } from '@/hooks/useNonConformities';
+import { CorrectiveActionSheet } from '@/components/nonconformities/CorrectiveActionSheet';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const severityConfig = {
   minor: { label: 'Mineur', class: 'bg-warning/10 text-warning border-warning/30' },
@@ -97,16 +34,31 @@ const statusConfig = {
 export default function NonConformities() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [selectedNC, setSelectedNC] = useState<NonConformityFromDB | null>(null);
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
 
-  const filteredNCs = mockNonConformities.filter(nc => {
+  const { data: nonConformities, isLoading } = useNonConformities(
+    statusFilter === 'all' ? 'all' : statusFilter as any
+  );
+
+  const filteredNCs = nonConformities?.filter(nc => {
     const matchesSearch = nc.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      nc.controlPointCode.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || nc.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+      nc.control_point_code.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesSearch;
+  }) || [];
 
-  const openCount = mockNonConformities.filter(nc => nc.status === 'open').length;
-  const inProgressCount = mockNonConformities.filter(nc => nc.status === 'in_progress').length;
+  const openCount = nonConformities?.filter(nc => nc.status === 'open').length || 0;
+  const inProgressCount = nonConformities?.filter(nc => nc.status === 'in_progress').length || 0;
+
+  const handleTraiter = (nc: NonConformityFromDB) => {
+    setSelectedNC(nc);
+    setIsSheetOpen(true);
+  };
+
+  const handleCloseSheet = () => {
+    setIsSheetOpen(false);
+    setSelectedNC(null);
+  };
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -153,80 +105,115 @@ export default function NonConformities() {
         </Select>
       </div>
 
-      {/* NC List */}
-      <div className="space-y-4">
-        {filteredNCs.map((nc) => {
-          const cp = CONTROL_POINTS.find(c => c.code === nc.controlPointCode);
-          const severity = severityConfig[nc.severity];
-          const status = statusConfig[nc.status];
-          
-          return (
-            <div 
-              key={nc.id} 
-              className="bg-card rounded-xl border border-border p-5 card-interactive"
-            >
-              <div className="flex flex-col sm:flex-row sm:items-start gap-4">
-                <div className="flex-1 space-y-3">
-                  {/* Header */}
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Badge className={cn("font-medium", severity.class)}>
-                      {severity.label}
-                    </Badge>
-                    <Badge className={status.class}>
-                      {status.label}
-                    </Badge>
-                    <span className="text-sm text-muted-foreground">
-                      {cp?.name || nc.controlPointCode}
-                    </span>
-                  </div>
-
-                  {/* Description */}
-                  <p className="text-foreground">{nc.description}</p>
-
-                  {/* Corrective action if exists */}
-                  {nc.correctiveAction && (
-                    <div className="bg-muted/50 rounded-lg p-3">
-                      <p className="text-sm font-medium text-foreground">Action corrective:</p>
-                      <p className="text-sm text-muted-foreground mt-1">{nc.correctiveAction}</p>
-                    </div>
-                  )}
-
-                  {/* Meta info */}
-                  <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-                    <span>
-                      Créée {formatDistanceToNow(nc.createdAt, { addSuffix: true, locale: fr })}
-                    </span>
-                    <span>•</span>
-                    <span>Assignée à: {nc.assignedTo}</span>
-                    {nc.validatedAt && (
-                      <>
-                        <span>•</span>
-                        <span className="text-success">
-                          Validée le {format(nc.validatedAt, 'dd/MM/yyyy', { locale: fr })}
-                        </span>
-                      </>
-                    )}
-                  </div>
+      {/* Loading State */}
+      {isLoading && (
+        <div className="space-y-4">
+          {[1, 2, 3].map(i => (
+            <div key={i} className="bg-card rounded-xl border border-border p-5">
+              <div className="space-y-3">
+                <div className="flex gap-2">
+                  <Skeleton className="h-6 w-20" />
+                  <Skeleton className="h-6 w-24" />
                 </div>
-
-                {/* Action button */}
-                {(nc.status === 'open' || nc.status === 'in_progress') && (
-                  <Button variant="outline" className="flex-shrink-0 touch-target">
-                    Traiter
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                )}
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-2/3" />
               </div>
             </div>
-          );
-        })}
-      </div>
+          ))}
+        </div>
+      )}
 
-      {filteredNCs.length === 0 && (
+      {/* NC List */}
+      {!isLoading && (
+        <div className="space-y-4">
+          {filteredNCs.map((nc) => {
+            const cp = CONTROL_POINTS.find(c => c.code === nc.control_point_code);
+            const severity = severityConfig[nc.severity];
+            const status = statusConfig[nc.status];
+            
+            return (
+              <div 
+                key={nc.id} 
+                className="bg-card rounded-xl border border-border p-5 card-interactive"
+              >
+                <div className="flex flex-col sm:flex-row sm:items-start gap-4">
+                  <div className="flex-1 space-y-3">
+                    {/* Header */}
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge className={cn("font-medium", severity.class)}>
+                        {severity.label}
+                      </Badge>
+                      <Badge className={status.class}>
+                        {status.label}
+                      </Badge>
+                      <span className="text-sm text-muted-foreground">
+                        {cp?.name || nc.control_point_code}
+                      </span>
+                    </div>
+
+                    {/* Description */}
+                    <p className="text-foreground">{nc.description}</p>
+
+                    {/* Corrective action if exists */}
+                    {nc.corrective_action && (
+                      <div className="bg-muted/50 rounded-lg p-3">
+                        <p className="text-sm font-medium text-foreground">Action corrective:</p>
+                        <p className="text-sm text-muted-foreground mt-1">{nc.corrective_action}</p>
+                      </div>
+                    )}
+
+                    {/* Meta info */}
+                    <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+                      <span>
+                        Créée {formatDistanceToNow(new Date(nc.created_at), { addSuffix: true, locale: fr })}
+                      </span>
+                      {nc.assigned_to && (
+                        <>
+                          <span>•</span>
+                          <span>Assignée à: {nc.assigned_to}</span>
+                        </>
+                      )}
+                      {nc.validated_at && (
+                        <>
+                          <span>•</span>
+                          <span className="text-success">
+                            Validée le {format(new Date(nc.validated_at), 'dd/MM/yyyy', { locale: fr })}
+                          </span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Action button */}
+                  {(nc.status === 'open' || nc.status === 'in_progress' || nc.status === 'resolved') && (
+                    <Button 
+                      variant="outline" 
+                      className="flex-shrink-0 touch-target"
+                      onClick={() => handleTraiter(nc)}
+                    >
+                      {nc.status === 'resolved' ? 'Valider' : 'Traiter'}
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {!isLoading && filteredNCs.length === 0 && (
         <div className="text-center py-12 bg-card rounded-xl border border-border">
           <p className="text-muted-foreground">Aucune non-conformité trouvée</p>
         </div>
       )}
+
+      {/* Corrective Action Sheet */}
+      <CorrectiveActionSheet
+        nonConformity={selectedNC}
+        isOpen={isSheetOpen}
+        onClose={handleCloseSheet}
+      />
     </div>
   );
 }

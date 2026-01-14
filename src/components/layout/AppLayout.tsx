@@ -203,36 +203,10 @@ export function AppLayout({ children }: AppLayoutProps) {
           <div className="flex-1 lg:flex-none" />
 
           <div className="flex items-center gap-2">
-            {/* Quick navigation dropdown for mobile */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="relative touch-target">
-                  <Bell className="h-5 w-5" />
-                  {ncCount > 0 && (
-                    <span className="absolute -top-1 -right-1 h-5 w-5 bg-destructive rounded-full flex items-center justify-center text-[10px] font-bold text-destructive-foreground">
-                      {ncCount}
-                    </span>
-                  )}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel>Alertes</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link to="/non-conformities" className="flex items-center justify-between w-full">
-                    <div className="flex items-center">
-                      <AlertTriangle className="mr-2 h-4 w-4 text-destructive" />
-                      Non-conformités
-                    </div>
-                    {ncCount > 0 && (
-                      <Badge variant="destructive" className="ml-2">
-                        {ncCount}
-                      </Badge>
-                    )}
-                  </Link>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <Button variant="ghost" size="icon" className="relative touch-target">
+              <Bell className="h-5 w-5" />
+              <span className="absolute top-2 right-2 h-2 w-2 bg-destructive rounded-full" />
+            </Button>
           </div>
         </header>
 

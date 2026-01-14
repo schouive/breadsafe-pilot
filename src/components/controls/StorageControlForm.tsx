@@ -24,6 +24,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { TemperatureInput } from '@/components/ui/TemperatureInput';
+import { CorrectiveActionModal } from './CorrectiveActionModal';
 
 interface StorageControlFormProps {
   controlPoint: ControlPoint | null;
@@ -39,11 +40,13 @@ export interface StorageFormData {
   temperature: number;
   isConforme: boolean;
   notes?: string;
+  correctiveAction?: string;
 }
 
 interface RoomTemperatureInput {
   temperature: string;
   notes: string;
+  correctiveAction?: string;
 }
 
 export function StorageControlForm({ controlPoint, isOpen, onClose, onSubmit }: StorageControlFormProps) {
@@ -53,13 +56,21 @@ export function StorageControlForm({ controlPoint, isOpen, onClose, onSubmit }: 
   
   const [roomInputs, setRoomInputs] = useState<Record<string, RoomTemperatureInput>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // State for corrective action modal
+  const [correctiveActionModal, setCorrectiveActionModal] = useState<{
+    isOpen: boolean;
+    roomId: string;
+    roomName: string;
+    temperature: number;
+  } | null>(null);
 
   // Initialize room inputs when cold rooms are loaded
   useEffect(() => {
     if (coldRooms) {
       const initialInputs: Record<string, RoomTemperatureInput> = {};
       coldRooms.forEach(room => {
-        initialInputs[room.id] = { temperature: '', notes: '' };
+        initialInputs[room.id] = { temperature: '', notes: '', correctiveAction: undefined };
       });
       setRoomInputs(initialInputs);
     }
@@ -93,20 +104,57 @@ export function StorageControlForm({ controlPoint, isOpen, onClose, onSubmit }: 
   };
 
   const handleTemperatureChange = (roomId: string, value: string) => {
+    const room = coldRooms?.find(r => r.id === roomId);
+    
     setRoomInputs(prev => ({
       ...prev,
-      [roomId]: { ...prev[roomId], temperature: value }
+      [roomId]: { ...prev[roomId], temperature: value, correctiveAction: undefined }
     }));
+    
+    // Check if we need to show corrective action modal
+    if (room && value && value.trim() !== '') {
+      const temp = parseFloat(value);
+      if (!isNaN(temp)) {
+        const { status } = checkConformity(temp, room);
+        if (status === 'nonconforme') {
+          // Show corrective action modal
+          setCorrectiveActionModal({
+            isOpen: true,
+            roomId: room.id,
+            roomName: room.name,
+            temperature: temp,
+          });
+        }
+      }
+    }
+  };
+  
+  const handleCorrectiveActionConfirm = (actionId: string, actionLabel: string) => {
+    if (correctiveActionModal) {
+      setRoomInputs(prev => ({
+        ...prev,
+        [correctiveActionModal.roomId]: { 
+          ...prev[correctiveActionModal.roomId], 
+          correctiveAction: actionLabel 
+        }
+      }));
+      setCorrectiveActionModal(null);
+    }
+  };
+  
+  const handleCorrectiveActionClose = () => {
+    setCorrectiveActionModal(null);
   };
 
   const resetForm = () => {
     if (coldRooms) {
       const initialInputs: Record<string, RoomTemperatureInput> = {};
       coldRooms.forEach(room => {
-        initialInputs[room.id] = { temperature: '', notes: '' };
+        initialInputs[room.id] = { temperature: '', notes: '', correctiveAction: undefined };
       });
       setRoomInputs(initialInputs);
     }
+    setCorrectiveActionModal(null);
   };
 
   if (!controlPoint) return null;
@@ -143,12 +191,17 @@ export function StorageControlForm({ controlPoint, isOpen, onClose, onSubmit }: 
 
         const { isConforme, status } = checkConformity(tempValue, room);
 
+        // Include corrective action in notes if present
+        const notesWithAction = input.correctiveAction 
+          ? `${input.notes ? input.notes + ' | ' : ''}Action corrective: ${input.correctiveAction}`
+          : (input.notes || undefined);
+
         await recordTemperature.mutateAsync({
           cold_room_id: room.id,
           operator_id: user.id,
           temperature: tempValue,
           is_conforme: isConforme,
-          notes: input.notes || undefined,
+          notes: notesWithAction,
         });
 
         onSubmit({
@@ -157,7 +210,8 @@ export function StorageControlForm({ controlPoint, isOpen, onClose, onSubmit }: 
           coldRoomName: room.name,
           temperature: tempValue,
           isConforme,
-          notes: input.notes || undefined,
+          notes: notesWithAction,
+          correctiveAction: input.correctiveAction,
         });
       }
 
@@ -172,6 +226,7 @@ export function StorageControlForm({ controlPoint, isOpen, onClose, onSubmit }: 
   };
 
   return (
+    <>
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-lg max-h-[95vh] flex flex-col p-0 gap-0 overflow-hidden">
         <DialogHeader className="px-6 pt-6 pb-4 border-b">
@@ -286,5 +341,17 @@ export function StorageControlForm({ controlPoint, isOpen, onClose, onSubmit }: 
         </DialogFooter>
       </DialogContent>
     </Dialog>
+    
+    {/* Corrective Action Modal */}
+    {correctiveActionModal && (
+      <CorrectiveActionModal
+        isOpen={correctiveActionModal.isOpen}
+        onClose={handleCorrectiveActionClose}
+        onConfirm={handleCorrectiveActionConfirm}
+        roomName={correctiveActionModal.roomName}
+        temperature={correctiveActionModal.temperature}
+      />
+    )}
+    </>
   );
 }

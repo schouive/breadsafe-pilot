@@ -122,7 +122,7 @@ export function CorrectiveActionSheet({
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
+      <SheetContent className="w-full sm:max-w-lg overflow-y-auto" onOpenAutoFocus={(e) => e.preventDefault()}>
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
             <AlertTriangle className="h-5 w-5 text-destructive" />

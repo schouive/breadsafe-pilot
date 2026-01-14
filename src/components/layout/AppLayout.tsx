@@ -11,7 +11,8 @@ import {
   X,
   Bell,
   LogOut,
-  Thermometer
+  Thermometer,
+  LucideIcon
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -27,15 +28,23 @@ import {
 import logo from '@/assets/logo-breadshop.png';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
+import { useOpenNonConformities } from '@/hooks/useNonConformities';
 
 interface AppLayoutProps {
   children: React.ReactNode;
 }
 
-const navigation = [
+interface NavItem {
+  name: string;
+  href: string;
+  icon: LucideIcon;
+  badgeKey?: 'nc_count';
+}
+
+const navigation: NavItem[] = [
   { name: 'Tableau de bord', href: '/', icon: LayoutDashboard },
   { name: 'Contrôles', href: '/controls', icon: ClipboardCheck },
-  { name: 'Non-conformités', href: '/non-conformities', icon: AlertTriangle, badge: 3 },
+  { name: 'Non-conformités', href: '/non-conformities', icon: AlertTriangle, badgeKey: 'nc_count' },
   { name: 'Températures', href: '/storage-temperatures', icon: Thermometer },
   { name: 'Planning', href: '/planning', icon: Calendar },
   { name: 'Rapports', href: '/reports', icon: BarChart3 },
@@ -46,6 +55,9 @@ export function AppLayout({ children }: AppLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
   const { profile, roles, signOut } = useAuth();
+  const { data: openNCs } = useOpenNonConformities();
+  
+  const ncCount = openNCs?.length || 0;
 
   const getRoleLabel = () => {
     if (roles.includes('admin')) return 'Administrateur';
@@ -117,9 +129,9 @@ export function AppLayout({ children }: AppLayoutProps) {
                 >
                   <item.icon className="h-5 w-5 flex-shrink-0" />
                   <span className="flex-1">{item.name}</span>
-                  {item.badge && (
+                  {item.badgeKey === 'nc_count' && ncCount > 0 && (
                     <Badge variant="destructive" className="ml-auto">
-                      {item.badge}
+                      {ncCount}
                     </Badge>
                   )}
                 </Link>

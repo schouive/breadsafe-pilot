@@ -164,11 +164,21 @@ export default function NonConformities() {
                     {/* Description */}
                     <p className="text-foreground">{nc.description}</p>
 
-                    {/* Corrective action if exists */}
-                    {nc.corrective_action && (
-                      <div className="bg-muted/50 rounded-lg p-3">
-                        <p className="text-sm font-medium text-foreground">Action corrective:</p>
-                        <p className="text-sm text-muted-foreground mt-1">{nc.corrective_action}</p>
+                    {/* Correction and Action corrective if exists */}
+                    {(nc.corrective_action || nc.preventive_action) && (
+                      <div className="bg-muted/50 rounded-lg p-3 space-y-2">
+                        {nc.corrective_action && (
+                          <div>
+                            <p className="text-sm font-medium text-foreground">Correction:</p>
+                            <p className="text-sm text-muted-foreground mt-1">{nc.corrective_action}</p>
+                          </div>
+                        )}
+                        {nc.preventive_action && (
+                          <div>
+                            <p className="text-sm font-medium text-foreground">Action corrective:</p>
+                            <p className="text-sm text-muted-foreground mt-1">{nc.preventive_action}</p>
+                          </div>
+                        )}
                       </div>
                     )}
 

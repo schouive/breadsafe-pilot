@@ -75,25 +75,28 @@ export function NCAuditHistory({ nonConformityId }: NCAuditHistoryProps) {
             )}
 
             {/* Action details - displayed for all log types */}
-            {log.new_values && (
-              <div className="text-xs text-muted-foreground space-y-1">
-                {log.new_values.corrective_action && (
-                  <p className="line-clamp-2">
-                    <span className="font-medium">Correction:</span> {log.new_values.corrective_action as string}
-                  </p>
-                )}
-                {log.new_values.preventive_action && (
-                  <p className="line-clamp-2">
-                    <span className="font-medium">Action corrective:</span> {log.new_values.preventive_action as string}
-                  </p>
-                )}
-                {log.new_values.assigned_to && (
-                  <p>
-                    <span className="font-medium">Assigné à:</span> {log.new_values.assigned_to as string}
-                  </p>
-                )}
-              </div>
-            )}
+            {log.new_values && (() => {
+              console.log('NCAuditHistory log.new_values:', JSON.stringify(log.new_values));
+              return (
+                <div className="text-xs text-muted-foreground space-y-1">
+                  {typeof log.new_values.corrective_action === 'string' && log.new_values.corrective_action.trim() !== '' && (
+                    <p className="line-clamp-2">
+                      <span className="font-medium text-foreground">Correction:</span> {log.new_values.corrective_action}
+                    </p>
+                  )}
+                  {typeof log.new_values.preventive_action === 'string' && log.new_values.preventive_action.trim() !== '' && (
+                    <p className="line-clamp-2">
+                      <span className="font-medium text-foreground">Action corrective:</span> {log.new_values.preventive_action}
+                    </p>
+                  )}
+                  {typeof log.new_values.assigned_to === 'string' && log.new_values.assigned_to.trim() !== '' && (
+                    <p>
+                      <span className="font-medium text-foreground">Assigné à:</span> {log.new_values.assigned_to}
+                    </p>
+                  )}
+                </div>
+              );
+            })()}
           </div>
         </div>
       ))}

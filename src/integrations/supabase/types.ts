@@ -182,6 +182,7 @@ export type Database = {
           description: string
           id: string
           photos: string[] | null
+          preventive_action: string | null
           severity: Database["public"]["Enums"]["nc_severity"]
           status: Database["public"]["Enums"]["nc_status"]
           updated_at: string
@@ -198,6 +199,7 @@ export type Database = {
           description: string
           id?: string
           photos?: string[] | null
+          preventive_action?: string | null
           severity?: Database["public"]["Enums"]["nc_severity"]
           status?: Database["public"]["Enums"]["nc_status"]
           updated_at?: string
@@ -214,6 +216,7 @@ export type Database = {
           description?: string
           id?: string
           photos?: string[] | null
+          preventive_action?: string | null
           severity?: Database["public"]["Enums"]["nc_severity"]
           status?: Database["public"]["Enums"]["nc_status"]
           updated_at?: string

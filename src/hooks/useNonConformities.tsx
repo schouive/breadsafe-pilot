@@ -37,6 +37,7 @@ export interface NonConformityFromDB {
   status: NCStatus;
   assigned_to: string | null;
   corrective_action: string | null;
+  preventive_action: string | null;
   corrective_action_date: string | null;
   validated_by: string | null;
   validated_at: string | null;
@@ -136,6 +137,7 @@ export function useUpdateNonConformity() {
       id: string; 
       status?: NCStatus;
       corrective_action?: string;
+      preventive_action?: string;
       corrective_action_date?: string;
       assigned_to?: string;
       validated_by?: string;

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ControlPoint, ControlStatus } from '@/types/haccp';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -33,7 +33,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { format } from 'date-fns';
+import { format, startOfDay, addDays } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { TemperatureInput } from '@/components/ui/TemperatureInput';
 import { useAllRawMaterials } from '@/hooks/useSuppliers';
@@ -59,6 +59,26 @@ const statusOptions = [
   { value: 'nonconforme', label: 'Non-conforme', icon: XCircle, color: 'text-destructive', bgColor: 'bg-destructive/10 border-destructive/30' },
 ];
 
+// Calculate CP8 status based on DLC date
+const calculateCP8Status = (dlcDate: Date | undefined): ControlStatus => {
+  if (!dlcDate) return 'conforme';
+  
+  const today = startOfDay(new Date());
+  const dlc = startOfDay(dlcDate);
+  const todayPlus2 = addDays(today, 2);
+  
+  // DLC > today + 2 days → conforme
+  if (dlc > todayPlus2) {
+    return 'conforme';
+  }
+  // DLC between today and today + 2 days (inclusive) → acceptable
+  if (dlc >= today && dlc <= todayPlus2) {
+    return 'acceptable';
+  }
+  // DLC < today → nonconforme
+  return 'nonconforme';
+};
+
 export function ControlForm({ controlPoint, isOpen, onClose, onSubmit }: ControlFormProps) {
   const [status, setStatus] = useState<ControlStatus>('conforme');
   const [temperature, setTemperature] = useState('');
@@ -78,6 +98,14 @@ export function ControlForm({ controlPoint, isOpen, onClose, onSubmit }: Control
     controlPoint?.code.includes('STOCKAGE');
   
   const isCP8Control = controlPoint?.code === 'CP8_DLC_PERIMEE';
+
+  // Auto-calculate status when DLC date changes for CP8
+  useEffect(() => {
+    if (isCP8Control && dlcDate) {
+      const calculatedStatus = calculateCP8Status(dlcDate);
+      setStatus(calculatedStatus);
+    }
+  }, [dlcDate, isCP8Control]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

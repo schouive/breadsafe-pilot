@@ -13,6 +13,13 @@ import {
   DialogDescription,
   DialogFooter 
 } from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { 
   Thermometer, 
   Camera, 
@@ -24,6 +31,7 @@ import {
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { TemperatureInput } from '@/components/ui/TemperatureInput';
+import { useAllRawMaterials } from '@/hooks/useSuppliers';
 
 interface ControlFormProps {
   controlPoint: ControlPoint | null;
@@ -52,9 +60,17 @@ export function ControlForm({ controlPoint, isOpen, onClose, onSubmit }: Control
   const [lotNumber, setLotNumber] = useState('');
   const [supplier, setSupplier] = useState('');
   const [product, setProduct] = useState('');
+  const [selectedMaterialId, setSelectedMaterialId] = useState('');
+
+  const { data: allMaterials } = useAllRawMaterials();
+  
+  // Filter materials that require DLC check for CP8
+  const dlcMaterials = allMaterials?.filter(m => m.requires_dlc_check && m.is_active) || [];
 
   const isTemperatureControl = controlPoint?.code.includes('TEMPERATURE') || 
     controlPoint?.code.includes('STOCKAGE');
+  
+  const isCP8Control = controlPoint?.code === 'CP8_DLC_PERIMEE';
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,13 +80,18 @@ export function ControlForm({ controlPoint, isOpen, onClose, onSubmit }: Control
       return;
     }
 
+    // For CP8, get the product name from selected material
+    const productName = isCP8Control 
+      ? dlcMaterials.find(m => m.id === selectedMaterialId)?.name 
+      : product;
+
     onSubmit({
       status,
       value: isTemperatureControl ? parseFloat(temperature) : undefined,
       notes: notes || undefined,
       lotNumber: lotNumber || undefined,
-      supplier: supplier || undefined,
-      product: product || undefined,
+      supplier: isCP8Control ? undefined : (supplier || undefined),
+      product: productName || undefined,
     });
 
     // Reset form
@@ -80,6 +101,7 @@ export function ControlForm({ controlPoint, isOpen, onClose, onSubmit }: Control
     setLotNumber('');
     setSupplier('');
     setProduct('');
+    setSelectedMaterialId('');
     
     toast.success('Contrôle enregistré avec succès');
     onClose();
@@ -134,27 +156,51 @@ export function ControlForm({ controlPoint, isOpen, onClose, onSubmit }: Control
             </div>
           )}
 
-          {/* Product info */}
-          <div className="grid grid-cols-2 gap-4">
+          {/* Product info - different for CP8 */}
+          {isCP8Control ? (
             <div className="space-y-2">
-              <Label htmlFor="product">Produit</Label>
-              <Input
-                id="product"
-                placeholder="Ex: Beurre AOP"
-                value={product}
-                onChange={(e) => setProduct(e.target.value)}
-              />
+              <Label htmlFor="material">Matière première</Label>
+              <Select value={selectedMaterialId} onValueChange={setSelectedMaterialId}>
+                <SelectTrigger id="material">
+                  <SelectValue placeholder="Sélectionnez une matière première" />
+                </SelectTrigger>
+                <SelectContent>
+                  {dlcMaterials.length === 0 ? (
+                    <SelectItem value="none" disabled>
+                      Aucune matière première configurée pour le contrôle DLC
+                    </SelectItem>
+                  ) : (
+                    dlcMaterials.map(material => (
+                      <SelectItem key={material.id} value={material.id}>
+                        {material.name} {material.suppliers?.name && `(${material.suppliers.name})`}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="supplier">Fournisseur</Label>
-              <Input
-                id="supplier"
-                placeholder="Ex: Lactalis"
-                value={supplier}
-                onChange={(e) => setSupplier(e.target.value)}
-              />
+          ) : (
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="product">Produit</Label>
+                <Input
+                  id="product"
+                  placeholder="Ex: Beurre AOP"
+                  value={product}
+                  onChange={(e) => setProduct(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="supplier">Fournisseur</Label>
+                <Input
+                  id="supplier"
+                  placeholder="Ex: Lactalis"
+                  value={supplier}
+                  onChange={(e) => setSupplier(e.target.value)}
+                />
+              </div>
             </div>
-          </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="lot">N° de lot</Label>

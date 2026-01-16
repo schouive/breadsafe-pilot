@@ -88,6 +88,7 @@ export function ControlForm({ controlPoint, isOpen, onClose, onSubmit }: Control
   const [product, setProduct] = useState('');
   const [selectedMaterialId, setSelectedMaterialId] = useState('');
   const [dlcDate, setDlcDate] = useState<Date | undefined>(undefined);
+  const [dlcPopoverOpen, setDlcPopoverOpen] = useState(false);
 
   const { data: allMaterials } = useAllRawMaterials();
   
@@ -220,7 +221,7 @@ export function ControlForm({ controlPoint, isOpen, onClose, onSubmit }: Control
 
               <div className="space-y-2">
                 <Label>Date de péremption (DLC)</Label>
-                <Popover>
+                <Popover open={dlcPopoverOpen} onOpenChange={setDlcPopoverOpen}>
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
@@ -237,7 +238,10 @@ export function ControlForm({ controlPoint, isOpen, onClose, onSubmit }: Control
                     <Calendar
                       mode="single"
                       selected={dlcDate}
-                      onSelect={setDlcDate}
+                      onSelect={(date) => {
+                        setDlcDate(date);
+                        setDlcPopoverOpen(false);
+                      }}
                       initialFocus
                       className={cn("p-3 pointer-events-auto")}
                     />
@@ -278,33 +282,35 @@ export function ControlForm({ controlPoint, isOpen, onClose, onSubmit }: Control
             />
           </div>
 
-          {/* Status selection */}
-          <div className="space-y-3">
-            <Label>Résultat du contrôle</Label>
-            <RadioGroup value={status} onValueChange={(v) => setStatus(v as ControlStatus)}>
-              <div className="grid gap-3">
-                {statusOptions.map((option) => {
-                  const Icon = option.icon;
-                  const isSelected = status === option.value;
-                  return (
-                    <label
-                      key={option.value}
-                      className={cn(
-                        "flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all touch-target",
-                        isSelected ? option.bgColor : "border-border hover:border-muted-foreground/30"
-                      )}
-                    >
-                      <RadioGroupItem value={option.value} className="sr-only" />
-                      <Icon className={cn("h-6 w-6", option.color)} />
-                      <span className={cn("font-medium", isSelected && option.color)}>
-                        {option.label}
-                      </span>
-                    </label>
-                  );
-                })}
-              </div>
-            </RadioGroup>
-          </div>
+          {/* Status selection - hidden for CP8 since it's auto-calculated */}
+          {!isCP8Control && (
+            <div className="space-y-3">
+              <Label>Résultat du contrôle</Label>
+              <RadioGroup value={status} onValueChange={(v) => setStatus(v as ControlStatus)}>
+                <div className="grid gap-3">
+                  {statusOptions.map((option) => {
+                    const Icon = option.icon;
+                    const isSelected = status === option.value;
+                    return (
+                      <label
+                        key={option.value}
+                        className={cn(
+                          "flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all touch-target",
+                          isSelected ? option.bgColor : "border-border hover:border-muted-foreground/30"
+                        )}
+                      >
+                        <RadioGroupItem value={option.value} className="sr-only" />
+                        <Icon className={cn("h-6 w-6", option.color)} />
+                        <span className={cn("font-medium", isSelected && option.color)}>
+                          {option.label}
+                        </span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </RadioGroup>
+            </div>
+          )}
 
           {/* Notes */}
           <div className="space-y-2">

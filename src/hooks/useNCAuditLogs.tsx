@@ -97,6 +97,7 @@ export function getActionLabel(action: string): string {
     'status_change': 'Changement de statut',
     'corrective_action_added': 'Action corrective ajoutée',
     'corrective_action_updated': 'Action corrective modifiée',
+    'action_updated': 'Mise à jour des actions',
     'assigned': 'Assignation',
     'validated': 'Validation',
     'created': 'Création',

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Package, Plus, Edit2, X, Check, Thermometer, AlertTriangle } from 'lucide-react';
+import { Package, Plus, Edit2, X, Check, Thermometer, AlertTriangle, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -60,6 +60,7 @@ export function RawMaterialManagement() {
     category: '',
     unit: 'kg',
     requires_cold_storage: false,
+    requires_dlc_check: false,
     storage_temp_min: '',
     storage_temp_max: '',
     allergens: [] as string[],
@@ -72,6 +73,7 @@ export function RawMaterialManagement() {
       category: '',
       unit: 'kg',
       requires_cold_storage: false,
+      requires_dlc_check: false,
       storage_temp_min: '',
       storage_temp_max: '',
       allergens: [],
@@ -87,6 +89,7 @@ export function RawMaterialManagement() {
       category: formData.category || null,
       unit: formData.unit || null,
       requires_cold_storage: formData.requires_cold_storage,
+      requires_dlc_check: formData.requires_dlc_check,
       storage_temp_min: formData.storage_temp_min ? parseFloat(formData.storage_temp_min) : null,
       storage_temp_max: formData.storage_temp_max ? parseFloat(formData.storage_temp_max) : null,
       allergens: formData.allergens.length > 0 ? formData.allergens : null,
@@ -106,6 +109,7 @@ export function RawMaterialManagement() {
       category: editingMaterial.category,
       unit: editingMaterial.unit,
       requires_cold_storage: editingMaterial.requires_cold_storage,
+      requires_dlc_check: editingMaterial.requires_dlc_check,
       storage_temp_min: editingMaterial.storage_temp_min,
       storage_temp_max: editingMaterial.storage_temp_max,
       allergens: editingMaterial.allergens,
@@ -189,6 +193,9 @@ export function RawMaterialManagement() {
                         <p className="font-medium">{material.name}</p>
                         {material.requires_cold_storage && (
                           <Thermometer className="h-4 w-4 text-blue-500" />
+                        )}
+                        {material.requires_dlc_check && (
+                          <Clock className="h-4 w-4 text-orange-500" />
                         )}
                         {material.allergens && material.allergens.length > 0 && (
                           <AlertTriangle className="h-4 w-4 text-warning" />
@@ -349,6 +356,20 @@ export function RawMaterialManagement() {
               </div>
             )}
 
+            <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+              <div className="flex items-center gap-3">
+                <Clock className="h-5 w-5 text-orange-500" />
+                <div>
+                  <p className="font-medium">CP8 - Contrôle DLC</p>
+                  <p className="text-sm text-muted-foreground">Ce produit nécessite un contrôle quotidien des dates de péremption</p>
+                </div>
+              </div>
+              <Switch
+                checked={formData.requires_dlc_check}
+                onCheckedChange={(checked) => setFormData({ ...formData, requires_dlc_check: checked })}
+              />
+            </div>
+
             <div className="space-y-2">
               <Label>Allergènes</Label>
               <div className="flex flex-wrap gap-2 p-3 bg-muted/50 rounded-lg">
@@ -500,6 +521,20 @@ export function RawMaterialManagement() {
                   </div>
                 </div>
               )}
+
+              <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+                <div className="flex items-center gap-3">
+                  <Clock className="h-5 w-5 text-orange-500" />
+                  <div>
+                    <p className="font-medium">CP8 - Contrôle DLC</p>
+                    <p className="text-sm text-muted-foreground">Ce produit nécessite un contrôle quotidien des dates de péremption</p>
+                  </div>
+                </div>
+                <Switch
+                  checked={editingMaterial.requires_dlc_check}
+                  onCheckedChange={(checked) => setEditingMaterial({ ...editingMaterial, requires_dlc_check: checked })}
+                />
+              </div>
 
               <div className="space-y-2">
                 <Label>Allergènes</Label>

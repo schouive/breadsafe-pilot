@@ -19,6 +19,7 @@ export interface RawMaterial {
   category: string | null;
   unit: string | null;
   requires_cold_storage: boolean;
+  requires_dlc_check: boolean;
   storage_temp_min: number | null;
   storage_temp_max: number | null;
   allergens: string[] | null;

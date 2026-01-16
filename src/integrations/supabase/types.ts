@@ -269,6 +269,7 @@ export type Database = {
           is_active: boolean
           name: string
           requires_cold_storage: boolean
+          requires_dlc_check: boolean
           storage_temp_max: number | null
           storage_temp_min: number | null
           supplier_id: string
@@ -283,6 +284,7 @@ export type Database = {
           is_active?: boolean
           name: string
           requires_cold_storage?: boolean
+          requires_dlc_check?: boolean
           storage_temp_max?: number | null
           storage_temp_min?: number | null
           supplier_id: string
@@ -297,6 +299,7 @@ export type Database = {
           is_active?: boolean
           name?: string
           requires_cold_storage?: boolean
+          requires_dlc_check?: boolean
           storage_temp_max?: number | null
           storage_temp_min?: number | null
           supplier_id?: string

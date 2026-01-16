@@ -410,10 +410,13 @@ export function CorrectiveActionSheet({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="correctiveAction" className="flex items-center gap-2">
-                <FileText className="h-4 w-4" />
-                Action corrective
-              </Label>
+              <div className="space-y-1">
+                <Label htmlFor="correctiveAction" className="flex items-center gap-2">
+                  <FileText className="h-4 w-4" />
+                  Correction
+                </Label>
+                <p className="text-sm text-muted-foreground">Action menée pour revenir à la conformité</p>
+              </div>
               <Textarea
                 id="correctiveAction"
                 placeholder="Décrivez l'action corrective mise en place..."

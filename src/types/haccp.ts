@@ -183,7 +183,7 @@ export const CONTROL_POINTS: ControlPoint[] = [
   {
     id: 'cp8',
     code: 'CP8_DLC_PERIMEE',
-    name: 'CP8 - DLC Périmée',
+    name: 'CP8 - Date de Péremption des produits réfrigérés',
     description: 'Vérification état périmé des matières premières',
     dangerType: 'Utilisation produit à DLC périmée',
     conformeCriteria: 'Non périmé le dernier jour prévisible d\'utilisation',

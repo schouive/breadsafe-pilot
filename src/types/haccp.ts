@@ -107,7 +107,7 @@ export const CONTROL_POINTS: ControlPoint[] = [
   {
     id: 'cp-reception',
     code: 'CP_RECEPTION',
-    name: 'CP1 - CP4 Contrôle Réception',
+    name: 'CP1-CP4 - Contrôle Réception',
     description: 'Contrôle complet à réception: température, intégrité, DLC et allergènes',
     dangerType: 'Microorganismes pathogènes, contamination, allergènes',
     conformeCriteria: 'Tous les critères respectés: température, emballage, DLC, composition',

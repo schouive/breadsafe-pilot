@@ -74,8 +74,8 @@ export function NCAuditHistory({ nonConformityId }: NCAuditHistoryProps) {
               </div>
             )}
 
-            {/* Other details */}
-            {log.new_values && log.action !== 'status_change' && (
+            {/* Action details - displayed for all log types */}
+            {log.new_values && (
               <div className="text-xs text-muted-foreground space-y-1">
                 {log.new_values.corrective_action && (
                   <p className="line-clamp-2">

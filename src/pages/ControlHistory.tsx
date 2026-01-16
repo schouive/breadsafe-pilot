@@ -92,6 +92,9 @@ export default function ControlHistory() {
     status: ControlStatus;
     value?: number;
     notes?: string;
+    lotNumber?: string;
+    supplier?: string;
+    product?: string;
   }) => {
     if (!user || !controlPoint) return;
 
@@ -101,6 +104,9 @@ export default function ControlHistory() {
       status: data.status,
       temperature: data.value,
       notes: data.notes,
+      lot_number: data.lotNumber,
+      supplier: data.supplier,
+      product: data.product,
     });
   };
 

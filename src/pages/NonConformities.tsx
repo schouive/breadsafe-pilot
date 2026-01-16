@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, ArrowRight } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -59,6 +59,16 @@ export default function NonConformities() {
     setIsSheetOpen(false);
     setSelectedNC(null);
   };
+
+  // Update selectedNC when data changes (after mutation)
+  useEffect(() => {
+    if (selectedNC && nonConformities) {
+      const updatedNC = nonConformities.find(nc => nc.id === selectedNC.id);
+      if (updatedNC && JSON.stringify(updatedNC) !== JSON.stringify(selectedNC)) {
+        setSelectedNC(updatedNC);
+      }
+    }
+  }, [nonConformities, selectedNC]);
 
   return (
     <div className="space-y-6 animate-fade-in">

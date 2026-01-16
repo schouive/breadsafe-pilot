@@ -123,6 +123,7 @@ export function useCreateControlRecord() {
       lot_number?: string;
       supplier?: string;
       product?: string;
+      dlc_date?: string;
       corps_etranger_detecte?: boolean;
     }) => {
       const { error } = await supabase

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Calendar, User, CheckCircle, XCircle, AlertTriangle, Thermometer, Snowflake, Camera, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Plus, Calendar, User, CheckCircle, XCircle, AlertTriangle, Thermometer, Snowflake, Camera, ChevronRight, Clock, Package } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -54,6 +54,7 @@ export default function ControlHistory() {
   const controlPoint = CONTROL_POINTS.find(cp => cp.code === code);
   const isStorageControl = code === 'CP_STOCKAGE';
   const isProductionControl = code === 'CP_PRODUCTION';
+  const isCP8Control = code === 'CP8_DLC_PERIMEE';
   
   // Fetch control records for non-storage controls
   const { data: records, isLoading } = useControlRecordsByCode(code || '');
@@ -278,6 +279,74 @@ export default function ControlHistory() {
                           </span>
                         </div>
                       )}
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="text-center py-12 bg-muted/30 rounded-xl border border-dashed">
+              <p className="text-muted-foreground">Aucun contrôle enregistré</p>
+              <Button onClick={handleNewControl} variant="outline" className="mt-4 gap-2">
+                <Plus className="h-4 w-4" />
+                Effectuer le premier contrôle
+              </Button>
+            </div>
+          )
+        ) : isCP8Control ? (
+          // CP8 DLC control records display with product details
+          records && records.length > 0 ? (
+            <div className="grid gap-3">
+              {records.map((record) => {
+                const status = statusConfig[record.status as keyof typeof statusConfig] || statusConfig.pending;
+                const StatusIcon = status.icon;
+                
+                return (
+                  <Card 
+                    key={record.id} 
+                    onClick={() => setSelectedRecord(record)}
+                    className={cn("p-4 border cursor-pointer hover:shadow-md transition-shadow", status.class)}
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex items-start gap-3">
+                        <StatusIcon className="h-5 w-5 mt-0.5 shrink-0" />
+                        <div className="space-y-1.5">
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className={status.class}>
+                              {status.label}
+                            </Badge>
+                          </div>
+                          {/* Product details for CP8 */}
+                          {record.product && (
+                            <div className="flex items-center gap-2">
+                              <Package className="h-4 w-4 text-muted-foreground" />
+                              <span className="font-medium text-foreground">{record.product}</span>
+                            </div>
+                          )}
+                          {record.lot_number && (
+                            <p className="text-sm text-muted-foreground">
+                              N° de lot: {record.lot_number}
+                            </p>
+                          )}
+                          {record.notes && (
+                            <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                              {record.notes}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="text-right text-sm text-muted-foreground shrink-0">
+                          <div className="flex items-center gap-1">
+                            <Calendar className="h-3.5 w-3.5" />
+                            {format(new Date(record.timestamp), 'dd MMM yyyy', { locale: fr })}
+                          </div>
+                          <div className="mt-0.5">
+                            {format(new Date(record.timestamp), 'HH:mm', { locale: fr })}
+                          </div>
+                        </div>
+                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                      </div>
                     </div>
                   </Card>
                 );

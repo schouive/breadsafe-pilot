@@ -59,6 +59,7 @@ export function CorrectiveActionSheet({
   const createAuditLog = useCreateNCAuditLog();
   
   const [correctiveAction, setCorrectiveAction] = useState('');
+  const [preventiveAction, setPreventiveAction] = useState('');
   const [assignedTo, setAssignedTo] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
@@ -67,6 +68,7 @@ export function CorrectiveActionSheet({
   useEffect(() => {
     if (nonConformity) {
       setCorrectiveAction(nonConformity.corrective_action || '');
+      setPreventiveAction(nonConformity.preventive_action || '');
       setAssignedTo(nonConformity.assigned_to || '');
     }
   }, [nonConformity]);
@@ -85,6 +87,7 @@ export function CorrectiveActionSheet({
         id: nonConformity.id,
         status: 'in_progress',
         corrective_action: correctiveAction,
+        preventive_action: preventiveAction || null,
         assigned_to: assignedTo || user?.email || 'Non assigné',
       });
       
@@ -96,6 +99,7 @@ export function CorrectiveActionSheet({
         new_values: { 
           status: 'in_progress',
           corrective_action: correctiveAction,
+          preventive_action: preventiveAction || null,
           assigned_to: assignedTo || user?.email || 'Non assigné',
         },
       });
@@ -114,6 +118,7 @@ export function CorrectiveActionSheet({
       await updateNC.mutateAsync({
         id: nonConformity.id,
         corrective_action: correctiveAction,
+        preventive_action: preventiveAction || null,
         assigned_to: assignedTo || user?.email || 'Non assigné',
       });
       
@@ -123,10 +128,12 @@ export function CorrectiveActionSheet({
         action: 'action_updated',
         old_values: { 
           corrective_action: nonConformity.corrective_action,
+          preventive_action: nonConformity.preventive_action,
           assigned_to: nonConformity.assigned_to,
         },
         new_values: { 
           corrective_action: correctiveAction,
+          preventive_action: preventiveAction || null,
           assigned_to: assignedTo || user?.email || 'Non assigné',
         },
       });
@@ -146,6 +153,7 @@ export function CorrectiveActionSheet({
         id: nonConformity.id,
         status: 'resolved',
         corrective_action: correctiveAction,
+        preventive_action: preventiveAction || null,
         corrective_action_date: new Date().toISOString(),
         assigned_to: assignedTo || user?.email || 'Non assigné',
       });
@@ -158,6 +166,7 @@ export function CorrectiveActionSheet({
         new_values: { 
           status: 'resolved',
           corrective_action: correctiveAction,
+          preventive_action: preventiveAction || null,
           corrective_action_date: new Date().toISOString(),
         },
       });
@@ -419,10 +428,28 @@ export function CorrectiveActionSheet({
               </div>
               <Textarea
                 id="correctiveAction"
-                placeholder="Décrivez l'action corrective mise en place..."
+                placeholder="Décrivez la correction mise en place..."
                 value={correctiveAction}
                 onChange={(e) => setCorrectiveAction(e.target.value)}
-                rows={4}
+                rows={3}
+                autoFocus={false}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <div className="space-y-1">
+                <Label htmlFor="preventiveAction" className="flex items-center gap-2">
+                  <FileText className="h-4 w-4" />
+                  Action corrective
+                </Label>
+                <p className="text-sm text-muted-foreground">Action menée pour éviter la récidive de la non-conformité</p>
+              </div>
+              <Textarea
+                id="preventiveAction"
+                placeholder="Décrivez l'action préventive mise en place..."
+                value={preventiveAction}
+                onChange={(e) => setPreventiveAction(e.target.value)}
+                rows={3}
                 autoFocus={false}
               />
             </div>

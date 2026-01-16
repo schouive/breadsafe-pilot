@@ -79,7 +79,12 @@ export function NCAuditHistory({ nonConformityId }: NCAuditHistoryProps) {
               <div className="text-xs text-muted-foreground space-y-1">
                 {log.new_values.corrective_action && (
                   <p className="line-clamp-2">
-                    <span className="font-medium">Action:</span> {log.new_values.corrective_action as string}
+                    <span className="font-medium">Correction:</span> {log.new_values.corrective_action as string}
+                  </p>
+                )}
+                {log.new_values.preventive_action && (
+                  <p className="line-clamp-2">
+                    <span className="font-medium">Action corrective:</span> {log.new_values.preventive_action as string}
                   </p>
                 )}
                 {log.new_values.assigned_to && (

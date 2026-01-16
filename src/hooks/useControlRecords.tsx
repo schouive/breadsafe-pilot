@@ -120,6 +120,9 @@ export function useCreateControlRecord() {
       status: ControlStatus;
       temperature?: number;
       notes?: string;
+      lot_number?: string;
+      supplier?: string;
+      product?: string;
       corps_etranger_detecte?: boolean;
     }) => {
       const { error } = await supabase

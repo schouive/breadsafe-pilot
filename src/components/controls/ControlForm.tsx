@@ -5,6 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { 
   Dialog, 
   DialogContent, 
@@ -26,10 +28,13 @@ import {
   CheckCircle2, 
   AlertCircle, 
   XCircle,
-  Info
+  Info,
+  CalendarIcon
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
 import { TemperatureInput } from '@/components/ui/TemperatureInput';
 import { useAllRawMaterials } from '@/hooks/useSuppliers';
 
@@ -44,6 +49,7 @@ interface ControlFormProps {
     lotNumber?: string;
     supplier?: string;
     product?: string;
+    dlcDate?: string;
   }) => void;
 }
 
@@ -61,6 +67,7 @@ export function ControlForm({ controlPoint, isOpen, onClose, onSubmit }: Control
   const [supplier, setSupplier] = useState('');
   const [product, setProduct] = useState('');
   const [selectedMaterialId, setSelectedMaterialId] = useState('');
+  const [dlcDate, setDlcDate] = useState<Date | undefined>(undefined);
 
   const { data: allMaterials } = useAllRawMaterials();
   
@@ -92,6 +99,7 @@ export function ControlForm({ controlPoint, isOpen, onClose, onSubmit }: Control
       lotNumber: lotNumber || undefined,
       supplier: isCP8Control ? undefined : (supplier || undefined),
       product: productName || undefined,
+      dlcDate: isCP8Control && dlcDate ? format(dlcDate, 'yyyy-MM-dd') : undefined,
     });
 
     // Reset form
@@ -102,6 +110,7 @@ export function ControlForm({ controlPoint, isOpen, onClose, onSubmit }: Control
     setSupplier('');
     setProduct('');
     setSelectedMaterialId('');
+    setDlcDate(undefined);
     
     toast.success('Contrôle enregistré avec succès');
     onClose();
@@ -158,26 +167,55 @@ export function ControlForm({ controlPoint, isOpen, onClose, onSubmit }: Control
 
           {/* Product info - different for CP8 */}
           {isCP8Control ? (
-            <div className="space-y-2">
-              <Label htmlFor="material">Matière première</Label>
-              <Select value={selectedMaterialId} onValueChange={setSelectedMaterialId}>
-                <SelectTrigger id="material">
-                  <SelectValue placeholder="Sélectionnez une matière première" />
-                </SelectTrigger>
-                <SelectContent>
-                  {dlcMaterials.length === 0 ? (
-                    <SelectItem value="none" disabled>
-                      Aucune matière première configurée pour le contrôle DLC
-                    </SelectItem>
-                  ) : (
-                    dlcMaterials.map(material => (
-                      <SelectItem key={material.id} value={material.id}>
-                        {material.name} {material.suppliers?.name && `(${material.suppliers.name})`}
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="material">Matière première</Label>
+                <Select value={selectedMaterialId} onValueChange={setSelectedMaterialId}>
+                  <SelectTrigger id="material">
+                    <SelectValue placeholder="Sélectionnez une matière première" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {dlcMaterials.length === 0 ? (
+                      <SelectItem value="none" disabled>
+                        Aucune matière première configurée pour le contrôle DLC
                       </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
+                    ) : (
+                      dlcMaterials.map(material => (
+                        <SelectItem key={material.id} value={material.id}>
+                          {material.name} {material.suppliers?.name && `(${material.suppliers.name})`}
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Date de péremption (DLC)</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !dlcDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {dlcDate ? format(dlcDate, 'dd MMMM yyyy', { locale: fr }) : "Sélectionnez une date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={dlcDate}
+                      onSelect={setDlcDate}
+                      initialFocus
+                      className={cn("p-3 pointer-events-auto")}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-4">

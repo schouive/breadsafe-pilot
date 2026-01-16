@@ -95,6 +95,7 @@ export default function ControlHistory() {
     lotNumber?: string;
     supplier?: string;
     product?: string;
+    dlcDate?: string;
   }) => {
     if (!user || !controlPoint) return;
 
@@ -107,6 +108,7 @@ export default function ControlHistory() {
       lot_number: data.lotNumber,
       supplier: data.supplier,
       product: data.product,
+      dlc_date: data.dlcDate,
     });
   };
 
@@ -327,6 +329,14 @@ export default function ControlHistory() {
                             <div className="flex items-center gap-2">
                               <Package className="h-4 w-4 text-muted-foreground" />
                               <span className="font-medium text-foreground">{record.product}</span>
+                            </div>
+                          )}
+                          {record.dlc_date && (
+                            <div className="flex items-center gap-2">
+                              <Clock className="h-4 w-4 text-orange-500" />
+                              <span className="text-sm">
+                                DLC: <span className="font-medium">{format(new Date(record.dlc_date), 'dd MMMM yyyy', { locale: fr })}</span>
+                              </span>
                             </div>
                           )}
                           {record.lot_number && (

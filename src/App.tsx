@@ -4,7 +4,10 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
-import { AppLayout } from "@/components/layout/AppLayout";
+import { HACCPLayout } from "@/components/layout/HACCPLayout";
+import { ProductsLayout } from "@/components/layout/ProductsLayout";
+import { SettingsLayout } from "@/components/layout/SettingsLayout";
+import Home from "./pages/Home";
 import Dashboard from "./pages/Dashboard";
 import Controls from "./pages/Controls";
 import Products from "./pages/Products";
@@ -35,85 +38,128 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     return <Navigate to="/auth" replace />;
   }
 
-  return <AppLayout>{children}</AppLayout>;
+  return <>{children}</>;
 }
 
 function AppRoutes() {
   return (
     <Routes>
       <Route path="/auth" element={<Auth />} />
+      
+      {/* Home - Module Selection */}
       <Route
         path="/"
         element={
           <ProtectedRoute>
-            <Dashboard />
+            <Home />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* HACCP Module Routes */}
+      <Route
+        path="/haccp"
+        element={
+          <ProtectedRoute>
+            <HACCPLayout>
+              <Dashboard />
+            </HACCPLayout>
           </ProtectedRoute>
         }
       />
       <Route
-        path="/controls"
+        path="/haccp/controls"
         element={
           <ProtectedRoute>
-            <Controls />
+            <HACCPLayout>
+              <Controls />
+            </HACCPLayout>
           </ProtectedRoute>
         }
       />
       <Route
-        path="/controls/:code"
+        path="/haccp/controls/:code"
         element={
           <ProtectedRoute>
-            <ControlHistory />
+            <HACCPLayout>
+              <ControlHistory />
+            </HACCPLayout>
           </ProtectedRoute>
         }
       />
       <Route
-        path="/non-conformities"
+        path="/haccp/non-conformities"
         element={
           <ProtectedRoute>
-            <NonConformities />
+            <HACCPLayout>
+              <NonConformities />
+            </HACCPLayout>
           </ProtectedRoute>
         }
       />
       <Route
-        path="/planning"
+        path="/haccp/temperatures"
         element={
           <ProtectedRoute>
-            <Planning />
+            <HACCPLayout>
+              <StorageTemperatures />
+            </HACCPLayout>
           </ProtectedRoute>
         }
       />
       <Route
-        path="/reports"
+        path="/haccp/planning"
         element={
           <ProtectedRoute>
-            <Reports />
+            <HACCPLayout>
+              <Planning />
+            </HACCPLayout>
           </ProtectedRoute>
         }
       />
       <Route
-        path="/storage-temperatures"
+        path="/haccp/reports"
         element={
           <ProtectedRoute>
-            <StorageTemperatures />
+            <HACCPLayout>
+              <Reports />
+            </HACCPLayout>
           </ProtectedRoute>
         }
       />
+
+      {/* Products Module Routes */}
       <Route
         path="/products"
         element={
           <ProtectedRoute>
-            <Products />
+            <ProductsLayout>
+              <Products />
+            </ProductsLayout>
           </ProtectedRoute>
         }
       />
+
+      {/* Settings Module Routes */}
       <Route
         path="/settings"
         element={
           <ProtectedRoute>
-            <Settings />
+            <SettingsLayout>
+              <Settings />
+            </SettingsLayout>
           </ProtectedRoute>
         }
       />
+
+      {/* Legacy redirects */}
+      <Route path="/controls" element={<Navigate to="/haccp/controls" replace />} />
+      <Route path="/controls/:code" element={<Navigate to="/haccp/controls/:code" replace />} />
+      <Route path="/non-conformities" element={<Navigate to="/haccp/non-conformities" replace />} />
+      <Route path="/storage-temperatures" element={<Navigate to="/haccp/temperatures" replace />} />
+      <Route path="/planning" element={<Navigate to="/haccp/planning" replace />} />
+      <Route path="/reports" element={<Navigate to="/haccp/reports" replace />} />
+
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

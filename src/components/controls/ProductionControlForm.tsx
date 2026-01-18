@@ -72,7 +72,7 @@ export function ProductionControlForm({ onSuccess, onCancel }: ProductionControl
 
       toast.success('Contrôle de production enregistré');
       onSuccess?.();
-      navigate('/controls/CP_PRODUCTION');
+      navigate('/haccp/controls/CP_PRODUCTION');
     } catch (error) {
       console.error('Error saving production control:', error);
       toast.error('Erreur lors de l\'enregistrement');

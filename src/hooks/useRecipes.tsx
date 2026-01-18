@@ -1,0 +1,414 @@
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { Tables, TablesInsert, TablesUpdate } from '@/integrations/supabase/types';
+
+export type Recipe = Tables<'recipes'>;
+export type RecipeIngredient = Tables<'recipe_ingredients'> & {
+  raw_materials?: Tables<'raw_materials'> & {
+    suppliers?: Tables<'suppliers'>;
+  };
+};
+export type RecipeNutrition = Tables<'recipe_nutrition'>;
+export type ProductSheet = Tables<'product_sheets'>;
+
+// Recipes hooks
+export function useRecipes() {
+  return useQuery({
+    queryKey: ['recipes'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('recipes')
+        .select('*')
+        .order('name');
+      
+      if (error) throw error;
+      return data as Recipe[];
+    },
+  });
+}
+
+export function useActiveRecipes() {
+  return useQuery({
+    queryKey: ['recipes', 'active'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('recipes')
+        .select('*')
+        .eq('is_active', true)
+        .order('name');
+      
+      if (error) throw error;
+      return data as Recipe[];
+    },
+  });
+}
+
+export function useRecipe(id: string | undefined) {
+  return useQuery({
+    queryKey: ['recipes', id],
+    queryFn: async () => {
+      if (!id) return null;
+      const { data, error } = await supabase
+        .from('recipes')
+        .select('*')
+        .eq('id', id)
+        .single();
+      
+      if (error) throw error;
+      return data as Recipe;
+    },
+    enabled: !!id,
+  });
+}
+
+export function useCreateRecipe() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async (recipe: TablesInsert<'recipes'>) => {
+      const { data, error } = await supabase
+        .from('recipes')
+        .insert(recipe)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['recipes'] });
+      toast({
+        title: 'Recette créée',
+        description: 'La recette a été ajoutée avec succès.',
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de créer la recette: ' + error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+}
+
+export function useUpdateRecipe() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: TablesUpdate<'recipes'> & { id: string }) => {
+      const { data, error } = await supabase
+        .from('recipes')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['recipes'] });
+      toast({
+        title: 'Recette modifiée',
+        description: 'Les modifications ont été enregistrées.',
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de modifier la recette: ' + error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+}
+
+export function useDeleteRecipe() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('recipes')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['recipes'] });
+      toast({
+        title: 'Recette supprimée',
+        description: 'La recette a été supprimée.',
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de supprimer la recette: ' + error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+}
+
+// Recipe ingredients hooks
+export function useRecipeIngredients(recipeId: string | undefined) {
+  return useQuery({
+    queryKey: ['recipe-ingredients', recipeId],
+    queryFn: async () => {
+      if (!recipeId) return [];
+      const { data, error } = await supabase
+        .from('recipe_ingredients')
+        .select(`
+          *,
+          raw_materials (
+            *,
+            suppliers (name)
+          )
+        `)
+        .eq('recipe_id', recipeId)
+        .order('order_index');
+      
+      if (error) throw error;
+      return data as RecipeIngredient[];
+    },
+    enabled: !!recipeId,
+  });
+}
+
+export function useCreateRecipeIngredient() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async (ingredient: TablesInsert<'recipe_ingredients'>) => {
+      const { data, error } = await supabase
+        .from('recipe_ingredients')
+        .insert(ingredient)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['recipe-ingredients', variables.recipe_id] });
+      queryClient.invalidateQueries({ queryKey: ['recipe-nutrition'] });
+    },
+    onError: (error) => {
+      toast({
+        title: 'Erreur',
+        description: 'Impossible d\'ajouter l\'ingrédient: ' + error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+}
+
+export function useUpdateRecipeIngredient() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: TablesUpdate<'recipe_ingredients'> & { id: string }) => {
+      const { data, error } = await supabase
+        .from('recipe_ingredients')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['recipe-ingredients'] });
+      queryClient.invalidateQueries({ queryKey: ['recipe-nutrition'] });
+    },
+  });
+}
+
+export function useDeleteRecipeIngredient() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, recipeId }: { id: string; recipeId: string }) => {
+      const { error } = await supabase
+        .from('recipe_ingredients')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+      return recipeId;
+    },
+    onSuccess: (recipeId) => {
+      queryClient.invalidateQueries({ queryKey: ['recipe-ingredients', recipeId] });
+      queryClient.invalidateQueries({ queryKey: ['recipe-nutrition'] });
+    },
+  });
+}
+
+// Recipe nutrition hook
+export function useRecipeNutrition(recipeId: string | undefined) {
+  return useQuery({
+    queryKey: ['recipe-nutrition', recipeId],
+    queryFn: async () => {
+      if (!recipeId) return null;
+      const { data, error } = await supabase
+        .from('recipe_nutrition')
+        .select('*')
+        .eq('recipe_id', recipeId)
+        .single();
+      
+      if (error && error.code !== 'PGRST116') throw error;
+      return data as RecipeNutrition | null;
+    },
+    enabled: !!recipeId,
+  });
+}
+
+// Product sheets hooks
+export function useProductSheets() {
+  return useQuery({
+    queryKey: ['product-sheets'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('product_sheets')
+        .select(`
+          *,
+          recipes (name, code)
+        `)
+        .order('product_name');
+      
+      if (error) throw error;
+      return data;
+    },
+  });
+}
+
+export function useProductSheet(id: string | undefined) {
+  return useQuery({
+    queryKey: ['product-sheets', id],
+    queryFn: async () => {
+      if (!id) return null;
+      const { data, error } = await supabase
+        .from('product_sheets')
+        .select(`
+          *,
+          recipes (
+            id,
+            name, 
+            code,
+            yield_quantity,
+            yield_unit
+          )
+        `)
+        .eq('id', id)
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!id,
+  });
+}
+
+export function useCreateProductSheet() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async (sheet: TablesInsert<'product_sheets'>) => {
+      const { data, error } = await supabase
+        .from('product_sheets')
+        .insert(sheet)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['product-sheets'] });
+      toast({
+        title: 'Fiche produit créée',
+        description: 'La fiche produit a été ajoutée avec succès.',
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de créer la fiche produit: ' + error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+}
+
+export function useUpdateProductSheet() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: TablesUpdate<'product_sheets'> & { id: string }) => {
+      const { data, error } = await supabase
+        .from('product_sheets')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['product-sheets'] });
+      toast({
+        title: 'Fiche produit modifiée',
+        description: 'Les modifications ont été enregistrées.',
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de modifier la fiche produit: ' + error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+}
+
+export function useDeleteProductSheet() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('product_sheets')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['product-sheets'] });
+      toast({
+        title: 'Fiche produit supprimée',
+        description: 'La fiche produit a été supprimée.',
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de supprimer la fiche produit: ' + error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+}

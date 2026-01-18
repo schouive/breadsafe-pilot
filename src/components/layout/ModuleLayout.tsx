@@ -1,18 +1,11 @@
 import { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
-  LayoutDashboard, 
-  ClipboardCheck, 
-  AlertTriangle, 
-  Calendar, 
-  BarChart3, 
-  Settings,
   Menu,
   X,
   Bell,
   LogOut,
-  Thermometer,
-  BookOpen,
+  Home,
   LucideIcon
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -29,37 +22,33 @@ import {
 import logo from '@/assets/logo-breadshop.png';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
-import { useOpenNonConformities } from '@/hooks/useNonConformities';
 
-interface AppLayoutProps {
+interface ModuleLayoutProps {
   children: React.ReactNode;
+  moduleName: string;
+  moduleColor: string;
+  navigation: NavItem[];
+  badges?: Record<string, number>;
 }
 
 interface NavItem {
   name: string;
   href: string;
   icon: LucideIcon;
-  badgeKey?: 'nc_count';
+  badgeKey?: string;
 }
 
-const navigation: NavItem[] = [
-  { name: 'Tableau de bord', href: '/', icon: LayoutDashboard },
-  { name: 'Contrôles', href: '/controls', icon: ClipboardCheck },
-  { name: 'Non-conformités', href: '/non-conformities', icon: AlertTriangle, badgeKey: 'nc_count' },
-  { name: 'Températures', href: '/storage-temperatures', icon: Thermometer },
-  { name: 'Produits', href: '/products', icon: BookOpen },
-  { name: 'Planning', href: '/planning', icon: Calendar },
-  { name: 'Rapports', href: '/reports', icon: BarChart3 },
-  { name: 'Paramètres', href: '/settings', icon: Settings },
-];
-
-export function AppLayout({ children }: AppLayoutProps) {
+export function ModuleLayout({ 
+  children, 
+  moduleName, 
+  moduleColor,
+  navigation,
+  badges = {}
+}: ModuleLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
   const { profile, roles, signOut } = useAuth();
-  const { data: openNCs } = useOpenNonConformities();
-  
-  const ncCount = openNCs?.length || 0;
 
   const getRoleLabel = () => {
     if (roles.includes('admin')) return 'Administrateur';
@@ -74,6 +63,13 @@ export function AppLayout({ children }: AppLayoutProps) {
       .join('')
       .toUpperCase()
       .slice(0, 2);
+  };
+
+  const isActiveRoute = (href: string) => {
+    if (href === location.pathname) return true;
+    // Handle sub-routes
+    if (href !== '/' && location.pathname.startsWith(href)) return true;
+    return false;
   };
 
   return (
@@ -99,8 +95,10 @@ export function AppLayout({ children }: AppLayoutProps) {
             <Link to="/" className="flex items-center gap-3">
               <img src={logo} alt="Breadshop" className="h-10 w-auto" />
               <div className="flex flex-col">
-                <span className="font-bold text-primary text-lg leading-tight">HACCP</span>
-                <span className="text-xs text-muted-foreground">Gestion Qualité</span>
+                <span className={cn("font-bold text-lg leading-tight", moduleColor)}>
+                  {moduleName}
+                </span>
+                <span className="text-xs text-muted-foreground">Breadshop</span>
               </div>
             </Link>
             <Button
@@ -113,10 +111,24 @@ export function AppLayout({ children }: AppLayoutProps) {
             </Button>
           </div>
 
+          {/* Back to Home */}
+          <div className="px-3 pt-4">
+            <Button
+              variant="ghost"
+              className="w-full justify-start gap-3 text-muted-foreground hover:text-foreground"
+              onClick={() => navigate('/')}
+            >
+              <Home className="h-4 w-4" />
+              Retour à l'accueil
+            </Button>
+          </div>
+
           {/* Navigation */}
           <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
             {navigation.map((item) => {
-              const isActive = location.pathname === item.href;
+              const isActive = isActiveRoute(item.href);
+              const badgeCount = item.badgeKey ? badges[item.badgeKey] : 0;
+              
               return (
                 <Link
                   key={item.name}
@@ -131,9 +143,9 @@ export function AppLayout({ children }: AppLayoutProps) {
                 >
                   <item.icon className="h-5 w-5 flex-shrink-0" />
                   <span className="flex-1">{item.name}</span>
-                  {item.badgeKey === 'nc_count' && ncCount > 0 && (
+                  {badgeCount > 0 && (
                     <Badge variant="destructive" className="ml-auto">
-                      {ncCount}
+                      {badgeCount}
                     </Badge>
                   )}
                 </Link>
@@ -171,13 +183,6 @@ export function AppLayout({ children }: AppLayoutProps) {
                     </span>
                   </div>
                 </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link to="/settings">
-                    <Settings className="mr-2 h-4 w-4" />
-                    Paramètres
-                  </Link>
-                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={signOut} className="text-destructive">
                   <LogOut className="mr-2 h-4 w-4" />

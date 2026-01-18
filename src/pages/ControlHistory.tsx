@@ -69,7 +69,7 @@ export default function ControlHistory() {
     return (
       <div className="text-center py-12">
         <p className="text-muted-foreground">Point de contrôle non trouvé</p>
-        <Button onClick={() => navigate('/controls')} className="mt-4">
+        <Button onClick={() => navigate('/haccp/controls')} className="mt-4">
           Retour aux contrôles
         </Button>
       </div>
@@ -144,7 +144,7 @@ export default function ControlHistory() {
           <Button 
             variant="ghost" 
             size="icon"
-            onClick={() => navigate('/controls')}
+            onClick={() => navigate('/haccp/controls')}
             className="shrink-0"
           >
             <ArrowLeft className="h-5 w-5" />

@@ -6,7 +6,7 @@ export default function Controls() {
   const navigate = useNavigate();
 
   const handleControlClick = (cp: ControlPoint) => {
-    navigate(`/controls/${cp.code}`);
+    navigate(`/haccp/controls/${cp.code}`);
   };
 
   return (

@@ -172,7 +172,7 @@ export default function Dashboard() {
       {/* Non-conformity Alert */}
       <NonConformityAlert 
         nonConformities={transformedNonConformities} 
-        onViewAll={() => navigate('/non-conformities')}
+        onViewAll={() => navigate('/haccp/non-conformities')}
       />
 
       {/* Main content grid */}

@@ -12,6 +12,7 @@ import {
   Bell,
   LogOut,
   Thermometer,
+  BookOpen,
   LucideIcon
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -46,6 +47,7 @@ const navigation: NavItem[] = [
   { name: 'Contrôles', href: '/controls', icon: ClipboardCheck },
   { name: 'Non-conformités', href: '/non-conformities', icon: AlertTriangle, badgeKey: 'nc_count' },
   { name: 'Températures', href: '/storage-temperatures', icon: Thermometer },
+  { name: 'Produits', href: '/products', icon: BookOpen },
   { name: 'Planning', href: '/planning', icon: Calendar },
   { name: 'Rapports', href: '/reports', icon: BarChart3 },
   { name: 'Paramètres', href: '/settings', icon: Settings },

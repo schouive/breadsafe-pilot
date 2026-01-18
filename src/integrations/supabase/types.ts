@@ -233,6 +233,87 @@ export type Database = {
           },
         ]
       }
+      product_sheets: {
+        Row: {
+          allergen_statement: string | null
+          barcode: string | null
+          brand: string | null
+          certifications: string[] | null
+          created_at: string
+          created_by: string | null
+          id: string
+          ingredients_declaration: string | null
+          is_published: boolean
+          net_weight: number | null
+          net_weight_unit: string | null
+          origin_country: string | null
+          product_name: string
+          published_at: string | null
+          recipe_id: string
+          shelf_life_days: number | null
+          storage_instructions: string | null
+          updated_at: string
+          usage_instructions: string | null
+        }
+        Insert: {
+          allergen_statement?: string | null
+          barcode?: string | null
+          brand?: string | null
+          certifications?: string[] | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          ingredients_declaration?: string | null
+          is_published?: boolean
+          net_weight?: number | null
+          net_weight_unit?: string | null
+          origin_country?: string | null
+          product_name: string
+          published_at?: string | null
+          recipe_id: string
+          shelf_life_days?: number | null
+          storage_instructions?: string | null
+          updated_at?: string
+          usage_instructions?: string | null
+        }
+        Update: {
+          allergen_statement?: string | null
+          barcode?: string | null
+          brand?: string | null
+          certifications?: string[] | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          ingredients_declaration?: string | null
+          is_published?: boolean
+          net_weight?: number | null
+          net_weight_unit?: string | null
+          origin_country?: string | null
+          product_name?: string
+          published_at?: string | null
+          recipe_id?: string
+          shelf_life_days?: number | null
+          storage_instructions?: string | null
+          updated_at?: string
+          usage_instructions?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_sheets_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipe_nutrition"
+            referencedColumns: ["recipe_id"]
+          },
+          {
+            foreignKeyName: "product_sheets_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -263,45 +344,72 @@ export type Database = {
       raw_materials: {
         Row: {
           allergens: string[] | null
+          carbohydrates: number | null
           category: string | null
           created_at: string
+          energy_kcal: number | null
+          energy_kj: number | null
+          fat: number | null
+          fiber: number | null
           id: string
           is_active: boolean
           name: string
+          protein: number | null
           requires_cold_storage: boolean
           requires_dlc_check: boolean
+          salt: number | null
+          saturated_fat: number | null
           storage_temp_max: number | null
           storage_temp_min: number | null
+          sugars: number | null
           supplier_id: string
           unit: string | null
           updated_at: string
         }
         Insert: {
           allergens?: string[] | null
+          carbohydrates?: number | null
           category?: string | null
           created_at?: string
+          energy_kcal?: number | null
+          energy_kj?: number | null
+          fat?: number | null
+          fiber?: number | null
           id?: string
           is_active?: boolean
           name: string
+          protein?: number | null
           requires_cold_storage?: boolean
           requires_dlc_check?: boolean
+          salt?: number | null
+          saturated_fat?: number | null
           storage_temp_max?: number | null
           storage_temp_min?: number | null
+          sugars?: number | null
           supplier_id: string
           unit?: string | null
           updated_at?: string
         }
         Update: {
           allergens?: string[] | null
+          carbohydrates?: number | null
           category?: string | null
           created_at?: string
+          energy_kcal?: number | null
+          energy_kj?: number | null
+          fat?: number | null
+          fiber?: number | null
           id?: string
           is_active?: boolean
           name?: string
+          protein?: number | null
           requires_cold_storage?: boolean
           requires_dlc_check?: boolean
+          salt?: number | null
+          saturated_fat?: number | null
           storage_temp_max?: number | null
           storage_temp_min?: number | null
+          sugars?: number | null
           supplier_id?: string
           unit?: string | null
           updated_at?: string
@@ -315,6 +423,109 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      recipe_ingredients: {
+        Row: {
+          created_at: string
+          id: string
+          notes: string | null
+          order_index: number
+          quantity: number
+          raw_material_id: string
+          recipe_id: string
+          unit: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          order_index?: number
+          quantity: number
+          raw_material_id: string
+          recipe_id: string
+          unit?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          order_index?: number
+          quantity?: number
+          raw_material_id?: string
+          recipe_id?: string
+          unit?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recipe_ingredients_raw_material_id_fkey"
+            columns: ["raw_material_id"]
+            isOneToOne: false
+            referencedRelation: "raw_materials"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recipe_ingredients_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipe_nutrition"
+            referencedColumns: ["recipe_id"]
+          },
+          {
+            foreignKeyName: "recipe_ingredients_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recipes: {
+        Row: {
+          category: string | null
+          code: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          preparation_notes: string | null
+          updated_at: string
+          yield_quantity: number
+          yield_unit: string
+        }
+        Insert: {
+          category?: string | null
+          code?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          preparation_notes?: string | null
+          updated_at?: string
+          yield_quantity?: number
+          yield_unit?: string
+        }
+        Update: {
+          category?: string | null
+          code?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          preparation_notes?: string | null
+          updated_at?: string
+          yield_quantity?: number
+          yield_unit?: string
+        }
+        Relationships: []
       }
       storage_temperature_records: {
         Row: {
@@ -413,7 +624,33 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      recipe_nutrition: {
+        Row: {
+          per_100g_carbohydrates: number | null
+          per_100g_energy_kcal: number | null
+          per_100g_energy_kj: number | null
+          per_100g_fat: number | null
+          per_100g_fiber: number | null
+          per_100g_protein: number | null
+          per_100g_salt: number | null
+          per_100g_saturated_fat: number | null
+          per_100g_sugars: number | null
+          recipe_id: string | null
+          recipe_name: string | null
+          total_carbohydrates: number | null
+          total_energy_kcal: number | null
+          total_energy_kj: number | null
+          total_fat: number | null
+          total_fiber: number | null
+          total_protein: number | null
+          total_salt: number | null
+          total_saturated_fat: number | null
+          total_sugars: number | null
+          yield_quantity: number | null
+          yield_unit: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       has_role: {

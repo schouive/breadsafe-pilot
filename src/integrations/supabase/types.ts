@@ -133,6 +133,85 @@ export type Database = {
           },
         ]
       }
+      label_data: {
+        Row: {
+          carton_format: string | null
+          cartons_per_layer: number | null
+          cartons_per_pallet: number | null
+          commercial_designation: string | null
+          created_at: string
+          id: string
+          net_weight: number | null
+          net_weight_unit: string | null
+          pieces_per_carton: number | null
+          product_image_url: string | null
+          product_reference: string | null
+          recipe_id: string
+          storage_conditions: string | null
+          thawing_instructions: string | null
+          updated_at: string
+          usage_instructions: string | null
+        }
+        Insert: {
+          carton_format?: string | null
+          cartons_per_layer?: number | null
+          cartons_per_pallet?: number | null
+          commercial_designation?: string | null
+          created_at?: string
+          id?: string
+          net_weight?: number | null
+          net_weight_unit?: string | null
+          pieces_per_carton?: number | null
+          product_image_url?: string | null
+          product_reference?: string | null
+          recipe_id: string
+          storage_conditions?: string | null
+          thawing_instructions?: string | null
+          updated_at?: string
+          usage_instructions?: string | null
+        }
+        Update: {
+          carton_format?: string | null
+          cartons_per_layer?: number | null
+          cartons_per_pallet?: number | null
+          commercial_designation?: string | null
+          created_at?: string
+          id?: string
+          net_weight?: number | null
+          net_weight_unit?: string | null
+          pieces_per_carton?: number | null
+          product_image_url?: string | null
+          product_reference?: string | null
+          recipe_id?: string
+          storage_conditions?: string | null
+          thawing_instructions?: string | null
+          updated_at?: string
+          usage_instructions?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "label_data_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: true
+            referencedRelation: "recipe_baker_nutrition"
+            referencedColumns: ["recipe_id"]
+          },
+          {
+            foreignKeyName: "label_data_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: true
+            referencedRelation: "recipe_nutrition"
+            referencedColumns: ["recipe_id"]
+          },
+          {
+            foreignKeyName: "label_data_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: true
+            referencedRelation: "recipes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       nc_audit_logs: {
         Row: {
           action: string
@@ -302,6 +381,13 @@ export type Database = {
             foreignKeyName: "product_sheets_recipe_id_fkey"
             columns: ["recipe_id"]
             isOneToOne: false
+            referencedRelation: "recipe_baker_nutrition"
+            referencedColumns: ["recipe_id"]
+          },
+          {
+            foreignKeyName: "product_sheets_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
             referencedRelation: "recipe_nutrition"
             referencedColumns: ["recipe_id"]
           },
@@ -441,6 +527,7 @@ export type Database = {
       }
       recipe_ingredients: {
         Row: {
+          baker_percentage: number | null
           created_at: string
           id: string
           notes: string | null
@@ -452,6 +539,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          baker_percentage?: number | null
           created_at?: string
           id?: string
           notes?: string | null
@@ -463,6 +551,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          baker_percentage?: number | null
           created_at?: string
           id?: string
           notes?: string | null
@@ -485,6 +574,13 @@ export type Database = {
             foreignKeyName: "recipe_ingredients_recipe_id_fkey"
             columns: ["recipe_id"]
             isOneToOne: false
+            referencedRelation: "recipe_baker_nutrition"
+            referencedColumns: ["recipe_id"]
+          },
+          {
+            foreignKeyName: "recipe_ingredients_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
             referencedRelation: "recipe_nutrition"
             referencedColumns: ["recipe_id"]
           },
@@ -499,6 +595,7 @@ export type Database = {
       }
       recipes: {
         Row: {
+          baking_ratio: number | null
           category: string | null
           code: string | null
           created_at: string
@@ -508,11 +605,15 @@ export type Database = {
           is_active: boolean
           name: string
           preparation_notes: string | null
+          process_losses: number | null
+          reference_flour_id: string | null
+          status: string | null
           updated_at: string
           yield_quantity: number
           yield_unit: string
         }
         Insert: {
+          baking_ratio?: number | null
           category?: string | null
           code?: string | null
           created_at?: string
@@ -522,11 +623,15 @@ export type Database = {
           is_active?: boolean
           name: string
           preparation_notes?: string | null
+          process_losses?: number | null
+          reference_flour_id?: string | null
+          status?: string | null
           updated_at?: string
           yield_quantity?: number
           yield_unit?: string
         }
         Update: {
+          baking_ratio?: number | null
           category?: string | null
           code?: string | null
           created_at?: string
@@ -536,11 +641,22 @@ export type Database = {
           is_active?: boolean
           name?: string
           preparation_notes?: string | null
+          process_losses?: number | null
+          reference_flour_id?: string | null
+          status?: string | null
           updated_at?: string
           yield_quantity?: number
           yield_unit?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "recipes_reference_flour_id_fkey"
+            columns: ["reference_flour_id"]
+            isOneToOne: false
+            referencedRelation: "raw_materials"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       storage_temperature_records: {
         Row: {
@@ -639,6 +755,26 @@ export type Database = {
       }
     }
     Views: {
+      recipe_baker_nutrition: {
+        Row: {
+          baking_ratio: number | null
+          process_losses: number | null
+          recipe_id: string | null
+          recipe_name: string | null
+          total_baker_percentage: number | null
+          total_carbohydrates: number | null
+          total_cost: number | null
+          total_energy_kcal: number | null
+          total_energy_kj: number | null
+          total_fat: number | null
+          total_fiber: number | null
+          total_protein: number | null
+          total_salt: number | null
+          total_saturated_fat: number | null
+          total_sugars: number | null
+        }
+        Relationships: []
+      }
       recipe_nutrition: {
         Row: {
           per_100g_carbohydrates: number | null

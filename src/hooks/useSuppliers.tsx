@@ -35,6 +35,8 @@ export interface RawMaterial {
   fiber: number | null;
   protein: number | null;
   salt: number | null;
+  price: number | null;
+  price_unit: string | null;
   is_active: boolean;
 }
 

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Package, Plus, Edit2, X, Check, Thermometer, AlertTriangle, Clock } from 'lucide-react';
+import { Package, Plus, Edit2, X, Check, Thermometer, AlertTriangle, Clock, Euro } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -39,6 +39,8 @@ const ALLERGEN_LIST = [
   'Mollusques', 'Crustacés', 'Poisson', 'Sulfites'
 ];
 
+const PRICE_UNITS = ['kg', 'L', 'pièce', 'unité', 'boîte', 'sachet'];
+
 interface FormData {
   name: string;
   supplier_id: string;
@@ -57,6 +59,8 @@ interface FormData {
   fiber: string;
   protein: string;
   salt: string;
+  price: string;
+  price_unit: string;
   requires_cold_storage: boolean;
   requires_dlc_check: boolean;
   storage_temp_min: string;
@@ -81,6 +85,8 @@ const initialFormData: FormData = {
   fiber: '',
   protein: '',
   salt: '',
+  price: '',
+  price_unit: 'kg',
   requires_cold_storage: false,
   requires_dlc_check: false,
   storage_temp_min: '',
@@ -121,6 +127,8 @@ export function RawMaterialManagement() {
       fiber: material.fiber?.toString() || '',
       protein: material.protein?.toString() || '',
       salt: material.salt?.toString() || '',
+      price: material.price?.toString() || '',
+      price_unit: material.price_unit || 'kg',
       requires_cold_storage: material.requires_cold_storage,
       requires_dlc_check: material.requires_dlc_check,
       storage_temp_min: material.storage_temp_min?.toString() || '',
@@ -149,6 +157,8 @@ export function RawMaterialManagement() {
       fiber: formData.fiber ? parseFloat(formData.fiber) : null,
       protein: formData.protein ? parseFloat(formData.protein) : null,
       salt: formData.salt ? parseFloat(formData.salt) : null,
+      price: formData.price ? parseFloat(formData.price) : null,
+      price_unit: formData.price_unit || null,
       requires_cold_storage: formData.requires_cold_storage,
       requires_dlc_check: formData.requires_dlc_check,
       storage_temp_min: formData.storage_temp_min ? parseFloat(formData.storage_temp_min) : null,
@@ -181,6 +191,8 @@ export function RawMaterialManagement() {
       fiber: formData.fiber ? parseFloat(formData.fiber) : null,
       protein: formData.protein ? parseFloat(formData.protein) : null,
       salt: formData.salt ? parseFloat(formData.salt) : null,
+      price: formData.price ? parseFloat(formData.price) : null,
+      price_unit: formData.price_unit || null,
       requires_cold_storage: formData.requires_cold_storage,
       requires_dlc_check: formData.requires_dlc_check,
       storage_temp_min: formData.storage_temp_min ? parseFloat(formData.storage_temp_min) : null,
@@ -243,6 +255,40 @@ export function RawMaterialManagement() {
               ))}
             </SelectContent>
           </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label>Prix</Label>
+          <div className="flex gap-2">
+            <div className="flex-1">
+              <Input
+                id="price"
+                type="number"
+                step="0.01"
+                min="0"
+                placeholder="0.00"
+                value={formData.price}
+                onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+              />
+            </div>
+            <div className="w-28">
+              <Select 
+                value={formData.price_unit} 
+                onValueChange={(value) => setFormData({ ...formData, price_unit: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Unité" />
+                </SelectTrigger>
+                <SelectContent>
+                  {PRICE_UNITS.map(unit => (
+                    <SelectItem key={unit} value={unit}>
+                      € / {unit}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
         </div>
 
         <div className="space-y-2">

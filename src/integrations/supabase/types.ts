@@ -344,9 +344,12 @@ export type Database = {
       raw_materials: {
         Row: {
           allergens: string[] | null
+          allergens_secondary: string[] | null
           carbohydrates: number | null
           category: string | null
+          composition: string | null
           created_at: string
+          description: string | null
           energy_kcal: number | null
           energy_kj: number | null
           fat: number | null
@@ -368,9 +371,12 @@ export type Database = {
         }
         Insert: {
           allergens?: string[] | null
+          allergens_secondary?: string[] | null
           carbohydrates?: number | null
           category?: string | null
+          composition?: string | null
           created_at?: string
+          description?: string | null
           energy_kcal?: number | null
           energy_kj?: number | null
           fat?: number | null
@@ -392,9 +398,12 @@ export type Database = {
         }
         Update: {
           allergens?: string[] | null
+          allergens_secondary?: string[] | null
           carbohydrates?: number | null
           category?: string | null
+          composition?: string | null
           created_at?: string
+          description?: string | null
           energy_kcal?: number | null
           energy_kj?: number | null
           fat?: number | null

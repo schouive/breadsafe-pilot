@@ -18,11 +18,23 @@ export interface RawMaterial {
   supplier_id: string;
   category: string | null;
   unit: string | null;
+  description: string | null;
+  composition: string | null;
   requires_cold_storage: boolean;
   requires_dlc_check: boolean;
   storage_temp_min: number | null;
   storage_temp_max: number | null;
   allergens: string[] | null;
+  allergens_secondary: string[] | null;
+  energy_kcal: number | null;
+  energy_kj: number | null;
+  fat: number | null;
+  saturated_fat: number | null;
+  carbohydrates: number | null;
+  sugars: number | null;
+  fiber: number | null;
+  protein: number | null;
+  salt: number | null;
   is_active: boolean;
 }
 

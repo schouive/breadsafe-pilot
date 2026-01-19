@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, ChefHat, Calculator, Eye, Trash2, CheckCircle, FileEdit, FileDown, Printer, Edit2, Copy } from 'lucide-react';
+import { Plus, ChefHat, Calculator, Eye, Trash2, CheckCircle, FileEdit, FileDown, Printer, Edit2, Copy, Search } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import logoImage from '@/assets/logo-breadshop.png';
@@ -40,6 +40,17 @@ export default function RecipesList() {
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
   const [deleteRecipeId, setDeleteRecipeId] = useState<string | null>(null);
   const [calcDialogOpen, setCalcDialogOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Filter recipes by name or code
+  const filteredRecipes = recipes?.filter((recipe) => {
+    const query = searchQuery.toLowerCase().trim();
+    if (!query) return true;
+    return (
+      recipe.name.toLowerCase().includes(query) ||
+      (recipe.code && recipe.code.toLowerCase().includes(query))
+    );
+  });
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -57,6 +68,17 @@ export default function RecipesList() {
         </Button>
       </div>
 
+      {/* Search bar */}
+      <div className="relative max-w-md">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Rechercher par nom ou code..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-10"
+        />
+      </div>
+
       {/* Recipes grid */}
       {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -69,23 +91,30 @@ export default function RecipesList() {
             </Card>
           ))}
         </div>
-      ) : recipes?.length === 0 ? (
+      ) : filteredRecipes?.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <ChefHat className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-medium mb-2">Aucune recette</h3>
+            <h3 className="text-lg font-medium mb-2">
+              {searchQuery ? 'Aucun résultat' : 'Aucune recette'}
+            </h3>
             <p className="text-muted-foreground text-center mb-4">
-              Créez votre première recette pour commencer
+              {searchQuery 
+                ? `Aucune recette ne correspond à "${searchQuery}"`
+                : 'Créez votre première recette pour commencer'
+              }
             </p>
-            <Button onClick={() => navigate('/products/new-recipe')}>
-              <Plus className="h-4 w-4 mr-2" />
-              Créer une recette
-            </Button>
+            {!searchQuery && (
+              <Button onClick={() => navigate('/products/new-recipe')}>
+                <Plus className="h-4 w-4 mr-2" />
+                Créer une recette
+              </Button>
+            )}
           </CardContent>
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {recipes?.map((recipe) => (
+          {filteredRecipes?.map((recipe) => (
             <Card 
               key={recipe.id} 
               className={cn(

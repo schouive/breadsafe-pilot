@@ -163,6 +163,10 @@ export function useDuplicateRecipe() {
 
   return useMutation({
     mutationFn: async (recipeId: string) => {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Utilisateur non connecté');
+
       // 1. Fetch the original recipe
       const { data: originalRecipe, error: recipeError } = await supabase
         .from('recipes')
@@ -180,14 +184,22 @@ export function useDuplicateRecipe() {
       
       if (ingredientsError) throw ingredientsError;
       
-      // 3. Create the duplicate recipe
-      const { id, created_at, updated_at, ...recipeData } = originalRecipe;
+      // 3. Create the duplicate recipe (exclude id, timestamps and set new created_by)
+      const { 
+        id: _id, 
+        created_at: _created_at, 
+        updated_at: _updated_at, 
+        created_by: _created_by,
+        ...recipeData 
+      } = originalRecipe;
+      
       const { data: newRecipe, error: createError } = await supabase
         .from('recipes')
         .insert({
           ...recipeData,
           name: `${originalRecipe.name} (copie)`,
           status: 'draft',
+          created_by: user.id,
         })
         .select()
         .single();
@@ -196,7 +208,13 @@ export function useDuplicateRecipe() {
       
       // 4. Duplicate ingredients if any
       if (originalIngredients && originalIngredients.length > 0) {
-        const newIngredients = originalIngredients.map(({ id, created_at, updated_at, recipe_id, ...ing }) => ({
+        const newIngredients = originalIngredients.map(({ 
+          id: _ingId, 
+          created_at: _ingCreated, 
+          updated_at: _ingUpdated, 
+          recipe_id: _recipeId, 
+          ...ing 
+        }) => ({
           ...ing,
           recipe_id: newRecipe.id,
         }));

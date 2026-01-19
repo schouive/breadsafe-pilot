@@ -331,18 +331,36 @@ function RecipeCalculationDialog({
           {/* Nutritional values */}
           <div>
             <h4 className="font-medium mb-3">Valeurs nutritionnelles pour 100g de produit fini</h4>
-            <div className="grid grid-cols-3 md:grid-cols-5 gap-2">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-2">
               <div className="p-3 bg-muted/50 rounded-lg text-center">
-                <p className="text-xs text-muted-foreground">Énergie</p>
+                <p className="text-xs text-muted-foreground">Énergie (kcal)</p>
                 <p className="font-mono font-medium">{calculation.nutritionPer100g.energyKcal.toFixed(0)} kcal</p>
+              </div>
+              <div className="p-3 bg-muted/50 rounded-lg text-center">
+                <p className="text-xs text-muted-foreground">Énergie (kJ)</p>
+                <p className="font-mono font-medium">{calculation.nutritionPer100g.energyKj.toFixed(0)} kJ</p>
               </div>
               <div className="p-3 bg-muted/50 rounded-lg text-center">
                 <p className="text-xs text-muted-foreground">Lipides</p>
                 <p className="font-mono font-medium">{calculation.nutritionPer100g.fat.toFixed(1)} g</p>
               </div>
               <div className="p-3 bg-muted/50 rounded-lg text-center">
+                <p className="text-xs text-muted-foreground">dont saturés</p>
+                <p className="font-mono font-medium">{calculation.nutritionPer100g.saturatedFat.toFixed(1)} g</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+              <div className="p-3 bg-muted/50 rounded-lg text-center">
                 <p className="text-xs text-muted-foreground">Glucides</p>
                 <p className="font-mono font-medium">{calculation.nutritionPer100g.carbohydrates.toFixed(1)} g</p>
+              </div>
+              <div className="p-3 bg-muted/50 rounded-lg text-center">
+                <p className="text-xs text-muted-foreground">dont sucres</p>
+                <p className="font-mono font-medium">{calculation.nutritionPer100g.sugars.toFixed(1)} g</p>
+              </div>
+              <div className="p-3 bg-muted/50 rounded-lg text-center">
+                <p className="text-xs text-muted-foreground">Fibres</p>
+                <p className="font-mono font-medium">{calculation.nutritionPer100g.fiber.toFixed(1)} g</p>
               </div>
               <div className="p-3 bg-muted/50 rounded-lg text-center">
                 <p className="text-xs text-muted-foreground">Protéines</p>

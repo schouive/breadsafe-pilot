@@ -23,6 +23,7 @@ import StorageTemperatures from "./pages/StorageTemperatures";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
+import { ProductSheetManagement } from "@/components/products/ProductSheetManagement";
 
 const queryClient = new QueryClient();
 
@@ -181,7 +182,7 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <ProductsLayout>
-              <div className="p-6"><h1 className="text-2xl font-bold">Fiche Technique</h1><p className="text-muted-foreground mt-2">À venir - Export PDF des fiches techniques</p></div>
+              <ProductSheetManagement />
             </ProductsLayout>
           </ProtectedRoute>
         }

@@ -357,6 +357,8 @@ export type Database = {
           id: string
           is_active: boolean
           name: string
+          price: number | null
+          price_unit: string | null
           protein: number | null
           requires_cold_storage: boolean
           requires_dlc_check: boolean
@@ -384,6 +386,8 @@ export type Database = {
           id?: string
           is_active?: boolean
           name: string
+          price?: number | null
+          price_unit?: string | null
           protein?: number | null
           requires_cold_storage?: boolean
           requires_dlc_check?: boolean
@@ -411,6 +415,8 @@ export type Database = {
           id?: string
           is_active?: boolean
           name?: string
+          price?: number | null
+          price_unit?: string | null
           protein?: number | null
           requires_cold_storage?: boolean
           requires_dlc_check?: boolean

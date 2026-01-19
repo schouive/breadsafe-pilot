@@ -182,9 +182,9 @@ export function useBakerCalculations(
     const afterBaking = rawDoughWeightKg * bakingRatio;
     const cookedWeightKg = afterBaking * (1 - processLosses / 100);
 
-    // Number of pieces
+    // Number of pieces (based on raw dough weight / unit weight)
     const numberOfPieces = unitWeightGrams > 0 
-      ? Math.floor((cookedWeightKg * 1000) / unitWeightGrams)
+      ? Math.floor((rawDoughWeightKg * 1000) / unitWeightGrams)
       : 0;
 
     // Total cost

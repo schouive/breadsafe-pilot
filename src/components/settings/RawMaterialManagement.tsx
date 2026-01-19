@@ -274,12 +274,15 @@ export function RawMaterialManagement() {
           <Label htmlFor="supplier">Fournisseur</Label>
           <Select 
             value={formData.supplier_id} 
-            onValueChange={(value) => setFormData({ ...formData, supplier_id: value })}
+            onValueChange={(value) => setFormData({ ...formData, supplier_id: value === '_none_' ? '' : value })}
           >
             <SelectTrigger id="supplier">
               <SelectValue placeholder="Sélectionnez un fournisseur" />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="_none_">
+                <span className="text-muted-foreground italic">Aucun fournisseur</span>
+              </SelectItem>
               {suppliers?.map(supplier => (
                 <SelectItem key={supplier.id} value={supplier.id}>
                   {supplier.name}

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, ChefHat, Calculator, Eye, Trash2, CheckCircle, FileEdit, FileDown, Printer } from 'lucide-react';
+import { Plus, ChefHat, Calculator, Eye, Trash2, CheckCircle, FileEdit, FileDown, Printer, Edit2 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import logoImage from '@/assets/logo-breadshop.png';
@@ -153,6 +153,14 @@ export default function RecipesList() {
                     onClick={() => navigate(`/products/recipes/${recipe.id}`)}
                   >
                     <Eye className="h-4 w-4" />
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="icon"
+                    onClick={() => navigate(`/products/recipes/edit/${recipe.id}`)}
+                    title="Modifier la recette"
+                  >
+                    <Edit2 className="h-4 w-4" />
                   </Button>
                   <Button 
                     variant="ghost" 

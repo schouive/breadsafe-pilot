@@ -21,7 +21,7 @@ export function ProductsLayout({ children }: ProductsLayoutProps) {
   return (
     <ModuleLayout
       moduleName="Recettes & Étiquetage"
-      moduleColor="text-success"
+      moduleColor="text-primary"
       navigation={productsNavigation}
     >
       {children}

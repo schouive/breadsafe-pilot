@@ -6,6 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
+import { Textarea } from '@/components/ui/textarea';
+import { Separator } from '@/components/ui/separator';
 import {
   Dialog,
   DialogContent,
@@ -37,12 +39,53 @@ const ALLERGEN_LIST = [
   'Mollusques', 'Crustacés', 'Poisson', 'Sulfites'
 ];
 
-const CATEGORIES = [
-  'Farines', 'Produits laitiers', 'Œufs', 'Levures', 'Matières grasses',
-  'Sucres', 'Fruits secs', 'Chocolat', 'Arômes', 'Autres'
-];
+interface FormData {
+  name: string;
+  supplier_id: string;
+  category: string;
+  unit: string;
+  description: string;
+  composition: string;
+  allergens: string[];
+  allergens_secondary: string[];
+  energy_kcal: string;
+  energy_kj: string;
+  fat: string;
+  saturated_fat: string;
+  carbohydrates: string;
+  sugars: string;
+  fiber: string;
+  protein: string;
+  salt: string;
+  requires_cold_storage: boolean;
+  requires_dlc_check: boolean;
+  storage_temp_min: string;
+  storage_temp_max: string;
+}
 
-const UNITS = ['kg', 'L', 'unité', 'carton', 'palette'];
+const initialFormData: FormData = {
+  name: '',
+  supplier_id: '',
+  category: '',
+  unit: 'kg',
+  description: '',
+  composition: '',
+  allergens: [],
+  allergens_secondary: [],
+  energy_kcal: '',
+  energy_kj: '',
+  fat: '',
+  saturated_fat: '',
+  carbohydrates: '',
+  sugars: '',
+  fiber: '',
+  protein: '',
+  salt: '',
+  requires_cold_storage: false,
+  requires_dlc_check: false,
+  storage_temp_min: '',
+  storage_temp_max: '',
+};
 
 export function RawMaterialManagement() {
   const { data: materials, isLoading } = useAllRawMaterials();
@@ -52,31 +95,36 @@ export function RawMaterialManagement() {
   
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editingMaterial, setEditingMaterial] = useState<RawMaterial | null>(null);
-  
-  // Form state
-  const [formData, setFormData] = useState({
-    name: '',
-    supplier_id: '',
-    category: '',
-    unit: 'kg',
-    requires_cold_storage: false,
-    requires_dlc_check: false,
-    storage_temp_min: '',
-    storage_temp_max: '',
-    allergens: [] as string[],
-  });
+  const [formData, setFormData] = useState<FormData>(initialFormData);
 
   const resetForm = () => {
+    setFormData(initialFormData);
+  };
+
+  const openEditDialog = (material: RawMaterial) => {
+    setEditingMaterial(material);
     setFormData({
-      name: '',
-      supplier_id: '',
-      category: '',
-      unit: 'kg',
-      requires_cold_storage: false,
-      requires_dlc_check: false,
-      storage_temp_min: '',
-      storage_temp_max: '',
-      allergens: [],
+      name: material.name,
+      supplier_id: material.supplier_id,
+      category: material.category || '',
+      unit: material.unit || 'kg',
+      description: material.description || '',
+      composition: material.composition || '',
+      allergens: material.allergens || [],
+      allergens_secondary: material.allergens_secondary || [],
+      energy_kcal: material.energy_kcal?.toString() || '',
+      energy_kj: material.energy_kj?.toString() || '',
+      fat: material.fat?.toString() || '',
+      saturated_fat: material.saturated_fat?.toString() || '',
+      carbohydrates: material.carbohydrates?.toString() || '',
+      sugars: material.sugars?.toString() || '',
+      fiber: material.fiber?.toString() || '',
+      protein: material.protein?.toString() || '',
+      salt: material.salt?.toString() || '',
+      requires_cold_storage: material.requires_cold_storage,
+      requires_dlc_check: material.requires_dlc_check,
+      storage_temp_min: material.storage_temp_min?.toString() || '',
+      storage_temp_max: material.storage_temp_max?.toString() || '',
     });
   };
 
@@ -88,11 +136,23 @@ export function RawMaterialManagement() {
       supplier_id: formData.supplier_id,
       category: formData.category || null,
       unit: formData.unit || null,
+      description: formData.description.trim() || null,
+      composition: formData.composition.trim() || null,
+      allergens: formData.allergens.length > 0 ? formData.allergens : null,
+      allergens_secondary: formData.allergens_secondary.length > 0 ? formData.allergens_secondary : null,
+      energy_kcal: formData.energy_kcal ? parseFloat(formData.energy_kcal) : null,
+      energy_kj: formData.energy_kj ? parseFloat(formData.energy_kj) : null,
+      fat: formData.fat ? parseFloat(formData.fat) : null,
+      saturated_fat: formData.saturated_fat ? parseFloat(formData.saturated_fat) : null,
+      carbohydrates: formData.carbohydrates ? parseFloat(formData.carbohydrates) : null,
+      sugars: formData.sugars ? parseFloat(formData.sugars) : null,
+      fiber: formData.fiber ? parseFloat(formData.fiber) : null,
+      protein: formData.protein ? parseFloat(formData.protein) : null,
+      salt: formData.salt ? parseFloat(formData.salt) : null,
       requires_cold_storage: formData.requires_cold_storage,
       requires_dlc_check: formData.requires_dlc_check,
       storage_temp_min: formData.storage_temp_min ? parseFloat(formData.storage_temp_min) : null,
       storage_temp_max: formData.storage_temp_max ? parseFloat(formData.storage_temp_max) : null,
-      allergens: formData.allergens.length > 0 ? formData.allergens : null,
     });
     
     setIsAddOpen(false);
@@ -104,18 +164,31 @@ export function RawMaterialManagement() {
     
     await updateMaterial.mutateAsync({
       id: editingMaterial.id,
-      name: editingMaterial.name,
-      supplier_id: editingMaterial.supplier_id,
-      category: editingMaterial.category,
-      unit: editingMaterial.unit,
-      requires_cold_storage: editingMaterial.requires_cold_storage,
-      requires_dlc_check: editingMaterial.requires_dlc_check,
-      storage_temp_min: editingMaterial.storage_temp_min,
-      storage_temp_max: editingMaterial.storage_temp_max,
-      allergens: editingMaterial.allergens,
+      name: formData.name.trim(),
+      supplier_id: formData.supplier_id,
+      category: formData.category || null,
+      unit: formData.unit || null,
+      description: formData.description.trim() || null,
+      composition: formData.composition.trim() || null,
+      allergens: formData.allergens.length > 0 ? formData.allergens : null,
+      allergens_secondary: formData.allergens_secondary.length > 0 ? formData.allergens_secondary : null,
+      energy_kcal: formData.energy_kcal ? parseFloat(formData.energy_kcal) : null,
+      energy_kj: formData.energy_kj ? parseFloat(formData.energy_kj) : null,
+      fat: formData.fat ? parseFloat(formData.fat) : null,
+      saturated_fat: formData.saturated_fat ? parseFloat(formData.saturated_fat) : null,
+      carbohydrates: formData.carbohydrates ? parseFloat(formData.carbohydrates) : null,
+      sugars: formData.sugars ? parseFloat(formData.sugars) : null,
+      fiber: formData.fiber ? parseFloat(formData.fiber) : null,
+      protein: formData.protein ? parseFloat(formData.protein) : null,
+      salt: formData.salt ? parseFloat(formData.salt) : null,
+      requires_cold_storage: formData.requires_cold_storage,
+      requires_dlc_check: formData.requires_dlc_check,
+      storage_temp_min: formData.storage_temp_min ? parseFloat(formData.storage_temp_min) : null,
+      storage_temp_max: formData.storage_temp_max ? parseFloat(formData.storage_temp_max) : null,
     });
     
     setEditingMaterial(null);
+    resetForm();
   };
 
   const handleToggleActive = async (material: RawMaterial) => {
@@ -125,20 +198,307 @@ export function RawMaterialManagement() {
     });
   };
 
-  const toggleAllergen = (allergen: string, isEditing: boolean) => {
-    if (isEditing && editingMaterial) {
-      const current = editingMaterial.allergens || [];
-      const updated = current.includes(allergen)
-        ? current.filter(a => a !== allergen)
-        : [...current, allergen];
-      setEditingMaterial({ ...editingMaterial, allergens: updated });
-    } else {
-      const updated = formData.allergens.includes(allergen)
-        ? formData.allergens.filter(a => a !== allergen)
-        : [...formData.allergens, allergen];
-      setFormData({ ...formData, allergens: updated });
-    }
+  const toggleAllergen = (allergen: string, type: 'primary' | 'secondary') => {
+    const field = type === 'primary' ? 'allergens' : 'allergens_secondary';
+    const current = formData[field];
+    const updated = current.includes(allergen)
+      ? current.filter(a => a !== allergen)
+      : [...current, allergen];
+    setFormData({ ...formData, [field]: updated });
   };
+
+  const closeEditDialog = () => {
+    setEditingMaterial(null);
+    resetForm();
+  };
+
+  const renderFormFields = () => (
+    <div className="space-y-6">
+      {/* Basic Info */}
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="name">Nom *</Label>
+          <Input
+            id="name"
+            placeholder="Ex: Farine T55"
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+          />
+        </div>
+        
+        <div className="space-y-2">
+          <Label htmlFor="supplier">Fournisseur *</Label>
+          <Select 
+            value={formData.supplier_id} 
+            onValueChange={(value) => setFormData({ ...formData, supplier_id: value })}
+          >
+            <SelectTrigger id="supplier">
+              <SelectValue placeholder="Sélectionnez un fournisseur" />
+            </SelectTrigger>
+            <SelectContent>
+              {suppliers?.map(supplier => (
+                <SelectItem key={supplier.id} value={supplier.id}>
+                  {supplier.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="description">Description</Label>
+          <Textarea
+            id="description"
+            placeholder="Description de l'ingrédient..."
+            value={formData.description}
+            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            rows={2}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="composition">Composition</Label>
+          <Textarea
+            id="composition"
+            placeholder="Composition détaillée..."
+            value={formData.composition}
+            onChange={(e) => setFormData({ ...formData, composition: e.target.value })}
+            rows={3}
+          />
+        </div>
+      </div>
+
+      <Separator />
+
+      {/* Allergens */}
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <Label>Allergènes Primaires</Label>
+          <p className="text-xs text-muted-foreground">Allergènes présents dans l'ingrédient</p>
+          <div className="flex flex-wrap gap-2 p-3 bg-muted/50 rounded-lg">
+            {ALLERGEN_LIST.map(allergen => (
+              <Badge
+                key={allergen}
+                variant="outline"
+                className={cn(
+                  "cursor-pointer transition-colors",
+                  formData.allergens.includes(allergen)
+                    ? "bg-destructive/20 text-destructive border-destructive"
+                    : "hover:bg-muted"
+                )}
+                onClick={() => toggleAllergen(allergen, 'primary')}
+              >
+                {allergen}
+              </Badge>
+            ))}
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label>Allergènes Secondaires</Label>
+          <p className="text-xs text-muted-foreground">Traces possibles (contamination croisée)</p>
+          <div className="flex flex-wrap gap-2 p-3 bg-muted/50 rounded-lg">
+            {ALLERGEN_LIST.map(allergen => (
+              <Badge
+                key={allergen}
+                variant="outline"
+                className={cn(
+                  "cursor-pointer transition-colors",
+                  formData.allergens_secondary.includes(allergen)
+                    ? "bg-warning/20 text-warning border-warning"
+                    : "hover:bg-muted"
+                )}
+                onClick={() => toggleAllergen(allergen, 'secondary')}
+              >
+                {allergen}
+              </Badge>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <Separator />
+
+      {/* Nutritional Values */}
+      <div className="space-y-4">
+        <Label className="text-base font-semibold">Valeurs nutritionnelles pour 100g</Label>
+        
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="energy_kcal">Énergie (kcal)</Label>
+            <Input
+              id="energy_kcal"
+              type="number"
+              step="0.1"
+              min="0"
+              placeholder="0"
+              value={formData.energy_kcal}
+              onChange={(e) => setFormData({ ...formData, energy_kcal: e.target.value })}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="energy_kj">Énergie (kJ)</Label>
+            <Input
+              id="energy_kj"
+              type="number"
+              step="0.1"
+              min="0"
+              placeholder="0"
+              value={formData.energy_kj}
+              onChange={(e) => setFormData({ ...formData, energy_kj: e.target.value })}
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="fat">Matières grasses (g)</Label>
+            <Input
+              id="fat"
+              type="number"
+              step="0.1"
+              min="0"
+              placeholder="0"
+              value={formData.fat}
+              onChange={(e) => setFormData({ ...formData, fat: e.target.value })}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="saturated_fat">dont acides gras saturés (g)</Label>
+            <Input
+              id="saturated_fat"
+              type="number"
+              step="0.1"
+              min="0"
+              placeholder="0"
+              value={formData.saturated_fat}
+              onChange={(e) => setFormData({ ...formData, saturated_fat: e.target.value })}
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="carbohydrates">Glucides (g)</Label>
+            <Input
+              id="carbohydrates"
+              type="number"
+              step="0.1"
+              min="0"
+              placeholder="0"
+              value={formData.carbohydrates}
+              onChange={(e) => setFormData({ ...formData, carbohydrates: e.target.value })}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="sugars">dont sucres (g)</Label>
+            <Input
+              id="sugars"
+              type="number"
+              step="0.1"
+              min="0"
+              placeholder="0"
+              value={formData.sugars}
+              onChange={(e) => setFormData({ ...formData, sugars: e.target.value })}
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-3 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="fiber">Fibres (g)</Label>
+            <Input
+              id="fiber"
+              type="number"
+              step="0.1"
+              min="0"
+              placeholder="0"
+              value={formData.fiber}
+              onChange={(e) => setFormData({ ...formData, fiber: e.target.value })}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="protein">Protéines (g)</Label>
+            <Input
+              id="protein"
+              type="number"
+              step="0.1"
+              min="0"
+              placeholder="0"
+              value={formData.protein}
+              onChange={(e) => setFormData({ ...formData, protein: e.target.value })}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="salt">Sel (g)</Label>
+            <Input
+              id="salt"
+              type="number"
+              step="0.01"
+              min="0"
+              placeholder="0"
+              value={formData.salt}
+              onChange={(e) => setFormData({ ...formData, salt: e.target.value })}
+            />
+          </div>
+        </div>
+      </div>
+
+      <Separator />
+
+      {/* Storage Settings */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+          <div className="flex items-center gap-3">
+            <Thermometer className="h-5 w-5 text-blue-500" />
+            <div>
+              <p className="font-medium">Stockage réfrigéré</p>
+              <p className="text-sm text-muted-foreground">Ce produit nécessite une température contrôlée</p>
+            </div>
+          </div>
+          <Switch
+            checked={formData.requires_cold_storage}
+            onCheckedChange={(checked) => setFormData({ ...formData, requires_cold_storage: checked })}
+          />
+        </div>
+
+        {formData.requires_cold_storage && (
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Temp. min (°C)</Label>
+              <TemperatureInput
+                value={formData.storage_temp_min}
+                onChange={(val) => setFormData({ ...formData, storage_temp_min: val })}
+                placeholder="0"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Temp. max (°C)</Label>
+              <TemperatureInput
+                value={formData.storage_temp_max}
+                onChange={(val) => setFormData({ ...formData, storage_temp_max: val })}
+                placeholder="4"
+              />
+            </div>
+          </div>
+        )}
+
+        <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+          <div className="flex items-center gap-3">
+            <Clock className="h-5 w-5 text-orange-500" />
+            <div>
+              <p className="font-medium">CP8 - Contrôle DLC</p>
+              <p className="text-sm text-muted-foreground">Ce produit nécessite un contrôle quotidien des dates de péremption</p>
+            </div>
+          </div>
+          <Switch
+            checked={formData.requires_dlc_check}
+            onCheckedChange={(checked) => setFormData({ ...formData, requires_dlc_check: checked })}
+          />
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <>
@@ -148,8 +508,8 @@ export function RawMaterialManagement() {
             <div className="flex items-center gap-3">
               <Package className="h-5 w-5 text-primary" />
               <div>
-                <CardTitle>Matières Premières</CardTitle>
-                <CardDescription>Gérez vos matières premières et leurs caractéristiques</CardDescription>
+                <CardTitle>Ingrédients</CardTitle>
+                <CardDescription>Gérez vos ingrédients et leurs caractéristiques</CardDescription>
               </div>
             </div>
             <Button size="sm" onClick={() => setIsAddOpen(true)}>
@@ -164,14 +524,14 @@ export function RawMaterialManagement() {
           ) : materials?.length === 0 ? (
             <div className="text-center py-8">
               <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">Aucune matière première configurée</p>
+              <p className="text-muted-foreground">Aucun ingrédient configuré</p>
               <Button 
                 variant="outline" 
                 className="mt-4"
                 onClick={() => setIsAddOpen(true)}
               >
                 <Plus className="h-4 w-4 mr-2" />
-                Ajouter une matière première
+                Ajouter un ingrédient
               </Button>
             </div>
           ) : (
@@ -197,21 +557,30 @@ export function RawMaterialManagement() {
                         {material.requires_dlc_check && (
                           <Clock className="h-4 w-4 text-orange-500" />
                         )}
-                        {material.allergens && material.allergens.length > 0 && (
+                        {((material.allergens && material.allergens.length > 0) || 
+                          (material.allergens_secondary && material.allergens_secondary.length > 0)) && (
                           <AlertTriangle className="h-4 w-4 text-warning" />
                         )}
                       </div>
                       <p className="text-sm text-muted-foreground">
                         {material.suppliers?.name}
-                        {material.category && ` • ${material.category}`}
                         {material.requires_cold_storage && material.storage_temp_min !== null && 
                           ` • ${material.storage_temp_min}°C à ${material.storage_temp_max}°C`}
                       </p>
                       {material.allergens && material.allergens.length > 0 && (
                         <div className="flex flex-wrap gap-1">
                           {material.allergens.map(allergen => (
-                            <Badge key={allergen} variant="outline" className="text-xs bg-warning/10 text-warning border-warning/30">
+                            <Badge key={allergen} variant="outline" className="text-xs bg-destructive/10 text-destructive border-destructive/30">
                               {allergen}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+                      {material.allergens_secondary && material.allergens_secondary.length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                          {material.allergens_secondary.map(allergen => (
+                            <Badge key={allergen} variant="outline" className="text-xs bg-warning/10 text-warning border-warning/30">
+                              Traces: {allergen}
                             </Badge>
                           ))}
                         </div>
@@ -228,7 +597,7 @@ export function RawMaterialManagement() {
                     <Button 
                       variant="ghost" 
                       size="icon"
-                      onClick={() => setEditingMaterial(material)}
+                      onClick={() => openEditDialog(material)}
                     >
                       <Edit2 className="h-4 w-4" />
                     </Button>
@@ -248,149 +617,15 @@ export function RawMaterialManagement() {
       </Card>
 
       {/* Add Dialog */}
-      <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+      <Dialog open={isAddOpen} onOpenChange={(open) => { if (!open) resetForm(); setIsAddOpen(open); }}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Ajouter une matière première</DialogTitle>
+            <DialogTitle>Ajouter un ingrédient</DialogTitle>
             <DialogDescription>
-              Enregistrez une nouvelle matière première
+              Enregistrez un nouvel ingrédient avec ses caractéristiques
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="material-name">Nom *</Label>
-              <Input
-                id="material-name"
-                placeholder="Ex: Farine T55"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="supplier">Fournisseur *</Label>
-              <Select 
-                value={formData.supplier_id} 
-                onValueChange={(value) => setFormData({ ...formData, supplier_id: value })}
-              >
-                <SelectTrigger id="supplier">
-                  <SelectValue placeholder="Sélectionnez un fournisseur" />
-                </SelectTrigger>
-                <SelectContent>
-                  {suppliers?.map(supplier => (
-                    <SelectItem key={supplier.id} value={supplier.id}>
-                      {supplier.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="category">Catégorie</Label>
-                <Select 
-                  value={formData.category} 
-                  onValueChange={(value) => setFormData({ ...formData, category: value })}
-                >
-                  <SelectTrigger id="category">
-                    <SelectValue placeholder="Catégorie" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {CATEGORIES.map(cat => (
-                      <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="unit">Unité</Label>
-                <Select 
-                  value={formData.unit} 
-                  onValueChange={(value) => setFormData({ ...formData, unit: value })}
-                >
-                  <SelectTrigger id="unit">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {UNITS.map(unit => (
-                      <SelectItem key={unit} value={unit}>{unit}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
-              <div className="flex items-center gap-3">
-                <Thermometer className="h-5 w-5 text-blue-500" />
-                <div>
-                  <p className="font-medium">Stockage réfrigéré</p>
-                  <p className="text-sm text-muted-foreground">Ce produit nécessite une température contrôlée</p>
-                </div>
-              </div>
-              <Switch
-                checked={formData.requires_cold_storage}
-                onCheckedChange={(checked) => setFormData({ ...formData, requires_cold_storage: checked })}
-              />
-            </div>
-
-            {formData.requires_cold_storage && (
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Temp. min (°C)</Label>
-                  <TemperatureInput
-                    value={formData.storage_temp_min}
-                    onChange={(val) => setFormData({ ...formData, storage_temp_min: val })}
-                    placeholder="0"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Temp. max (°C)</Label>
-                  <TemperatureInput
-                    value={formData.storage_temp_max}
-                    onChange={(val) => setFormData({ ...formData, storage_temp_max: val })}
-                    placeholder="4"
-                  />
-                </div>
-              </div>
-            )}
-
-            <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
-              <div className="flex items-center gap-3">
-                <Clock className="h-5 w-5 text-orange-500" />
-                <div>
-                  <p className="font-medium">CP8 - Contrôle DLC</p>
-                  <p className="text-sm text-muted-foreground">Ce produit nécessite un contrôle quotidien des dates de péremption</p>
-                </div>
-              </div>
-              <Switch
-                checked={formData.requires_dlc_check}
-                onCheckedChange={(checked) => setFormData({ ...formData, requires_dlc_check: checked })}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Allergènes</Label>
-              <div className="flex flex-wrap gap-2 p-3 bg-muted/50 rounded-lg">
-                {ALLERGEN_LIST.map(allergen => (
-                  <Badge
-                    key={allergen}
-                    variant="outline"
-                    className={cn(
-                      "cursor-pointer transition-colors",
-                      formData.allergens.includes(allergen)
-                        ? "bg-warning/20 text-warning border-warning"
-                        : "hover:bg-muted"
-                    )}
-                    onClick={() => toggleAllergen(allergen, false)}
-                  >
-                    {allergen}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-          </div>
+          {renderFormFields()}
           <DialogFooter>
             <Button variant="outline" onClick={() => { setIsAddOpen(false); resetForm(); }}>
               Annuler
@@ -406,165 +641,22 @@ export function RawMaterialManagement() {
       </Dialog>
 
       {/* Edit Dialog */}
-      <Dialog open={!!editingMaterial} onOpenChange={(open) => !open && setEditingMaterial(null)}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+      <Dialog open={!!editingMaterial} onOpenChange={(open) => !open && closeEditDialog()}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Modifier la matière première</DialogTitle>
+            <DialogTitle>Modifier l'ingrédient</DialogTitle>
             <DialogDescription>
-              Modifiez les caractéristiques de cette matière première
+              Modifiez les caractéristiques de cet ingrédient
             </DialogDescription>
           </DialogHeader>
-          {editingMaterial && (
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="edit-material-name">Nom *</Label>
-                <Input
-                  id="edit-material-name"
-                  value={editingMaterial.name}
-                  onChange={(e) => setEditingMaterial({ ...editingMaterial, name: e.target.value })}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="edit-supplier">Fournisseur *</Label>
-                <Select 
-                  value={editingMaterial.supplier_id} 
-                  onValueChange={(value) => setEditingMaterial({ ...editingMaterial, supplier_id: value })}
-                >
-                  <SelectTrigger id="edit-supplier">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {suppliers?.map(supplier => (
-                      <SelectItem key={supplier.id} value={supplier.id}>
-                        {supplier.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="edit-category">Catégorie</Label>
-                  <Select 
-                    value={editingMaterial.category || ''} 
-                    onValueChange={(value) => setEditingMaterial({ ...editingMaterial, category: value || null })}
-                  >
-                    <SelectTrigger id="edit-category">
-                      <SelectValue placeholder="Catégorie" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {CATEGORIES.map(cat => (
-                        <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="edit-unit">Unité</Label>
-                  <Select 
-                    value={editingMaterial.unit || 'kg'} 
-                    onValueChange={(value) => setEditingMaterial({ ...editingMaterial, unit: value })}
-                  >
-                    <SelectTrigger id="edit-unit">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {UNITS.map(unit => (
-                        <SelectItem key={unit} value={unit}>{unit}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
-                <div className="flex items-center gap-3">
-                  <Thermometer className="h-5 w-5 text-blue-500" />
-                  <div>
-                    <p className="font-medium">Stockage réfrigéré</p>
-                    <p className="text-sm text-muted-foreground">Ce produit nécessite une température contrôlée</p>
-                  </div>
-                </div>
-                <Switch
-                  checked={editingMaterial.requires_cold_storage}
-                  onCheckedChange={(checked) => setEditingMaterial({ ...editingMaterial, requires_cold_storage: checked })}
-                />
-              </div>
-
-              {editingMaterial.requires_cold_storage && (
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Temp. min (°C)</Label>
-                    <TemperatureInput
-                      value={editingMaterial.storage_temp_min?.toString() ?? ''}
-                      onChange={(val) => {
-                        setEditingMaterial({ 
-                          ...editingMaterial, 
-                          storage_temp_min: val === '' ? null : parseFloat(val) 
-                        });
-                      }}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Temp. max (°C)</Label>
-                    <TemperatureInput
-                      value={editingMaterial.storage_temp_max?.toString() ?? ''}
-                      onChange={(val) => {
-                        setEditingMaterial({ 
-                          ...editingMaterial, 
-                          storage_temp_max: val === '' ? null : parseFloat(val) 
-                        });
-                      }}
-                    />
-                  </div>
-                </div>
-              )}
-
-              <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
-                <div className="flex items-center gap-3">
-                  <Clock className="h-5 w-5 text-orange-500" />
-                  <div>
-                    <p className="font-medium">CP8 - Contrôle DLC</p>
-                    <p className="text-sm text-muted-foreground">Ce produit nécessite un contrôle quotidien des dates de péremption</p>
-                  </div>
-                </div>
-                <Switch
-                  checked={editingMaterial.requires_dlc_check}
-                  onCheckedChange={(checked) => setEditingMaterial({ ...editingMaterial, requires_dlc_check: checked })}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>Allergènes</Label>
-                <div className="flex flex-wrap gap-2 p-3 bg-muted/50 rounded-lg">
-                  {ALLERGEN_LIST.map(allergen => (
-                    <Badge
-                      key={allergen}
-                      variant="outline"
-                      className={cn(
-                        "cursor-pointer transition-colors",
-                        (editingMaterial.allergens || []).includes(allergen)
-                          ? "bg-warning/20 text-warning border-warning"
-                          : "hover:bg-muted"
-                      )}
-                      onClick={() => toggleAllergen(allergen, true)}
-                    >
-                      {allergen}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
+          {renderFormFields()}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEditingMaterial(null)}>
+            <Button variant="outline" onClick={closeEditDialog}>
               Annuler
             </Button>
             <Button 
               onClick={handleUpdate}
-              disabled={updateMaterial.isPending}
+              disabled={updateMaterial.isPending || !formData.name.trim() || !formData.supplier_id}
             >
               {updateMaterial.isPending ? 'Mise à jour...' : 'Enregistrer'}
             </Button>

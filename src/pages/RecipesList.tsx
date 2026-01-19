@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, ChefHat, Calculator, Eye, Trash2, CheckCircle, FileEdit, FileDown, Printer, Edit2 } from 'lucide-react';
+import { Plus, ChefHat, Calculator, Eye, Trash2, CheckCircle, FileEdit, FileDown, Printer, Edit2, Copy } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import logoImage from '@/assets/logo-breadshop.png';
@@ -26,7 +26,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { useRecipes, useRecipeIngredients, useDeleteRecipe, Recipe } from '@/hooks/useRecipes';
+import { useRecipes, useRecipeIngredients, useDeleteRecipe, useDuplicateRecipe, Recipe } from '@/hooks/useRecipes';
 import { useBakerCalculations } from '@/hooks/useBakerCalculations';
 import { useNutriScore, getNutriScoreColor, getNutriScoreTextColor } from '@/hooks/useNutriScore';
 import { cn } from '@/lib/utils';
@@ -35,6 +35,7 @@ export default function RecipesList() {
   const navigate = useNavigate();
   const { data: recipes, isLoading } = useRecipes();
   const deleteRecipe = useDeleteRecipe();
+  const duplicateRecipe = useDuplicateRecipe();
 
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
   const [deleteRecipeId, setDeleteRecipeId] = useState<string | null>(null);
@@ -158,7 +159,17 @@ export default function RecipesList() {
                   <Button 
                     variant="ghost" 
                     size="icon"
+                    onClick={() => duplicateRecipe.mutate(recipe.id)}
+                    disabled={duplicateRecipe.isPending}
+                    title="Dupliquer la recette"
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="icon"
                     onClick={() => setDeleteRecipeId(recipe.id)}
+                    title="Supprimer la recette"
                   >
                     <Trash2 className="h-4 w-4 text-destructive" />
                   </Button>

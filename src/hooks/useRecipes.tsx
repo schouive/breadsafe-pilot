@@ -157,6 +157,76 @@ export function useDeleteRecipe() {
   });
 }
 
+export function useDuplicateRecipe() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async (recipeId: string) => {
+      // 1. Fetch the original recipe
+      const { data: originalRecipe, error: recipeError } = await supabase
+        .from('recipes')
+        .select('*')
+        .eq('id', recipeId)
+        .single();
+      
+      if (recipeError) throw recipeError;
+      
+      // 2. Fetch original ingredients
+      const { data: originalIngredients, error: ingredientsError } = await supabase
+        .from('recipe_ingredients')
+        .select('*')
+        .eq('recipe_id', recipeId);
+      
+      if (ingredientsError) throw ingredientsError;
+      
+      // 3. Create the duplicate recipe
+      const { id, created_at, updated_at, ...recipeData } = originalRecipe;
+      const { data: newRecipe, error: createError } = await supabase
+        .from('recipes')
+        .insert({
+          ...recipeData,
+          name: `${originalRecipe.name} (copie)`,
+          status: 'draft',
+        })
+        .select()
+        .single();
+      
+      if (createError) throw createError;
+      
+      // 4. Duplicate ingredients if any
+      if (originalIngredients && originalIngredients.length > 0) {
+        const newIngredients = originalIngredients.map(({ id, created_at, updated_at, recipe_id, ...ing }) => ({
+          ...ing,
+          recipe_id: newRecipe.id,
+        }));
+        
+        const { error: ingredientsInsertError } = await supabase
+          .from('recipe_ingredients')
+          .insert(newIngredients);
+        
+        if (ingredientsInsertError) throw ingredientsInsertError;
+      }
+      
+      return newRecipe;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['recipes'] });
+      toast({
+        title: 'Recette dupliquée',
+        description: 'La copie de la recette a été créée avec succès.',
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de dupliquer la recette: ' + error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+}
+
 // Recipe ingredients hooks
 export function useRecipeIngredients(recipeId: string | undefined) {
   return useQuery({

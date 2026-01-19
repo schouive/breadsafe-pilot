@@ -453,7 +453,7 @@ export type Database = {
           storage_temp_max: number | null
           storage_temp_min: number | null
           sugars: number | null
-          supplier_id: string
+          supplier_id: string | null
           type: string | null
           unit: string | null
           updated_at: string
@@ -483,7 +483,7 @@ export type Database = {
           storage_temp_max?: number | null
           storage_temp_min?: number | null
           sugars?: number | null
-          supplier_id: string
+          supplier_id?: string | null
           type?: string | null
           unit?: string | null
           updated_at?: string
@@ -513,7 +513,7 @@ export type Database = {
           storage_temp_max?: number | null
           storage_temp_min?: number | null
           sugars?: number | null
-          supplier_id?: string
+          supplier_id?: string | null
           type?: string | null
           unit?: string | null
           updated_at?: string

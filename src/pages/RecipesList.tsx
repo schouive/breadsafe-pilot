@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, ChefHat, Calculator, Eye, Trash2, CheckCircle, FileEdit } from 'lucide-react';
+import { Plus, ChefHat, Calculator, Eye, Trash2, CheckCircle, FileEdit, FileDown } from 'lucide-react';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -218,7 +220,7 @@ function RecipeCalculationDialog({
 }) {
   const { data: ingredients } = useRecipeIngredients(recipe.id);
   const [flourQuantity, setFlourQuantity] = useState('100');
-  const [unitWeight, setUnitWeight] = useState('250');
+  const [unitWeight, setUnitWeight] = useState('');
 
   const calculation = useBakerCalculations(
     ingredients,
@@ -228,14 +230,77 @@ function RecipeCalculationDialog({
     recipe.process_losses || 0
   );
 
+  const handleExportPDF = () => {
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    
+    // Title
+    doc.setFontSize(18);
+    doc.text(recipe.name, pageWidth / 2, 20, { align: 'center' });
+    
+    if (recipe.code) {
+      doc.setFontSize(10);
+      doc.setTextColor(100);
+      doc.text(`Code: ${recipe.code}`, pageWidth / 2, 28, { align: 'center' });
+    }
+    
+    // Flour quantity info
+    doc.setFontSize(11);
+    doc.setTextColor(0);
+    doc.text(`Base farines: ${flourQuantity} kg`, 14, 40);
+    
+    // Ingredients table (without prices)
+    autoTable(doc, {
+      startY: 48,
+      head: [['Ingrédient', '%', 'Quantité (kg)']],
+      body: calculation.ingredients.map((ing) => [
+        ing.ingredientName,
+        `${ing.bakerPercentage}%`,
+        ing.quantityKg.toFixed(2),
+      ]),
+      styles: { fontSize: 10 },
+      headStyles: { fillColor: [80, 80, 80] },
+    });
+    
+    // Summary
+    const finalY = (doc as any).lastAutoTable.finalY + 10;
+    doc.setFontSize(11);
+    doc.text(`Poids pâte cru: ${calculation.rawDoughWeightKg.toFixed(2)} kg`, 14, finalY);
+    doc.text(`Poids après cuisson: ${calculation.cookedWeightKg.toFixed(2)} kg`, 14, finalY + 7);
+    
+    if (parseFloat(unitWeight) > 0) {
+      doc.text(`Nombre de pièces: ${calculation.numberOfPieces}`, 14, finalY + 14);
+    }
+    
+    // Footer with date
+    doc.setFontSize(8);
+    doc.setTextColor(150);
+    doc.text(`Généré le ${new Date().toLocaleDateString('fr-FR')}`, 14, doc.internal.pageSize.getHeight() - 10);
+    
+    doc.save(`recette-${recipe.name.toLowerCase().replace(/\s+/g, '-')}.pdf`);
+  };
+
   return (
     <Dialog open={open} onOpenChange={() => onClose()}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{recipe.name} - Calculs de production</DialogTitle>
-          <DialogDescription>
-            Saisissez la quantité de farine et le poids unitaire pour calculer la production
-          </DialogDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <DialogTitle>{recipe.name} - Calculs de production</DialogTitle>
+              <DialogDescription>
+                Saisissez la quantité de farine et le poids unitaire pour calculer la production
+              </DialogDescription>
+            </div>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleExportPDF}
+              disabled={calculation.ingredients.length === 0}
+            >
+              <FileDown className="h-4 w-4 mr-1" />
+              PDF
+            </Button>
+          </div>
         </DialogHeader>
 
         <div className="grid grid-cols-2 gap-4 mb-6">
@@ -258,6 +323,7 @@ function RecipeCalculationDialog({
               min="0"
               value={unitWeight}
               onChange={(e) => setUnitWeight(e.target.value)}
+              placeholder="Optionnel"
             />
           </div>
         </div>

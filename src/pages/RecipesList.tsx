@@ -144,15 +144,8 @@ export default function RecipesList() {
                       setCalcDialogOpen(true);
                     }}
                   >
-                    <Calculator className="h-4 w-4 mr-1" />
-                    Calculer
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="icon"
-                    onClick={() => navigate(`/products/recipes/${recipe.id}`)}
-                  >
-                    <Eye className="h-4 w-4" />
+                    <Eye className="h-4 w-4 mr-1" />
+                    Voir
                   </Button>
                   <Button 
                     variant="ghost" 

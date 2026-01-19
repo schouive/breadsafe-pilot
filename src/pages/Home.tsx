@@ -91,8 +91,8 @@ export default function Home() {
       title: 'Recettes & Étiquetage',
       description: 'Gestion des recettes, calcul nutritionnel et fiches techniques produits',
       icon: Tag,
-      color: 'text-success',
-      bgColor: 'bg-success/10',
+      color: 'text-primary',
+      bgColor: 'bg-primary/10',
       href: '/products',
     },
     {

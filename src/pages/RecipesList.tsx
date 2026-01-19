@@ -25,6 +25,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useRecipes, useRecipeIngredients, useDeleteRecipe, Recipe } from '@/hooks/useRecipes';
 import { useBakerCalculations } from '@/hooks/useBakerCalculations';
+import { useNutriScore, getNutriScoreColor, getNutriScoreTextColor } from '@/hooks/useNutriScore';
 import { cn } from '@/lib/utils';
 
 export default function RecipesList() {
@@ -373,6 +374,9 @@ function RecipeCalculationDialog({
             </div>
           </div>
 
+          {/* Nutri-Score */}
+          <NutriScoreDisplay nutrition={calculation.nutritionPer100g} />
+
           {/* Allergens */}
           {(calculation.allAllergens.length > 0 || calculation.allAllergensSecondary.length > 0) && (
             <div>
@@ -403,5 +407,40 @@ function RecipeCalculationDialog({
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+// Nutri-Score Display Component
+function NutriScoreDisplay({ nutrition }: { nutrition: { energyKj: number; sugars: number; saturatedFat: number; salt: number; fiber: number; protein: number } }) {
+  const nutriScore = useNutriScore(nutrition);
+
+  if (!nutriScore) return null;
+
+  const grades: Array<'A' | 'B' | 'C' | 'D' | 'E'> = ['A', 'B', 'C', 'D', 'E'];
+
+  return (
+    <div>
+      <h4 className="font-medium mb-3">Nutri-Score</h4>
+      <div className="flex items-center gap-1">
+        {grades.map((grade) => (
+          <div
+            key={grade}
+            className={cn(
+              "w-10 h-10 flex items-center justify-center font-bold text-lg rounded transition-all",
+              getNutriScoreColor(grade),
+              getNutriScoreTextColor(grade),
+              nutriScore.grade === grade 
+                ? "scale-125 ring-2 ring-offset-2 ring-gray-400" 
+                : "opacity-40"
+            )}
+          >
+            {grade}
+          </div>
+        ))}
+      </div>
+      <p className="text-xs text-muted-foreground mt-2">
+        Score: {nutriScore.score} (N: {nutriScore.negativePoints} - P: {nutriScore.positivePoints})
+      </p>
+    </div>
   );
 }

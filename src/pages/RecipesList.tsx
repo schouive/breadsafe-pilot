@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, ChefHat, Calculator, Eye, Trash2, CheckCircle, FileEdit, FileDown } from 'lucide-react';
+import { Plus, ChefHat, Calculator, Eye, Trash2, CheckCircle, FileEdit, FileDown, Printer } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import logoImage from '@/assets/logo-breadshop.png';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -230,28 +231,40 @@ function RecipeCalculationDialog({
     recipe.process_losses || 0
   );
 
+  // Brand colors from Breadshop identity (Slate Blue #4A5D73 = HSL 212 23% 37%)
+  const brandColor: [number, number, number] = [74, 93, 115];
+  const brandColorLight: [number, number, number] = [210, 220, 230];
+
   const handleExportPDF = () => {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
     
-    // Title
-    doc.setFontSize(18);
-    doc.text(recipe.name, pageWidth / 2, 20, { align: 'center' });
+    // Logo
+    try {
+      doc.addImage(logoImage, 'PNG', 14, 10, 40, 15);
+    } catch {
+      // Fallback if logo fails
+    }
+    
+    // Title with brand color
+    doc.setFontSize(20);
+    doc.setTextColor(...brandColor);
+    doc.text(recipe.name, pageWidth / 2, 35, { align: 'center' });
     
     if (recipe.code) {
       doc.setFontSize(10);
       doc.setTextColor(100);
-      doc.text(`Code: ${recipe.code}`, pageWidth / 2, 28, { align: 'center' });
+      doc.text(`Code: ${recipe.code}`, pageWidth / 2, 42, { align: 'center' });
     }
     
     // Flour quantity info
     doc.setFontSize(11);
     doc.setTextColor(0);
-    doc.text(`Base farines: ${flourQuantity} kg`, 14, 40);
+    doc.text(`Base farines: ${flourQuantity} kg`, 14, 55);
     
     // Ingredients table (without prices)
     autoTable(doc, {
-      startY: 48,
+      startY: 62,
       head: [['Ingrédient', '%', 'Quantité (kg)']],
       body: calculation.ingredients.map((ing) => [
         ing.ingredientName,
@@ -259,25 +272,97 @@ function RecipeCalculationDialog({
         ing.quantityKg.toFixed(2),
       ]),
       styles: { fontSize: 10 },
-      headStyles: { fillColor: [80, 80, 80] },
+      headStyles: { fillColor: brandColor },
+      alternateRowStyles: { fillColor: brandColorLight },
     });
     
-    // Summary
+    // Summary - only number of pieces if provided
     const finalY = (doc as any).lastAutoTable.finalY + 10;
-    doc.setFontSize(11);
-    doc.text(`Poids pâte cru: ${calculation.rawDoughWeightKg.toFixed(2)} kg`, 14, finalY);
-    doc.text(`Poids après cuisson: ${calculation.cookedWeightKg.toFixed(2)} kg`, 14, finalY + 7);
-    
     if (parseFloat(unitWeight) > 0) {
-      doc.text(`Nombre de pièces: ${calculation.numberOfPieces}`, 14, finalY + 14);
+      doc.setFontSize(11);
+      doc.text(`Poids unitaire: ${unitWeight} g  •  Nombre de pièces: ${calculation.numberOfPieces}`, 14, finalY);
     }
     
-    // Footer with date
+    // Footer with date and brand
     doc.setFontSize(8);
     doc.setTextColor(150);
-    doc.text(`Généré le ${new Date().toLocaleDateString('fr-FR')}`, 14, doc.internal.pageSize.getHeight() - 10);
+    doc.text(`Breadshop SAS - Généré le ${new Date().toLocaleDateString('fr-FR')}`, 14, doc.internal.pageSize.getHeight() - 10);
     
     doc.save(`recette-${recipe.name.toLowerCase().replace(/\s+/g, '-')}.pdf`);
+  };
+
+  const handlePrint = () => {
+    const printContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Recette - ${recipe.name}</title>
+        <style>
+          @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body { font-family: 'Inter', sans-serif; padding: 20px; color: #1a1a2e; }
+          .header { display: flex; align-items: center; gap: 20px; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #4A5D73; }
+          .logo { height: 50px; }
+          .title { color: #4A5D73; font-size: 24px; font-weight: 700; }
+          .code { color: #666; font-size: 12px; margin-top: 4px; }
+          .info { margin: 15px 0; font-size: 14px; color: #333; }
+          table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+          th { background: #4A5D73; color: white; padding: 10px; text-align: left; font-weight: 600; }
+          td { padding: 8px 10px; border-bottom: 1px solid #ddd; }
+          tr:nth-child(even) { background: #f5f7fa; }
+          .summary { margin-top: 15px; font-size: 14px; color: #333; }
+          .footer { margin-top: 30px; padding-top: 15px; border-top: 1px solid #ddd; font-size: 10px; color: #999; }
+          @media print { body { padding: 0; } }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <img src="${logoImage}" alt="Breadshop" class="logo" />
+          <div>
+            <div class="title">${recipe.name}</div>
+            ${recipe.code ? `<div class="code">Code: ${recipe.code}</div>` : ''}
+          </div>
+        </div>
+        <div class="info">Base farines: <strong>${flourQuantity} kg</strong></div>
+        <table>
+          <thead>
+            <tr>
+              <th>Ingrédient</th>
+              <th style="text-align: right;">%</th>
+              <th style="text-align: right;">Quantité (kg)</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${calculation.ingredients.map(ing => `
+              <tr>
+                <td>${ing.ingredientName}</td>
+                <td style="text-align: right;">${ing.bakerPercentage}%</td>
+                <td style="text-align: right;">${ing.quantityKg.toFixed(2)}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+        ${parseFloat(unitWeight) > 0 ? `
+          <div class="summary">
+            Poids unitaire: <strong>${unitWeight} g</strong> • Nombre de pièces: <strong>${calculation.numberOfPieces}</strong>
+          </div>
+        ` : ''}
+        <div class="footer">
+          Breadshop SAS - Imprimé le ${new Date().toLocaleDateString('fr-FR')}
+        </div>
+      </body>
+      </html>
+    `;
+
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(printContent);
+      printWindow.document.close();
+      printWindow.onload = () => {
+        printWindow.print();
+        printWindow.close();
+      };
+    }
   };
 
   return (
@@ -291,15 +376,26 @@ function RecipeCalculationDialog({
                 Saisissez la quantité de farine et le poids unitaire pour calculer la production
               </DialogDescription>
             </div>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={handleExportPDF}
-              disabled={calculation.ingredients.length === 0}
-            >
-              <FileDown className="h-4 w-4 mr-1" />
-              PDF
-            </Button>
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handlePrint}
+                disabled={calculation.ingredients.length === 0}
+              >
+                <Printer className="h-4 w-4 mr-1" />
+                Imprimer
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleExportPDF}
+                disabled={calculation.ingredients.length === 0}
+              >
+                <FileDown className="h-4 w-4 mr-1" />
+                PDF
+              </Button>
+            </div>
           </div>
         </DialogHeader>
 

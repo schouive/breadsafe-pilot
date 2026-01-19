@@ -713,7 +713,7 @@ export function RawMaterialManagement() {
             </Button>
             <Button 
               onClick={handleAdd}
-              disabled={createMaterial.isPending || !formData.name.trim() || !formData.supplier_id}
+              disabled={createMaterial.isPending || !formData.name.trim()}
             >
               {createMaterial.isPending ? 'Ajout...' : 'Ajouter'}
             </Button>
@@ -737,7 +737,7 @@ export function RawMaterialManagement() {
             </Button>
             <Button 
               onClick={handleUpdate}
-              disabled={updateMaterial.isPending || !formData.name.trim() || !formData.supplier_id}
+              disabled={updateMaterial.isPending || !formData.name.trim()}
             >
               {updateMaterial.isPending ? 'Mise à jour...' : 'Enregistrer'}
             </Button>

@@ -273,7 +273,7 @@ export function RawMaterialManagement() {
         <div className="space-y-2">
           <Label htmlFor="supplier">Fournisseur</Label>
           <Select 
-            value={formData.supplier_id} 
+            value={formData.supplier_id || '_none_'} 
             onValueChange={(value) => setFormData({ ...formData, supplier_id: value === '_none_' ? '' : value })}
           >
             <SelectTrigger id="supplier">

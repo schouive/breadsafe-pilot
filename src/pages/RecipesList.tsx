@@ -239,7 +239,7 @@ function RecipeCalculationDialog({
 
         <div className="grid grid-cols-2 gap-4 mb-6">
           <div className="space-y-2">
-            <Label>Quantité de farine (kg)</Label>
+            <Label>Quantité totale de farines (kg)</Label>
             <Input
               type="number"
               step="0.1"
@@ -247,6 +247,7 @@ function RecipeCalculationDialog({
               value={flourQuantity}
               onChange={(e) => setFlourQuantity(e.target.value)}
             />
+            <p className="text-xs text-muted-foreground">Base 100% pour le calcul</p>
           </div>
           <div className="space-y-2">
             <Label>Poids unitaire produit fini (g)</Label>

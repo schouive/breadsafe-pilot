@@ -41,8 +41,14 @@ const ALLERGEN_LIST = [
 
 const PRICE_UNITS = ['kg', 'L', 'pièce', 'unité', 'boîte', 'sachet'];
 
+const MATERIAL_TYPES = [
+  { value: 'farine', label: 'Farine' },
+  { value: 'ingredient', label: 'Autre ingrédient' },
+];
+
 interface FormData {
   name: string;
+  type: 'farine' | 'ingredient';
   supplier_id: string;
   category: string;
   unit: string;
@@ -69,6 +75,7 @@ interface FormData {
 
 const initialFormData: FormData = {
   name: '',
+  type: 'ingredient',
   supplier_id: '',
   category: '',
   unit: 'kg',
@@ -111,7 +118,8 @@ export function RawMaterialManagement() {
     setEditingMaterial(material);
     setFormData({
       name: material.name,
-      supplier_id: material.supplier_id,
+      type: material.type || 'ingredient',
+      supplier_id: material.supplier_id || '',
       category: material.category || '',
       unit: material.unit || 'kg',
       description: material.description || '',
@@ -141,6 +149,7 @@ export function RawMaterialManagement() {
     
     await createMaterial.mutateAsync({
       name: formData.name.trim(),
+      type: formData.type,
       supplier_id: formData.supplier_id || null,
       category: formData.category || null,
       unit: formData.unit || null,
@@ -175,7 +184,8 @@ export function RawMaterialManagement() {
     await updateMaterial.mutateAsync({
       id: editingMaterial.id,
       name: formData.name.trim(),
-      supplier_id: formData.supplier_id,
+      type: formData.type,
+      supplier_id: formData.supplier_id || null,
       category: formData.category || null,
       unit: formData.unit || null,
       description: formData.description.trim() || null,
@@ -236,6 +246,28 @@ export function RawMaterialManagement() {
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
           />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="type">Type de matière première *</Label>
+          <Select 
+            value={formData.type} 
+            onValueChange={(value: 'farine' | 'ingredient') => setFormData({ ...formData, type: value })}
+          >
+            <SelectTrigger id="type">
+              <SelectValue placeholder="Sélectionnez le type" />
+            </SelectTrigger>
+            <SelectContent>
+              {MATERIAL_TYPES.map(type => (
+                <SelectItem key={type.value} value={type.value}>
+                  {type.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground">
+            Les farines constituent la base de calcul (100%) des recettes
+          </p>
         </div>
         
         <div className="space-y-2">

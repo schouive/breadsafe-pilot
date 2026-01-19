@@ -15,6 +15,7 @@ export interface Supplier {
 export interface RawMaterial {
   id: string;
   name: string;
+  type: 'farine' | 'ingredient';
   supplier_id: string | null;
   category: string | null;
   unit: string | null;

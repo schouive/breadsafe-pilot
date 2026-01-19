@@ -11,6 +11,8 @@ import Home from "./pages/Home";
 import Dashboard from "./pages/Dashboard";
 import Controls from "./pages/Controls";
 import Products from "./pages/Products";
+import NewRecipe from "./pages/NewRecipe";
+import RecipesList from "./pages/RecipesList";
 import ControlHistory from "./pages/ControlHistory";
 import NonConformities from "./pages/NonConformities";
 import Planning from "./pages/Planning";
@@ -131,10 +133,54 @@ function AppRoutes() {
       {/* Products Module Routes */}
       <Route
         path="/products"
+        element={<Navigate to="/products/recipes" replace />}
+      />
+      <Route
+        path="/products/new-recipe"
         element={
           <ProtectedRoute>
             <ProductsLayout>
-              <Products />
+              <NewRecipe />
+            </ProductsLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/products/recipes"
+        element={
+          <ProtectedRoute>
+            <ProductsLayout>
+              <RecipesList />
+            </ProductsLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/products/label-data"
+        element={
+          <ProtectedRoute>
+            <ProductsLayout>
+              <div className="p-6"><h1 className="text-2xl font-bold">Datas Étiquette</h1><p className="text-muted-foreground mt-2">À venir - Sélectionnez une recette pour configurer les données d'étiquette</p></div>
+            </ProductsLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/products/technical-sheet"
+        element={
+          <ProtectedRoute>
+            <ProductsLayout>
+              <div className="p-6"><h1 className="text-2xl font-bold">Fiche Technique</h1><p className="text-muted-foreground mt-2">À venir - Export PDF des fiches techniques</p></div>
+            </ProductsLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/products/carton-labels"
+        element={
+          <ProtectedRoute>
+            <ProductsLayout>
+              <div className="p-6"><h1 className="text-2xl font-bold">Étiquettes Carton</h1><p className="text-muted-foreground mt-2">À venir - Génération des étiquettes carton</p></div>
             </ProductsLayout>
           </ProtectedRoute>
         }

@@ -184,20 +184,25 @@ export function useDuplicateRecipe() {
       
       if (ingredientsError) throw ingredientsError;
       
-      // 3. Create the duplicate recipe (exclude id, timestamps and set new created_by)
+      // 3. Create the duplicate recipe (exclude id, timestamps, code and set new created_by)
       const { 
         id: _id, 
         created_at: _created_at, 
         updated_at: _updated_at, 
         created_by: _created_by,
+        code: originalCode,
         ...recipeData 
       } = originalRecipe;
+      
+      // Generate a new unique code if original had one
+      const newCode = originalCode ? `${originalCode}-CPY${Date.now().toString().slice(-4)}` : null;
       
       const { data: newRecipe, error: createError } = await supabase
         .from('recipes')
         .insert({
           ...recipeData,
           name: `${originalRecipe.name} (copie)`,
+          code: newCode,
           status: 'draft',
           created_by: user.id,
         })

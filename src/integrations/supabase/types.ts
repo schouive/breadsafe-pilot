@@ -317,64 +317,118 @@ export type Database = {
           allergen_statement: string | null
           barcode: string | null
           brand: string | null
+          carton_dimensions: string | null
+          carton_weight: number | null
+          cartons_per_layer: number | null
           certifications: string[] | null
           created_at: string
           created_by: string | null
+          dlc_ddm_days: number | null
+          dlc_ddm_type: string | null
           id: string
           ingredients_declaration: string | null
           is_published: boolean
+          layers_per_pallet: number | null
           net_weight: number | null
           net_weight_unit: string | null
           origin_country: string | null
+          pieces_per_carton: number | null
+          product_image_url: string | null
           product_name: string
+          product_reference: string | null
           published_at: string | null
+          quality_comment: string | null
           recipe_id: string
           shelf_life_days: number | null
+          snapshot_allergens: Json | null
+          snapshot_created_at: string | null
+          snapshot_ingredients: Json | null
+          snapshot_nutrition: Json | null
+          snapshot_recipe_code: string | null
+          snapshot_recipe_name: string | null
           storage_instructions: string | null
+          thawing_instructions: string | null
           updated_at: string
           usage_instructions: string | null
+          version: number
         }
         Insert: {
           allergen_statement?: string | null
           barcode?: string | null
           brand?: string | null
+          carton_dimensions?: string | null
+          carton_weight?: number | null
+          cartons_per_layer?: number | null
           certifications?: string[] | null
           created_at?: string
           created_by?: string | null
+          dlc_ddm_days?: number | null
+          dlc_ddm_type?: string | null
           id?: string
           ingredients_declaration?: string | null
           is_published?: boolean
+          layers_per_pallet?: number | null
           net_weight?: number | null
           net_weight_unit?: string | null
           origin_country?: string | null
+          pieces_per_carton?: number | null
+          product_image_url?: string | null
           product_name: string
+          product_reference?: string | null
           published_at?: string | null
+          quality_comment?: string | null
           recipe_id: string
           shelf_life_days?: number | null
+          snapshot_allergens?: Json | null
+          snapshot_created_at?: string | null
+          snapshot_ingredients?: Json | null
+          snapshot_nutrition?: Json | null
+          snapshot_recipe_code?: string | null
+          snapshot_recipe_name?: string | null
           storage_instructions?: string | null
+          thawing_instructions?: string | null
           updated_at?: string
           usage_instructions?: string | null
+          version?: number
         }
         Update: {
           allergen_statement?: string | null
           barcode?: string | null
           brand?: string | null
+          carton_dimensions?: string | null
+          carton_weight?: number | null
+          cartons_per_layer?: number | null
           certifications?: string[] | null
           created_at?: string
           created_by?: string | null
+          dlc_ddm_days?: number | null
+          dlc_ddm_type?: string | null
           id?: string
           ingredients_declaration?: string | null
           is_published?: boolean
+          layers_per_pallet?: number | null
           net_weight?: number | null
           net_weight_unit?: string | null
           origin_country?: string | null
+          pieces_per_carton?: number | null
+          product_image_url?: string | null
           product_name?: string
+          product_reference?: string | null
           published_at?: string | null
+          quality_comment?: string | null
           recipe_id?: string
           shelf_life_days?: number | null
+          snapshot_allergens?: Json | null
+          snapshot_created_at?: string | null
+          snapshot_ingredients?: Json | null
+          snapshot_nutrition?: Json | null
+          snapshot_recipe_code?: string | null
+          snapshot_recipe_name?: string | null
           storage_instructions?: string | null
+          thawing_instructions?: string | null
           updated_at?: string
           usage_instructions?: string | null
+          version?: number
         }
         Relationships: [
           {

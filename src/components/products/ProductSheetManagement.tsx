@@ -1,12 +1,11 @@
 import { useState } from 'react';
-import { Plus, FileText, Edit2, Trash2, Eye, Check, X } from 'lucide-react';
+import { Plus, FileText, Edit2, Trash2, Eye, Check, X, FileCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useProductSheets, useDeleteProductSheet } from '@/hooks/useRecipes';
-import { cn } from '@/lib/utils';
-import { ProductSheetFormDialog } from './ProductSheetFormDialog';
-import { ProductSheetDetailSheet } from './ProductSheetDetailSheet';
+import { TechnicalSheetFormDialog } from './TechnicalSheetFormDialog';
+import { TechnicalSheetDetailSheet } from './TechnicalSheetDetailSheet';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -39,15 +38,15 @@ export function ProductSheetManagement() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <FileText className="h-5 w-5 text-primary" />
+              <FileCheck className="h-5 w-5 text-primary" />
               <div>
-                <CardTitle>Fiches Produit</CardTitle>
-                <CardDescription>Gérez les informations d'étiquetage de vos produits</CardDescription>
+                <CardTitle>Fiches Techniques</CardTitle>
+                <CardDescription>Générez et gérez les fiches techniques de vos produits</CardDescription>
               </div>
             </div>
             <Button onClick={() => setIsAddOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
-              Nouvelle fiche
+              Générer une nouvelle FT
             </Button>
           </div>
         </CardHeader>
@@ -56,11 +55,11 @@ export function ProductSheetManagement() {
             <p className="text-muted-foreground">Chargement...</p>
           ) : sheets?.length === 0 ? (
             <div className="text-center py-12">
-              <FileText className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground mb-4">Aucune fiche produit créée</p>
+              <FileCheck className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground mb-4">Aucune fiche technique créée</p>
               <Button variant="outline" onClick={() => setIsAddOpen(true)}>
                 <Plus className="h-4 w-4 mr-2" />
-                Créer une fiche
+                Générer une FT
               </Button>
             </div>
           ) : (
@@ -72,19 +71,24 @@ export function ProductSheetManagement() {
                 >
                   <div className="flex items-center gap-4">
                     <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
-                      <FileText className="h-6 w-6 text-primary" />
+                      <FileCheck className="h-6 w-6 text-primary" />
                     </div>
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
                         <p className="font-medium">{sheet.product_name}</p>
-                        {sheet.barcode && (
-                          <Badge variant="outline" className="text-xs font-mono">
-                            {sheet.barcode}
+                        {(sheet as any).version && (
+                          <Badge variant="outline" className="text-xs">
+                            v{(sheet as any).version}
+                          </Badge>
+                        )}
+                        {(sheet as any).product_reference && (
+                          <Badge variant="secondary" className="text-xs font-mono">
+                            {(sheet as any).product_reference}
                           </Badge>
                         )}
                       </div>
                       <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                        {sheet.recipes?.name && <span>Recette: {sheet.recipes.name}</span>}
+                        {(sheet as any).snapshot_recipe_name && <span>Recette: {(sheet as any).snapshot_recipe_name}</span>}
                         {sheet.brand && <span>• {sheet.brand}</span>}
                         {sheet.net_weight && (
                           <span>• {sheet.net_weight} {sheet.net_weight_unit}</span>
@@ -133,21 +137,23 @@ export function ProductSheetManagement() {
       </Card>
 
       {/* Add Dialog */}
-      <ProductSheetFormDialog
+      <TechnicalSheetFormDialog
         open={isAddOpen}
         onOpenChange={setIsAddOpen}
         sheet={null}
+        mode="create"
       />
 
       {/* Edit Dialog */}
-      <ProductSheetFormDialog
+      <TechnicalSheetFormDialog
         open={!!editingSheet}
         onOpenChange={(open) => !open && setEditingSheet(null)}
         sheet={editingSheet}
+        mode="edit"
       />
 
       {/* View Sheet */}
-      <ProductSheetDetailSheet
+      <TechnicalSheetDetailSheet
         open={!!viewingSheet}
         onOpenChange={(open) => !open && setViewingSheet(null)}
         sheet={viewingSheet}

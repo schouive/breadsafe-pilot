@@ -12,6 +12,7 @@ import Dashboard from "./pages/Dashboard";
 import Controls from "./pages/Controls";
 import Products from "./pages/Products";
 import NewRecipe from "./pages/NewRecipe";
+import EditRecipe from "./pages/EditRecipe";
 import RecipesList from "./pages/RecipesList";
 import ControlHistory from "./pages/ControlHistory";
 import NonConformities from "./pages/NonConformities";
@@ -151,6 +152,16 @@ function AppRoutes() {
           <ProtectedRoute>
             <ProductsLayout>
               <RecipesList />
+            </ProductsLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/products/recipes/edit/:id"
+        element={
+          <ProtectedRoute>
+            <ProductsLayout>
+              <EditRecipe />
             </ProductsLayout>
           </ProtectedRoute>
         }

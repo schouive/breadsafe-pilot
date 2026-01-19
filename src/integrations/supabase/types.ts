@@ -454,6 +454,7 @@ export type Database = {
           storage_temp_min: number | null
           sugars: number | null
           supplier_id: string
+          type: string | null
           unit: string | null
           updated_at: string
         }
@@ -483,6 +484,7 @@ export type Database = {
           storage_temp_min?: number | null
           sugars?: number | null
           supplier_id: string
+          type?: string | null
           unit?: string | null
           updated_at?: string
         }
@@ -512,6 +514,7 @@ export type Database = {
           storage_temp_min?: number | null
           sugars?: number | null
           supplier_id?: string
+          type?: string | null
           unit?: string | null
           updated_at?: string
         }
@@ -768,6 +771,7 @@ export type Database = {
           total_energy_kj: number | null
           total_fat: number | null
           total_fiber: number | null
+          total_flour_percentage: number | null
           total_protein: number | null
           total_salt: number | null
           total_saturated_fat: number | null

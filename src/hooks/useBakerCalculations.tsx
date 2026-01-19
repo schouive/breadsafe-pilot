@@ -4,6 +4,7 @@ import { RecipeIngredient } from './useRecipes';
 export interface BakerCalculation {
   ingredientId: string;
   ingredientName: string;
+  type: 'farine' | 'ingredient';
   bakerPercentage: number;
   quantityKg: number;
   costEuros: number;
@@ -24,7 +25,11 @@ export interface BakerCalculation {
 
 export interface RecipeCalculationResult {
   ingredients: BakerCalculation[];
+  flourIngredients: BakerCalculation[];
+  otherIngredients: BakerCalculation[];
+  totalFlourPercentage: number;
   totalBakerPercentage: number;
+  isFlourValid: boolean;
   rawDoughWeightKg: number;
   cookedWeightKg: number;
   numberOfPieces: number;
@@ -45,7 +50,7 @@ export interface RecipeCalculationResult {
   // All allergens
   allAllergens: string[];
   allAllergensSecondary: string[];
-  // Sorted ingredients for label
+  // Sorted ingredients for label (by weight descending)
   sortedIngredients: Array<{
     name: string;
     composition: string | null;
@@ -54,18 +59,31 @@ export interface RecipeCalculationResult {
   }>;
 }
 
+/**
+ * Multi-flour baker's percentage calculation hook
+ * 
+ * Business Logic:
+ * - Flours must total 100% (base of calculation)
+ * - Other ingredients are expressed as % of total flour
+ * - User inputs total flour quantity in kg (this represents 100%)
+ * - All ingredient quantities are calculated from this base
+ */
 export function useBakerCalculations(
   ingredients: RecipeIngredient[] | undefined,
-  flourQuantityKg: number,
+  totalFlourQuantityKg: number,
   unitWeightGrams: number,
   bakingRatio: number = 0.9,
   processLosses: number = 0
 ): RecipeCalculationResult {
   return useMemo(() => {
-    if (!ingredients || ingredients.length === 0 || flourQuantityKg <= 0) {
+    if (!ingredients || ingredients.length === 0 || totalFlourQuantityKg <= 0) {
       return {
         ingredients: [],
+        flourIngredients: [],
+        otherIngredients: [],
+        totalFlourPercentage: 0,
         totalBakerPercentage: 0,
+        isFlourValid: false,
         rawDoughWeightKg: 0,
         cookedWeightKg: 0,
         numberOfPieces: 0,
@@ -88,16 +106,22 @@ export function useBakerCalculations(
       };
     }
 
+    // Calculate quantities for each ingredient
     const calculatedIngredients: BakerCalculation[] = ingredients.map((ing) => {
       const bakerPercentage = ing.baker_percentage || 0;
-      const quantityKg = flourQuantityKg * (bakerPercentage / 100);
+      const rm = ing.raw_materials;
+      const type = (rm?.type || 'ingredient') as 'farine' | 'ingredient';
+      
+      // For flours: quantity = totalFlourQuantity * (flour% / 100)
+      // For other ingredients: quantity = totalFlourQuantity * (ingredient% / 100)
+      // This is the standard baker's percentage calculation
+      const quantityKg = totalFlourQuantityKg * (bakerPercentage / 100);
       const quantityGrams = quantityKg * 1000;
       
-      const rm = ing.raw_materials;
       const pricePerKg = rm?.price || 0;
       const costEuros = quantityKg * pricePerKg;
 
-      // Nutritional values (based on quantity in grams)
+      // Nutritional values (based on quantity in grams, values per 100g)
       const energyKcal = (quantityGrams * (rm?.energy_kcal || 0)) / 100;
       const energyKj = (quantityGrams * (rm?.energy_kj || 0)) / 100;
       const fat = (quantityGrams * (rm?.fat || 0)) / 100;
@@ -111,6 +135,7 @@ export function useBakerCalculations(
       return {
         ingredientId: ing.id,
         ingredientName: rm?.name || 'Inconnu',
+        type,
         bakerPercentage,
         quantityKg,
         costEuros,
@@ -128,13 +153,26 @@ export function useBakerCalculations(
       };
     });
 
-    // Total baker percentage
+    // Separate flour and other ingredients
+    const flourIngredients = calculatedIngredients.filter(ing => ing.type === 'farine');
+    const otherIngredients = calculatedIngredients.filter(ing => ing.type !== 'farine');
+
+    // Calculate flour percentage total (should be 100%)
+    const totalFlourPercentage = flourIngredients.reduce(
+      (sum, ing) => sum + ing.bakerPercentage,
+      0
+    );
+
+    // Validate flour total equals 100%
+    const isFlourValid = Math.abs(totalFlourPercentage - 100) < 0.01;
+
+    // Total baker percentage (flours + others)
     const totalBakerPercentage = calculatedIngredients.reduce(
       (sum, ing) => sum + ing.bakerPercentage,
       0
     );
 
-    // Raw dough weight
+    // Raw dough weight = sum of all ingredient quantities
     const rawDoughWeightKg = calculatedIngredients.reduce(
       (sum, ing) => sum + ing.quantityKg,
       0
@@ -197,7 +235,7 @@ export function useBakerCalculations(
           salt: 0,
         };
 
-    // Collect all allergens
+    // Collect all allergens (unique, sorted)
     const allAllergens = [...new Set(
       calculatedIngredients.flatMap((ing) => ing.allergens)
     )].sort();
@@ -211,14 +249,18 @@ export function useBakerCalculations(
       .map((ing) => ({
         name: ing.raw_materials?.name || 'Inconnu',
         composition: ing.raw_materials?.composition || null,
-        weightKg: flourQuantityKg * ((ing.baker_percentage || 0) / 100),
+        weightKg: totalFlourQuantityKg * ((ing.baker_percentage || 0) / 100),
         allergens: ing.raw_materials?.allergens || [],
       }))
       .sort((a, b) => b.weightKg - a.weightKg);
 
     return {
       ingredients: calculatedIngredients,
+      flourIngredients,
+      otherIngredients,
+      totalFlourPercentage,
       totalBakerPercentage,
+      isFlourValid,
       rawDoughWeightKg,
       cookedWeightKg,
       numberOfPieces,
@@ -229,7 +271,7 @@ export function useBakerCalculations(
       allAllergensSecondary,
       sortedIngredients,
     };
-  }, [ingredients, flourQuantityKg, unitWeightGrams, bakingRatio, processLosses]);
+  }, [ingredients, totalFlourQuantityKg, unitWeightGrams, bakingRatio, processLosses]);
 }
 
 // Generate ingredient list for label (with allergens in UPPERCASE)

@@ -250,7 +250,7 @@ function RecipeCalculationDialog({
             <p className="text-xs text-muted-foreground">Base 100% pour le calcul</p>
           </div>
           <div className="space-y-2">
-            <Label>Poids unitaire produit fini (g)</Label>
+            <Label>Poids unitaire produit (g)</Label>
             <Input
               type="number"
               step="1"

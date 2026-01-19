@@ -15,7 +15,7 @@ export interface Supplier {
 export interface RawMaterial {
   id: string;
   name: string;
-  supplier_id: string;
+  supplier_id: string | null;
   category: string | null;
   unit: string | null;
   description: string | null;
@@ -44,7 +44,7 @@ export interface RawMaterialWithSupplier extends RawMaterial {
   suppliers: {
     id: string;
     name: string;
-  };
+  } | null;
 }
 
 // Suppliers hooks

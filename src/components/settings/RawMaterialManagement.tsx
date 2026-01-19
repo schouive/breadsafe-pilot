@@ -137,11 +137,11 @@ export function RawMaterialManagement() {
   };
 
   const handleAdd = async () => {
-    if (!formData.name.trim() || !formData.supplier_id) return;
+    if (!formData.name.trim()) return;
     
     await createMaterial.mutateAsync({
       name: formData.name.trim(),
-      supplier_id: formData.supplier_id,
+      supplier_id: formData.supplier_id || null,
       category: formData.category || null,
       unit: formData.unit || null,
       description: formData.description.trim() || null,
@@ -239,7 +239,7 @@ export function RawMaterialManagement() {
         </div>
         
         <div className="space-y-2">
-          <Label htmlFor="supplier">Fournisseur *</Label>
+          <Label htmlFor="supplier">Fournisseur</Label>
           <Select 
             value={formData.supplier_id} 
             onValueChange={(value) => setFormData({ ...formData, supplier_id: value })}

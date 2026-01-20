@@ -1,6 +1,27 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { generateIngredientLists } from '@/lib/ingredientListGenerator';
+
+interface SnapshotIngredient {
+  name: string;
+  composition: string | null;
+  bakerPercentage: number;
+  allergens: string[];
+  allergensSecondary: string[];
+}
+
+interface SnapshotNutrition {
+  energyKcal: number | null;
+  energyKj: number | null;
+  fat: number | null;
+  saturatedFat: number | null;
+  carbohydrates: number | null;
+  sugars: number | null;
+  fiber: number | null;
+  protein: number | null;
+  salt: number | null;
+}
 
 export interface CartonLabel {
   id: string;
@@ -28,9 +49,9 @@ export interface CartonLabel {
     product_name: string;
     version: number;
     is_published: boolean;
-    snapshot_ingredients: { condensedHtml?: string } | null;
-    snapshot_allergens: { secondary?: string[] } | null;
-    snapshot_nutrition: Record<string, number> | null;
+    snapshot_ingredients: unknown;
+    snapshot_allergens: unknown;
+    snapshot_nutrition: unknown;
     net_weight: number | null;
     net_weight_unit: string | null;
     storage_instructions: string | null;
@@ -140,8 +161,34 @@ export function useCreateCartonLabel() {
       if (sheetError) throw sheetError;
       if (!sheet.is_published) throw new Error('La fiche technique doit être validée');
 
-      const snapshotIngredients = sheet.snapshot_ingredients as { condensedHtml?: string } | null;
-      const snapshotAllergens = sheet.snapshot_allergens as { secondary?: string[] } | null;
+      // Parse snapshot data from FT
+      const snapshotIngredients = sheet.snapshot_ingredients as unknown as SnapshotIngredient[] | null;
+      const snapshotAllergens = sheet.snapshot_allergens as unknown as { main?: string[]; secondary?: string[] } | null;
+      const snapshotNutrition = sheet.snapshot_nutrition as unknown as SnapshotNutrition | null;
+
+      // Generate INCO ingredient list from FT ingredients
+      let ingredientsHtml = '';
+      if (snapshotIngredients && snapshotIngredients.length > 0) {
+        const allAllergens = [...new Set(
+          snapshotIngredients.flatMap((ing) => ing.allergens || [])
+        )].sort();
+        
+        const lists = generateIngredientLists(snapshotIngredients, allAllergens);
+        ingredientsHtml = lists.condensedHtml;
+      }
+
+      // Convert nutrition to per 100g format for display
+      const nutritionFor100g = snapshotNutrition ? {
+        per_100g_energy_kcal: snapshotNutrition.energyKcal,
+        per_100g_energy_kj: snapshotNutrition.energyKj,
+        per_100g_fat: snapshotNutrition.fat,
+        per_100g_saturated_fat: snapshotNutrition.saturatedFat,
+        per_100g_carbohydrates: snapshotNutrition.carbohydrates,
+        per_100g_sugars: snapshotNutrition.sugars,
+        per_100g_fiber: snapshotNutrition.fiber,
+        per_100g_protein: snapshotNutrition.protein,
+        per_100g_salt: snapshotNutrition.salt,
+      } : null;
 
       const { data, error } = await supabase
         .from('carton_labels')
@@ -150,9 +197,9 @@ export function useCreateCartonLabel() {
           label_title: label.label_title,
           created_by: user.id,
           snapshot_product_sheet_version: sheet.version,
-          snapshot_ingredients_html: snapshotIngredients?.condensedHtml || null,
+          snapshot_ingredients_html: ingredientsHtml || null,
           snapshot_allergens_secondary: snapshotAllergens?.secondary || [],
-          snapshot_nutrition: sheet.snapshot_nutrition,
+          snapshot_nutrition: nutritionFor100g,
           snapshot_net_weight: sheet.net_weight,
           snapshot_net_weight_unit: sheet.net_weight_unit,
           snapshot_storage_instructions: sheet.storage_instructions,
@@ -330,17 +377,43 @@ export function useRefreshCartonLabelSnapshot() {
       if (sheetError) throw sheetError;
       if (!sheet.is_published) throw new Error('La fiche technique doit être validée');
 
-      const snapshotIngredients = sheet.snapshot_ingredients as { condensedHtml?: string } | null;
-      const snapshotAllergens = sheet.snapshot_allergens as { secondary?: string[] } | null;
+      // Parse snapshot data from FT
+      const snapshotIngredients = sheet.snapshot_ingredients as unknown as SnapshotIngredient[] | null;
+      const snapshotAllergens = sheet.snapshot_allergens as unknown as { main?: string[]; secondary?: string[] } | null;
+      const snapshotNutrition = sheet.snapshot_nutrition as unknown as SnapshotNutrition | null;
+
+      // Generate INCO ingredient list from FT ingredients
+      let ingredientsHtml = '';
+      if (snapshotIngredients && snapshotIngredients.length > 0) {
+        const allAllergens = [...new Set(
+          snapshotIngredients.flatMap((ing) => ing.allergens || [])
+        )].sort();
+        
+        const lists = generateIngredientLists(snapshotIngredients, allAllergens);
+        ingredientsHtml = lists.condensedHtml;
+      }
+
+      // Convert nutrition to per 100g format for display
+      const nutritionFor100g = snapshotNutrition ? {
+        per_100g_energy_kcal: snapshotNutrition.energyKcal,
+        per_100g_energy_kj: snapshotNutrition.energyKj,
+        per_100g_fat: snapshotNutrition.fat,
+        per_100g_saturated_fat: snapshotNutrition.saturatedFat,
+        per_100g_carbohydrates: snapshotNutrition.carbohydrates,
+        per_100g_sugars: snapshotNutrition.sugars,
+        per_100g_fiber: snapshotNutrition.fiber,
+        per_100g_protein: snapshotNutrition.protein,
+        per_100g_salt: snapshotNutrition.salt,
+      } : null;
 
       const { data, error } = await supabase
         .from('carton_labels')
         .update({
           status: 'draft', // Reset to draft when refreshing
           snapshot_product_sheet_version: sheet.version,
-          snapshot_ingredients_html: snapshotIngredients?.condensedHtml || null,
+          snapshot_ingredients_html: ingredientsHtml || null,
           snapshot_allergens_secondary: snapshotAllergens?.secondary || [],
-          snapshot_nutrition: sheet.snapshot_nutrition,
+          snapshot_nutrition: nutritionFor100g,
           snapshot_net_weight: sheet.net_weight,
           snapshot_net_weight_unit: sheet.net_weight_unit,
           snapshot_storage_instructions: sheet.storage_instructions,

@@ -93,9 +93,13 @@ export default function EditRecipe() {
     !ingredients.some(ing => ing.rawMaterialId === m.id)
   );
 
-  // Calculate flour total
-  const flourIngredients = ingredients.filter(ing => ing.type === 'farine');
-  const otherIngredients = ingredients.filter(ing => ing.type !== 'farine');
+  // Calculate flour total and sort by descending percentage
+  const flourIngredients = ingredients
+    .filter(ing => ing.type === 'farine')
+    .sort((a, b) => b.bakerPercentage - a.bakerPercentage);
+  const otherIngredients = ingredients
+    .filter(ing => ing.type !== 'farine')
+    .sort((a, b) => b.bakerPercentage - a.bakerPercentage);
   const totalFlourPercentage = flourIngredients.reduce((sum, ing) => sum + ing.bakerPercentage, 0);
   const totalOtherPercentage = otherIngredients.reduce((sum, ing) => sum + ing.bakerPercentage, 0);
   const totalBakerPercentage = totalFlourPercentage + totalOtherPercentage;
@@ -123,8 +127,16 @@ export default function EditRecipe() {
     setIngredientPercentage('');
   };
 
-  const handleRemoveIngredient = (index: number) => {
-    setIngredients(ingredients.filter((_, i) => i !== index));
+  const handleUpdatePercentage = (rawMaterialId: string, newPercentage: number) => {
+    setIngredients(ingredients.map(ing => 
+      ing.rawMaterialId === rawMaterialId 
+        ? { ...ing, bakerPercentage: newPercentage }
+        : ing
+    ));
+  };
+
+  const handleRemoveIngredient = (rawMaterialId: string) => {
+    setIngredients(ingredients.filter(ing => ing.rawMaterialId !== rawMaterialId));
   };
 
   const handleSubmit = async () => {
@@ -384,7 +396,7 @@ export default function EditRecipe() {
 
               {/* Flour list */}
               <div className="space-y-2">
-                {flourIngredients.map((ing, index) => (
+                {flourIngredients.map((ing) => (
                   <div 
                     key={ing.rawMaterialId}
                     className="flex items-center justify-between p-3 bg-primary/5 rounded-lg border border-primary/20"
@@ -394,12 +406,21 @@ export default function EditRecipe() {
                       <span className="font-medium">{getMaterialName(ing.rawMaterialId)}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="font-mono font-bold text-primary">{ing.bakerPercentage}%</span>
+                      <Input
+                        type="number"
+                        step="0.1"
+                        min="0"
+                        max="100"
+                        className="w-20 h-8 text-right font-mono font-bold text-primary"
+                        value={ing.bakerPercentage}
+                        onChange={(e) => handleUpdatePercentage(ing.rawMaterialId, parseFloat(e.target.value) || 0)}
+                      />
+                      <span className="text-primary font-bold">%</span>
                       <Button 
                         variant="ghost" 
                         size="icon" 
                         className="h-8 w-8"
-                        onClick={() => handleRemoveIngredient(ingredients.indexOf(ing))}
+                        onClick={() => handleRemoveIngredient(ing.rawMaterialId)}
                       >
                         <X className="h-4 w-4" />
                       </Button>
@@ -495,12 +516,20 @@ export default function EditRecipe() {
                   >
                     <span>{getMaterialName(ing.rawMaterialId)}</span>
                     <div className="flex items-center gap-2">
-                      <span className="font-mono">{ing.bakerPercentage}%</span>
+                      <Input
+                        type="number"
+                        step="0.1"
+                        min="0"
+                        className="w-20 h-8 text-right font-mono"
+                        value={ing.bakerPercentage}
+                        onChange={(e) => handleUpdatePercentage(ing.rawMaterialId, parseFloat(e.target.value) || 0)}
+                      />
+                      <span className="font-medium">%</span>
                       <Button 
                         variant="ghost" 
                         size="icon" 
                         className="h-8 w-8"
-                        onClick={() => handleRemoveIngredient(ingredients.indexOf(ing))}
+                        onClick={() => handleRemoveIngredient(ing.rawMaterialId)}
                       >
                         <X className="h-4 w-4" />
                       </Button>

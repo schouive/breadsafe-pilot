@@ -28,6 +28,7 @@ import {
 } from '@/components/ui/sheet';
 import { ProductSheet } from '@/hooks/useRecipes';
 import { generateTechnicalSheetPDF } from '@/lib/technicalSheetPdf';
+import { generateIngredientLists, markdownToUppercase } from '@/lib/ingredientListGenerator';
 
 interface SnapshotNutrition {
   energyKcal: number | null;
@@ -216,13 +217,31 @@ export function TechnicalSheetDetailSheet({ open, onOpenChange, sheet }: Technic
             </>
           ) : null}
 
-          {/* Ingredients declaration */}
+          {/* Ingredients declaration - Condensed INCO version */}
           {sheetData.ingredients_declaration && (
             <>
               <Separator />
               <div>
-                <h4 className="font-medium mb-2">Liste des ingrédients</h4>
-                <p className="text-sm text-muted-foreground">{sheetData.ingredients_declaration}</p>
+                <h4 className="font-medium mb-2">Liste des ingrédients (étiquette INCO)</h4>
+                <p className="text-sm text-muted-foreground whitespace-pre-wrap">{sheetData.ingredients_declaration}</p>
+                
+                {/* Technical list - expandable */}
+                {snapshotIngredients && snapshotIngredients.length > 0 && (
+                  <details className="mt-3 group">
+                    <summary className="cursor-pointer text-sm text-primary hover:underline">
+                      Voir la liste technique complète
+                    </summary>
+                    <div className="mt-2 p-3 bg-muted/30 rounded-lg text-sm text-muted-foreground whitespace-pre-wrap">
+                      {(() => {
+                        const allAllergens = [...new Set(
+                          snapshotIngredients.flatMap((ing: any) => ing.allergens || [])
+                        )];
+                        const lists = generateIngredientLists(snapshotIngredients as any, allAllergens as string[]);
+                        return lists.technical;
+                      })()}
+                    </div>
+                  </details>
+                )}
               </div>
             </>
           )}

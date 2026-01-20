@@ -200,8 +200,8 @@ export function useCreateCartonLabel() {
           snapshot_ingredients_html: ingredientsHtml || null,
           snapshot_allergens_secondary: snapshotAllergens?.secondary || [],
           snapshot_nutrition: nutritionFor100g,
-          snapshot_net_weight: sheet.net_weight,
-          snapshot_net_weight_unit: sheet.net_weight_unit,
+        snapshot_net_weight: sheet.carton_weight,
+        snapshot_net_weight_unit: 'kg', // Carton weight is typically in kg
           snapshot_storage_instructions: sheet.storage_instructions,
           snapshot_thawing_instructions: sheet.thawing_instructions,
         })
@@ -414,8 +414,8 @@ export function useRefreshCartonLabelSnapshot() {
           snapshot_ingredients_html: ingredientsHtml || null,
           snapshot_allergens_secondary: snapshotAllergens?.secondary || [],
           snapshot_nutrition: nutritionFor100g,
-          snapshot_net_weight: sheet.net_weight,
-          snapshot_net_weight_unit: sheet.net_weight_unit,
+        snapshot_net_weight: sheet.carton_weight,
+        snapshot_net_weight_unit: 'kg', // Carton weight is typically in kg
           snapshot_storage_instructions: sheet.storage_instructions,
           snapshot_thawing_instructions: sheet.thawing_instructions,
           snapshot_created_at: new Date().toISOString(),

@@ -243,14 +243,14 @@ export async function generateTechnicalSheetPDF(sheet: ProductSheet): Promise<vo
       head: [['Nutriment', 'Pour 100g']],
       body: nutritionData,
       theme: 'striped',
-      styles: { fontSize: 9, cellPadding: 2 },
+      styles: { fontSize: 9, cellPadding: 2, minCellHeight: 6 },
       headStyles: { fillColor: primaryColor, textColor: [255, 255, 255] },
       columnStyles: {
-        0: { cellWidth: 70 },
-        1: { cellWidth: 40, halign: 'right' },
+        0: { cellWidth: 80 },
+        1: { cellWidth: 50, halign: 'right' },
       },
       margin: { left: margin, right: margin },
-      tableWidth: 120,
+      tableWidth: 140,
     });
 
     yPos = (doc as any).lastAutoTable.finalY + 10;

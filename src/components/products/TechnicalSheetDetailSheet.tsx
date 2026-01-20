@@ -28,7 +28,7 @@ import {
   SheetDescription,
 } from '@/components/ui/sheet';
 import { ProductSheet } from '@/hooks/useRecipes';
-import { generateTechnicalSheetPDF } from '@/lib/technicalSheetPdf';
+import { generateTechnicalSheetPDF, printTechnicalSheet } from '@/lib/technicalSheetPdf';
 import { generateIngredientLists, markdownToUppercase } from '@/lib/ingredientListGenerator';
 
 interface SnapshotNutrition {
@@ -78,7 +78,7 @@ export function TechnicalSheetDetailSheet({ open, onOpenChange, sheet }: Technic
   };
 
   const handlePrint = () => {
-    window.print();
+    printTechnicalSheet(sheet);
   };
 
   // Calculate total cartons per pallet

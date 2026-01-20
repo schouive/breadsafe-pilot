@@ -16,6 +16,8 @@
  * - SECONDARY allergens (from compositions): no bold, no uppercase
  * - For wheat flour: add (**gluten**) in bold
  * - Never show compound ingredient structure in final INCO list
+ * - Never show technological enzymes
+ * - Never show both additive name AND E-code for same additive
  */
 
 interface IngredientInput {
@@ -35,6 +37,8 @@ interface FlatIngredient {
   allergenNames: string[];
   isAdditive: boolean;
   additiveFunction?: string;
+  additiveName?: string;         // Clean name without function prefix
+  eCode?: string;                // E-code if detected
   isFromPrimaryIngredient: boolean; // Track if this came from a direct recipe ingredient
 }
 
@@ -54,6 +58,24 @@ const INTERMEDIATE_MATERIALS = [
   'préparation', 'preparation',
   'mélange', 'melange',
   'base',
+];
+
+// Technological enzymes to EXCLUDE from INCO list (processing aids)
+const ENZYMES_TO_EXCLUDE = [
+  'amylase', 'amylases',
+  'alpha-amylase', 'alpha amylase',
+  'protéase', 'protease', 'protéases', 'proteases',
+  'lipase', 'lipases',
+  'xylanase', 'xylanases',
+  'glucose oxydase', 'glucose-oxydase',
+  'hémicellulase', 'hemicellulase', 'hémicellulases', 'hemicellulases',
+  'transglutaminase',
+  'maltase',
+  'invertase',
+  'lactase',
+  'pectinase', 'pectinases',
+  'cellulase', 'cellulases',
+  'enzyme', 'enzymes',
 ];
 
 // Common allergens list for detection
@@ -82,20 +104,60 @@ const WHEAT_TERMS = [
 ];
 
 // Additive functions for INCO grouping
-const ADDITIVE_PATTERNS: { pattern: RegExp; function: string }[] = [
-  { pattern: /émulsifiant|emulsifiant/i, function: 'émulsifiant' },
-  { pattern: /conservateur/i, function: 'conservateur' },
-  { pattern: /antioxydant/i, function: 'antioxydant' },
-  { pattern: /colorant/i, function: 'colorant' },
-  { pattern: /épaississant|epaississant/i, function: 'épaississant' },
-  { pattern: /stabilisant/i, function: 'stabilisant' },
-  { pattern: /acidifiant/i, function: 'acidifiant' },
-  { pattern: /agent de traitement de la farine/i, function: 'agent de traitement de la farine' },
-  { pattern: /anti-agglomérant|antiagglomerant/i, function: 'anti-agglomérant' },
-  { pattern: /arôme|arome/i, function: 'arôme' },
-  { pattern: /exhausteur de goût|exhausteur/i, function: 'exhausteur de goût' },
-  { pattern: /E\d{3,4}/i, function: 'additif' },
+const ADDITIVE_FUNCTIONS: { pattern: RegExp; function: string; priority: number }[] = [
+  { pattern: /émulsifiant|emulsifiant/i, function: 'émulsifiant', priority: 1 },
+  { pattern: /conservateur/i, function: 'conservateur', priority: 2 },
+  { pattern: /antioxydant/i, function: 'antioxydant', priority: 3 },
+  { pattern: /colorant/i, function: 'colorant', priority: 4 },
+  { pattern: /épaississant|epaississant/i, function: 'épaississant', priority: 5 },
+  { pattern: /stabilisant/i, function: 'stabilisant', priority: 6 },
+  { pattern: /acidifiant/i, function: 'acidifiant', priority: 7 },
+  { pattern: /agent de traitement de la farine/i, function: 'agent de traitement de la farine', priority: 8 },
+  { pattern: /anti-agglomérant|antiagglomerant|anti-mottant/i, function: 'anti-agglomérant', priority: 9 },
+  { pattern: /arôme|arome/i, function: 'arôme', priority: 10 },
+  { pattern: /exhausteur de goût|exhausteur/i, function: 'exhausteur de goût', priority: 11 },
+  { pattern: /poudre à lever|poudre levante|levure chimique/i, function: 'poudre à lever', priority: 12 },
 ];
+
+// E-code to additive name mapping for deduplication
+const E_CODE_MAPPING: Record<string, { name: string; function: string }> = {
+  'e471': { name: 'mono et diglycérides d\'acides gras', function: 'émulsifiant' },
+  'e472e': { name: 'esters mono- et diacétyltartriques', function: 'émulsifiant' },
+  'e322': { name: 'lécithine', function: 'émulsifiant' },
+  'e300': { name: 'acide ascorbique', function: 'agent de traitement de la farine' },
+  'e282': { name: 'propionate de calcium', function: 'conservateur' },
+  'e281': { name: 'propionate de sodium', function: 'conservateur' },
+  'e200': { name: 'acide sorbique', function: 'conservateur' },
+  'e202': { name: 'sorbate de potassium', function: 'conservateur' },
+  'e270': { name: 'acide lactique', function: 'acidifiant' },
+  'e330': { name: 'acide citrique', function: 'acidifiant' },
+  'e500': { name: 'carbonates de sodium', function: 'poudre à lever' },
+  'e503': { name: 'carbonates d\'ammonium', function: 'poudre à lever' },
+  'e450': { name: 'diphosphates', function: 'poudre à lever' },
+  'e341': { name: 'phosphates de calcium', function: 'acidifiant' },
+  'e160a': { name: 'carotènes', function: 'colorant' },
+  'e160b': { name: 'rocou', function: 'colorant' },
+  'e100': { name: 'curcumine', function: 'colorant' },
+  'e170': { name: 'carbonate de calcium', function: 'anti-agglomérant' },
+  'e551': { name: 'dioxyde de silicium', function: 'anti-agglomérant' },
+  'e412': { name: 'gomme de guar', function: 'épaississant' },
+  'e415': { name: 'gomme xanthane', function: 'épaississant' },
+  'e466': { name: 'carboxyméthylcellulose', function: 'épaississant' },
+};
+
+// Reverse mapping: additive names to their E-codes
+const ADDITIVE_NAME_TO_E_CODE: Record<string, string> = {};
+for (const [eCode, data] of Object.entries(E_CODE_MAPPING)) {
+  ADDITIVE_NAME_TO_E_CODE[data.name.toLowerCase()] = eCode;
+}
+
+/**
+ * Check if an ingredient is an enzyme to exclude
+ */
+function isEnzymeToExclude(name: string): boolean {
+  const lowerName = name.toLowerCase();
+  return ENZYMES_TO_EXCLUDE.some(enzyme => lowerName.includes(enzyme));
+}
 
 /**
  * Check if an ingredient name is an intermediate material that should be decomposed
@@ -138,14 +200,64 @@ function containsAllergen(text: string, allergens: string[]): { isAllergen: bool
 }
 
 /**
+ * Extract E-code from text if present
+ */
+function extractECode(text: string): string | null {
+  const match = text.match(/\bE\s*(\d{3,4}[a-z]?)\b/i);
+  if (match) {
+    return `e${match[1].toLowerCase()}`;
+  }
+  return null;
+}
+
+/**
  * Detect if an ingredient is an additive and get its function
  */
-function detectAdditive(name: string): { isAdditive: boolean; function?: string } {
-  for (const { pattern, function: func } of ADDITIVE_PATTERNS) {
+function detectAdditive(name: string): { isAdditive: boolean; function?: string; cleanName?: string; eCode?: string } {
+  const lowerName = name.toLowerCase().trim();
+  
+  // Check for E-code
+  const eCode = extractECode(name);
+  if (eCode && E_CODE_MAPPING[eCode]) {
+    return {
+      isAdditive: true,
+      function: E_CODE_MAPPING[eCode].function,
+      cleanName: E_CODE_MAPPING[eCode].name,
+      eCode
+    };
+  }
+  
+  // Check for additive function patterns
+  for (const { pattern, function: func } of ADDITIVE_FUNCTIONS) {
     if (pattern.test(name)) {
-      return { isAdditive: true, function: func };
+      // Extract the clean name after the function
+      const cleanName = name.replace(pattern, '').replace(/^[\s:,]+|[\s:,]+$/g, '').trim();
+      return { 
+        isAdditive: true, 
+        function: func,
+        cleanName: cleanName || name,
+        eCode: ADDITIVE_NAME_TO_E_CODE[cleanName.toLowerCase()] || undefined
+      };
     }
   }
+  
+  // Check if the name matches a known additive
+  for (const [eCode, data] of Object.entries(E_CODE_MAPPING)) {
+    if (lowerName.includes(data.name.toLowerCase())) {
+      return {
+        isAdditive: true,
+        function: data.function,
+        cleanName: data.name,
+        eCode
+      };
+    }
+  }
+  
+  // Check for standalone E-code patterns
+  if (/^E\s*\d{3,4}[a-z]?$/i.test(name.trim())) {
+    return { isAdditive: true, function: 'additif', cleanName: name.trim(), eCode: eCode || undefined };
+  }
+  
   return { isAdditive: false };
 }
 
@@ -188,6 +300,11 @@ function parseComposition(
     let part = parts[i].trim();
     const weight = parentWeight * weights[i];
     
+    // Skip enzymes
+    if (isEnzymeToExclude(part)) {
+      continue;
+    }
+    
     // Check for nested composition in parentheses: "Ingredient (sub1, sub2)"
     const nestedMatch = part.match(/^(.+?)\s*\(([^)]+)\)$/);
     if (nestedMatch) {
@@ -205,18 +322,20 @@ function parseComposition(
     } else {
       // Simple ingredient from composition = SECONDARY allergen
       const { isAllergen, foundAllergens } = containsAllergen(part, parentAllergens);
-      const { isAdditive, function: additiveFunction } = detectAdditive(part);
+      const { isAdditive, function: additiveFunction, cleanName, eCode } = detectAdditive(part);
       
-      const cleanedName = cleanIngredientName(part);
+      const ingredientName = cleanIngredientName(isAdditive && cleanName ? cleanName : part);
       
       results.push({
-        name: cleanedName,
+        name: ingredientName,
         weight,
         isPrimaryAllergen: false,  // From composition = always secondary
         isSecondaryAllergen: isAllergen,
         allergenNames: foundAllergens,
         isAdditive,
         additiveFunction,
+        additiveName: cleanName,
+        eCode,
         isFromPrimaryIngredient: false,
       });
     }
@@ -252,14 +371,16 @@ function estimateWeights(count: number): number[] {
 function cleanIngredientName(name: string): string {
   let cleaned = name.trim();
   cleaned = cleaned.replace(/^[,;:\s]+|[,;:\s]+$/g, '');
+  // Remove E-code parentheses if name is provided
+  cleaned = cleaned.replace(/\s*\(E\s*\d{3,4}[a-z]?\)/gi, '');
   return cleaned;
 }
 
 /**
- * Normalize ingredient name for deduplication
+ * Normalize ingredient name for deduplication - aggressive normalization
  */
 function normalizeIngredientName(name: string): string {
-  return name
+  let normalized = name
     .toLowerCase()
     .trim()
     .replace(/\s+/g, ' ')
@@ -269,7 +390,27 @@ function normalizeIngredientName(name: string): string {
     .replace(/[îï]/g, 'i')
     .replace(/[ôö]/g, 'o')
     .replace(/[ç]/g, 'c')
-    .replace(/['']/g, "'");
+    .replace(/['']/g, "'")
+    .replace(/[-–—]/g, ' ')
+    .replace(/\s+/g, ' ');
+    
+  // Remove common prefixes/suffixes that don't change meaning
+  normalized = normalized.replace(/^(de |du |des |d'|le |la |les |l')/, '');
+  
+  return normalized;
+}
+
+/**
+ * Create a canonical key for additive deduplication
+ */
+function getAdditiveKey(ingredient: FlatIngredient): string {
+  if (ingredient.eCode) {
+    return ingredient.eCode;
+  }
+  if (ingredient.additiveName) {
+    return normalizeIngredientName(ingredient.additiveName);
+  }
+  return normalizeIngredientName(ingredient.name);
 }
 
 /**
@@ -282,6 +423,11 @@ function flattenIngredients(
   const flatIngredients: FlatIngredient[] = [];
 
   for (const ing of ingredients) {
+    // Skip enzymes at the top level too
+    if (isEnzymeToExclude(ing.name)) {
+      continue;
+    }
+    
     const hasComposition = ing.composition && ing.composition.trim() !== '';
     const shouldDecompose = hasComposition && (
       isIntermediateMaterial(ing.name) || 
@@ -300,33 +446,42 @@ function flattenIngredients(
       );
       flatIngredients.push(...subIngredients);
     } else if (hasComposition) {
+      // Skip if composition is an enzyme
+      if (isEnzymeToExclude(ing.composition!)) {
+        continue;
+      }
+      
       // Simple ingredient with single composition
       const { isAllergen, foundAllergens } = containsAllergen(ing.composition!, allAllergens);
-      const { isAdditive, function: additiveFunction } = detectAdditive(ing.composition!);
+      const { isAdditive, function: additiveFunction, cleanName, eCode } = detectAdditive(ing.composition!);
       
       flatIngredients.push({
-        name: cleanIngredientName(ing.composition!),
+        name: cleanIngredientName(isAdditive && cleanName ? cleanName : ing.composition!),
         weight: ing.bakerPercentage,
         isPrimaryAllergen: isPrimaryAllergen,
         isSecondaryAllergen: isAllergen && !isPrimaryAllergen,
         allergenNames: [...foundAllergens, ...ing.allergens],
         isAdditive,
         additiveFunction,
+        additiveName: cleanName,
+        eCode,
         isFromPrimaryIngredient: true,
       });
     } else {
       // Simple ingredient without composition = PRIMARY if has allergens
       const { isAllergen, foundAllergens } = containsAllergen(ing.name, allAllergens);
-      const { isAdditive, function: additiveFunction } = detectAdditive(ing.name);
+      const { isAdditive, function: additiveFunction, cleanName, eCode } = detectAdditive(ing.name);
       
       flatIngredients.push({
-        name: cleanIngredientName(ing.name),
+        name: cleanIngredientName(isAdditive && cleanName ? cleanName : ing.name),
         weight: ing.bakerPercentage,
         isPrimaryAllergen: isPrimaryAllergen || (isAllergen && ing.allergens.length > 0),
         isSecondaryAllergen: isAllergen && !isPrimaryAllergen,
         allergenNames: [...foundAllergens, ...ing.allergens],
         isAdditive,
         additiveFunction,
+        additiveName: cleanName,
+        eCode,
         isFromPrimaryIngredient: true,
       });
     }
@@ -337,35 +492,62 @@ function flattenIngredients(
 
 /**
  * Merge duplicates and group by normalized name
+ * Special handling for additives to prevent name/E-code duplicates
  */
 function mergeAndDeduplicate(ingredients: FlatIngredient[]): FlatIngredient[] {
   const merged = new Map<string, FlatIngredient>();
+  const additivesMerged = new Map<string, FlatIngredient>();
 
   for (const ing of ingredients) {
-    const key = normalizeIngredientName(ing.name);
-    const existing = merged.get(key);
+    // Handle additives separately to avoid name/E-code duplicates
+    if (ing.isAdditive) {
+      const key = getAdditiveKey(ing);
+      const existing = additivesMerged.get(key);
 
-    if (existing) {
-      existing.weight += ing.weight;
-      // Preserve primary allergen status if any occurrence was primary
-      if (ing.isPrimaryAllergen) existing.isPrimaryAllergen = true;
-      if (ing.isSecondaryAllergen && !existing.isPrimaryAllergen) existing.isSecondaryAllergen = true;
-      existing.allergenNames = [...new Set([...existing.allergenNames, ...ing.allergenNames])];
-      if (ing.isAdditive && !existing.isAdditive) {
-        existing.isAdditive = true;
-        existing.additiveFunction = ing.additiveFunction;
+      if (existing) {
+        existing.weight += ing.weight;
+        if (ing.isPrimaryAllergen) existing.isPrimaryAllergen = true;
+        if (ing.isSecondaryAllergen && !existing.isPrimaryAllergen) existing.isSecondaryAllergen = true;
+        existing.allergenNames = [...new Set([...existing.allergenNames, ...ing.allergenNames])];
+        if (ing.isFromPrimaryIngredient) existing.isFromPrimaryIngredient = true;
+        // Keep the better name (prefer descriptive name over E-code)
+        if (ing.additiveName && !existing.additiveName) {
+          existing.additiveName = ing.additiveName;
+          existing.name = ing.additiveName;
+        }
+        if (ing.eCode && !existing.eCode) {
+          existing.eCode = ing.eCode;
+        }
+        if (ing.additiveFunction && !existing.additiveFunction) {
+          existing.additiveFunction = ing.additiveFunction;
+        }
+      } else {
+        additivesMerged.set(key, { ...ing });
       }
-      if (ing.isFromPrimaryIngredient) existing.isFromPrimaryIngredient = true;
     } else {
-      merged.set(key, { ...ing });
+      // Regular ingredients
+      const key = normalizeIngredientName(ing.name);
+      const existing = merged.get(key);
+
+      if (existing) {
+        existing.weight += ing.weight;
+        if (ing.isPrimaryAllergen) existing.isPrimaryAllergen = true;
+        if (ing.isSecondaryAllergen && !existing.isPrimaryAllergen) existing.isSecondaryAllergen = true;
+        existing.allergenNames = [...new Set([...existing.allergenNames, ...ing.allergenNames])];
+        if (ing.isFromPrimaryIngredient) existing.isFromPrimaryIngredient = true;
+      } else {
+        merged.set(key, { ...ing });
+      }
     }
   }
 
-  return Array.from(merged.values());
+  // Combine regular and additive ingredients
+  return [...Array.from(merged.values()), ...Array.from(additivesMerged.values())];
 }
 
 /**
  * Group additives by function for INCO compliance
+ * Format: "function : additive1, additive2"
  */
 function groupAdditivesByFunction(ingredients: FlatIngredient[]): FlatIngredient[] {
   const result: FlatIngredient[] = [];
@@ -381,9 +563,19 @@ function groupAdditivesByFunction(ingredients: FlatIngredient[]): FlatIngredient
     }
   }
 
+  // Create grouped additive entries
   for (const [func, additives] of additiveGroups.entries()) {
+    // Deduplicate additive names within the group
+    const uniqueNames = new Map<string, string>();
+    for (const a of additives) {
+      const key = normalizeIngredientName(a.additiveName || a.name);
+      if (!uniqueNames.has(key)) {
+        uniqueNames.set(key, a.additiveName || a.name);
+      }
+    }
+    
     const totalWeight = additives.reduce((sum, a) => sum + a.weight, 0);
-    const names = additives.map(a => a.name.replace(new RegExp(`^${func}\\s*[:\\s]*`, 'i'), ''));
+    const names = Array.from(uniqueNames.values());
     
     result.push({
       name: `${func} : ${names.join(', ')}`,
@@ -474,7 +666,8 @@ function generateTechnicalList(
  * Generate the CONDENSED (INCO) ingredient list for labels
  * - Decomposes compound ingredients completely
  * - Never shows intermediate material names
- * - Removes duplicates
+ * - Excludes technological enzymes
+ * - Removes duplicates (including name/E-code duplicates)
  * - Groups additives by function
  * - Orders by actual weight in finished product
  * - PRIMARY allergens: bold only (no uppercase)
@@ -485,10 +678,10 @@ function generateCondensedList(
   allAllergens: string[],
   format: 'markdown' | 'html' = 'markdown'
 ): string {
-  // Step 1: Flatten all ingredients to their base components
+  // Step 1: Flatten all ingredients to their base components (excludes enzymes)
   const flat = flattenIngredients(ingredients, allAllergens);
   
-  // Step 2: Merge duplicates
+  // Step 2: Merge duplicates (with special additive handling)
   const merged = mergeAndDeduplicate(flat);
   
   // Step 3: Group additives by function
@@ -526,8 +719,7 @@ export function generateIngredientLists(
 }
 
 /**
- * Utility: Convert markdown bold to plain uppercase (for PDF/plain text)
- * NOTE: This is kept for backward compatibility but should not add uppercase
+ * Utility: Convert markdown bold to plain text (remove bold markers)
  */
 export function markdownToUppercase(text: string): string {
   // Just remove the markdown bold markers, don't add uppercase

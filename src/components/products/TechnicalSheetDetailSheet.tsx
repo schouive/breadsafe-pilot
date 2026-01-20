@@ -9,6 +9,7 @@ import {
   Package,
   Thermometer,
   Download,
+  Printer,
   Clock,
   Layers,
   Box,
@@ -76,6 +77,10 @@ export function TechnicalSheetDetailSheet({ open, onOpenChange, sheet }: Technic
     }
   };
 
+  const handlePrint = () => {
+    window.print();
+  };
+
   // Calculate total cartons per pallet
   const cartonsPerPallet = sheetData.cartons_per_layer && sheetData.layers_per_pallet 
     ? sheetData.cartons_per_layer * sheetData.layers_per_pallet 
@@ -108,10 +113,16 @@ export function TechnicalSheetDetailSheet({ open, onOpenChange, sheet }: Technic
                 </SheetDescription>
               </div>
             </div>
-            <Button onClick={handleExportPDF} disabled={isExporting}>
-              <Download className="h-4 w-4 mr-2" />
-              {isExporting ? 'Export...' : 'Export PDF'}
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={handlePrint}>
+                <Printer className="h-4 w-4 mr-1" />
+                Imprimer
+              </Button>
+              <Button size="sm" onClick={handleExportPDF} disabled={isExporting}>
+                <Download className="h-4 w-4 mr-1" />
+                {isExporting ? 'Export...' : 'PDF'}
+              </Button>
+            </div>
           </div>
         </SheetHeader>
 

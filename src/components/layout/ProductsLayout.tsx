@@ -1,6 +1,5 @@
 import { 
   BookOpen,
-  Tag,
   FileText,
   Package
 } from 'lucide-react';
@@ -12,7 +11,6 @@ interface ProductsLayoutProps {
 
 const productsNavigation = [
   { name: 'Recettes', href: '/products/recipes', icon: BookOpen },
-  { name: 'Datas Étiquette', href: '/products/label-data', icon: Tag },
   { name: 'Fiche technique', href: '/products/technical-sheet', icon: FileText },
   { name: 'Étiquettes carton', href: '/products/carton-labels', icon: Package },
 ];

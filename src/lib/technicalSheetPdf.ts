@@ -15,19 +15,23 @@ interface SnapshotNutrition {
   salt: number | null;
 }
 
-// Helper function to load image as base64
-async function loadImageAsBase64(src: string): Promise<string> {
+// Helper function to load image as base64 and get its natural dimensions
+async function loadImageAsBase64WithDimensions(src: string): Promise<{ base64: string; width: number; height: number }> {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.crossOrigin = 'Anonymous';
     img.onload = () => {
       const canvas = document.createElement('canvas');
-      canvas.width = img.width;
-      canvas.height = img.height;
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
       const ctx = canvas.getContext('2d');
       if (ctx) {
         ctx.drawImage(img, 0, 0);
-        resolve(canvas.toDataURL('image/png'));
+        resolve({
+          base64: canvas.toDataURL('image/png'),
+          width: img.naturalWidth,
+          height: img.naturalHeight
+        });
       } else {
         reject(new Error('Could not get canvas context'));
       }
@@ -35,6 +39,20 @@ async function loadImageAsBase64(src: string): Promise<string> {
     img.onerror = reject;
     img.src = src;
   });
+}
+
+// Get logo as base64 for print (needed because new window can't access bundled imports)
+let cachedLogoBase64: string | null = null;
+async function getLogoBase64(): Promise<string> {
+  if (cachedLogoBase64) return cachedLogoBase64;
+  try {
+    const result = await loadImageAsBase64WithDimensions(logoImage);
+    cachedLogoBase64 = result.base64;
+    return cachedLogoBase64;
+  } catch (e) {
+    console.warn('Could not load logo');
+    return '';
+  }
 }
 
 export async function generateTechnicalSheetPDF(sheet: ProductSheet): Promise<void> {
@@ -52,15 +70,16 @@ export async function generateTechnicalSheetPDF(sheet: ProductSheet): Promise<vo
 
   // Header with logo
   doc.setFillColor(...primaryColor);
-  doc.rect(0, 0, pageWidth, 45, 'F');
+  doc.rect(0, 0, pageWidth, 50, 'F');
   
-  // Try to add logo - calculate proper aspect ratio
+  // Try to add logo - calculate proper aspect ratio from actual image dimensions
   try {
-    const logoBase64 = await loadImageAsBase64(logoImage);
-    // Logo dimensions: keep aspect ratio, max height 12mm
-    const logoHeight = 12;
-    const logoWidth = logoHeight * 2.5; // Approximate aspect ratio
-    doc.addImage(logoBase64, 'PNG', margin, 6, logoWidth, logoHeight);
+    const logoData = await loadImageAsBase64WithDimensions(logoImage);
+    // Calculate aspect ratio from actual image dimensions
+    const aspectRatio = logoData.width / logoData.height;
+    const logoHeight = 14;
+    const logoWidth = logoHeight * aspectRatio;
+    doc.addImage(logoData.base64, 'PNG', margin, 8, logoWidth, logoHeight);
   } catch (e) {
     console.warn('Could not load logo for PDF');
   }
@@ -68,7 +87,7 @@ export async function generateTechnicalSheetPDF(sheet: ProductSheet): Promise<vo
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(9);
   doc.setFont('helvetica', 'normal');
-  doc.text('FICHE TECHNIQUE PRODUIT', margin, 24);
+  doc.text('FICHE TECHNIQUE PRODUIT', margin, 26);
   
   // Product name - prominent
   doc.setFontSize(16);
@@ -78,20 +97,20 @@ export async function generateTechnicalSheetPDF(sheet: ProductSheet): Promise<vo
   const truncatedName = doc.getTextWidth(productName) > maxTitleWidth 
     ? productName.substring(0, 40) + '...' 
     : productName;
-  doc.text(truncatedName, margin, 38);
+  doc.text(truncatedName, margin, 42);
   
   // Version badge
   if (sheetData.version) {
     const versionText = `v${sheetData.version}`;
     const versionWidth = doc.getTextWidth(versionText) + 8;
     doc.setFillColor(255, 255, 255);
-    doc.roundedRect(pageWidth - margin - versionWidth, 28, versionWidth, 12, 2, 2, 'F');
+    doc.roundedRect(pageWidth - margin - versionWidth, 32, versionWidth, 12, 2, 2, 'F');
     doc.setTextColor(...primaryColor);
     doc.setFontSize(10);
-    doc.text(versionText, pageWidth - margin - versionWidth + 4, 36);
+    doc.text(versionText, pageWidth - margin - versionWidth + 4, 40);
   }
   
-  yPos = 55;
+  yPos = 60;
   
   // Description section (if present)
   if (sheetData.description) {
@@ -351,8 +370,11 @@ export async function generateTechnicalSheetPDF(sheet: ProductSheet): Promise<vo
 /**
  * Generate a printable HTML version of the technical sheet
  */
-export function printTechnicalSheet(sheet: any): void {
+export async function printTechnicalSheet(sheet: any): Promise<void> {
   const sheetData = sheet as any;
+  
+  // Get logo as base64 for the print window (important: bundled paths don't work in new windows)
+  const logoBase64 = await getLogoBase64();
   
   const snapshotAllergens = sheetData.snapshot_allergens as { main?: string[]; secondary?: string[] } | null;
   const snapshotNutrition = sheetData.snapshot_nutrition as SnapshotNutrition | null;
@@ -375,55 +397,49 @@ export function printTechnicalSheet(sheet: any): void {
   <title>Fiche Technique - ${sheetData.product_name || 'Produit'}</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
+    @page { 
+      size: A4; 
+      margin: 15mm 10mm 15mm 10mm; 
+    }
     body { 
       font-family: Arial, sans-serif; 
       font-size: 11pt; 
       color: #1e293b; 
       line-height: 1.4;
-      padding: 20px;
       margin: 0;
-    }
-    @page { 
-      size: A4; 
-      margin: 10mm; 
+      padding: 0;
     }
     @media print {
       body { 
         -webkit-print-color-adjust: exact; 
         print-color-adjust: exact; 
-        padding: 0;
       }
     }
     .header {
       background: #62779c;
       color: white;
-      padding: 12px 20px;
-      margin: -20px -20px 20px -20px;
+      padding: 15px 20px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      min-height: 70px;
+      min-height: 80px;
+      margin-bottom: 20px;
     }
-    @media print {
-      .header {
-        margin: -10mm -10mm 15px -10mm;
-        padding: 10px 15px;
-      }
-    }
-    .header-left { display: flex; flex-direction: column; gap: 4px; }
+    .header-left { display: flex; flex-direction: column; gap: 6px; flex: 1; }
     .header-top { display: flex; align-items: center; gap: 12px; }
-    .header-logo { height: 24px; width: auto; object-fit: contain; }
+    .header-logo { height: 28px; width: auto; object-fit: contain; }
     .header-subtitle { font-size: 9pt; opacity: 0.9; }
-    .header-title { font-size: 18pt; font-weight: bold; line-height: 1.2; }
+    .header-title { font-size: 18pt; font-weight: bold; line-height: 1.2; margin-top: 4px; }
     .header .version { 
       background: white; 
       color: #62779c; 
-      padding: 4px 10px; 
+      padding: 6px 12px; 
       border-radius: 4px; 
       font-size: 10pt;
       font-weight: bold;
       flex-shrink: 0;
     }
+    .content { padding: 0 20px; }
     .description { 
       font-style: italic; 
       color: #64748b; 
@@ -483,7 +499,6 @@ export function printTechnicalSheet(sheet: any): void {
         bottom: 0;
         left: 0;
         right: 0;
-        margin: 0 -10mm -10mm -10mm;
       }
     }
     .status-valid { color: #16a34a; font-weight: bold; }
@@ -495,7 +510,7 @@ export function printTechnicalSheet(sheet: any): void {
   <div class="header">
     <div class="header-left">
       <div class="header-top">
-        <img src="${logoImage}" alt="Breadshop" class="header-logo" />
+        ${logoBase64 ? `<img src="${logoBase64}" alt="Breadshop" class="header-logo" />` : ''}
         <span class="header-subtitle">FICHE TECHNIQUE PRODUIT</span>
       </div>
       <div class="header-title">${sheetData.product_name || 'Sans nom'}</div>
@@ -503,6 +518,7 @@ export function printTechnicalSheet(sheet: any): void {
     ${sheetData.version ? `<div class="version">v${sheetData.version}</div>` : ''}
   </div>
 
+  <div class="content">
   ${sheetData.description ? `<div class="description">${sheetData.description}</div>` : ''}
 
   <div class="section">
@@ -570,6 +586,8 @@ export function printTechnicalSheet(sheet: any): void {
     ${sheetData.usage_instructions ? `<div class="conservation-item"><strong>Mise en œuvre:</strong> ${sheetData.usage_instructions}</div>` : ''}
   </div>
   ` : ''}
+
+  </div><!-- end content -->
 
   <div class="footer">
     <div>

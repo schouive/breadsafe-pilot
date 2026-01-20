@@ -77,8 +77,8 @@ export function TechnicalSheetDetailSheet({ open, onOpenChange, sheet }: Technic
     }
   };
 
-  const handlePrint = () => {
-    printTechnicalSheet(sheet);
+  const handlePrint = async () => {
+    await printTechnicalSheet(sheet);
   };
 
   // Calculate total cartons per pallet

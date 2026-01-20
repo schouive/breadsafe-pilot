@@ -12,7 +12,9 @@
  * - Fully decompose intermediate ingredients into their final components
  * - Remove duplicates and group identical additives
  * - Order by descending actual weight in finished product
- * - Highlight allergens in BOLD
+ * - PRIMARY allergens (direct recipe ingredients): bold only, no uppercase
+ * - SECONDARY allergens (from compositions): no bold, no uppercase
+ * - For wheat flour: add (**gluten**) in bold
  * - Never show compound ingredient structure in final INCO list
  */
 
@@ -20,18 +22,20 @@ interface IngredientInput {
   name: string;
   composition: string | null;
   bakerPercentage: number;
-  allergens: string[];
-  allergensSecondary?: string[];
+  allergens: string[];       // Primary allergens
+  allergensSecondary?: string[]; // Secondary allergens (from composition)
   type?: string; // 'farine' or 'ingredient'
 }
 
 interface FlatIngredient {
   name: string;
   weight: number;
-  isAllergen: boolean;
+  isPrimaryAllergen: boolean;    // From direct recipe ingredient
+  isSecondaryAllergen: boolean;  // From composition
   allergenNames: string[];
   isAdditive: boolean;
-  additiveFunction?: string; // émulsifiant, conservateur, etc.
+  additiveFunction?: string;
+  isFromPrimaryIngredient: boolean; // Track if this came from a direct recipe ingredient
 }
 
 interface GeneratedLists {
@@ -72,6 +76,11 @@ const COMMON_ALLERGENS = [
   'mollusques', 'mollusque'
 ];
 
+// Wheat-related terms that require gluten mention
+const WHEAT_TERMS = [
+  'blé', 'ble', 'froment', 'farine de blé', 'farine de ble'
+];
+
 // Additive functions for INCO grouping
 const ADDITIVE_PATTERNS: { pattern: RegExp; function: string }[] = [
   { pattern: /émulsifiant|emulsifiant/i, function: 'émulsifiant' },
@@ -94,6 +103,14 @@ const ADDITIVE_PATTERNS: { pattern: RegExp; function: string }[] = [
 function isIntermediateMaterial(name: string): boolean {
   const lowerName = name.toLowerCase();
   return INTERMEDIATE_MATERIALS.some(term => lowerName.includes(term));
+}
+
+/**
+ * Check if a text contains wheat (for gluten annotation)
+ */
+function containsWheat(text: string): boolean {
+  const lowerText = text.toLowerCase();
+  return WHEAT_TERMS.some(term => lowerText.includes(term));
 }
 
 /**
@@ -134,7 +151,7 @@ function detectAdditive(name: string): { isAdditive: boolean; function?: string 
 
 /**
  * Parse a composition string to extract sub-ingredients
- * Handles nested compositions and respects parentheses
+ * All ingredients from composition are marked as secondary (not primary allergens)
  */
 function parseComposition(
   composition: string,
@@ -174,7 +191,6 @@ function parseComposition(
     // Check for nested composition in parentheses: "Ingredient (sub1, sub2)"
     const nestedMatch = part.match(/^(.+?)\s*\(([^)]+)\)$/);
     if (nestedMatch) {
-      // Has nested composition - recursively parse
       const [, mainName, nestedComposition] = nestedMatch;
       
       // If the main name is an intermediate material, just decompose
@@ -187,20 +203,21 @@ function parseComposition(
         results.push(...subIngredients);
       }
     } else {
-      // Simple ingredient
+      // Simple ingredient from composition = SECONDARY allergen
       const { isAllergen, foundAllergens } = containsAllergen(part, parentAllergens);
       const { isAdditive, function: additiveFunction } = detectAdditive(part);
       
-      // Clean up the name (remove E-numbers format duplicates)
       const cleanedName = cleanIngredientName(part);
       
       results.push({
         name: cleanedName,
         weight,
-        isAllergen,
+        isPrimaryAllergen: false,  // From composition = always secondary
+        isSecondaryAllergen: isAllergen,
         allergenNames: foundAllergens,
         isAdditive,
         additiveFunction,
+        isFromPrimaryIngredient: false,
       });
     }
   }
@@ -215,19 +232,16 @@ function estimateWeights(count: number): number[] {
   if (count === 0) return [];
   if (count === 1) return [1];
   
-  // Use exponential decay: first ingredient gets most, decreasing thereafter
   const weights: number[] = [];
   let remaining = 1;
   
   for (let i = 0; i < count; i++) {
-    // Each subsequent ingredient gets ~60% of what's left
     const factor = Math.max(0.6 - (i * 0.05), 0.1);
     const weight = i === count - 1 ? remaining : remaining * factor;
     weights.push(weight);
     remaining -= weight;
   }
   
-  // Normalize to ensure sum = 1
   const sum = weights.reduce((a, b) => a + b, 0);
   return weights.map(w => w / sum);
 }
@@ -237,10 +251,7 @@ function estimateWeights(count: number): number[] {
  */
 function cleanIngredientName(name: string): string {
   let cleaned = name.trim();
-  
-  // Remove leading/trailing punctuation
   cleaned = cleaned.replace(/^[,;:\s]+|[,;:\s]+$/g, '');
-  
   return cleaned;
 }
 
@@ -274,11 +285,14 @@ function flattenIngredients(
     const hasComposition = ing.composition && ing.composition.trim() !== '';
     const shouldDecompose = hasComposition && (
       isIntermediateMaterial(ing.name) || 
-      ing.composition!.includes(',') // Contains multiple sub-ingredients
+      ing.composition!.includes(',')
     );
 
+    // Check if this is a primary allergen (direct ingredient in recipe)
+    const isPrimaryAllergen = ing.allergens && ing.allergens.length > 0;
+
     if (shouldDecompose) {
-      // Decompose the ingredient
+      // Decompose the ingredient - sub-ingredients are secondary
       const subIngredients = parseComposition(
         ing.composition!,
         ing.bakerPercentage,
@@ -286,30 +300,34 @@ function flattenIngredients(
       );
       flatIngredients.push(...subIngredients);
     } else if (hasComposition) {
-      // Simple ingredient with composition that's just a single ingredient
+      // Simple ingredient with single composition
       const { isAllergen, foundAllergens } = containsAllergen(ing.composition!, allAllergens);
       const { isAdditive, function: additiveFunction } = detectAdditive(ing.composition!);
       
       flatIngredients.push({
         name: cleanIngredientName(ing.composition!),
         weight: ing.bakerPercentage,
-        isAllergen: isAllergen || ing.allergens.length > 0,
+        isPrimaryAllergen: isPrimaryAllergen,
+        isSecondaryAllergen: isAllergen && !isPrimaryAllergen,
         allergenNames: [...foundAllergens, ...ing.allergens],
         isAdditive,
         additiveFunction,
+        isFromPrimaryIngredient: true,
       });
     } else {
-      // Simple ingredient without composition
+      // Simple ingredient without composition = PRIMARY if has allergens
       const { isAllergen, foundAllergens } = containsAllergen(ing.name, allAllergens);
       const { isAdditive, function: additiveFunction } = detectAdditive(ing.name);
       
       flatIngredients.push({
         name: cleanIngredientName(ing.name),
         weight: ing.bakerPercentage,
-        isAllergen: isAllergen || ing.allergens.length > 0,
+        isPrimaryAllergen: isPrimaryAllergen || (isAllergen && ing.allergens.length > 0),
+        isSecondaryAllergen: isAllergen && !isPrimaryAllergen,
         allergenNames: [...foundAllergens, ...ing.allergens],
         isAdditive,
         additiveFunction,
+        isFromPrimaryIngredient: true,
       });
     }
   }
@@ -328,14 +346,16 @@ function mergeAndDeduplicate(ingredients: FlatIngredient[]): FlatIngredient[] {
     const existing = merged.get(key);
 
     if (existing) {
-      // Merge: add weights, combine allergens
       existing.weight += ing.weight;
-      if (ing.isAllergen) existing.isAllergen = true;
+      // Preserve primary allergen status if any occurrence was primary
+      if (ing.isPrimaryAllergen) existing.isPrimaryAllergen = true;
+      if (ing.isSecondaryAllergen && !existing.isPrimaryAllergen) existing.isSecondaryAllergen = true;
       existing.allergenNames = [...new Set([...existing.allergenNames, ...ing.allergenNames])];
       if (ing.isAdditive && !existing.isAdditive) {
         existing.isAdditive = true;
         existing.additiveFunction = ing.additiveFunction;
       }
+      if (ing.isFromPrimaryIngredient) existing.isFromPrimaryIngredient = true;
     } else {
       merged.set(key, { ...ing });
     }
@@ -361,7 +381,6 @@ function groupAdditivesByFunction(ingredients: FlatIngredient[]): FlatIngredient
     }
   }
 
-  // Add grouped additives with combined weights
   for (const [func, additives] of additiveGroups.entries()) {
     const totalWeight = additives.reduce((sum, a) => sum + a.weight, 0);
     const names = additives.map(a => a.name.replace(new RegExp(`^${func}\\s*[:\\s]*`, 'i'), ''));
@@ -369,10 +388,12 @@ function groupAdditivesByFunction(ingredients: FlatIngredient[]): FlatIngredient
     result.push({
       name: `${func} : ${names.join(', ')}`,
       weight: totalWeight,
-      isAllergen: additives.some(a => a.isAllergen),
+      isPrimaryAllergen: additives.some(a => a.isPrimaryAllergen),
+      isSecondaryAllergen: additives.some(a => a.isSecondaryAllergen) && !additives.some(a => a.isPrimaryAllergen),
       allergenNames: [...new Set(additives.flatMap(a => a.allergenNames))],
       isAdditive: true,
       additiveFunction: func,
+      isFromPrimaryIngredient: additives.some(a => a.isFromPrimaryIngredient),
     });
   }
 
@@ -380,36 +401,34 @@ function groupAdditivesByFunction(ingredients: FlatIngredient[]): FlatIngredient
 }
 
 /**
- * Format allergens in text with bold
+ * Format ingredient with allergen highlighting
+ * - PRIMARY allergens: bold only (no uppercase)
+ * - SECONDARY allergens: no formatting
+ * - For wheat flour: add (**gluten**) in bold
  */
 function formatWithAllergens(
   ingredient: FlatIngredient,
-  allAllergens: string[],
   format: 'markdown' | 'html'
 ): string {
   let text = ingredient.name;
-  const allAllergensList = [...new Set([...allAllergens, ...COMMON_ALLERGENS])];
 
-  if (ingredient.isAllergen) {
-    // Try to find and highlight specific allergens in the text
-    for (const allergen of allAllergensList) {
-      const regex = new RegExp(`\\b(${escapeRegex(allergen)})\\b`, 'gi');
-      if (regex.test(text)) {
-        if (format === 'html') {
-          text = text.replace(regex, '<strong>$1</strong>');
-        } else {
-          text = text.replace(regex, '**$1**');
-        }
+  // Only format primary allergens with bold
+  if (ingredient.isPrimaryAllergen) {
+    const isWheat = containsWheat(text);
+    
+    if (format === 'html') {
+      text = `<strong>${text}</strong>`;
+      if (isWheat) {
+        text += ' (<strong>gluten</strong>)';
+      }
+    } else {
+      text = `**${text}**`;
+      if (isWheat) {
+        text += ' (**gluten**)';
       }
     }
-
-    // If no allergen was found in text but ingredient is flagged, bold the whole thing
-    if (format === 'markdown' && !text.includes('**') && ingredient.allergenNames.length > 0) {
-      text = `**${text}**`;
-    } else if (format === 'html' && !text.includes('<strong>') && ingredient.allergenNames.length > 0) {
-      text = `<strong>${text}</strong>`;
-    }
   }
+  // Secondary allergens: no formatting at all
 
   return text;
 }
@@ -424,24 +443,23 @@ function escapeRegex(str: string): string {
 /**
  * Generate the TECHNICAL (complete) ingredient list
  * Lists all ingredients with their full compositions
+ * Uses uppercase for allergens (internal use only)
  */
 function generateTechnicalList(
   ingredients: IngredientInput[],
   allAllergens: string[]
 ): string {
-  // Sort by weight (baker percentage) descending
   const sorted = [...ingredients].sort((a, b) => b.bakerPercentage - a.bakerPercentage);
   
   return sorted
     .map((ing) => {
       let text = ing.name;
       
-      // Add composition in parentheses if exists
       if (ing.composition && ing.composition.trim() !== '') {
         text += ` (${ing.composition})`;
       }
       
-      // Highlight allergens in UPPERCASE
+      // For technical list, use UPPERCASE for allergens (internal only)
       allAllergens.forEach((allergen) => {
         const regex = new RegExp(`\\b${escapeRegex(allergen)}\\b`, 'gi');
         text = text.replace(regex, allergen.toUpperCase());
@@ -459,7 +477,8 @@ function generateTechnicalList(
  * - Removes duplicates
  * - Groups additives by function
  * - Orders by actual weight in finished product
- * - Highlights allergens in bold
+ * - PRIMARY allergens: bold only (no uppercase)
+ * - SECONDARY allergens: no formatting
  */
 function generateCondensedList(
   ingredients: IngredientInput[],
@@ -472,14 +491,14 @@ function generateCondensedList(
   // Step 2: Merge duplicates
   const merged = mergeAndDeduplicate(flat);
   
-  // Step 3: Group additives by function (optional, can be disabled)
+  // Step 3: Group additives by function
   const grouped = groupAdditivesByFunction(merged);
   
   // Step 4: Sort by weight descending
   const sorted = grouped.sort((a, b) => b.weight - a.weight);
   
-  // Step 5: Format with allergen highlighting
-  const formatted = sorted.map(ing => formatWithAllergens(ing, allAllergens, format));
+  // Step 5: Format with allergen highlighting (only primary in bold)
+  const formatted = sorted.map(ing => formatWithAllergens(ing, format));
   
   return formatted.join(', ') + '.';
 }
@@ -507,17 +526,17 @@ export function generateIngredientLists(
 }
 
 /**
- * Convert markdown bold (**text**) to plain uppercase for PDF/print
+ * Utility: Convert markdown bold to plain uppercase (for PDF/plain text)
+ * NOTE: This is kept for backward compatibility but should not add uppercase
  */
 export function markdownToUppercase(text: string): string {
-  return text.replace(/\*\*([^*]+)\*\*/g, (_, match) => match.toUpperCase());
+  // Just remove the markdown bold markers, don't add uppercase
+  return text.replace(/\*\*([^*]+)\*\*/g, '$1');
 }
 
 /**
- * Convert markdown bold (**text**) to HTML bold
+ * Utility: Convert markdown bold to HTML strong tags
  */
 export function markdownToHtml(text: string): string {
   return text.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
 }
-
-export type { IngredientInput, GeneratedLists };

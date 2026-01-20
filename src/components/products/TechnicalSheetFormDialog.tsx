@@ -32,7 +32,7 @@ import {
   Recipe,
 } from '@/hooks/useRecipes';
 import { useAuth } from '@/hooks/useAuth';
-import { generateIngredientsList } from '@/hooks/useBakerCalculations';
+import { generateIngredientLists, markdownToUppercase } from '@/lib/ingredientListGenerator';
 import { supabase } from '@/integrations/supabase/client';
 
 const WEIGHT_UNITS = ['g', 'kg', 'L', 'mL', 'cl'];
@@ -105,24 +105,19 @@ export function TechnicalSheetFormDialog({
     is_published: false,
   });
 
-  // Calculate derived data from selected recipe
-  const { ingredientsList, allergens, allergensSecondary } = useMemo(() => {
+  // Calculate derived data from selected recipe - two versions of ingredient lists
+  const { ingredientsListTechnical, ingredientsListCondensed, ingredientsListCondensedHtml, allergens, allergensSecondary } = useMemo(() => {
     if (!recipeIngredients || recipeIngredients.length === 0) {
-      return { ingredientsList: '', allergens: [] as string[], allergensSecondary: [] as string[] };
+      return { 
+        ingredientsListTechnical: '', 
+        ingredientsListCondensed: '',
+        ingredientsListCondensedHtml: '',
+        allergens: [] as string[], 
+        allergensSecondary: [] as string[] 
+      };
     }
 
-    // Sort ingredients by baker percentage (weight) descending
-    const sortedIngredients = [...recipeIngredients]
-      .sort((a, b) => (b.baker_percentage || 0) - (a.baker_percentage || 0))
-      .map((ing) => ({
-        name: ing.raw_materials?.name || 'Inconnu',
-        composition: ing.raw_materials?.composition || null,
-        allergens: ing.raw_materials?.allergens || [],
-      }));
-
-    const list = generateIngredientsList(sortedIngredients);
-    
-    // Collect all allergens
+    // Collect all allergens first
     const allAllergens = [...new Set(
       recipeIngredients.flatMap((ing) => ing.raw_materials?.allergens || [])
     )].sort();
@@ -131,8 +126,22 @@ export function TechnicalSheetFormDialog({
       recipeIngredients.flatMap((ing) => ing.raw_materials?.allergens_secondary || [])
     )].filter(a => !allAllergens.includes(a)).sort();
 
+    // Prepare ingredients for the generator
+    const ingredientsForGenerator = recipeIngredients.map((ing) => ({
+      name: ing.raw_materials?.name || 'Inconnu',
+      composition: ing.raw_materials?.composition || null,
+      bakerPercentage: ing.baker_percentage || 0,
+      allergens: ing.raw_materials?.allergens || [],
+      allergensSecondary: ing.raw_materials?.allergens_secondary || [],
+    }));
+
+    // Generate both technical and condensed lists
+    const lists = generateIngredientLists(ingredientsForGenerator, allAllergens);
+
     return { 
-      ingredientsList: list, 
+      ingredientsListTechnical: lists.technical,
+      ingredientsListCondensed: lists.condensed,
+      ingredientsListCondensedHtml: lists.condensedHtml,
       allergens: allAllergens,
       allergensSecondary: allAllergensSecondary
     };
@@ -302,10 +311,10 @@ export function TechnicalSheetFormDialog({
         is_published: formData.is_published,
         published_at: formData.is_published ? new Date().toISOString() : null,
         created_by: user?.id || null,
-        // Generated fields
-        ingredients_declaration: ingredientsList,
+        // Generated fields - use condensed list for labels (INCO compliant), converted to uppercase for allergens
+        ingredients_declaration: markdownToUppercase(ingredientsListCondensed),
         allergen_statement: allergens.length > 0 
-          ? `Contient: ${allergens.join(', ')}${allergensSecondary.length > 0 ? `. Peut contenir des traces de: ${allergensSecondary.join(', ')}` : ''}`
+          ? `Contient: ${allergens.map(a => a.toUpperCase()).join(', ')}${allergensSecondary.length > 0 ? `. Peut contenir des traces de: ${allergensSecondary.join(', ')}` : ''}`
           : null,
       };
 
@@ -400,12 +409,24 @@ export function TechnicalSheetFormDialog({
                   </h4>
                 </div>
                 
-                {/* Ingredients */}
-                <div className="p-4 bg-muted/30 rounded-lg border">
-                  <h5 className="font-medium text-sm mb-2">Liste des ingrédients</h5>
-                  <p className="text-sm text-muted-foreground">
-                    {ingredientsList || 'Aucun ingrédient défini dans la recette'}
-                  </p>
+                {/* Ingredients - Show both versions */}
+                <div className="space-y-3">
+                  <div className="p-4 bg-muted/30 rounded-lg border">
+                    <h5 className="font-medium text-sm mb-2">Liste ingrédients condensée (étiquette INCO)</h5>
+                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                      {ingredientsListCondensed ? markdownToUppercase(ingredientsListCondensed) : 'Aucun ingrédient défini dans la recette'}
+                    </p>
+                  </div>
+                  <details className="group">
+                    <summary className="cursor-pointer text-sm text-muted-foreground hover:text-foreground">
+                      Voir la liste technique complète
+                    </summary>
+                    <div className="p-4 mt-2 bg-muted/20 rounded-lg border">
+                      <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                        {ingredientsListTechnical || 'Aucun ingrédient défini dans la recette'}
+                      </p>
+                    </div>
+                  </details>
                 </div>
 
                 {/* Allergens */}

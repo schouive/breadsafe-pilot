@@ -93,16 +93,17 @@ export async function generateTechnicalSheetPDF(sheet: ProductSheet): Promise<vo
     yPos += 10;
   }
 
-  // Ingredients section
+  // Ingredients section - Condensed INCO list for labels
   doc.setTextColor(...textColor);
   doc.setFontSize(14);
   doc.setFont('helvetica', 'bold');
-  doc.text('Liste des ingrédients', margin, yPos);
+  doc.text('Liste des ingrédients (INCO)', margin, yPos);
   yPos += 6;
 
   if (sheetData.ingredients_declaration) {
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
+    // The ingredients_declaration now contains the condensed INCO-compliant list with allergens in UPPERCASE
     const ingredientLines = doc.splitTextToSize(sheetData.ingredients_declaration, pageWidth - 2 * margin);
     doc.text(ingredientLines, margin, yPos);
     yPos += ingredientLines.length * 5 + 5;

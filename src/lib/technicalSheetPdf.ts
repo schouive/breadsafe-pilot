@@ -52,38 +52,46 @@ export async function generateTechnicalSheetPDF(sheet: ProductSheet): Promise<vo
 
   // Header with logo
   doc.setFillColor(...primaryColor);
-  doc.rect(0, 0, pageWidth, 50, 'F');
+  doc.rect(0, 0, pageWidth, 45, 'F');
   
-  // Try to add logo
+  // Try to add logo - calculate proper aspect ratio
   try {
     const logoBase64 = await loadImageAsBase64(logoImage);
-    doc.addImage(logoBase64, 'PNG', margin, 8, 35, 14);
+    // Logo dimensions: keep aspect ratio, max height 12mm
+    const logoHeight = 12;
+    const logoWidth = logoHeight * 2.5; // Approximate aspect ratio
+    doc.addImage(logoBase64, 'PNG', margin, 6, logoWidth, logoHeight);
   } catch (e) {
     console.warn('Could not load logo for PDF');
   }
   
   doc.setTextColor(255, 255, 255);
-  doc.setFontSize(11);
+  doc.setFontSize(9);
   doc.setFont('helvetica', 'normal');
-  doc.text('FICHE TECHNIQUE PRODUIT', margin, 32);
+  doc.text('FICHE TECHNIQUE PRODUIT', margin, 24);
   
   // Product name - prominent
-  doc.setFontSize(18);
+  doc.setFontSize(16);
   doc.setFont('helvetica', 'bold');
-  doc.text(sheetData.product_name || 'Sans nom', margin, 44);
+  const productName = sheetData.product_name || 'Sans nom';
+  const maxTitleWidth = pageWidth - 2 * margin - 30; // Leave space for version badge
+  const truncatedName = doc.getTextWidth(productName) > maxTitleWidth 
+    ? productName.substring(0, 40) + '...' 
+    : productName;
+  doc.text(truncatedName, margin, 38);
   
   // Version badge
   if (sheetData.version) {
     const versionText = `v${sheetData.version}`;
     const versionWidth = doc.getTextWidth(versionText) + 8;
     doc.setFillColor(255, 255, 255);
-    doc.roundedRect(pageWidth - margin - versionWidth, 32, versionWidth, 12, 2, 2, 'F');
+    doc.roundedRect(pageWidth - margin - versionWidth, 28, versionWidth, 12, 2, 2, 'F');
     doc.setTextColor(...primaryColor);
     doc.setFontSize(10);
-    doc.text(versionText, pageWidth - margin - versionWidth + 4, 40);
+    doc.text(versionText, pageWidth - margin - versionWidth + 4, 36);
   }
   
-  yPos = 60;
+  yPos = 55;
   
   // Description section (if present)
   if (sheetData.description) {
@@ -372,30 +380,41 @@ export function printTechnicalSheet(sheet: any): void {
       font-size: 11pt; 
       color: #1e293b; 
       line-height: 1.4;
-      padding: 0;
+      padding: 20px;
       margin: 0;
     }
     @page { 
       size: A4; 
-      margin: 15mm; 
+      margin: 10mm; 
     }
     @media print {
-      body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      body { 
+        -webkit-print-color-adjust: exact; 
+        print-color-adjust: exact; 
+        padding: 0;
+      }
     }
     .header {
       background: #62779c;
       color: white;
-      padding: 15px 20px;
-      margin: -15mm -15mm 20px -15mm;
+      padding: 12px 20px;
+      margin: -20px -20px 20px -20px;
       display: flex;
       justify-content: space-between;
-      align-items: flex-start;
+      align-items: center;
+      min-height: 70px;
     }
-    .header-left { display: flex; flex-direction: column; }
-    .header-top { display: flex; align-items: center; gap: 15px; margin-bottom: 8px; }
-    .header-logo { height: 30px; }
-    .header-subtitle { font-size: 10pt; opacity: 0.9; }
-    .header-title { font-size: 20pt; font-weight: bold; margin-top: 5px; }
+    @media print {
+      .header {
+        margin: -10mm -10mm 15px -10mm;
+        padding: 10px 15px;
+      }
+    }
+    .header-left { display: flex; flex-direction: column; gap: 4px; }
+    .header-top { display: flex; align-items: center; gap: 12px; }
+    .header-logo { height: 24px; width: auto; object-fit: contain; }
+    .header-subtitle { font-size: 9pt; opacity: 0.9; }
+    .header-title { font-size: 18pt; font-weight: bold; line-height: 1.2; }
     .header .version { 
       background: white; 
       color: #62779c; 
@@ -403,7 +422,7 @@ export function printTechnicalSheet(sheet: any): void {
       border-radius: 4px; 
       font-size: 10pt;
       font-weight: bold;
-      margin-top: 5px;
+      flex-shrink: 0;
     }
     .description { 
       font-style: italic; 
@@ -449,10 +468,7 @@ export function printTechnicalSheet(sheet: any): void {
     .conservation-item { margin-bottom: 8px; }
     .conservation-item strong { display: block; margin-bottom: 2px; }
     .footer {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
+      margin-top: 20px;
       background: #f5f5f5;
       padding: 10px 20px;
       font-size: 9pt;
@@ -460,7 +476,15 @@ export function printTechnicalSheet(sheet: any): void {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin: 0 -15mm -15mm -15mm;
+    }
+    @media print {
+      .footer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        margin: 0 -10mm -10mm -10mm;
+      }
     }
     .status-valid { color: #16a34a; font-weight: bold; }
     .status-draft { color: #ef4444; font-weight: bold; }

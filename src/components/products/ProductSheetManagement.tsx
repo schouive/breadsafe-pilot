@@ -109,12 +109,13 @@ export function ProductSheetManagement() {
                     </Badge>
                     <div className="flex items-center gap-1">
                       <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
+                        variant="outline"
+                        size="sm"
+                        className="h-8"
                         onClick={() => setViewingSheet(sheet)}
                       >
-                        <Eye className="h-4 w-4" />
+                        <Eye className="h-4 w-4 mr-1" />
+                        Voir
                       </Button>
                       <Button
                         variant="ghost"

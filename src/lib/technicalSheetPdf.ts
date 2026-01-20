@@ -68,49 +68,61 @@ export async function generateTechnicalSheetPDF(sheet: ProductSheet): Promise<vo
   const textColor = [30, 41, 59] as [number, number, number];
   const mutedColor = [100, 116, 139] as [number, number, number];
 
-  // Header with logo
-  doc.setFillColor(...primaryColor);
-  doc.rect(0, 0, pageWidth, 50, 'F');
+  // ========== PROFESSIONAL HEADER ==========
+  // Header background - clean white with subtle bottom border
+  doc.setFillColor(255, 255, 255);
+  doc.rect(0, 0, pageWidth, 55, 'F');
+  doc.setDrawColor(220, 220, 220);
+  doc.setLineWidth(0.5);
+  doc.line(0, 55, pageWidth, 55);
   
-  // Try to add logo - calculate proper aspect ratio from actual image dimensions
+  // Logo positioning (top left, proportional)
+  let logoEndX = margin;
   try {
     const logoData = await loadImageAsBase64WithDimensions(logoImage);
-    // Calculate aspect ratio from actual image dimensions
     const aspectRatio = logoData.width / logoData.height;
-    const logoHeight = 14;
+    const logoHeight = 12;
     const logoWidth = logoHeight * aspectRatio;
     doc.addImage(logoData.base64, 'PNG', margin, 8, logoWidth, logoHeight);
+    logoEndX = margin + logoWidth + 6;
   } catch (e) {
     console.warn('Could not load logo for PDF');
   }
   
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(9);
-  doc.setFont('helvetica', 'normal');
-  doc.text('FICHE TECHNIQUE PRODUIT', margin, 26);
+  // Company name - aligned with logo, secondary prominence
+  doc.setTextColor(...mutedColor);
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'bold');
+  doc.text('BREADSHOP SAS', logoEndX, 16);
   
-  // Product name - prominent
-  doc.setFontSize(16);
+  // Document type label
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'normal');
+  doc.text('FICHE TECHNIQUE PRODUIT', logoEndX, 22);
+  
+  // Product name - MOST PROMINENT ELEMENT
+  doc.setTextColor(...textColor);
+  doc.setFontSize(22);
   doc.setFont('helvetica', 'bold');
   const productName = sheetData.product_name || 'Sans nom';
-  const maxTitleWidth = pageWidth - 2 * margin - 30; // Leave space for version badge
+  const maxTitleWidth = pageWidth - 2 * margin - 40;
   const truncatedName = doc.getTextWidth(productName) > maxTitleWidth 
-    ? productName.substring(0, 40) + '...' 
+    ? productName.substring(0, 35) + '...' 
     : productName;
   doc.text(truncatedName, margin, 42);
   
-  // Version badge
+  // Version badge (top right)
   if (sheetData.version) {
     const versionText = `v${sheetData.version}`;
-    const versionWidth = doc.getTextWidth(versionText) + 8;
-    doc.setFillColor(255, 255, 255);
-    doc.roundedRect(pageWidth - margin - versionWidth, 32, versionWidth, 12, 2, 2, 'F');
-    doc.setTextColor(...primaryColor);
-    doc.setFontSize(10);
-    doc.text(versionText, pageWidth - margin - versionWidth + 4, 40);
+    doc.setFillColor(240, 240, 240);
+    doc.setFontSize(9);
+    const versionWidth = doc.getTextWidth(versionText) + 10;
+    doc.roundedRect(pageWidth - margin - versionWidth, 6, versionWidth, 14, 2, 2, 'F');
+    doc.setTextColor(...mutedColor);
+    doc.text(versionText, pageWidth - margin - versionWidth + 5, 15);
   }
   
-  yPos = 60;
+  yPos = 65;
   
   // Description section (if present)
   if (sheetData.description) {
@@ -399,10 +411,10 @@ export async function printTechnicalSheet(sheet: any): Promise<void> {
     * { margin: 0; padding: 0; box-sizing: border-box; }
     @page { 
       size: A4; 
-      margin: 15mm 10mm 15mm 10mm; 
+      margin: 12mm 10mm 15mm 10mm; 
     }
     body { 
-      font-family: Arial, sans-serif; 
+      font-family: 'Inter', 'Roboto', 'Open Sans', Arial, sans-serif; 
       font-size: 11pt; 
       color: #1e293b; 
       line-height: 1.4;
@@ -415,30 +427,62 @@ export async function printTechnicalSheet(sheet: any): Promise<void> {
         print-color-adjust: exact; 
       }
     }
+    
+    /* ========== PROFESSIONAL HEADER ========== */
     .header {
-      background: #62779c;
-      color: white;
-      padding: 15px 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      min-height: 80px;
+      padding: 12px 20px 15px 20px;
+      border-bottom: 2px solid #e2e8f0;
       margin-bottom: 20px;
     }
-    .header-left { display: flex; flex-direction: column; gap: 6px; flex: 1; }
-    .header-top { display: flex; align-items: center; gap: 12px; }
-    .header-logo { height: 28px; width: auto; object-fit: contain; }
-    .header-subtitle { font-size: 9pt; opacity: 0.9; }
-    .header-title { font-size: 18pt; font-weight: bold; line-height: 1.2; margin-top: 4px; }
-    .header .version { 
-      background: white; 
-      color: #62779c; 
-      padding: 6px 12px; 
-      border-radius: 4px; 
-      font-size: 10pt;
-      font-weight: bold;
-      flex-shrink: 0;
+    .header-top-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 12px;
     }
+    .header-identity {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .header-logo { 
+      height: 24px; 
+      width: auto; 
+      object-fit: contain; 
+    }
+    .header-company {
+      display: flex;
+      flex-direction: column;
+    }
+    .company-name { 
+      font-size: 13pt; 
+      font-weight: 700; 
+      color: #475569;
+      letter-spacing: 0.02em;
+    }
+    .document-type { 
+      font-size: 8pt; 
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .header .version { 
+      background: #f1f5f9; 
+      color: #64748b; 
+      padding: 5px 10px; 
+      border-radius: 4px; 
+      font-size: 9pt;
+      font-weight: 600;
+    }
+    /* Product name - MOST PROMINENT */
+    .product-name { 
+      font-size: 22pt; 
+      font-weight: 700; 
+      color: #0f172a;
+      line-height: 1.2;
+      margin: 0;
+    }
+    
     .content { padding: 0 20px; }
     .description { 
       font-style: italic; 
@@ -450,16 +494,18 @@ export async function printTechnicalSheet(sheet: any): Promise<void> {
     }
     .section { margin-bottom: 15px; }
     .section-title { 
-      font-size: 12pt; 
-      font-weight: bold; 
-      color: #1e293b; 
+      font-size: 11pt; 
+      font-weight: 700; 
+      color: #334155; 
       margin-bottom: 8px;
       border-bottom: 1px solid #e2e8f0;
       padding-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
     }
     .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
     .info-row { display: flex; }
-    .info-label { color: #64748b; width: 140px; flex-shrink: 0; }
+    .info-label { color: #64748b; width: 140px; flex-shrink: 0; font-size: 10pt; }
     .info-value { font-weight: 500; }
     .recipe-source { font-style: italic; color: #64748b; font-size: 10pt; margin-bottom: 15px; }
     .allergens-warning { color: #b45309; font-weight: bold; margin-bottom: 5px; }
@@ -469,10 +515,11 @@ export async function printTechnicalSheet(sheet: any): Promise<void> {
     table { width: 100%; border-collapse: collapse; font-size: 10pt; }
     table.nutrition { width: auto; min-width: 250px; }
     table th { 
-      background: #62779c; 
+      background: #475569; 
       color: white; 
       text-align: left; 
       padding: 6px 10px; 
+      font-weight: 600;
     }
     table td { 
       padding: 5px 10px; 
@@ -485,13 +532,14 @@ export async function printTechnicalSheet(sheet: any): Promise<void> {
     .conservation-item strong { display: block; margin-bottom: 2px; }
     .footer {
       margin-top: 20px;
-      background: #f5f5f5;
+      background: #f8fafc;
       padding: 10px 20px;
       font-size: 9pt;
       color: #64748b;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      border-top: 1px solid #e2e8f0;
     }
     @media print {
       .footer {
@@ -508,14 +556,17 @@ export async function printTechnicalSheet(sheet: any): Promise<void> {
 </head>
 <body>
   <div class="header">
-    <div class="header-left">
-      <div class="header-top">
-        ${logoBase64 ? `<img src="${logoBase64}" alt="Breadshop" class="header-logo" />` : ''}
-        <span class="header-subtitle">FICHE TECHNIQUE PRODUIT</span>
+    <div class="header-top-row">
+      <div class="header-identity">
+        ${logoBase64 ? `<img src="${logoBase64}" alt="Logo" class="header-logo" />` : ''}
+        <div class="header-company">
+          <span class="company-name">BREADSHOP SAS</span>
+          <span class="document-type">Fiche technique produit</span>
+        </div>
       </div>
-      <div class="header-title">${sheetData.product_name || 'Sans nom'}</div>
+      ${sheetData.version ? `<div class="version">v${sheetData.version}</div>` : ''}
     </div>
-    ${sheetData.version ? `<div class="version">v${sheetData.version}</div>` : ''}
+    <h1 class="product-name">${sheetData.product_name || 'Sans nom'}</h1>
   </div>
 
   <div class="content">

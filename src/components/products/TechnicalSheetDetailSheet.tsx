@@ -223,7 +223,10 @@ export function TechnicalSheetDetailSheet({ open, onOpenChange, sheet }: Technic
               <Separator />
               <div>
                 <h4 className="font-medium mb-2">Liste des ingrédients (étiquette INCO)</h4>
-                <p className="text-sm text-muted-foreground whitespace-pre-wrap">{sheetData.ingredients_declaration}</p>
+                <p 
+                  className="text-sm text-muted-foreground whitespace-pre-wrap"
+                  dangerouslySetInnerHTML={{ __html: sheetData.ingredients_declaration }}
+                />
                 
                 {/* Technical list - expandable */}
                 {snapshotIngredients && snapshotIngredients.length > 0 && (

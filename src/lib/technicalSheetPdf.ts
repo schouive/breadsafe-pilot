@@ -297,3 +297,217 @@ export async function generateTechnicalSheetPDF(sheet: ProductSheet): Promise<vo
   const fileName = `FT_${(sheetData.product_reference || sheetData.product_name || 'produit').replace(/\s+/g, '_')}_v${sheetData.version || 1}.pdf`;
   doc.save(fileName);
 }
+
+/**
+ * Generate a printable HTML version of the technical sheet
+ */
+export function printTechnicalSheet(sheet: any): void {
+  const sheetData = sheet as any;
+  
+  const snapshotAllergens = sheetData.snapshot_allergens as { main?: string[]; secondary?: string[] } | null;
+  const snapshotNutrition = sheetData.snapshot_nutrition as SnapshotNutrition | null;
+  
+  const cartonsPerPallet = sheetData.cartons_per_layer && sheetData.layers_per_pallet 
+    ? sheetData.cartons_per_layer * sheetData.layers_per_pallet 
+    : null;
+
+  // Convert HTML ingredients to uppercase allergens for print
+  const ingredientsText = sheetData.ingredients_declaration
+    ? sheetData.ingredients_declaration
+        .replace(/<strong>([^<]+)<\/strong>/gi, (_: string, content: string) => `<strong>${content.toUpperCase()}</strong>`)
+    : '';
+
+  const html = `
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Fiche Technique - ${sheetData.product_name || 'Produit'}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      font-family: Arial, sans-serif; 
+      font-size: 11pt; 
+      color: #1e293b; 
+      line-height: 1.4;
+      padding: 0;
+      margin: 0;
+    }
+    @page { 
+      size: A4; 
+      margin: 15mm; 
+    }
+    @media print {
+      body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+    .header {
+      background: #62779c;
+      color: white;
+      padding: 15px 20px;
+      margin: -15mm -15mm 20px -15mm;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .header h1 { font-size: 18pt; font-weight: bold; }
+    .header .product-name { font-size: 12pt; margin-top: 5px; }
+    .header .version { 
+      background: white; 
+      color: #62779c; 
+      padding: 4px 10px; 
+      border-radius: 4px; 
+      font-size: 10pt;
+      font-weight: bold;
+    }
+    .section { margin-bottom: 15px; }
+    .section-title { 
+      font-size: 12pt; 
+      font-weight: bold; 
+      color: #1e293b; 
+      margin-bottom: 8px;
+      border-bottom: 1px solid #e2e8f0;
+      padding-bottom: 4px;
+    }
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+    .info-row { display: flex; }
+    .info-label { color: #64748b; width: 140px; flex-shrink: 0; }
+    .info-value { font-weight: 500; }
+    .recipe-source { font-style: italic; color: #64748b; font-size: 10pt; margin-bottom: 15px; }
+    .allergens-warning { color: #b45309; font-weight: bold; margin-bottom: 5px; }
+    .allergens-list { margin-bottom: 5px; }
+    .ingredients { text-align: justify; margin-bottom: 10px; }
+    .ingredients strong { font-weight: bold; }
+    table { width: 100%; border-collapse: collapse; font-size: 10pt; }
+    table.nutrition { width: auto; min-width: 250px; }
+    table th { 
+      background: #62779c; 
+      color: white; 
+      text-align: left; 
+      padding: 6px 10px; 
+    }
+    table td { 
+      padding: 5px 10px; 
+      border-bottom: 1px solid #e2e8f0; 
+    }
+    table tr:nth-child(even) { background: #f8fafc; }
+    table td:last-child { text-align: right; }
+    .sub-row td:first-child { padding-left: 20px; color: #64748b; }
+    .conservation-item { margin-bottom: 8px; }
+    .conservation-item strong { display: block; margin-bottom: 2px; }
+    .footer {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: #f5f5f5;
+      padding: 10px 20px;
+      font-size: 9pt;
+      color: #64748b;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 0 -15mm -15mm -15mm;
+    }
+    .status-valid { color: #16a34a; font-weight: bold; }
+    .status-draft { color: #ef4444; font-weight: bold; }
+    .two-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div>
+      <h1>FICHE TECHNIQUE PRODUIT</h1>
+      <div class="product-name">${sheetData.product_name || 'Sans nom'}</div>
+    </div>
+    ${sheetData.version ? `<div class="version">v${sheetData.version}</div>` : ''}
+  </div>
+
+  <div class="section">
+    <div class="section-title">Identification produit</div>
+    <div class="info-grid">
+      <div class="info-row"><span class="info-label">Désignation commerciale</span><span class="info-value">${sheetData.product_name || '—'}</span></div>
+      <div class="info-row"><span class="info-label">Référence produit</span><span class="info-value">${sheetData.product_reference || '—'}</span></div>
+      <div class="info-row"><span class="info-label">Marque</span><span class="info-value">${sheetData.brand || '—'}</span></div>
+      <div class="info-row"><span class="info-label">Code-barres</span><span class="info-value">${sheetData.barcode || '—'}</span></div>
+      <div class="info-row"><span class="info-label">Poids net</span><span class="info-value">${sheetData.net_weight ? `${sheetData.net_weight} ${sheetData.net_weight_unit}` : '—'}</span></div>
+      <div class="info-row"><span class="info-label">Pays d'origine</span><span class="info-value">${sheetData.origin_country || '—'}</span></div>
+    </div>
+  </div>
+
+  ${sheetData.snapshot_recipe_name ? `<div class="recipe-source">Recette source: ${sheetData.snapshot_recipe_name}${sheetData.snapshot_recipe_code ? ` (${sheetData.snapshot_recipe_code})` : ''}</div>` : ''}
+
+  <div class="section">
+    <div class="section-title">Liste des ingrédients (INCO)</div>
+    <div class="ingredients">${ingredientsText || '—'}</div>
+    
+    ${snapshotAllergens && (snapshotAllergens.main?.length || snapshotAllergens.secondary?.length) ? `
+      <div class="allergens-warning">⚠ Allergènes</div>
+      ${snapshotAllergens.main?.length ? `<div class="allergens-list"><strong>Contient:</strong> ${snapshotAllergens.main.map(a => a.toUpperCase()).join(', ')}</div>` : ''}
+      ${snapshotAllergens.secondary?.length ? `<div class="allergens-list"><strong>Peut contenir des traces de:</strong> ${snapshotAllergens.secondary.join(', ')}</div>` : ''}
+    ` : ''}
+  </div>
+
+  <div class="two-columns">
+    ${snapshotNutrition ? `
+    <div class="section">
+      <div class="section-title">Valeurs nutritionnelles (pour 100g)</div>
+      <table class="nutrition">
+        <thead><tr><th>Nutriment</th><th>Pour 100g</th></tr></thead>
+        <tbody>
+          <tr><td>Énergie</td><td>${snapshotNutrition.energyKcal?.toFixed(0) || '—'} kcal / ${snapshotNutrition.energyKj?.toFixed(0) || '—'} kJ</td></tr>
+          <tr><td>Matières grasses</td><td>${snapshotNutrition.fat?.toFixed(1) || '—'} g</td></tr>
+          <tr class="sub-row"><td>dont acides gras saturés</td><td>${snapshotNutrition.saturatedFat?.toFixed(1) || '—'} g</td></tr>
+          <tr><td>Glucides</td><td>${snapshotNutrition.carbohydrates?.toFixed(1) || '—'} g</td></tr>
+          <tr class="sub-row"><td>dont sucres</td><td>${snapshotNutrition.sugars?.toFixed(1) || '—'} g</td></tr>
+          <tr><td>Fibres alimentaires</td><td>${snapshotNutrition.fiber?.toFixed(1) || '—'} g</td></tr>
+          <tr><td>Protéines</td><td>${snapshotNutrition.protein?.toFixed(1) || '—'} g</td></tr>
+          <tr><td>Sel</td><td>${snapshotNutrition.salt?.toFixed(2) || '—'} g</td></tr>
+        </tbody>
+      </table>
+    </div>
+    ` : ''}
+
+    <div class="section">
+      <div class="section-title">Conditionnement & Logistique</div>
+      <div class="info-row"><span class="info-label">Pièces par carton</span><span class="info-value">${sheetData.pieces_per_carton || '—'}</span></div>
+      <div class="info-row"><span class="info-label">Cartons par couche</span><span class="info-value">${sheetData.cartons_per_layer || '—'}</span></div>
+      <div class="info-row"><span class="info-label">Couches par palette</span><span class="info-value">${sheetData.layers_per_pallet || '—'}</span></div>
+      <div class="info-row"><span class="info-label">Cartons par palette</span><span class="info-value">${cartonsPerPallet || '—'}</span></div>
+      <div class="info-row"><span class="info-label">Poids du carton</span><span class="info-value">${sheetData.carton_weight ? `${sheetData.carton_weight} kg` : '—'}</span></div>
+      <div class="info-row"><span class="info-label">Dimensions carton</span><span class="info-value">${sheetData.carton_dimensions || '—'}</span></div>
+    </div>
+  </div>
+
+  ${sheetData.storage_instructions || sheetData.thawing_instructions || sheetData.usage_instructions || sheetData.dlc_ddm_days ? `
+  <div class="section">
+    <div class="section-title">Conservation & Utilisation</div>
+    ${sheetData.dlc_ddm_days ? `<div class="conservation-item"><strong>${sheetData.dlc_ddm_type || 'DLC'}: ${sheetData.dlc_ddm_days} jours</strong></div>` : ''}
+    ${sheetData.storage_instructions ? `<div class="conservation-item"><strong>Conservation:</strong> ${sheetData.storage_instructions}</div>` : ''}
+    ${sheetData.thawing_instructions ? `<div class="conservation-item"><strong>Décongélation:</strong> ${sheetData.thawing_instructions}</div>` : ''}
+    ${sheetData.usage_instructions ? `<div class="conservation-item"><strong>Mise en œuvre:</strong> ${sheetData.usage_instructions}</div>` : ''}
+  </div>
+  ` : ''}
+
+  <div class="footer">
+    <div>
+      <div>Document généré le ${new Date().toLocaleDateString('fr-FR')}</div>
+      ${sheetData.snapshot_created_at ? `<div>Données figées le ${new Date(sheetData.snapshot_created_at).toLocaleDateString('fr-FR')}</div>` : ''}
+    </div>
+    <div class="${sheetData.is_published ? 'status-valid' : 'status-draft'}">
+      ${sheetData.is_published ? '✓ DOCUMENT VALIDÉ' : 'BROUILLON'}
+    </div>
+    <div>Version ${sheetData.version || 1}</div>
+  </div>
+</body>
+</html>`;
+
+  // Open print window
+  const printWindow = window.open('', '_blank');
+  if (printWindow) {
+    printWindow.document.write(html);
+    printWindow.document.close();
+    printWindow.onload = () => {
+      printWindow.print();
+    };
+  }
+}

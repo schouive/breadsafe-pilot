@@ -167,7 +167,7 @@ export const CONTROL_POINTS: ControlPoint[] = [
   {
     id: 'cp-stockage',
     code: 'CP_STOCKAGE',
-    name: 'CP - Températures Stockage',
+    name: 'CP6-CP7 - Températures Stockage',
     description: 'Surveillance des températures des chambres froides (positif et négatif)',
     dangerType: 'Multiplication bactéries pathogènes par rupture chaîne du froid',
     conformeCriteria: 'Température dans les limites définies pour chaque chambre',

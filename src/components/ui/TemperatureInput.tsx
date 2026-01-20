@@ -42,16 +42,6 @@ export function TemperatureInput({
   return (
     <div className={cn("relative", className)}>
       <div className="flex items-center gap-2">
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          onClick={handleToggleSign}
-          disabled={disabled}
-          className="shrink-0 h-10 w-10 text-lg font-bold"
-        >
-          ±
-        </Button>
         <Input
           type="text"
           inputMode="text"

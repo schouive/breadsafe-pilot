@@ -163,7 +163,7 @@ export async function generateTechnicalSheetPDF(sheet: ProductSheet): Promise<vo
     margin: { left: margin, right: margin },
   });
 
-  yPos = (doc as any).lastAutoTable.finalY + 10;
+  yPos = (doc as any).lastAutoTable.finalY + 15;
 
   // Recipe source
   if (sheetData.snapshot_recipe_name) {
@@ -171,7 +171,7 @@ export async function generateTechnicalSheetPDF(sheet: ProductSheet): Promise<vo
     doc.setFont('helvetica', 'italic');
     doc.setTextColor(...mutedColor);
     doc.text(`Recette source: ${sheetData.snapshot_recipe_name}${sheetData.snapshot_recipe_code ? ` (${sheetData.snapshot_recipe_code})` : ''}`, margin, yPos);
-    yPos += 10;
+    yPos += 12;
   }
 
   // Ingredients section - Condensed INCO list for labels
@@ -197,7 +197,7 @@ export async function generateTechnicalSheetPDF(sheet: ProductSheet): Promise<vo
   // Allergens
   const snapshotAllergens = sheetData.snapshot_allergens as { main?: string[]; secondary?: string[] } | null;
   if (snapshotAllergens && (snapshotAllergens.main?.length || snapshotAllergens.secondary?.length)) {
-    yPos += 5;
+    yPos += 8;
     doc.setFontSize(12);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(...primaryColor); // Blue color
@@ -208,11 +208,11 @@ export async function generateTechnicalSheetPDF(sheet: ProductSheet): Promise<vo
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(...textColor);
     if (snapshotAllergens.main && snapshotAllergens.main.length > 0) {
-      doc.text(`Contient: ${snapshotAllergens.main.map(a => a.toUpperCase()).join(', ')}`, margin, yPos);
+      doc.text(`Contient: ${snapshotAllergens.main.map(a => a.toLowerCase()).join(', ')}`, margin, yPos);
       yPos += 5;
     }
     if (snapshotAllergens.secondary && snapshotAllergens.secondary.length > 0) {
-      doc.text(`Peut contenir des traces de: ${snapshotAllergens.secondary.join(', ')}`, margin, yPos);
+      doc.text(`Peut contenir des traces de: ${snapshotAllergens.secondary.map(a => a.toLowerCase()).join(', ')}`, margin, yPos);
       yPos += 5;
     }
   }
@@ -220,7 +220,7 @@ export async function generateTechnicalSheetPDF(sheet: ProductSheet): Promise<vo
   // Nutrition table
   const snapshotNutrition: SnapshotNutrition | null = sheetData.snapshot_nutrition;
   if (snapshotNutrition) {
-    yPos += 10;
+    yPos += 15;
     doc.setTextColor(...textColor);
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
@@ -253,7 +253,7 @@ export async function generateTechnicalSheetPDF(sheet: ProductSheet): Promise<vo
       tableWidth: 140,
     });
 
-    yPos = (doc as any).lastAutoTable.finalY + 10;
+    yPos = (doc as any).lastAutoTable.finalY + 15;
   }
 
   // Check if we need a new page
@@ -295,7 +295,7 @@ export async function generateTechnicalSheetPDF(sheet: ProductSheet): Promise<vo
     margin: { left: margin, right: margin },
   });
 
-  yPos = (doc as any).lastAutoTable.finalY + 10;
+  yPos = (doc as any).lastAutoTable.finalY + 15;
 
   // Conservation section
   if (sheetData.storage_instructions || sheetData.thawing_instructions || sheetData.usage_instructions || sheetData.dlc_ddm_days) {
@@ -493,25 +493,25 @@ export async function printTechnicalSheet(sheet: any): Promise<void> {
       background: #f8fafc;
       border-left: 3px solid #62779c;
     }
-    .section { margin-bottom: 15px; }
+    .section { margin-bottom: 20px; }
     .section-title { 
       font-size: 11pt; 
       font-weight: 700; 
       color: #334155; 
-      margin-bottom: 8px;
+      margin-bottom: 10px;
       border-bottom: 1px solid #e2e8f0;
       padding-bottom: 4px;
       text-transform: uppercase;
       letter-spacing: 0.03em;
     }
-    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
     .info-row { display: flex; }
     .info-label { color: #64748b; width: 140px; flex-shrink: 0; font-size: 10pt; }
     .info-value { font-weight: 500; }
-    .recipe-source { font-style: italic; color: #64748b; font-size: 10pt; margin-bottom: 15px; }
-    .allergens-title { color: #62779c; font-weight: bold; margin-bottom: 5px; font-size: 11pt; }
-    .allergens-list { margin-bottom: 5px; }
-    .ingredients { text-align: justify; margin-bottom: 10px; }
+    .recipe-source { font-style: italic; color: #64748b; font-size: 10pt; margin-bottom: 18px; }
+    .allergens-title { color: #62779c; font-weight: bold; margin-bottom: 6px; margin-top: 10px; font-size: 11pt; }
+    .allergens-list { margin-bottom: 6px; }
+    .ingredients { text-align: justify; margin-bottom: 12px; }
     .ingredients strong { font-weight: bold; }
     table { width: 100%; border-collapse: collapse; font-size: 10pt; }
     table.nutrition { width: auto; min-width: 250px; }
@@ -593,8 +593,8 @@ export async function printTechnicalSheet(sheet: any): Promise<void> {
     
     ${snapshotAllergens && (snapshotAllergens.main?.length || snapshotAllergens.secondary?.length) ? `
       <div class="allergens-title">Allergènes</div>
-      ${snapshotAllergens.main?.length ? `<div class="allergens-list"><strong>Contient:</strong> ${snapshotAllergens.main.map(a => a.toUpperCase()).join(', ')}</div>` : ''}
-      ${snapshotAllergens.secondary?.length ? `<div class="allergens-list"><strong>Peut contenir des traces de:</strong> ${snapshotAllergens.secondary.join(', ')}</div>` : ''}
+      ${snapshotAllergens.main?.length ? `<div class="allergens-list"><strong>Contient:</strong> ${snapshotAllergens.main.map(a => a.toLowerCase()).join(', ')}</div>` : ''}
+      ${snapshotAllergens.secondary?.length ? `<div class="allergens-list"><strong>Peut contenir des traces de:</strong> ${snapshotAllergens.secondary.map(a => a.toLowerCase()).join(', ')}</div>` : ''}
     ` : ''}
   </div>
 

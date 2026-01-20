@@ -24,6 +24,7 @@ import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
 import { ProductSheetManagement } from "@/components/products/ProductSheetManagement";
+import { CartonLabelManagement } from "@/components/products/CartonLabelManagement";
 
 const queryClient = new QueryClient();
 
@@ -192,7 +193,7 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <ProductsLayout>
-              <div className="p-6"><h1 className="text-2xl font-bold">Étiquettes Carton</h1><p className="text-muted-foreground mt-2">À venir - Génération des étiquettes carton</p></div>
+              <CartonLabelManagement />
             </ProductsLayout>
           </ProtectedRoute>
         }

@@ -14,6 +14,83 @@ export type Database = {
   }
   public: {
     Tables: {
+      carton_labels: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          label_title: string
+          product_sheet_id: string
+          snapshot_allergens_secondary: Json | null
+          snapshot_created_at: string | null
+          snapshot_ingredients_html: string | null
+          snapshot_net_weight: number | null
+          snapshot_net_weight_unit: string | null
+          snapshot_nutrition: Json | null
+          snapshot_product_sheet_version: number | null
+          snapshot_storage_instructions: string | null
+          snapshot_thawing_instructions: string | null
+          status: string
+          updated_at: string
+          validated_at: string | null
+          validated_by: string | null
+          validation_comment: string | null
+          version: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          label_title: string
+          product_sheet_id: string
+          snapshot_allergens_secondary?: Json | null
+          snapshot_created_at?: string | null
+          snapshot_ingredients_html?: string | null
+          snapshot_net_weight?: number | null
+          snapshot_net_weight_unit?: string | null
+          snapshot_nutrition?: Json | null
+          snapshot_product_sheet_version?: number | null
+          snapshot_storage_instructions?: string | null
+          snapshot_thawing_instructions?: string | null
+          status?: string
+          updated_at?: string
+          validated_at?: string | null
+          validated_by?: string | null
+          validation_comment?: string | null
+          version?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          label_title?: string
+          product_sheet_id?: string
+          snapshot_allergens_secondary?: Json | null
+          snapshot_created_at?: string | null
+          snapshot_ingredients_html?: string | null
+          snapshot_net_weight?: number | null
+          snapshot_net_weight_unit?: string | null
+          snapshot_nutrition?: Json | null
+          snapshot_product_sheet_version?: number | null
+          snapshot_storage_instructions?: string | null
+          snapshot_thawing_instructions?: string | null
+          status?: string
+          updated_at?: string
+          validated_at?: string | null
+          validated_by?: string | null
+          validation_comment?: string | null
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "carton_labels_product_sheet_id_fkey"
+            columns: ["product_sheet_id"]
+            isOneToOne: false
+            referencedRelation: "product_sheets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cold_rooms: {
         Row: {
           created_at: string

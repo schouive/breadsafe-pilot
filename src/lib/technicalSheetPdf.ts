@@ -1,6 +1,7 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { ProductSheet } from '@/hooks/useRecipes';
+import logoImage from '@/assets/logo-breadshop.png';
 
 interface SnapshotNutrition {
   energyKcal: number | null;
@@ -12,6 +13,28 @@ interface SnapshotNutrition {
   fiber: number | null;
   protein: number | null;
   salt: number | null;
+}
+
+// Helper function to load image as base64
+async function loadImageAsBase64(src: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'Anonymous';
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.drawImage(img, 0, 0);
+        resolve(canvas.toDataURL('image/png'));
+      } else {
+        reject(new Error('Could not get canvas context'));
+      }
+    };
+    img.onerror = reject;
+    img.src = src;
+  });
 }
 
 export async function generateTechnicalSheetPDF(sheet: ProductSheet): Promise<void> {
@@ -27,31 +50,50 @@ export async function generateTechnicalSheetPDF(sheet: ProductSheet): Promise<vo
   const textColor = [30, 41, 59] as [number, number, number];
   const mutedColor = [100, 116, 139] as [number, number, number];
 
-  // Header
+  // Header with logo
   doc.setFillColor(...primaryColor);
-  doc.rect(0, 0, pageWidth, 40, 'F');
+  doc.rect(0, 0, pageWidth, 50, 'F');
+  
+  // Try to add logo
+  try {
+    const logoBase64 = await loadImageAsBase64(logoImage);
+    doc.addImage(logoBase64, 'PNG', margin, 8, 35, 14);
+  } catch (e) {
+    console.warn('Could not load logo for PDF');
+  }
   
   doc.setTextColor(255, 255, 255);
-  doc.setFontSize(20);
-  doc.setFont('helvetica', 'bold');
-  doc.text('FICHE TECHNIQUE PRODUIT', margin, 18);
-  
-  doc.setFontSize(12);
+  doc.setFontSize(11);
   doc.setFont('helvetica', 'normal');
-  doc.text(sheetData.product_name || 'Sans nom', margin, 30);
+  doc.text('FICHE TECHNIQUE PRODUIT', margin, 32);
+  
+  // Product name - prominent
+  doc.setFontSize(18);
+  doc.setFont('helvetica', 'bold');
+  doc.text(sheetData.product_name || 'Sans nom', margin, 44);
   
   // Version badge
   if (sheetData.version) {
     const versionText = `v${sheetData.version}`;
     const versionWidth = doc.getTextWidth(versionText) + 8;
     doc.setFillColor(255, 255, 255);
-    doc.roundedRect(pageWidth - margin - versionWidth, 22, versionWidth, 12, 2, 2, 'F');
+    doc.roundedRect(pageWidth - margin - versionWidth, 32, versionWidth, 12, 2, 2, 'F');
     doc.setTextColor(...primaryColor);
     doc.setFontSize(10);
-    doc.text(versionText, pageWidth - margin - versionWidth + 4, 30);
+    doc.text(versionText, pageWidth - margin - versionWidth + 4, 40);
   }
   
-  yPos = 50;
+  yPos = 60;
+  
+  // Description section (if present)
+  if (sheetData.description) {
+    doc.setTextColor(...textColor);
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'italic');
+    const descriptionLines = doc.splitTextToSize(sheetData.description, pageWidth - 2 * margin);
+    doc.text(descriptionLines, margin, yPos);
+    yPos += descriptionLines.length * 5 + 8;
+  }
   
   // Product info section
   doc.setTextColor(...textColor);
@@ -347,10 +389,13 @@ export function printTechnicalSheet(sheet: any): void {
       margin: -15mm -15mm 20px -15mm;
       display: flex;
       justify-content: space-between;
-      align-items: center;
+      align-items: flex-start;
     }
-    .header h1 { font-size: 18pt; font-weight: bold; }
-    .header .product-name { font-size: 12pt; margin-top: 5px; }
+    .header-left { display: flex; flex-direction: column; }
+    .header-top { display: flex; align-items: center; gap: 15px; margin-bottom: 8px; }
+    .header-logo { height: 30px; }
+    .header-subtitle { font-size: 10pt; opacity: 0.9; }
+    .header-title { font-size: 20pt; font-weight: bold; margin-top: 5px; }
     .header .version { 
       background: white; 
       color: #62779c; 
@@ -358,6 +403,15 @@ export function printTechnicalSheet(sheet: any): void {
       border-radius: 4px; 
       font-size: 10pt;
       font-weight: bold;
+      margin-top: 5px;
+    }
+    .description { 
+      font-style: italic; 
+      color: #64748b; 
+      margin-bottom: 15px; 
+      padding: 10px;
+      background: #f8fafc;
+      border-left: 3px solid #62779c;
     }
     .section { margin-bottom: 15px; }
     .section-title { 
@@ -415,12 +469,17 @@ export function printTechnicalSheet(sheet: any): void {
 </head>
 <body>
   <div class="header">
-    <div>
-      <h1>FICHE TECHNIQUE PRODUIT</h1>
-      <div class="product-name">${sheetData.product_name || 'Sans nom'}</div>
+    <div class="header-left">
+      <div class="header-top">
+        <img src="${logoImage}" alt="Breadshop" class="header-logo" />
+        <span class="header-subtitle">FICHE TECHNIQUE PRODUIT</span>
+      </div>
+      <div class="header-title">${sheetData.product_name || 'Sans nom'}</div>
     </div>
     ${sheetData.version ? `<div class="version">v${sheetData.version}</div>` : ''}
   </div>
+
+  ${sheetData.description ? `<div class="description">${sheetData.description}</div>` : ''}
 
   <div class="section">
     <div class="section-title">Identification produit</div>

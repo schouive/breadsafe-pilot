@@ -646,16 +646,25 @@ function groupAdditivesByFunction(ingredients: FlatIngredient[]): FlatIngredient
 }
 
 /**
+ * Convert ingredient name to lowercase (INCO standard: no capitals after commas)
+ */
+function toLowerCaseIngredient(name: string): string {
+  return name.toLowerCase();
+}
+
+/**
  * Format ingredient with allergen highlighting
  * - PRIMARY allergens: bold only (no uppercase)
  * - SECONDARY allergens: no formatting
  * - For wheat flour: add (**gluten**) in bold
+ * - All text in lowercase (INCO standard)
  */
 function formatWithAllergens(
   ingredient: FlatIngredient,
   format: 'markdown' | 'html'
 ): string {
-  let text = ingredient.name;
+  // Convert to lowercase for INCO compliance
+  let text = toLowerCaseIngredient(ingredient.name);
 
   // Only format primary allergens with bold
   if (ingredient.isPrimaryAllergen) {
@@ -743,10 +752,26 @@ function generateCondensedList(
   // Step 4: Sort by weight descending
   const sorted = grouped.sort((a, b) => b.weight - a.weight);
   
-  // Step 5: Format with allergen highlighting (only primary in bold)
+  // Step 5: Format with allergen highlighting (only primary in bold, all lowercase)
   const formatted = sorted.map(ing => formatWithAllergens(ing, format));
   
-  return formatted.join(', ') + '.';
+  // Step 6: Join and capitalize first letter of the list
+  let result = formatted.join(', ') + '.';
+  
+  // Capitalize the first letter (after any HTML/markdown tags)
+  if (format === 'html') {
+    // Handle <strong> at the start
+    result = result.replace(/^(<strong>)?([a-zàâäéèêëïîôùûüç])/i, (match, tag, letter) => 
+      (tag || '') + letter.toUpperCase()
+    );
+  } else {
+    // Handle ** at the start for markdown
+    result = result.replace(/^(\*\*)?([a-zàâäéèêëïîôùûüç])/i, (match, tag, letter) => 
+      (tag || '') + letter.toUpperCase()
+    );
+  }
+  
+  return result;
 }
 
 /**

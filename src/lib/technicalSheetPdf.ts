@@ -71,45 +71,50 @@ export async function generateTechnicalSheetPDF(sheet: ProductSheet): Promise<vo
   // ========== PROFESSIONAL HEADER ==========
   // Header background - clean white with subtle bottom border
   doc.setFillColor(255, 255, 255);
-  doc.rect(0, 0, pageWidth, 55, 'F');
+  doc.rect(0, 0, pageWidth, 60, 'F');
   doc.setDrawColor(220, 220, 220);
   doc.setLineWidth(0.5);
-  doc.line(0, 55, pageWidth, 55);
+  doc.line(0, 60, pageWidth, 60);
   
-  // Logo positioning (top left, proportional)
-  let logoEndX = margin;
+  // Logo positioning (left side, vertically centered in header)
+  let logoWidth = 0;
   try {
     const logoData = await loadImageAsBase64WithDimensions(logoImage);
     const aspectRatio = logoData.width / logoData.height;
-    const logoHeight = 12;
-    const logoWidth = logoHeight * aspectRatio;
-    doc.addImage(logoData.base64, 'PNG', margin, 8, logoWidth, logoHeight);
-    logoEndX = margin + logoWidth + 6;
+    const logoHeight = 25; // Increased size
+    logoWidth = logoHeight * aspectRatio;
+    // Vertically center the logo in the header (header height is 60, logo at center)
+    const logoY = (60 - logoHeight) / 2;
+    doc.addImage(logoData.base64, 'PNG', margin, logoY, logoWidth, logoHeight);
   } catch (e) {
     console.warn('Could not load logo for PDF');
   }
   
-  // Company name - aligned with logo, secondary prominence
+  // Calculate center position (accounting for logo space)
+  const textAreaStart = margin + logoWidth + 10;
+  const textAreaCenter = textAreaStart + (pageWidth - textAreaStart - margin) / 2;
+  
+  // Company name - CENTERED
   doc.setTextColor(...mutedColor);
   doc.setFontSize(12);
   doc.setFont('helvetica', 'bold');
-  doc.text('BREADSHOP SAS', logoEndX, 16);
+  doc.text('BREADSHOP SAS', textAreaCenter, 18, { align: 'center' });
   
-  // Document type label
+  // Document type label - centered below company name
   doc.setFontSize(8);
   doc.setFont('helvetica', 'normal');
-  doc.text('FICHE TECHNIQUE PRODUIT', logoEndX, 22);
+  doc.text('FICHE TECHNIQUE PRODUIT', textAreaCenter, 25, { align: 'center' });
   
-  // Product name - MOST PROMINENT ELEMENT
+  // Product name - CENTERED, MOST PROMINENT ELEMENT
   doc.setTextColor(...textColor);
   doc.setFontSize(22);
   doc.setFont('helvetica', 'bold');
   const productName = sheetData.product_name || 'Sans nom';
-  const maxTitleWidth = pageWidth - 2 * margin - 40;
+  const maxTitleWidth = pageWidth - textAreaStart - margin - 10;
   const truncatedName = doc.getTextWidth(productName) > maxTitleWidth 
-    ? productName.substring(0, 35) + '...' 
+    ? productName.substring(0, 30) + '...' 
     : productName;
-  doc.text(truncatedName, margin, 42);
+  doc.text(truncatedName, textAreaCenter, 48, { align: 'center' });
   
   // Version badge (top right)
   if (sheetData.version) {
@@ -122,7 +127,7 @@ export async function generateTechnicalSheetPDF(sheet: ProductSheet): Promise<vo
     doc.text(versionText, pageWidth - margin - versionWidth + 5, 15);
   }
   
-  yPos = 65;
+  yPos = 70;
   
   // Description section (if present)
   if (sheetData.description) {
@@ -431,29 +436,33 @@ export async function printTechnicalSheet(sheet: any): Promise<void> {
     
     /* ========== PROFESSIONAL HEADER ========== */
     .header {
-      padding: 12px 20px 15px 20px;
+      padding: 15px 20px 18px 20px;
       border-bottom: 2px solid #e2e8f0;
       margin-bottom: 20px;
-    }
-    .header-top-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 12px;
-    }
-    .header-identity {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 20px;
+      position: relative;
     }
     .header-logo { 
-      height: 24px; 
+      height: 50px; 
       width: auto; 
-      object-fit: contain; 
+      object-fit: contain;
+      flex-shrink: 0;
+    }
+    .header-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
     }
     .header-company {
       display: flex;
       flex-direction: column;
+      align-items: center;
+      margin-bottom: 8px;
     }
     .company-name { 
       font-size: 13pt; 
@@ -474,14 +483,18 @@ export async function printTechnicalSheet(sheet: any): Promise<void> {
       border-radius: 4px; 
       font-size: 9pt;
       font-weight: 600;
+      position: absolute;
+      top: 10px;
+      right: 20px;
     }
-    /* Product name - MOST PROMINENT */
+    /* Product name - MOST PROMINENT, CENTERED */
     .product-name { 
       font-size: 22pt; 
       font-weight: 700; 
       color: #0f172a;
       line-height: 1.2;
       margin: 0;
+      text-align: center;
     }
     
     .content { padding: 0 20px; }
@@ -557,17 +570,15 @@ export async function printTechnicalSheet(sheet: any): Promise<void> {
 </head>
 <body>
   <div class="header">
-    <div class="header-top-row">
-      <div class="header-identity">
-        ${logoBase64 ? `<img src="${logoBase64}" alt="Logo" class="header-logo" />` : ''}
-        <div class="header-company">
-          <span class="company-name">BREADSHOP SAS</span>
-          <span class="document-type">Fiche technique produit</span>
-        </div>
+    ${logoBase64 ? `<img src="${logoBase64}" alt="Logo" class="header-logo" />` : ''}
+    <div class="header-content">
+      <div class="header-company">
+        <span class="company-name">BREADSHOP SAS</span>
+        <span class="document-type">Fiche technique produit</span>
       </div>
-      ${sheetData.version ? `<div class="version">v${sheetData.version}</div>` : ''}
+      <h1 class="product-name">${sheetData.product_name || 'Sans nom'}</h1>
     </div>
-    <h1 class="product-name">${sheetData.product_name || 'Sans nom'}</h1>
+    ${sheetData.version ? `<div class="version">v${sheetData.version}</div>` : ''}
   </div>
 
   <div class="content">

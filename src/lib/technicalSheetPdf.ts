@@ -196,16 +196,17 @@ export async function generateTechnicalSheetPDF(sheet: ProductSheet): Promise<vo
 
   // Allergens
   const snapshotAllergens = sheetData.snapshot_allergens as { main?: string[]; secondary?: string[] } | null;
-  if (snapshotAllergens) {
+  if (snapshotAllergens && (snapshotAllergens.main?.length || snapshotAllergens.secondary?.length)) {
     yPos += 5;
     doc.setFontSize(12);
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(180, 83, 9); // Warning color
-    doc.text('⚠ Allergènes', margin, yPos);
+    doc.setTextColor(...primaryColor); // Blue color
+    doc.text('Allergènes', margin, yPos);
     yPos += 6;
     
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
+    doc.setTextColor(...textColor);
     if (snapshotAllergens.main && snapshotAllergens.main.length > 0) {
       doc.text(`Contient: ${snapshotAllergens.main.map(a => a.toUpperCase()).join(', ')}`, margin, yPos);
       yPos += 5;
@@ -223,7 +224,7 @@ export async function generateTechnicalSheetPDF(sheet: ProductSheet): Promise<vo
     doc.setTextColor(...textColor);
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
-    doc.text('Valeurs nutritionnelles moyennes (pour 100g)', margin, yPos);
+    doc.text('Valeurs nutritionnelles (100g)', margin, yPos);
     yPos += 5;
 
     const nutritionData = [
@@ -508,7 +509,7 @@ export async function printTechnicalSheet(sheet: any): Promise<void> {
     .info-label { color: #64748b; width: 140px; flex-shrink: 0; font-size: 10pt; }
     .info-value { font-weight: 500; }
     .recipe-source { font-style: italic; color: #64748b; font-size: 10pt; margin-bottom: 15px; }
-    .allergens-warning { color: #b45309; font-weight: bold; margin-bottom: 5px; }
+    .allergens-title { color: #62779c; font-weight: bold; margin-bottom: 5px; font-size: 11pt; }
     .allergens-list { margin-bottom: 5px; }
     .ingredients { text-align: justify; margin-bottom: 10px; }
     .ingredients strong { font-weight: bold; }
@@ -591,7 +592,7 @@ export async function printTechnicalSheet(sheet: any): Promise<void> {
     <div class="ingredients">${ingredientsText || '—'}</div>
     
     ${snapshotAllergens && (snapshotAllergens.main?.length || snapshotAllergens.secondary?.length) ? `
-      <div class="allergens-warning">⚠ Allergènes</div>
+      <div class="allergens-title">Allergènes</div>
       ${snapshotAllergens.main?.length ? `<div class="allergens-list"><strong>Contient:</strong> ${snapshotAllergens.main.map(a => a.toUpperCase()).join(', ')}</div>` : ''}
       ${snapshotAllergens.secondary?.length ? `<div class="allergens-list"><strong>Peut contenir des traces de:</strong> ${snapshotAllergens.secondary.join(', ')}</div>` : ''}
     ` : ''}
@@ -600,7 +601,7 @@ export async function printTechnicalSheet(sheet: any): Promise<void> {
   <div class="two-columns">
     ${snapshotNutrition ? `
     <div class="section">
-      <div class="section-title">Valeurs nutritionnelles (pour 100g)</div>
+      <div class="section-title">Valeurs nutritionnelles (100g)</div>
       <table class="nutrition">
         <thead><tr><th>Nutriment</th><th>Pour 100g</th></tr></thead>
         <tbody>

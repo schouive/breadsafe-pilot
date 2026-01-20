@@ -323,6 +323,7 @@ export type Database = {
           certifications: string[] | null
           created_at: string
           created_by: string | null
+          description: string | null
           dlc_ddm_days: number | null
           dlc_ddm_type: string | null
           id: string
@@ -362,6 +363,7 @@ export type Database = {
           certifications?: string[] | null
           created_at?: string
           created_by?: string | null
+          description?: string | null
           dlc_ddm_days?: number | null
           dlc_ddm_type?: string | null
           id?: string
@@ -401,6 +403,7 @@ export type Database = {
           certifications?: string[] | null
           created_at?: string
           created_by?: string | null
+          description?: string | null
           dlc_ddm_days?: number | null
           dlc_ddm_type?: string | null
           id?: string

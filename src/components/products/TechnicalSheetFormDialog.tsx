@@ -85,6 +85,7 @@ export function TechnicalSheetFormDialog({
   
   const [formData, setFormData] = useState({
     product_name: '',
+    description: '',
     product_reference: '',
     brand: '',
     barcode: '',
@@ -160,6 +161,7 @@ export function TechnicalSheetFormDialog({
         setSelectedRecipeId(sheet.recipe_id);
         setFormData({
           product_name: sheet.product_name || '',
+          description: (sheet as any).description || '',
           product_reference: (sheet as any).product_reference || '',
           brand: sheet.brand || '',
           barcode: sheet.barcode || '',
@@ -187,6 +189,7 @@ export function TechnicalSheetFormDialog({
         setSelectedRecipeId('');
         setFormData({
           product_name: '',
+          description: '',
           product_reference: '',
           brand: '',
           barcode: '',
@@ -290,6 +293,7 @@ export function TechnicalSheetFormDialog({
       const data: any = {
         recipe_id: selectedRecipeId,
         product_name: formData.product_name.trim(),
+        description: formData.description.trim() || null,
         product_reference: formData.product_reference.trim() || null,
         brand: formData.brand.trim() || null,
         barcode: formData.barcode.trim() || null,
@@ -394,6 +398,17 @@ export function TechnicalSheetFormDialog({
                   onChange={(e) => setFormData({ ...formData, product_name: e.target.value })}
                 />
               </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="description">Description du produit</Label>
+              <Textarea
+                id="description"
+                placeholder="Description courte du produit pour la fiche technique..."
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                rows={2}
+              />
             </div>
           </div>
 

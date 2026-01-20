@@ -169,16 +169,6 @@ function AppRoutes() {
         }
       />
       <Route
-        path="/products/label-data"
-        element={
-          <ProtectedRoute>
-            <ProductsLayout>
-              <div className="p-6"><h1 className="text-2xl font-bold">Datas Étiquette</h1><p className="text-muted-foreground mt-2">À venir - Sélectionnez une recette pour configurer les données d'étiquette</p></div>
-            </ProductsLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
         path="/products/technical-sheet"
         element={
           <ProtectedRoute>

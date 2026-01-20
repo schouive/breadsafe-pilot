@@ -311,8 +311,8 @@ export function TechnicalSheetFormDialog({
         is_published: formData.is_published,
         published_at: formData.is_published ? new Date().toISOString() : null,
         created_by: user?.id || null,
-        // Generated fields - use condensed list for labels (INCO compliant), converted to uppercase for allergens
-        ingredients_declaration: markdownToUppercase(ingredientsListCondensed),
+        // Generated fields - use condensed list for labels (INCO compliant) with HTML formatting for bold allergens
+        ingredients_declaration: ingredientsListCondensedHtml,
         allergen_statement: allergens.length > 0 
           ? `Contient: ${allergens.map(a => a.toUpperCase()).join(', ')}${allergensSecondary.length > 0 ? `. Peut contenir des traces de: ${allergensSecondary.join(', ')}` : ''}`
           : null,
@@ -411,11 +411,14 @@ export function TechnicalSheetFormDialog({
                 
                 {/* Ingredients - Show both versions */}
                 <div className="space-y-3">
-                  <div className="p-4 bg-muted/30 rounded-lg border">
+                <div className="p-4 bg-muted/30 rounded-lg border">
                     <h5 className="font-medium text-sm mb-2">Liste ingrédients condensée (étiquette INCO)</h5>
-                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                      {ingredientsListCondensed ? markdownToUppercase(ingredientsListCondensed) : 'Aucun ingrédient défini dans la recette'}
-                    </p>
+                    <p 
+                      className="text-sm text-muted-foreground whitespace-pre-wrap"
+                      dangerouslySetInnerHTML={{ 
+                        __html: ingredientsListCondensedHtml || 'Aucun ingrédient défini dans la recette' 
+                      }}
+                    />
                   </div>
                   <details className="group">
                     <summary className="cursor-pointer text-sm text-muted-foreground hover:text-foreground">

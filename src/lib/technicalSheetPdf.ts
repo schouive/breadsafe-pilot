@@ -103,8 +103,12 @@ export async function generateTechnicalSheetPDF(sheet: ProductSheet): Promise<vo
   if (sheetData.ingredients_declaration) {
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    // The ingredients_declaration now contains the condensed INCO-compliant list with allergens in UPPERCASE
-    const ingredientLines = doc.splitTextToSize(sheetData.ingredients_declaration, pageWidth - 2 * margin);
+    // Remove HTML tags and convert to plain text for PDF
+    // The <strong> tags indicate allergens - we'll use UPPERCASE for them in PDF
+    const ingredientsText = sheetData.ingredients_declaration
+      .replace(/<strong>([^<]+)<\/strong>/gi, (match: string, content: string) => content.toUpperCase())
+      .replace(/<[^>]*>/g, '');
+    const ingredientLines = doc.splitTextToSize(ingredientsText, pageWidth - 2 * margin);
     doc.text(ingredientLines, margin, yPos);
     yPos += ingredientLines.length * 5 + 5;
   }

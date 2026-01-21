@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Package, Plus, Edit2, X, Check, Thermometer, AlertTriangle, Clock, Euro } from 'lucide-react';
+import { Package, Plus, Edit2, X, Check, Thermometer, AlertTriangle, Clock, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -17,6 +17,16 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -27,6 +37,7 @@ import {
   useAllRawMaterials, 
   useCreateRawMaterial, 
   useUpdateRawMaterial, 
+  useDeleteRawMaterial,
   useSuppliers,
   RawMaterial 
 } from '@/hooks/useSuppliers';
@@ -105,9 +116,11 @@ export function RawMaterialManagement() {
   const { data: suppliers } = useSuppliers();
   const createMaterial = useCreateRawMaterial();
   const updateMaterial = useUpdateRawMaterial();
+  const deleteMaterial = useDeleteRawMaterial();
   
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editingMaterial, setEditingMaterial] = useState<RawMaterial | null>(null);
+  const [deletingMaterial, setDeletingMaterial] = useState<RawMaterial | null>(null);
   const [formData, setFormData] = useState<FormData>(initialFormData);
 
   const resetForm = () => {
@@ -232,6 +245,12 @@ export function RawMaterialManagement() {
   const closeEditDialog = () => {
     setEditingMaterial(null);
     resetForm();
+  };
+
+  const handleDelete = async () => {
+    if (!deletingMaterial) return;
+    await deleteMaterial.mutateAsync(deletingMaterial.id);
+    setDeletingMaterial(null);
   };
 
   const renderFormFields = () => (
@@ -689,6 +708,14 @@ export function RawMaterialManagement() {
                     >
                       {material.is_active ? <X className="h-4 w-4" /> : <Check className="h-4 w-4" />}
                     </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                      onClick={() => setDeletingMaterial(material)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
               ))}
@@ -744,6 +771,28 @@ export function RawMaterialManagement() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deletingMaterial} onOpenChange={(open) => !open && setDeletingMaterial(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer l'ingrédient ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Êtes-vous sûr de vouloir supprimer <strong>{deletingMaterial?.name}</strong> ? 
+              Cette action est irréversible. Si cet ingrédient est utilisé dans des recettes, la suppression échouera.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteMaterial.isPending ? 'Suppression...' : 'Supprimer'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

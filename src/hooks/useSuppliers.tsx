@@ -131,6 +131,29 @@ export function useUpdateSupplier() {
   });
 }
 
+export function useDeleteSupplier() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('suppliers')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['suppliers'] });
+      toast.success('Fournisseur supprimé');
+    },
+    onError: (error) => {
+      toast.error('Erreur lors de la suppression. Ce fournisseur est peut-être utilisé par des matières premières.');
+      console.error(error);
+    },
+  });
+}
+
 // Raw Materials hooks
 export function useRawMaterials(supplierId?: string) {
   return useQuery({
@@ -244,6 +267,29 @@ export function useUpdateRawMaterial() {
     },
     onError: (error) => {
       toast.error('Erreur lors de la mise à jour');
+      console.error(error);
+    },
+  });
+}
+
+export function useDeleteRawMaterial() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('raw_materials')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['raw_materials'] });
+      toast.success('Matière première supprimée');
+    },
+    onError: (error) => {
+      toast.error('Erreur lors de la suppression. Cette matière première est peut-être utilisée dans des recettes.');
       console.error(error);
     },
   });

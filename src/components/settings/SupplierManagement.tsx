@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Truck, Plus, Edit2, X, Check } from 'lucide-react';
+import { Truck, Plus, Edit2, X, Check, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -13,16 +13,28 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
-import { useAllSuppliers, useCreateSupplier, useUpdateSupplier, Supplier } from '@/hooks/useSuppliers';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { useAllSuppliers, useCreateSupplier, useUpdateSupplier, useDeleteSupplier, Supplier } from '@/hooks/useSuppliers';
 import { cn } from '@/lib/utils';
 
 export function SupplierManagement() {
   const { data: suppliers, isLoading } = useAllSuppliers();
   const createSupplier = useCreateSupplier();
   const updateSupplier = useUpdateSupplier();
+  const deleteSupplier = useDeleteSupplier();
   
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
+  const [deletingSupplier, setDeletingSupplier] = useState<Supplier | null>(null);
   
   // Form state
   const [formData, setFormData] = useState({
@@ -82,6 +94,12 @@ export function SupplierManagement() {
 
   const openEditDialog = (supplier: Supplier) => {
     setEditingSupplier({ ...supplier });
+  };
+
+  const handleDelete = async () => {
+    if (!deletingSupplier) return;
+    await deleteSupplier.mutateAsync(deletingSupplier.id);
+    setDeletingSupplier(null);
   };
 
   return (
@@ -160,6 +178,14 @@ export function SupplierManagement() {
                       onClick={() => handleToggleActive(supplier)}
                     >
                       {supplier.is_active ? <X className="h-4 w-4" /> : <Check className="h-4 w-4" />}
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                      onClick={() => setDeletingSupplier(supplier)}
+                    >
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>
@@ -311,6 +337,28 @@ export function SupplierManagement() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deletingSupplier} onOpenChange={(open) => !open && setDeletingSupplier(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer le fournisseur ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Êtes-vous sûr de vouloir supprimer <strong>{deletingSupplier?.name}</strong> ? 
+              Cette action est irréversible. Les matières premières associées ne seront pas supprimées.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteSupplier.isPending ? 'Suppression...' : 'Supprimer'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

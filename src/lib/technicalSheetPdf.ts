@@ -69,7 +69,7 @@ export async function generateTechnicalSheetPDF(sheet: ProductSheet): Promise<vo
   const mutedColor = [100, 116, 139] as [number, number, number]; // Slate 500
   const lightMutedColor = [148, 163, 184] as [number, number, number]; // Slate 400
 
-  // ========== HEADER - MATCHING PRINT VERSION ==========
+  // ========== HEADER - CENTERED ON PAGE ==========
   // Logo positioning (left side)
   let logoWidth = 0;
   let logoHeight = 20;
@@ -83,32 +83,31 @@ export async function generateTechnicalSheetPDF(sheet: ProductSheet): Promise<vo
     console.warn('Could not load logo for PDF');
   }
   
-  // Calculate center position for text (accounting for logo space)
-  const textAreaStart = margin + logoWidth + 10;
-  const textAreaCenter = textAreaStart + (pageWidth - textAreaStart - margin) / 2;
+  // Center position for text - CENTERED ON THE FULL PAGE
+  const pageCenter = pageWidth / 2;
   
-  // Company name - centered
+  // Company name - centered on page
   doc.setTextColor(...mutedColor);
   doc.setFontSize(11);
   doc.setFont('helvetica', 'bold');
-  doc.text('BREADSHOP SAS', textAreaCenter, yPos + 6, { align: 'center' });
+  doc.text('BREADSHOP SAS', pageCenter, yPos + 6, { align: 'center' });
   
   // Document type label
   doc.setFontSize(7);
   doc.setTextColor(...lightMutedColor);
   doc.setFont('helvetica', 'normal');
-  doc.text('FICHE TECHNIQUE PRODUIT', textAreaCenter, yPos + 11, { align: 'center' });
+  doc.text('FICHE TECHNIQUE PRODUIT', pageCenter, yPos + 11, { align: 'center' });
   
-  // Product name - centered, prominent
+  // Product name - centered on page, prominent
   doc.setTextColor(15, 23, 42); // Slate 900
   doc.setFontSize(18);
   doc.setFont('helvetica', 'bold');
   const productName = sheetData.product_name || 'Sans nom';
-  const maxTitleWidth = pageWidth - textAreaStart - margin - 20;
+  const maxTitleWidth = pageWidth - 2 * margin - 40;
   const truncatedName = doc.getTextWidth(productName) > maxTitleWidth 
-    ? productName.substring(0, 35) + '...' 
+    ? productName.substring(0, 40) + '...' 
     : productName;
-  doc.text(truncatedName, textAreaCenter, yPos + 22, { align: 'center' });
+  doc.text(truncatedName, pageCenter, yPos + 22, { align: 'center' });
   
   // Version badge (top right)
   if (sheetData.version) {
@@ -128,6 +127,28 @@ export async function generateTechnicalSheetPDF(sheet: ProductSheet): Promise<vo
   doc.setLineWidth(0.5);
   doc.line(margin, yPos, pageWidth - margin, yPos);
   yPos += 10;
+
+  // ========== PRODUCT IMAGE ==========
+  if (sheetData.product_image_url) {
+    try {
+      const imgData = await loadImageAsBase64WithDimensions(sheetData.product_image_url);
+      const imgMaxHeight = 50;
+      const imgMaxWidth = 60;
+      const aspectRatio = imgData.width / imgData.height;
+      let imgWidth = imgMaxWidth;
+      let imgHeight = imgWidth / aspectRatio;
+      if (imgHeight > imgMaxHeight) {
+        imgHeight = imgMaxHeight;
+        imgWidth = imgHeight * aspectRatio;
+      }
+      // Position image on the right
+      const imgX = pageWidth - margin - imgWidth;
+      doc.addImage(imgData.base64, 'PNG', imgX, yPos, imgWidth, imgHeight);
+      // Don't advance yPos here - let the image float on the right
+    } catch (e) {
+      console.warn('Could not load product image for PDF');
+    }
+  }
   
   // Description section (if present)
   if (sheetData.description) {
@@ -463,29 +484,29 @@ export async function printTechnicalSheet(sheet: any): Promise<void> {
       }
     }
     
-    /* ========== PROFESSIONAL HEADER ========== */
+    /* ========== PROFESSIONAL HEADER - CENTERED ON PAGE ========== */
     .header {
       padding: 15px 20px 18px 20px;
       border-bottom: 2px solid #e2e8f0;
       margin-bottom: 20px;
-      display: flex;
-      align-items: center;
-      gap: 20px;
       position: relative;
     }
     .header-logo { 
       height: 50px; 
       width: auto; 
       object-fit: contain;
-      flex-shrink: 0;
+      position: absolute;
+      left: 20px;
+      top: 50%;
+      transform: translateY(-50%);
     }
     .header-content {
-      flex: 1;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       text-align: center;
+      width: 100%;
     }
     .header-company {
       display: flex;
@@ -516,7 +537,7 @@ export async function printTechnicalSheet(sheet: any): Promise<void> {
       top: 10px;
       right: 20px;
     }
-    /* Product name - MOST PROMINENT, CENTERED */
+    /* Product name - MOST PROMINENT, CENTERED ON PAGE */
     .product-name { 
       font-size: 22pt; 
       font-weight: 700; 
@@ -524,6 +545,18 @@ export async function printTechnicalSheet(sheet: any): Promise<void> {
       line-height: 1.2;
       margin: 0;
       text-align: center;
+    }
+    /* Product image styling */
+    .product-image-container {
+      text-align: center;
+      margin-bottom: 15px;
+    }
+    .product-image {
+      max-width: 180px;
+      max-height: 120px;
+      object-fit: contain;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
     }
     
     .content { padding: 0 20px; }
@@ -611,6 +644,11 @@ export async function printTechnicalSheet(sheet: any): Promise<void> {
   </div>
 
   <div class="content">
+  ${sheetData.product_image_url ? `
+    <div class="product-image-container">
+      <img src="${sheetData.product_image_url}" alt="${sheetData.product_name || 'Produit'}" class="product-image" />
+    </div>
+  ` : ''}
   ${sheetData.description ? `<div class="description">${sheetData.description}</div>` : ''}
 
   <div class="section">

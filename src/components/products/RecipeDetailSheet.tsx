@@ -153,6 +153,10 @@ export function RecipeDetailSheet({ open, onOpenChange, recipe }: RecipeDetailSh
                     {ingredients?.map((ingredient) => {
                       // Check if this is an intermediate recipe ingredient
                       const isIntermediate = !!ingredient.ingredient_recipe_id;
+                      // Debug log to verify data structure
+                      if (isIntermediate) {
+                        console.log('PI ingredient:', ingredient.id, 'ingredient_recipe:', ingredient.ingredient_recipe);
+                      }
                       const name = isIntermediate 
                         ? (ingredient.ingredient_recipe?.name || 'PI sans nom')
                         : ingredient.raw_materials?.name;

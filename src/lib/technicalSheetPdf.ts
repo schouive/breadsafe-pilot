@@ -366,51 +366,68 @@ export async function generateTechnicalSheetPDF(sheet: ProductSheet): Promise<vo
   const nutritionEndY = snapshotNutrition ? (doc as any).lastAutoTable?.finalY || savedYPos : savedYPos;
   yPos = Math.max(nutritionEndY, yPos) + 12;
 
-  // ========== CONSERVATION SECTION ==========
-  if (sheetData.storage_instructions || sheetData.thawing_instructions || sheetData.usage_instructions || sheetData.dlc_ddm_days) {
+  // ========== CONSERVATION SECTION ========== (matching print version exactly)
+  const hasConservation = sheetData.storage_instructions || sheetData.thawing_instructions || sheetData.usage_instructions || sheetData.dlc_ddm_days;
+  if (hasConservation) {
+    // Check if we need a new page
+    const pageHeight = doc.internal.pageSize.getHeight();
+    if (yPos > pageHeight - 80) {
+      doc.addPage();
+      yPos = 20;
+    }
+
     doc.setTextColor(...textColor);
     doc.setFontSize(10);
     doc.setFont('helvetica', 'bold');
     doc.text('CONSERVATION & UTILISATION', margin, yPos);
     yPos += 2;
     doc.setDrawColor(226, 232, 240);
+    doc.setLineWidth(0.3);
     doc.line(margin, yPos, margin + 60, yPos);
-    yPos += 6;
+    yPos += 8;
 
     doc.setFontSize(9);
+    const contentWidth = pageWidth - 2 * margin;
 
+    // DLC/DDM - matching print style: bold block
     if (sheetData.dlc_ddm_days) {
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(...textColor);
       doc.text(`${sheetData.dlc_ddm_type || 'DLC'}: ${sheetData.dlc_ddm_days} jours`, margin, yPos);
-      yPos += 6;
+      yPos += 8;
     }
 
+    // Conservation - matching print style: label on same line, then content
     if (sheetData.storage_instructions) {
       doc.setFont('helvetica', 'bold');
-      doc.text('Conservation: ', margin, yPos);
+      doc.setTextColor(...textColor);
+      doc.text('Conservation:', margin, yPos);
       doc.setFont('helvetica', 'normal');
-      const storageLines = doc.splitTextToSize(sheetData.storage_instructions, pageWidth - 2 * margin - 25);
-      doc.text(storageLines, margin + doc.getTextWidth('Conservation: '), yPos);
-      yPos += storageLines.length * 4 + 4;
+      const storageLines = doc.splitTextToSize(sheetData.storage_instructions, contentWidth - 30);
+      doc.text(storageLines, margin + 28, yPos);
+      yPos += storageLines.length * 5 + 6;
     }
 
+    // Décongélation - matching print style
     if (sheetData.thawing_instructions) {
       doc.setFont('helvetica', 'bold');
-      doc.text('Décongélation: ', margin, yPos);
+      doc.setTextColor(...textColor);
+      doc.text('Décongélation:', margin, yPos);
       doc.setFont('helvetica', 'normal');
-      const thawingLines = doc.splitTextToSize(sheetData.thawing_instructions, pageWidth - 2 * margin - 30);
-      doc.text(thawingLines, margin + doc.getTextWidth('Décongélation: '), yPos);
-      yPos += thawingLines.length * 4 + 4;
+      const thawingLines = doc.splitTextToSize(sheetData.thawing_instructions, contentWidth - 35);
+      doc.text(thawingLines, margin + 32, yPos);
+      yPos += thawingLines.length * 5 + 6;
     }
 
+    // Mise en œuvre - matching print style
     if (sheetData.usage_instructions) {
       doc.setFont('helvetica', 'bold');
-      doc.text('Mise en œuvre: ', margin, yPos);
+      doc.setTextColor(...textColor);
+      doc.text('Mise en œuvre:', margin, yPos);
       doc.setFont('helvetica', 'normal');
-      const usageLines = doc.splitTextToSize(sheetData.usage_instructions, pageWidth - 2 * margin - 30);
-      doc.text(usageLines, margin + doc.getTextWidth('Mise en œuvre: '), yPos);
-      yPos += usageLines.length * 4 + 4;
+      const usageLines = doc.splitTextToSize(sheetData.usage_instructions, contentWidth - 35);
+      doc.text(usageLines, margin + 32, yPos);
+      yPos += usageLines.length * 5 + 6;
     }
   }
 

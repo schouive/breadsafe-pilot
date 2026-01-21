@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, X, ChefHat, Wheat, AlertCircle, Beaker, Package } from 'lucide-react';
+import { ArrowLeft, Plus, X, ChefHat, Wheat, AlertCircle, Beaker, Package, Scale, Percent } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -41,6 +41,7 @@ export default function NewRecipe() {
     description: '',
     process: '',
     recipeType: 'finished' as 'finished' | 'intermediate',
+    calculationMode: 'flour_based' as 'flour_based' | 'total_weight',
     status: 'draft' as 'draft' | 'validated',
     bakingRatio: '0.90',
     processLosses: '0',
@@ -63,12 +64,16 @@ export default function NewRecipe() {
   const availableOtherMaterials = otherMaterials.filter(m => 
     !ingredients.some(ing => ing.rawMaterialId === m.id)
   );
+  // All materials for total_weight mode
+  const availableAllMaterials = rawMaterials?.filter(m =>
+    !ingredients.some(ing => ing.rawMaterialId === m.id)
+  ) || [];
   // Filter out already added intermediate recipes
   const availableIntermediates = intermediateRecipes?.filter(r =>
     !ingredients.some(ing => ing.ingredientRecipeId === r.id)
   ) || [];
 
-  // Calculate flour total
+  // Calculate totals
   const flourIngredients = ingredients.filter(ing => ing.type === 'farine');
   const otherIngredients = ingredients.filter(ing => ing.type === 'ingredient');
   const intermediateIngredients = ingredients.filter(ing => ing.type === 'intermediate');
@@ -77,7 +82,11 @@ export default function NewRecipe() {
   const totalIntermediatePercentage = intermediateIngredients.reduce((sum, ing) => sum + ing.bakerPercentage, 0);
   const totalBakerPercentage = totalFlourPercentage + totalOtherPercentage + totalIntermediatePercentage;
 
-  const isFlourValid = totalFlourPercentage === 100;
+  // Validation based on calculation mode
+  const isFlourBased = formData.calculationMode === 'flour_based';
+  const isFlourValid = isFlourBased ? totalFlourPercentage === 100 : true;
+  const isTotalWeightValid = !isFlourBased ? Math.abs(totalBakerPercentage - 100) < 0.01 : true;
+  const isRecipeValid = isFlourBased ? isFlourValid : isTotalWeightValid;
 
   const handleAddIngredient = (type: 'farine' | 'ingredient') => {
     if (!selectedIngredient || !ingredientPercentage) return;
@@ -133,13 +142,23 @@ export default function NewRecipe() {
       return;
     }
 
-    if (flourIngredients.length === 0) {
+    if (ingredients.length === 0) {
+      toast.error('Veuillez ajouter au moins un ingrédient');
+      return;
+    }
+
+    if (isFlourBased && flourIngredients.length === 0) {
       toast.error('Veuillez ajouter au moins une farine');
       return;
     }
 
-    if (!isFlourValid) {
+    if (isFlourBased && !isFlourValid) {
       toast.error('Le total des farines doit être égal à 100%');
+      return;
+    }
+
+    if (!isFlourBased && !isTotalWeightValid) {
+      toast.error('Le total des ingrédients doit être égal à 100%');
       return;
     }
 
@@ -151,6 +170,7 @@ export default function NewRecipe() {
         description: formData.description.trim() || null,
         process: formData.process.trim() || null,
         recipe_type: formData.recipeType,
+        calculation_mode: formData.calculationMode,
         status: formData.status,
         reference_flour_id: null,
         baking_ratio: parseFloat(formData.bakingRatio) || 0.9,
@@ -266,6 +286,40 @@ export default function NewRecipe() {
               </div>
 
               <div className="space-y-2">
+                <Label htmlFor="calculationMode">Mode de calcul *</Label>
+                <Select 
+                  value={formData.calculationMode} 
+                  onValueChange={(value: 'flour_based' | 'total_weight') => 
+                    setFormData({ ...formData, calculationMode: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="flour_based">
+                      <div className="flex items-center gap-2">
+                        <Wheat className="h-4 w-4" />
+                        <span>Base farine (boulangerie)</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="total_weight">
+                      <div className="flex items-center gap-2">
+                        <Scale className="h-4 w-4" />
+                        <span>Base poids total</span>
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  {formData.calculationMode === 'flour_based' 
+                    ? 'Farine = 100%. Les autres ingrédients sont exprimés en % de la farine.'
+                    : 'Tous les ingrédients sont exprimés en % du poids total (doit = 100%).'
+                  }
+                </p>
+              </div>
+
+              <div className="space-y-2">
                 <Label htmlFor="status">Statut</Label>
                 <Select 
                   value={formData.status} 
@@ -348,7 +402,8 @@ export default function NewRecipe() {
 
         {/* Right column - Ingredients */}
         <div className="space-y-6">
-          {/* Flour Section */}
+          {/* Flour Section - Only for flour-based mode */}
+          {isFlourBased && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -461,13 +516,17 @@ export default function NewRecipe() {
               )}
             </CardContent>
           </Card>
+          )}
 
           {/* Other Ingredients Section */}
           <Card>
             <CardHeader>
-              <CardTitle>Autres ingrédients (% boulangers)</CardTitle>
+              <CardTitle>{isFlourBased ? 'Autres ingrédients (% boulangers)' : 'Ingrédients (% du poids total)'}</CardTitle>
               <CardDescription>
-                Pourcentages par rapport au total des farines (100%)
+                {isFlourBased 
+                  ? 'Pourcentages par rapport au total des farines (100%)'
+                  : 'La somme de tous les ingrédients doit être égale à 100%'
+                }
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -482,9 +541,12 @@ export default function NewRecipe() {
                       <SelectValue placeholder="Sélectionner un ingrédient..." />
                     </SelectTrigger>
                     <SelectContent>
-                      {availableOtherMaterials?.map(m => (
+                      {(isFlourBased ? availableOtherMaterials : availableAllMaterials)?.map(m => (
                         <SelectItem key={m.id} value={m.id}>
-                          {m.name}
+                          <div className="flex items-center gap-2">
+                            {m.type === 'farine' && <Wheat className="h-3 w-3" />}
+                            {m.name}
+                          </div>
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -503,7 +565,7 @@ export default function NewRecipe() {
                 <Button 
                   onClick={() => handleAddIngredient('ingredient')}
                   size="icon"
-                  disabled={!selectedIngredient || !ingredientPercentage || !availableOtherMaterials.some(m => m.id === selectedIngredient)}
+                  disabled={!selectedIngredient || !ingredientPercentage || !(isFlourBased ? availableOtherMaterials : availableAllMaterials).some(m => m.id === selectedIngredient)}
                 >
                   <Plus className="h-4 w-4" />
                 </Button>
@@ -511,14 +573,24 @@ export default function NewRecipe() {
 
               {/* Ingredients list - sorted by percentage descending */}
               <div className="space-y-2">
-                {[...otherIngredients].sort((a, b) => b.bakerPercentage - a.bakerPercentage).map((ing) => (
+                {/* In total_weight mode, show all ingredients including flours */}
+                {(isFlourBased 
+                  ? [...otherIngredients]
+                  : [...ingredients.filter(ing => ing.type !== 'intermediate')]
+                ).sort((a, b) => b.bakerPercentage - a.bakerPercentage).map((ing) => (
                   <div 
                     key={ing.rawMaterialId}
-                    className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
+                    className={cn(
+                      "flex items-center justify-between p-3 rounded-lg",
+                      ing.type === 'farine' ? "bg-primary/5 border border-primary/20" : "bg-muted/50"
+                    )}
                   >
-                    <span>{ing.name}</span>
                     <div className="flex items-center gap-2">
-                      <span className="font-mono">{ing.bakerPercentage}%</span>
+                      {ing.type === 'farine' && <Wheat className="h-4 w-4 text-primary" />}
+                      <span>{ing.name}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className={cn("font-mono", ing.type === 'farine' && "font-bold text-primary")}>{ing.bakerPercentage}%</span>
                       <Button 
                         variant="ghost" 
                         size="icon" 
@@ -531,23 +603,42 @@ export default function NewRecipe() {
                   </div>
                 ))}
 
-                {otherIngredients.length === 0 && (
+                {(isFlourBased ? otherIngredients.length === 0 : ingredients.filter(ing => ing.type !== 'intermediate').length === 0) && (
                   <p className="text-center text-muted-foreground py-4 text-sm">
-                    Aucun autre ingrédient ajouté
+                    Aucun ingrédient ajouté
                   </p>
                 )}
               </div>
 
               {/* Total */}
-              {(otherIngredients.length > 0 || intermediateIngredients.length > 0) && (
-                <div className="pt-4 border-t">
+              {ingredients.length > 0 && (
+                <div className={cn(
+                  "p-3 rounded-lg",
+                  isFlourBased 
+                    ? "pt-4 border-t" 
+                    : (isTotalWeightValid ? "bg-success/10" : "bg-destructive/10")
+                )}>
                   <div className="flex items-center justify-between">
-                    <span className="font-medium">Total pourcentages boulangers</span>
-                    <span className="font-mono text-lg font-bold">{totalBakerPercentage.toFixed(1)}%</span>
+                    <span className="font-medium">
+                      {isFlourBased ? 'Total pourcentages boulangers' : 'Total ingrédients'}
+                    </span>
+                    <span className={cn(
+                      "font-mono text-lg font-bold",
+                      !isFlourBased && (isTotalWeightValid ? "text-success" : "text-destructive")
+                    )}>
+                      {totalBakerPercentage.toFixed(1)}%
+                    </span>
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    = 100% (farines) + {totalOtherPercentage.toFixed(1)}% (ingrédients) + {totalIntermediatePercentage.toFixed(1)}% (PI)
-                  </p>
+                  {isFlourBased && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      = 100% (farines) + {totalOtherPercentage.toFixed(1)}% (ingrédients) + {totalIntermediatePercentage.toFixed(1)}% (PI)
+                    </p>
+                  )}
+                  {!isFlourBased && !isTotalWeightValid && (
+                    <p className="text-xs text-destructive mt-1">
+                      Le total doit être exactement 100%
+                    </p>
+                  )}
                 </div>
               )}
             </CardContent>
@@ -640,11 +731,20 @@ export default function NewRecipe() {
           )}
 
           {/* Validation Alert */}
-          {!isFlourValid && flourIngredients.length > 0 && (
+          {isFlourBased && !isFlourValid && flourIngredients.length > 0 && (
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                Le total des farines ({totalFlourPercentage}%) doit être égal à 100% pour valider la recette.
+                Le total des farines ({totalFlourPercentage.toFixed(1)}%) doit être égal à 100% pour valider la recette.
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {!isFlourBased && !isTotalWeightValid && ingredients.length > 0 && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                Le total des ingrédients ({totalBakerPercentage.toFixed(1)}%) doit être égal à 100% pour valider la recette.
               </AlertDescription>
             </Alert>
           )}
@@ -664,8 +764,8 @@ export default function NewRecipe() {
               disabled={
                 createRecipe.isPending || 
                 !formData.name || 
-                flourIngredients.length === 0 || 
-                !isFlourValid
+                ingredients.length === 0 ||
+                !isRecipeValid
               }
             >
               {createRecipe.isPending ? 'Création...' : 'Créer la recette'}

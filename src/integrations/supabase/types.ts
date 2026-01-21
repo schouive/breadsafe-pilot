@@ -757,6 +757,7 @@ export type Database = {
       recipes: {
         Row: {
           baking_ratio: number | null
+          calculation_mode: string
           category: string | null
           code: string | null
           created_at: string
@@ -777,6 +778,7 @@ export type Database = {
         }
         Insert: {
           baking_ratio?: number | null
+          calculation_mode?: string
           category?: string | null
           code?: string | null
           created_at?: string
@@ -797,6 +799,7 @@ export type Database = {
         }
         Update: {
           baking_ratio?: number | null
+          calculation_mode?: string
           category?: string | null
           code?: string | null
           created_at?: string

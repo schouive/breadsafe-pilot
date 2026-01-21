@@ -272,40 +272,73 @@ function RecipeCalculationDialog({
     recipe.process_losses || 0
   );
 
-  // Brand colors from Breadshop identity (Slate Blue #4A5D73 = HSL 212 23% 37%)
-  const brandColor: [number, number, number] = [74, 93, 115];
+  // Brand colors from Breadshop identity - matching FT style
+  const primaryColor: [number, number, number] = [71, 85, 105]; // Slate 600
+  const textColor: [number, number, number] = [30, 41, 59]; // Slate 800
+  const mutedColor: [number, number, number] = [100, 116, 139]; // Slate 500
+  const lightMutedColor: [number, number, number] = [148, 163, 184]; // Slate 400
   const brandColorLight: [number, number, number] = [210, 220, 230];
 
   const handleExportPDF = () => {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
+    const margin = 15;
+    let yPos = 15;
     
-    // Logo
+    // ========== HEADER - MATCHING FT STYLE ==========
+    // Logo positioning (left side)
     try {
-      doc.addImage(logoImage, 'PNG', 14, 10, 40, 15);
+      doc.addImage(logoImage, 'PNG', margin, yPos, 40, 15);
     } catch {
       // Fallback if logo fails
     }
     
-    // Title with brand color
-    doc.setFontSize(20);
-    doc.setTextColor(...brandColor);
-    doc.text(recipe.name, pageWidth / 2, 35, { align: 'center' });
+    // Center position for text - CENTERED ON THE FULL PAGE
+    const pageCenter = pageWidth / 2;
     
+    // Company name - centered on page
+    doc.setTextColor(...mutedColor);
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.text('BREADSHOP SAS', pageCenter, yPos + 6, { align: 'center' });
+    
+    // Document type label
+    doc.setFontSize(7);
+    doc.setTextColor(...lightMutedColor);
+    doc.setFont('helvetica', 'normal');
+    doc.text('FICHE RECETTE', pageCenter, yPos + 11, { align: 'center' });
+    
+    // Recipe name - centered on page, prominent
+    doc.setTextColor(15, 23, 42); // Slate 900
+    doc.setFontSize(18);
+    doc.setFont('helvetica', 'bold');
+    doc.text(recipe.name, pageCenter, yPos + 22, { align: 'center' });
+    
+    // Code badge (if exists)
     if (recipe.code) {
-      doc.setFontSize(10);
-      doc.setTextColor(100);
-      doc.text(`Code: ${recipe.code}`, pageWidth / 2, 42, { align: 'center' });
+      doc.setFontSize(9);
+      doc.setTextColor(...mutedColor);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Code: ${recipe.code}`, pageCenter, yPos + 28, { align: 'center' });
     }
+    
+    // Header separator line
+    yPos += 35;
+    doc.setDrawColor(226, 232, 240); // Slate 200
+    doc.setLineWidth(0.5);
+    doc.line(margin, yPos, pageWidth - margin, yPos);
+    yPos += 8;
     
     // Flour quantity info
     doc.setFontSize(11);
-    doc.setTextColor(0);
-    doc.text(`Base farines: ${flourQuantity} kg`, 14, 55);
+    doc.setTextColor(...textColor);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Base farines: ${flourQuantity} kg`, margin, yPos);
+    yPos += 8;
     
     // Ingredients table (without prices)
     autoTable(doc, {
-      startY: 62,
+      startY: yPos,
       head: [['Ingrédient', '%', 'Quantité (kg)']],
       body: calculation.ingredients.map((ing) => [
         ing.ingredientName,
@@ -313,26 +346,51 @@ function RecipeCalculationDialog({
         ing.quantityKg.toFixed(2),
       ]),
       styles: { fontSize: 10 },
-      headStyles: { fillColor: brandColor },
+      headStyles: { fillColor: primaryColor },
       alternateRowStyles: { fillColor: brandColorLight },
     });
     
     // Summary - only number of pieces if provided
-    const finalY = (doc as any).lastAutoTable.finalY + 10;
+    let finalY = (doc as any).lastAutoTable.finalY + 10;
     if (parseFloat(unitWeight) > 0) {
       doc.setFontSize(11);
-      doc.text(`Poids unitaire: ${unitWeight} g  •  Nombre de pièces: ${calculation.numberOfPieces}`, 14, finalY);
+      doc.setTextColor(...textColor);
+      doc.text(`Poids unitaire: ${unitWeight} g  •  Nombre de pièces: ${calculation.numberOfPieces}`, margin, finalY);
+      finalY += 12;
+    }
+    
+    // Process section (if exists)
+    const recipeProcess = (recipe as any).process;
+    if (recipeProcess) {
+      // Check if we need a new page
+      if (finalY > doc.internal.pageSize.getHeight() - 80) {
+        doc.addPage();
+        finalY = 20;
+      }
+      
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(...primaryColor);
+      doc.text('Process de fabrication', margin, finalY);
+      finalY += 6;
+      
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(...textColor);
+      doc.setFontSize(10);
+      const processLines = doc.splitTextToSize(recipeProcess, pageWidth - 2 * margin);
+      doc.text(processLines, margin, finalY);
     }
     
     // Footer with date and brand
     doc.setFontSize(8);
-    doc.setTextColor(150);
-    doc.text(`Breadshop SAS - Généré le ${new Date().toLocaleDateString('fr-FR')}`, 14, doc.internal.pageSize.getHeight() - 10);
+    doc.setTextColor(150, 150, 150);
+    doc.text(`Breadshop SAS - Généré le ${new Date().toLocaleDateString('fr-FR')}`, margin, doc.internal.pageSize.getHeight() - 10);
     
     doc.save(`recette-${recipe.name.toLowerCase().replace(/\s+/g, '-')}.pdf`);
   };
 
   const handlePrint = () => {
+    const recipeProcess = (recipe as any).process;
     const printContent = `
       <!DOCTYPE html>
       <html>
@@ -341,25 +399,73 @@ function RecipeCalculationDialog({
         <style>
           @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
           * { margin: 0; padding: 0; box-sizing: border-box; }
-          body { font-family: 'Inter', sans-serif; padding: 20px; color: #1a1a2e; }
-          .header { display: flex; align-items: center; gap: 20px; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #4A5D73; }
-          .logo { height: 50px; }
-          .title { color: #4A5D73; font-size: 24px; font-weight: 700; }
-          .code { color: #666; font-size: 12px; margin-top: 4px; }
-          .info { margin: 15px 0; font-size: 14px; color: #333; }
+          body { font-family: 'Inter', sans-serif; padding: 20px; color: #1e293b; }
+          .header { 
+            display: flex; 
+            align-items: flex-start; 
+            margin-bottom: 20px; 
+            padding-bottom: 15px; 
+            border-bottom: 1px solid #e2e8f0; 
+          }
+          .logo { height: 45px; margin-right: 20px; }
+          .header-center { 
+            flex: 1; 
+            text-align: center; 
+          }
+          .company-name { 
+            color: #64748b; 
+            font-size: 11px; 
+            font-weight: 700; 
+            letter-spacing: 0.5px;
+          }
+          .doc-type { 
+            color: #94a3b8; 
+            font-size: 7px; 
+            text-transform: uppercase; 
+            margin-top: 2px; 
+          }
+          .title { 
+            color: #0f172a; 
+            font-size: 18px; 
+            font-weight: 700; 
+            margin-top: 6px;
+          }
+          .code { color: #64748b; font-size: 9px; margin-top: 4px; }
+          .info { margin: 15px 0; font-size: 14px; color: #334155; }
           table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-          th { background: #4A5D73; color: white; padding: 10px; text-align: left; font-weight: 600; }
-          td { padding: 8px 10px; border-bottom: 1px solid #ddd; }
-          tr:nth-child(even) { background: #f5f7fa; }
-          .summary { margin-top: 15px; font-size: 14px; color: #333; }
-          .footer { margin-top: 30px; padding-top: 15px; border-top: 1px solid #ddd; font-size: 10px; color: #999; }
+          th { background: #475569; color: white; padding: 10px; text-align: left; font-weight: 600; }
+          td { padding: 8px 10px; border-bottom: 1px solid #e2e8f0; }
+          tr:nth-child(even) { background: #f8fafc; }
+          .summary { margin-top: 15px; font-size: 14px; color: #334155; }
+          .process-section { 
+            margin-top: 25px; 
+            padding: 15px; 
+            background: #f8fafc; 
+            border-left: 3px solid #475569; 
+            border-radius: 4px;
+          }
+          .process-title { 
+            font-weight: 700; 
+            color: #475569; 
+            font-size: 12px; 
+            margin-bottom: 8px; 
+          }
+          .process-content { 
+            font-size: 11px; 
+            color: #334155; 
+            white-space: pre-line; 
+            line-height: 1.5;
+          }
+          .footer { margin-top: 30px; padding-top: 15px; border-top: 1px solid #e2e8f0; font-size: 10px; color: #94a3b8; }
           @media print { body { padding: 0; } }
         </style>
       </head>
       <body>
         <div class="header">
           <img src="${logoImage}" alt="Breadshop" class="logo" />
-          <div>
+          <div class="header-center">
+            <div class="company-name">BREADSHOP SAS</div>
+            <div class="doc-type">Fiche Recette</div>
             <div class="title">${recipe.name}</div>
             ${recipe.code ? `<div class="code">Code: ${recipe.code}</div>` : ''}
           </div>
@@ -386,6 +492,12 @@ function RecipeCalculationDialog({
         ${parseFloat(unitWeight) > 0 ? `
           <div class="summary">
             Poids unitaire: <strong>${unitWeight} g</strong> • Nombre de pièces: <strong>${calculation.numberOfPieces}</strong>
+          </div>
+        ` : ''}
+        ${recipeProcess ? `
+          <div class="process-section">
+            <div class="process-title">Process de fabrication</div>
+            <div class="process-content">${recipeProcess}</div>
           </div>
         ` : ''}
         <div class="footer">

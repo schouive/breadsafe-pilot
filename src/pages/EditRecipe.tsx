@@ -40,6 +40,7 @@ export default function EditRecipe() {
     name: '',
     code: '',
     description: '',
+    process: '',
     status: 'draft' as 'draft' | 'validated',
     bakingRatio: '0.90',
     processLosses: '0',
@@ -57,6 +58,7 @@ export default function EditRecipe() {
         name: recipe.name || '',
         code: recipe.code || '',
         description: recipe.description || '',
+        process: (recipe as any).process || '',
         status: (recipe.status as 'draft' | 'validated') || 'draft',
         bakingRatio: String(recipe.baking_ratio || 0.90),
         processLosses: String(recipe.process_losses || 0),
@@ -164,6 +166,7 @@ export default function EditRecipe() {
         name: formData.name.trim(),
         code: formData.code.trim() || null,
         description: formData.description.trim() || null,
+        process: formData.process.trim() || null,
         status: formData.status,
         baking_ratio: parseFloat(formData.bakingRatio) || 0.9,
         process_losses: parseFloat(formData.processLosses) || 0,
@@ -290,7 +293,18 @@ export default function EditRecipe() {
                   placeholder="Description de la recette..."
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  rows={3}
+                  rows={2}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="process">Process de fabrication</Label>
+                <Textarea
+                  id="process"
+                  placeholder="Décrivez les étapes de fabrication..."
+                  value={formData.process}
+                  onChange={(e) => setFormData({ ...formData, process: e.target.value })}
+                  rows={4}
                 />
               </div>
             </CardContent>

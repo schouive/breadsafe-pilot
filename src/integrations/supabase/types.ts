@@ -742,6 +742,7 @@ export type Database = {
           is_active: boolean
           name: string
           preparation_notes: string | null
+          process: string | null
           process_losses: number | null
           reference_flour_id: string | null
           status: string | null
@@ -760,6 +761,7 @@ export type Database = {
           is_active?: boolean
           name: string
           preparation_notes?: string | null
+          process?: string | null
           process_losses?: number | null
           reference_flour_id?: string | null
           status?: string | null
@@ -778,6 +780,7 @@ export type Database = {
           is_active?: boolean
           name?: string
           preparation_notes?: string | null
+          process?: string | null
           process_losses?: number | null
           reference_flour_id?: string | null
           status?: string | null

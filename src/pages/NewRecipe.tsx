@@ -36,6 +36,7 @@ export default function NewRecipe() {
     name: '',
     code: '',
     description: '',
+    process: '',
     status: 'draft' as 'draft' | 'validated',
     bakingRatio: '0.90',
     processLosses: '0',
@@ -113,6 +114,7 @@ export default function NewRecipe() {
         name: formData.name.trim(),
         code: formData.code.trim() || null,
         description: formData.description.trim() || null,
+        process: formData.process.trim() || null,
         status: formData.status,
         reference_flour_id: null, // Multi-flour doesn't need single reference
         baking_ratio: parseFloat(formData.bakingRatio) || 0.9,
@@ -216,7 +218,18 @@ export default function NewRecipe() {
                   placeholder="Description de la recette..."
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  rows={3}
+                  rows={2}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="process">Process de fabrication</Label>
+                <Textarea
+                  id="process"
+                  placeholder="Décrivez les étapes de fabrication..."
+                  value={formData.process}
+                  onChange={(e) => setFormData({ ...formData, process: e.target.value })}
+                  rows={4}
                 />
               </div>
             </CardContent>

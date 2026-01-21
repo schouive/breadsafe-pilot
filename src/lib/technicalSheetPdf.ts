@@ -128,34 +128,6 @@ export async function generateTechnicalSheetPDF(sheet: ProductSheet): Promise<vo
   doc.line(margin, yPos, pageWidth - margin, yPos);
   yPos += 10;
 
-  // ========== PRODUCT IMAGE - CENTERED LIKE PRINT VERSION ==========
-  if (sheetData.product_image_url) {
-    try {
-      const imgData = await loadImageAsBase64WithDimensions(sheetData.product_image_url);
-      const imgMaxHeight = 40;
-      const imgMaxWidth = 60;
-      const aspectRatio = imgData.width / imgData.height;
-      let imgWidth = imgMaxWidth;
-      let imgHeight = imgWidth / aspectRatio;
-      if (imgHeight > imgMaxHeight) {
-        imgHeight = imgMaxHeight;
-        imgWidth = imgHeight * aspectRatio;
-      }
-      // Center the image on the page
-      const imgX = (pageWidth - imgWidth) / 2;
-      
-      // Draw a light border around the image
-      doc.setDrawColor(226, 232, 240); // Slate 200
-      doc.setLineWidth(0.5);
-      doc.roundedRect(imgX - 2, yPos - 2, imgWidth + 4, imgHeight + 4, 2, 2, 'S');
-      
-      doc.addImage(imgData.base64, 'PNG', imgX, yPos, imgWidth, imgHeight);
-      yPos += imgHeight + 10;
-    } catch (e) {
-      console.warn('Could not load product image for PDF');
-    }
-  }
-  
   // Description section (if present)
   if (sheetData.description) {
     doc.setFillColor(248, 250, 252); // Slate 50
@@ -173,7 +145,7 @@ export async function generateTechnicalSheetPDF(sheet: ProductSheet): Promise<vo
     yPos += descHeight + 8;
   }
   
-  // ========== IDENTIFICATION SECTION ==========
+  // ========== IDENTIFICATION SECTION WITH PRODUCT IMAGE ==========
   doc.setTextColor(...textColor);
   doc.setFontSize(10);
   doc.setFont('helvetica', 'bold');
@@ -184,6 +156,16 @@ export async function generateTechnicalSheetPDF(sheet: ProductSheet): Promise<vo
   doc.line(margin, yPos, margin + 50, yPos);
   yPos += 6;
 
+  // Calculate if we have an image to show
+  let productImageData: { base64: string; width: number; height: number } | null = null;
+  if (sheetData.product_image_url) {
+    try {
+      productImageData = await loadImageAsBase64WithDimensions(sheetData.product_image_url);
+    } catch (e) {
+      console.warn('Could not load product image for PDF');
+    }
+  }
+
   const productInfo = [
     ['Désignation commerciale', sheetData.product_name || '—'],
     ['Référence produit', sheetData.product_reference || '—'],
@@ -193,24 +175,51 @@ export async function generateTechnicalSheetPDF(sheet: ProductSheet): Promise<vo
     ['Pays d\'origine', sheetData.origin_country || '—'],
   ];
 
-  // Two-column layout for product info
-  const colWidth = (pageWidth - 2 * margin) / 2;
+  // If we have an image, use two-column layout: info on left, image on right
+  const infoColumnWidth = productImageData ? (pageWidth - 2 * margin) * 0.6 : pageWidth - 2 * margin;
+  const imageColumnX = margin + infoColumnWidth + 10;
+  const sectionStartY = yPos;
+
+  // Left column: Product info
   doc.setFontSize(9);
   for (let i = 0; i < productInfo.length; i++) {
-    const col = i % 2;
-    const row = Math.floor(i / 2);
-    const xPos = margin + col * colWidth;
-    const yOffset = yPos + row * 6;
-    
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(...mutedColor);
-    doc.text(productInfo[i][0], xPos, yOffset);
+    doc.text(productInfo[i][0], margin, yPos);
     
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(...textColor);
-    doc.text(productInfo[i][1], xPos + 45, yOffset);
+    doc.text(productInfo[i][1], margin + 48, yPos);
+    yPos += 6;
   }
-  yPos += Math.ceil(productInfo.length / 2) * 6 + 8;
+
+  // Right column: Product image
+  let imageEndY = yPos;
+  if (productImageData) {
+    const imgMaxHeight = 45;
+    const imgMaxWidth = (pageWidth - 2 * margin) * 0.35;
+    const aspectRatio = productImageData.width / productImageData.height;
+    let imgWidth = imgMaxWidth;
+    let imgHeight = imgWidth / aspectRatio;
+    if (imgHeight > imgMaxHeight) {
+      imgHeight = imgMaxHeight;
+      imgWidth = imgHeight * aspectRatio;
+    }
+    
+    // Center the image in its column
+    const imgX = imageColumnX + ((pageWidth - margin - imageColumnX) - imgWidth) / 2;
+    
+    // Draw a light border around the image
+    doc.setDrawColor(226, 232, 240); // Slate 200
+    doc.setLineWidth(0.5);
+    doc.roundedRect(imgX - 2, sectionStartY - 2, imgWidth + 4, imgHeight + 4, 2, 2, 'S');
+    
+    doc.addImage(productImageData.base64, 'PNG', imgX, sectionStartY, imgWidth, imgHeight);
+    imageEndY = sectionStartY + imgHeight + 6;
+  }
+
+  // Use the maximum Y position between info and image
+  yPos = Math.max(yPos, imageEndY) + 4;
 
   // Recipe source
   if (sheetData.snapshot_recipe_name) {
@@ -552,14 +561,10 @@ export async function printTechnicalSheet(sheet: any): Promise<void> {
       margin: 0;
       text-align: center;
     }
-    /* Product image styling */
-    .product-image-container {
-      text-align: center;
-      margin-bottom: 15px;
-    }
+    /* Product image styling - in identification section */
     .product-image {
-      max-width: 180px;
-      max-height: 120px;
+      max-width: 140px;
+      max-height: 100px;
       object-fit: contain;
       border-radius: 8px;
       border: 1px solid #e2e8f0;
@@ -585,7 +590,23 @@ export async function printTechnicalSheet(sheet: any): Promise<void> {
       text-transform: uppercase;
       letter-spacing: 0.03em;
     }
+    /* Identification section with image */
+    .identification-layout {
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+    }
+    .identification-info {
+      flex: 1;
+    }
+    .identification-image {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
     .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    .info-list { display: flex; flex-direction: column; gap: 6px; }
     .info-row { display: flex; }
     .info-label { color: #64748b; width: 140px; flex-shrink: 0; font-size: 10pt; }
     .info-value { font-weight: 500; }
@@ -650,22 +671,26 @@ export async function printTechnicalSheet(sheet: any): Promise<void> {
   </div>
 
   <div class="content">
-  ${sheetData.product_image_url ? `
-    <div class="product-image-container">
-      <img src="${sheetData.product_image_url}" alt="${sheetData.product_name || 'Produit'}" class="product-image" />
-    </div>
-  ` : ''}
   ${sheetData.description ? `<div class="description">${sheetData.description}</div>` : ''}
 
   <div class="section">
     <div class="section-title">Identification produit</div>
-    <div class="info-grid">
-      <div class="info-row"><span class="info-label">Désignation commerciale</span><span class="info-value">${sheetData.product_name || '—'}</span></div>
-      <div class="info-row"><span class="info-label">Référence produit</span><span class="info-value">${sheetData.product_reference || '—'}</span></div>
-      <div class="info-row"><span class="info-label">Marque</span><span class="info-value">${sheetData.brand || '—'}</span></div>
-      <div class="info-row"><span class="info-label">Code-barres</span><span class="info-value">${sheetData.barcode || '—'}</span></div>
-      <div class="info-row"><span class="info-label">Poids net</span><span class="info-value">${sheetData.net_weight ? `${sheetData.net_weight} ${sheetData.net_weight_unit}` : '—'}</span></div>
-      <div class="info-row"><span class="info-label">Pays d'origine</span><span class="info-value">${sheetData.origin_country || '—'}</span></div>
+    <div class="identification-layout">
+      <div class="identification-info">
+        <div class="info-list">
+          <div class="info-row"><span class="info-label">Désignation commerciale</span><span class="info-value">${sheetData.product_name || '—'}</span></div>
+          <div class="info-row"><span class="info-label">Référence produit</span><span class="info-value">${sheetData.product_reference || '—'}</span></div>
+          <div class="info-row"><span class="info-label">Marque</span><span class="info-value">${sheetData.brand || '—'}</span></div>
+          <div class="info-row"><span class="info-label">Code-barres</span><span class="info-value">${sheetData.barcode || '—'}</span></div>
+          <div class="info-row"><span class="info-label">Poids net</span><span class="info-value">${sheetData.net_weight ? `${sheetData.net_weight} ${sheetData.net_weight_unit}` : '—'}</span></div>
+          <div class="info-row"><span class="info-label">Pays d'origine</span><span class="info-value">${sheetData.origin_country || '—'}</span></div>
+        </div>
+      </div>
+      ${sheetData.product_image_url ? `
+      <div class="identification-image">
+        <img src="${sheetData.product_image_url}" alt="${sheetData.product_name || 'Produit'}" class="product-image" />
+      </div>
+      ` : ''}
     </div>
   </div>
 

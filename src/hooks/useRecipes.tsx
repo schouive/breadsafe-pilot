@@ -44,6 +44,42 @@ export function useActiveRecipes() {
   });
 }
 
+// Get only intermediate recipes (poolish, levain, etc.) for use as ingredients
+export function useIntermediateRecipes() {
+  return useQuery({
+    queryKey: ['recipes', 'intermediate'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('recipes')
+        .select('*')
+        .eq('recipe_type', 'intermediate')
+        .eq('is_active', true)
+        .order('name');
+      
+      if (error) throw error;
+      return data as Recipe[];
+    },
+  });
+}
+
+// Get only finished product recipes
+export function useFinishedRecipes() {
+  return useQuery({
+    queryKey: ['recipes', 'finished'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('recipes')
+        .select('*')
+        .eq('recipe_type', 'finished')
+        .eq('is_active', true)
+        .order('name');
+      
+      if (error) throw error;
+      return data as Recipe[];
+    },
+  });
+}
+
 export function useRecipe(id: string | undefined) {
   return useQuery({
     queryKey: ['recipes', id],
@@ -263,13 +299,20 @@ export function useRecipeIngredients(recipeId: string | undefined) {
           raw_materials (
             *,
             suppliers (name)
+          ),
+          ingredient_recipe:ingredient_recipe_id (
+            id,
+            name,
+            code,
+            recipe_type
           )
         `)
         .eq('recipe_id', recipeId)
         .order('order_index');
       
       if (error) throw error;
-      return data as RecipeIngredient[];
+      // Cast to any to handle the complex nested type with optional ingredient_recipe
+      return data as any[];
     },
     enabled: !!recipeId,
   });

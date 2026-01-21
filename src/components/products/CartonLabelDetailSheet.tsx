@@ -9,7 +9,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import {
@@ -21,9 +20,10 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { CartonLabel, useValidateCartonLabel, useRefreshCartonLabelSnapshot } from '@/hooks/useCartonLabels';
-import { Check, X, RefreshCw, Printer, CheckCircle, AlertTriangle, Recycle, Loader2 } from 'lucide-react';
+import { Check, X, RefreshCw, Printer, CheckCircle, AlertTriangle, Recycle, Loader2, Eye } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { CartonLabelPreview } from './CartonLabelPreview';
 
 interface CartonLabelDetailSheetProps {
   open: boolean;
@@ -130,7 +130,20 @@ export function CartonLabelDetailSheet({
             </div>
           )}
 
-          <div className="mt-6 space-y-6">
+          {/* Label Preview */}
+          <div className="mt-6">
+            <div className="flex items-center gap-2 mb-3">
+              <Eye className="h-4 w-4 text-muted-foreground" />
+              <h3 className="font-semibold">Aperçu de l'étiquette (120 x 64 mm)</h3>
+            </div>
+            <div className="overflow-x-auto -mx-6 px-6 pb-2">
+              <CartonLabelPreview label={label} />
+            </div>
+          </div>
+
+          <Separator className="my-6" />
+
+          <div className="space-y-6">
             {/* Liste des ingrédients */}
             <section>
               <h3 className="font-semibold mb-2">Liste des ingrédients</h3>

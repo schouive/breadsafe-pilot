@@ -149,31 +149,42 @@ export function RecipeDetailSheet({ open, onOpenChange, recipe }: RecipeDetailSh
                       <TableHead className="w-10"></TableHead>
                     </TableRow>
                   </TableHeader>
-                  <TableBody>
-                    {ingredients?.map((ingredient) => (
-                      <TableRow key={ingredient.id}>
-                        <TableCell>
-                          <div>
-                            <p className="font-medium">{ingredient.raw_materials?.name}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {ingredient.raw_materials?.suppliers?.name}
-                            </p>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {ingredient.quantity} {ingredient.unit}
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleDeleteIngredient(ingredient.id)}
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                <TableBody>
+                    {ingredients?.map((ingredient) => {
+                      // Check if this is an intermediate recipe ingredient
+                      const isIntermediate = !!ingredient.ingredient_recipe_id;
+                      const name = isIntermediate 
+                        ? ingredient.ingredient_recipe?.name 
+                        : ingredient.raw_materials?.name;
+                      const subtitle = isIntermediate 
+                        ? 'Produit intermédiaire' 
+                        : ingredient.raw_materials?.suppliers?.name;
+                      
+                      return (
+                        <TableRow key={ingredient.id}>
+                          <TableCell>
+                            <div>
+                              <p className="font-medium">{name || 'Inconnu'}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {subtitle}
+                              </p>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {ingredient.quantity} {ingredient.unit}
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleDeleteIngredient(ingredient.id)}
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               )}

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Trash2, Scale, AlertTriangle, ChefHat } from 'lucide-react';
+import { Plus, Trash2, Scale, AlertTriangle, ChefHat, Beaker } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -154,7 +154,7 @@ export function RecipeDetailSheet({ open, onOpenChange, recipe }: RecipeDetailSh
                       // Check if this is an intermediate recipe ingredient
                       const isIntermediate = !!ingredient.ingredient_recipe_id;
                       const name = isIntermediate 
-                        ? ingredient.ingredient_recipe?.name 
+                        ? (ingredient.ingredient_recipe?.name || 'PI sans nom')
                         : ingredient.raw_materials?.name;
                       const subtitle = isIntermediate 
                         ? 'Produit intermédiaire' 
@@ -163,11 +163,21 @@ export function RecipeDetailSheet({ open, onOpenChange, recipe }: RecipeDetailSh
                       return (
                         <TableRow key={ingredient.id}>
                           <TableCell>
-                            <div>
-                              <p className="font-medium">{name || 'Inconnu'}</p>
-                              <p className="text-xs text-muted-foreground">
-                                {subtitle}
-                              </p>
+                            <div className="flex items-center gap-2">
+                              {isIntermediate && (
+                                <Beaker className="h-4 w-4 text-amber-600 flex-shrink-0" />
+                              )}
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <p className="font-medium">{name || 'Inconnu'}</p>
+                                  {isIntermediate && (
+                                    <Badge variant="outline" className="text-amber-700 border-amber-300 text-xs">PI</Badge>
+                                  )}
+                                </div>
+                                <p className="text-xs text-muted-foreground">
+                                  {subtitle}
+                                </p>
+                              </div>
                             </div>
                           </TableCell>
                           <TableCell className="text-right">

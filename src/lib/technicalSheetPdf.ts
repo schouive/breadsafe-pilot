@@ -128,11 +128,11 @@ export async function generateTechnicalSheetPDF(sheet: ProductSheet): Promise<vo
   doc.line(margin, yPos, pageWidth - margin, yPos);
   yPos += 10;
 
-  // ========== PRODUCT IMAGE ==========
+  // ========== PRODUCT IMAGE - CENTERED LIKE PRINT VERSION ==========
   if (sheetData.product_image_url) {
     try {
       const imgData = await loadImageAsBase64WithDimensions(sheetData.product_image_url);
-      const imgMaxHeight = 50;
+      const imgMaxHeight = 40;
       const imgMaxWidth = 60;
       const aspectRatio = imgData.width / imgData.height;
       let imgWidth = imgMaxWidth;
@@ -141,10 +141,16 @@ export async function generateTechnicalSheetPDF(sheet: ProductSheet): Promise<vo
         imgHeight = imgMaxHeight;
         imgWidth = imgHeight * aspectRatio;
       }
-      // Position image on the right
-      const imgX = pageWidth - margin - imgWidth;
+      // Center the image on the page
+      const imgX = (pageWidth - imgWidth) / 2;
+      
+      // Draw a light border around the image
+      doc.setDrawColor(226, 232, 240); // Slate 200
+      doc.setLineWidth(0.5);
+      doc.roundedRect(imgX - 2, yPos - 2, imgWidth + 4, imgHeight + 4, 2, 2, 'S');
+      
       doc.addImage(imgData.base64, 'PNG', imgX, yPos, imgWidth, imgHeight);
-      // Don't advance yPos here - let the image float on the right
+      yPos += imgHeight + 10;
     } catch (e) {
       console.warn('Could not load product image for PDF');
     }

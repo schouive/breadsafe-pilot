@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Plus, X, ChefHat, Wheat, AlertCircle, Loader2, Beaker, Package } from 'lucide-react';
+import { ArrowLeft, Plus, X, ChefHat, Wheat, AlertCircle, Loader2, Beaker, Package, Scale, Percent } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -46,6 +46,7 @@ export default function EditRecipe() {
     description: '',
     process: '',
     recipeType: 'finished' as 'finished' | 'intermediate',
+    calculationMode: 'flour_based' as 'flour_based' | 'total_weight',
     status: 'draft' as 'draft' | 'validated',
     bakingRatio: '0.90',
     processLosses: '0',
@@ -67,6 +68,7 @@ export default function EditRecipe() {
         description: recipe.description || '',
         process: (recipe as any).process || '',
         recipeType: ((recipe as any).recipe_type as 'finished' | 'intermediate') || 'finished',
+        calculationMode: ((recipe as any).calculation_mode as 'flour_based' | 'total_weight') || 'flour_based',
         status: (recipe.status as 'draft' | 'validated') || 'draft',
         bakingRatio: String(recipe.baking_ratio || 0.90),
         processLosses: String(recipe.process_losses || 0),
@@ -115,12 +117,16 @@ export default function EditRecipe() {
   const availableOtherMaterials = otherMaterials.filter(m => 
     !ingredients.some(ing => ing.rawMaterialId === m.id)
   );
+  // All materials for total_weight mode
+  const availableAllMaterials = rawMaterials?.filter(m =>
+    !ingredients.some(ing => ing.rawMaterialId === m.id)
+  ) || [];
   // Filter out already added intermediate recipes (and exclude current recipe being edited)
   const availableIntermediates = intermediateRecipes?.filter(r =>
     r.id !== id && !ingredients.some(ing => ing.ingredientRecipeId === r.id)
   ) || [];
 
-  // Calculate flour total and sort by descending percentage
+  // Calculate totals and sort by descending percentage
   const flourIngredients = ingredients
     .filter(ing => ing.type === 'farine')
     .sort((a, b) => b.bakerPercentage - a.bakerPercentage);
@@ -135,7 +141,11 @@ export default function EditRecipe() {
   const totalIntermediatePercentage = intermediateIngredients.reduce((sum, ing) => sum + ing.bakerPercentage, 0);
   const totalBakerPercentage = totalFlourPercentage + totalOtherPercentage + totalIntermediatePercentage;
 
-  const isFlourValid = totalFlourPercentage === 100;
+  // Validation based on calculation mode
+  const isFlourBased = formData.calculationMode === 'flour_based';
+  const isFlourValid = isFlourBased ? totalFlourPercentage === 100 : true;
+  const isTotalWeightValid = !isFlourBased ? Math.abs(totalBakerPercentage - 100) < 0.01 : true;
+  const isRecipeValid = isFlourBased ? isFlourValid : isTotalWeightValid;
 
   const handleAddIngredient = (type: 'farine' | 'ingredient') => {
     if (!selectedIngredient || !ingredientPercentage) return;
@@ -203,13 +213,23 @@ export default function EditRecipe() {
       return;
     }
 
-    if (flourIngredients.length === 0) {
+    if (ingredients.length === 0) {
+      toast.error('Veuillez ajouter au moins un ingrédient');
+      return;
+    }
+
+    if (isFlourBased && flourIngredients.length === 0) {
       toast.error('Veuillez ajouter au moins une farine');
       return;
     }
 
-    if (!isFlourValid) {
+    if (isFlourBased && !isFlourValid) {
       toast.error('Le total des farines doit être égal à 100%');
+      return;
+    }
+
+    if (!isFlourBased && !isTotalWeightValid) {
+      toast.error('Le total des ingrédients doit être égal à 100%');
       return;
     }
 
@@ -222,6 +242,7 @@ export default function EditRecipe() {
         description: formData.description.trim() || null,
         process: formData.process.trim() || null,
         recipe_type: formData.recipeType,
+        calculation_mode: formData.calculationMode,
         status: formData.status,
         baking_ratio: parseFloat(formData.bakingRatio) || 0.9,
         process_losses: parseFloat(formData.processLosses) || 0,
@@ -376,6 +397,40 @@ export default function EditRecipe() {
               </div>
 
               <div className="space-y-2">
+                <Label htmlFor="calculationMode">Mode de calcul *</Label>
+                <Select 
+                  value={formData.calculationMode} 
+                  onValueChange={(value: 'flour_based' | 'total_weight') => 
+                    setFormData({ ...formData, calculationMode: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="flour_based">
+                      <div className="flex items-center gap-2">
+                        <Wheat className="h-4 w-4" />
+                        <span>Base farine (boulangerie)</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="total_weight">
+                      <div className="flex items-center gap-2">
+                        <Scale className="h-4 w-4" />
+                        <span>Base poids total</span>
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  {formData.calculationMode === 'flour_based' 
+                    ? 'Farine = 100%. Les autres ingrédients sont exprimés en % de la farine.'
+                    : 'Tous les ingrédients sont exprimés en % du poids total (doit = 100%).'
+                  }
+                </p>
+              </div>
+
+              <div className="space-y-2">
                 <Label htmlFor="description">Description</Label>
                 <Textarea
                   id="description"
@@ -440,7 +495,8 @@ export default function EditRecipe() {
 
         {/* Right column - Ingredients */}
         <div className="space-y-6">
-          {/* Flour Section */}
+          {/* Flour Section - Only for flour-based mode */}
+          {isFlourBased && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -562,13 +618,17 @@ export default function EditRecipe() {
               )}
             </CardContent>
           </Card>
+          )}
 
           {/* Other Ingredients Section */}
           <Card>
             <CardHeader>
-              <CardTitle>Autres ingrédients (% boulangers)</CardTitle>
+              <CardTitle>{isFlourBased ? 'Autres ingrédients (% boulangers)' : 'Ingrédients (% du poids total)'}</CardTitle>
               <CardDescription>
-                Pourcentages par rapport au total des farines (100%)
+                {isFlourBased 
+                  ? 'Pourcentages par rapport au total des farines (100%)'
+                  : 'La somme de tous les ingrédients doit être égale à 100%'
+                }
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -663,11 +723,20 @@ export default function EditRecipe() {
           </Card>
 
           {/* Validation Alert */}
-          {!isFlourValid && flourIngredients.length > 0 && (
+          {isFlourBased && !isFlourValid && flourIngredients.length > 0 && (
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                Le total des farines ({totalFlourPercentage}%) doit être égal à 100% pour valider la recette.
+                Le total des farines ({totalFlourPercentage.toFixed(1)}%) doit être égal à 100% pour valider la recette.
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {!isFlourBased && !isTotalWeightValid && ingredients.length > 0 && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                Le total des ingrédients ({totalBakerPercentage.toFixed(1)}%) doit être égal à 100% pour valider la recette.
               </AlertDescription>
             </Alert>
           )}
@@ -687,8 +756,8 @@ export default function EditRecipe() {
               disabled={
                 updateRecipe.isPending || 
                 !formData.name || 
-                flourIngredients.length === 0 || 
-                !isFlourValid
+                ingredients.length === 0 ||
+                !isRecipeValid
               }
             >
               {updateRecipe.isPending ? 'Enregistrement...' : 'Enregistrer les modifications'}

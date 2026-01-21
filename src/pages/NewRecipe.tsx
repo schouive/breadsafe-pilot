@@ -136,6 +136,13 @@ export default function NewRecipe() {
     setIngredients(ingredients.filter((_, i) => i !== index));
   };
 
+  const handleUpdatePercentage = (ingredientId: string, newPercentage: number) => {
+    setIngredients(ingredients.map(ing => {
+      const matchId = ing.rawMaterialId || ing.ingredientRecipeId;
+      return matchId === ingredientId ? { ...ing, bakerPercentage: newPercentage } : ing;
+    }));
+  };
+
   const handleSubmit = async () => {
     if (!formData.name.trim()) {
       toast.error('Le nom de la recette est obligatoire');
@@ -469,10 +476,19 @@ export default function NewRecipe() {
                   >
                     <div className="flex items-center gap-2">
                       <Wheat className="h-4 w-4 text-primary" />
-                      <span className="font-medium">{getMaterialName(ing.rawMaterialId)}</span>
+                      <span className="font-medium">{getMaterialName(ing.rawMaterialId!)}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="font-mono font-bold text-primary">{ing.bakerPercentage}%</span>
+                      <Input
+                        type="number"
+                        step="0.1"
+                        min="0"
+                        max="100"
+                        className="w-20 h-8 text-right font-mono font-bold text-primary"
+                        value={ing.bakerPercentage}
+                        onChange={(e) => handleUpdatePercentage(ing.rawMaterialId!, parseFloat(e.target.value) || 0)}
+                      />
+                      <span className="text-primary font-bold">%</span>
                       <Button 
                         variant="ghost" 
                         size="icon" 
@@ -590,7 +606,15 @@ export default function NewRecipe() {
                       <span>{ing.name}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className={cn("font-mono", ing.type === 'farine' && "font-bold text-primary")}>{ing.bakerPercentage}%</span>
+                      <Input
+                        type="number"
+                        step="0.1"
+                        min="0"
+                        className={cn("w-20 h-8 text-right font-mono", ing.type === 'farine' && "font-bold text-primary")}
+                        value={ing.bakerPercentage}
+                        onChange={(e) => handleUpdatePercentage(ing.rawMaterialId!, parseFloat(e.target.value) || 0)}
+                      />
+                      <span className={cn("font-medium", ing.type === 'farine' && "font-bold text-primary")}>%</span>
                       <Button 
                         variant="ghost" 
                         size="icon" 
@@ -702,7 +726,7 @@ export default function NewRecipe() {
 
                 {/* Intermediate list */}
                 <div className="space-y-2">
-                  {intermediateIngredients.map((ing) => (
+                {intermediateIngredients.map((ing) => (
                     <div 
                       key={ing.ingredientRecipeId}
                       className="flex items-center justify-between p-3 bg-amber-100 rounded-lg border border-amber-200"
@@ -713,7 +737,15 @@ export default function NewRecipe() {
                         <Badge variant="outline" className="text-amber-700 border-amber-300">PI</Badge>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="font-mono font-bold text-amber-700">{ing.bakerPercentage}%</span>
+                        <Input
+                          type="number"
+                          step="0.1"
+                          min="0"
+                          className="w-20 h-8 text-right font-mono font-bold text-amber-700"
+                          value={ing.bakerPercentage}
+                          onChange={(e) => handleUpdatePercentage(ing.ingredientRecipeId!, parseFloat(e.target.value) || 0)}
+                        />
+                        <span className="font-bold text-amber-700">%</span>
                         <Button 
                           variant="ghost" 
                           size="icon" 

@@ -255,15 +255,17 @@ export default function EditRecipe() {
         }
       }
 
-      // Add all ingredients (flours first, then others)
-      const allIngredients = [...flourIngredients, ...otherIngredients];
+      // Add all ingredients (flours first, then others, then intermediates)
+      const allIngredients = [...flourIngredients, ...otherIngredients, ...intermediateIngredients];
       for (let i = 0; i < allIngredients.length; i++) {
+        const ing = allIngredients[i];
         await createIngredient.mutateAsync({
           recipe_id: id,
-          raw_material_id: allIngredients[i].rawMaterialId,
-          quantity: allIngredients[i].bakerPercentage,
+          raw_material_id: ing.rawMaterialId || null,
+          ingredient_recipe_id: ing.ingredientRecipeId || null,
+          quantity: ing.bakerPercentage,
           unit: '%',
-          baker_percentage: allIngredients[i].bakerPercentage,
+          baker_percentage: ing.bakerPercentage,
           order_index: i,
         });
       }

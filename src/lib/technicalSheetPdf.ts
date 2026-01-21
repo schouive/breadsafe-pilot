@@ -196,8 +196,8 @@ export async function generateTechnicalSheetPDF(sheet: ProductSheet): Promise<vo
   // Right column: Product image
   let imageEndY = yPos;
   if (productImageData) {
-    const imgMaxHeight = 45;
-    const imgMaxWidth = (pageWidth - 2 * margin) * 0.35;
+    const imgMaxHeight = 90; // Tripled from 45
+    const imgMaxWidth = (pageWidth - 2 * margin) * 0.45; // Increased from 0.35
     const aspectRatio = productImageData.width / productImageData.height;
     let imgWidth = imgMaxWidth;
     let imgHeight = imgWidth / aspectRatio;
@@ -563,8 +563,8 @@ export async function printTechnicalSheet(sheet: any): Promise<void> {
     }
     /* Product image styling - in identification section */
     .product-image {
-      max-width: 140px;
-      max-height: 100px;
+      max-width: 280px;
+      max-height: 200px;
       object-fit: contain;
       border-radius: 8px;
       border: 1px solid #e2e8f0;

@@ -221,6 +221,7 @@ export default function EditRecipe() {
         code: formData.code.trim() || null,
         description: formData.description.trim() || null,
         process: formData.process.trim() || null,
+        recipe_type: formData.recipeType,
         status: formData.status,
         baking_ratio: parseFloat(formData.bakingRatio) || 0.9,
         process_losses: parseFloat(formData.processLosses) || 0,
@@ -338,6 +339,40 @@ export default function EditRecipe() {
                     <SelectItem value="validated">Validée</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="recipeType">Type de recette *</Label>
+                <Select 
+                  value={formData.recipeType} 
+                  onValueChange={(value: 'finished' | 'intermediate') => 
+                    setFormData({ ...formData, recipeType: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="finished">
+                      <div className="flex items-center gap-2">
+                        <Package className="h-4 w-4 text-primary" />
+                        Produit fini
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="intermediate">
+                      <div className="flex items-center gap-2">
+                        <Beaker className="h-4 w-4 text-amber-600" />
+                        Produit intermédiaire
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  {formData.recipeType === 'intermediate' 
+                    ? "Les produits intermédiaires peuvent être utilisés comme ingrédients dans d'autres recettes"
+                    : "Les produits finis génèrent des fiches techniques et étiquettes"
+                  }
+                </p>
               </div>
 
               <div className="space-y-2">

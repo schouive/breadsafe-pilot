@@ -77,19 +77,25 @@ export default function EditRecipe() {
     }
   }, [recipe, isInitialized]);
 
+  // Track if ingredients have been loaded from DB
+  const [ingredientsLoaded, setIngredientsLoaded] = useState(false);
+
   // Initialize ingredients from existing data
   useEffect(() => {
-    if (existingIngredients && rawMaterials && intermediateRecipes && isInitialized && ingredients.length === 0) {
+    if (existingIngredients && rawMaterials && intermediateRecipes && isInitialized && !ingredientsLoaded) {
       const mappedIngredients: IngredientEntry[] = existingIngredients.map((ing: any) => {
         // Check if this is an intermediate recipe ingredient
         if (ing.ingredient_recipe_id) {
-          const intermediateRecipe = intermediateRecipes.find(r => r.id === ing.ingredient_recipe_id);
+          // Get name from joined relation or lookup in intermediateRecipes
+          const recipeName = ing.ingredient_recipe?.name || 
+            intermediateRecipes.find(r => r.id === ing.ingredient_recipe_id)?.name || 
+            'Produit intermédiaire';
           return {
             id: ing.id,
             ingredientRecipeId: ing.ingredient_recipe_id,
             bakerPercentage: ing.baker_percentage || ing.quantity,
             type: 'intermediate' as const,
-            name: intermediateRecipe?.name || ing.ingredient_recipe?.name || 'Produit intermédiaire',
+            name: recipeName,
           };
         }
         
@@ -103,8 +109,9 @@ export default function EditRecipe() {
         };
       });
       setIngredients(mappedIngredients);
+      setIngredientsLoaded(true);
     }
-  }, [existingIngredients, rawMaterials, intermediateRecipes, isInitialized, ingredients.length]);
+  }, [existingIngredients, rawMaterials, intermediateRecipes, isInitialized, ingredientsLoaded]);
 
   // Separate flour and other ingredients
   const flourMaterials = rawMaterials?.filter(m => m.type === 'farine') || [];
@@ -719,6 +726,120 @@ export default function EditRecipe() {
                   <p className="text-xs text-muted-foreground mt-1">
                     = 100% (farines) + {totalOtherPercentage.toFixed(1)}% (autres ingrédients)
                   </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Intermediate Products Section */}
+          <Card className="border-amber-200 bg-amber-50/50">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Beaker className="h-5 w-5 text-amber-600" />
+                Produits intermédiaires
+              </CardTitle>
+              <CardDescription>
+                Intégrez des poolish, levains ou autres préparations
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Add intermediate form */}
+              <div className="flex gap-2">
+                <div className="flex-1">
+                  <Select 
+                    value={selectedIntermediate} 
+                    onValueChange={setSelectedIntermediate}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sélectionner un produit intermédiaire..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableIntermediates.length === 0 ? (
+                        <div className="p-2 text-sm text-muted-foreground">
+                          Aucun produit intermédiaire disponible
+                        </div>
+                      ) : (
+                        availableIntermediates.map(r => (
+                          <SelectItem key={r.id} value={r.id}>
+                            <div className="flex items-center gap-2">
+                              <Beaker className="h-3 w-3" />
+                              {r.name}
+                              {r.code && <span className="text-muted-foreground">({r.code})</span>}
+                            </div>
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="w-24">
+                  <Input
+                    type="number"
+                    step="0.1"
+                    min="0"
+                    placeholder="%"
+                    value={intermediatePercentage}
+                    onChange={(e) => setIntermediatePercentage(e.target.value)}
+                  />
+                </div>
+                <Button 
+                  onClick={handleAddIntermediate}
+                  size="icon"
+                  disabled={!selectedIntermediate || !intermediatePercentage}
+                  className="bg-amber-600 hover:bg-amber-700"
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+
+              {/* Intermediate list */}
+              <div className="space-y-2">
+                {intermediateIngredients.map((ing) => (
+                  <div 
+                    key={ing.ingredientRecipeId}
+                    className="flex items-center justify-between p-3 bg-amber-100 rounded-lg border border-amber-200"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Beaker className="h-4 w-4 text-amber-600" />
+                      <span className="font-medium">{ing.name}</span>
+                      <Badge variant="outline" className="text-amber-700 border-amber-300">PI</Badge>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="number"
+                        step="0.1"
+                        min="0"
+                        className="w-20 h-8 text-right font-mono font-bold text-amber-700"
+                        value={ing.bakerPercentage}
+                        onChange={(e) => handleUpdatePercentage(ing.ingredientRecipeId!, parseFloat(e.target.value) || 0)}
+                      />
+                      <span className="font-bold text-amber-700">%</span>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8"
+                        onClick={() => handleRemoveIngredient(ing.ingredientRecipeId!)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+
+                {intermediateIngredients.length === 0 && (
+                  <p className="text-center text-muted-foreground py-4 text-sm">
+                    Aucun produit intermédiaire ajouté
+                  </p>
+                )}
+              </div>
+
+              {/* PI Total */}
+              {intermediateIngredients.length > 0 && (
+                <div className="pt-2 border-t border-amber-200">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium text-amber-700">Total PI</span>
+                    <span className="font-mono font-bold text-amber-700">{totalIntermediatePercentage.toFixed(1)}%</span>
+                  </div>
                 </div>
               )}
             </CardContent>

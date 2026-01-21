@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Plus, X, ChefHat, Wheat, AlertCircle, Loader2 } from 'lucide-react';
+import { ArrowLeft, Plus, X, ChefHat, Wheat, AlertCircle, Loader2, Beaker, Package } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   Select,
@@ -14,16 +15,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useRecipe, useRecipeIngredients, useUpdateRecipe, useCreateRecipeIngredient, useDeleteRecipeIngredient } from '@/hooks/useRecipes';
+import { useRecipe, useRecipeIngredients, useUpdateRecipe, useCreateRecipeIngredient, useDeleteRecipeIngredient, useIntermediateRecipes } from '@/hooks/useRecipes';
 import { useAllRawMaterials } from '@/hooks/useSuppliers';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
 interface IngredientEntry {
   id?: string;
-  rawMaterialId: string;
+  rawMaterialId?: string;
+  ingredientRecipeId?: string;
   bakerPercentage: number;
-  type: 'farine' | 'ingredient';
+  type: 'farine' | 'ingredient' | 'intermediate';
+  name: string;
 }
 
 export default function EditRecipe() {
@@ -32,6 +35,7 @@ export default function EditRecipe() {
   const { data: recipe, isLoading: loadingRecipe } = useRecipe(id);
   const { data: existingIngredients, isLoading: loadingIngredients } = useRecipeIngredients(id);
   const { data: rawMaterials, isLoading: loadingMaterials } = useAllRawMaterials();
+  const { data: intermediateRecipes } = useIntermediateRecipes();
   const updateRecipe = useUpdateRecipe();
   const createIngredient = useCreateRecipeIngredient();
   const deleteIngredient = useDeleteRecipeIngredient();
@@ -41,6 +45,7 @@ export default function EditRecipe() {
     code: '',
     description: '',
     process: '',
+    recipeType: 'finished' as 'finished' | 'intermediate',
     status: 'draft' as 'draft' | 'validated',
     bakingRatio: '0.90',
     processLosses: '0',
@@ -49,6 +54,8 @@ export default function EditRecipe() {
   const [ingredients, setIngredients] = useState<IngredientEntry[]>([]);
   const [selectedIngredient, setSelectedIngredient] = useState('');
   const [ingredientPercentage, setIngredientPercentage] = useState('');
+  const [selectedIntermediate, setSelectedIntermediate] = useState('');
+  const [intermediatePercentage, setIntermediatePercentage] = useState('');
   const [isInitialized, setIsInitialized] = useState(false);
 
   // Initialize form with recipe data
@@ -59,6 +66,7 @@ export default function EditRecipe() {
         code: recipe.code || '',
         description: recipe.description || '',
         process: (recipe as any).process || '',
+        recipeType: ((recipe as any).recipe_type as 'finished' | 'intermediate') || 'finished',
         status: (recipe.status as 'draft' | 'validated') || 'draft',
         bakingRatio: String(recipe.baking_ratio || 0.90),
         processLosses: String(recipe.process_losses || 0),
@@ -69,19 +77,32 @@ export default function EditRecipe() {
 
   // Initialize ingredients from existing data
   useEffect(() => {
-    if (existingIngredients && rawMaterials && isInitialized && ingredients.length === 0) {
-      const mappedIngredients: IngredientEntry[] = existingIngredients.map((ing) => {
+    if (existingIngredients && rawMaterials && intermediateRecipes && isInitialized && ingredients.length === 0) {
+      const mappedIngredients: IngredientEntry[] = existingIngredients.map((ing: any) => {
+        // Check if this is an intermediate recipe ingredient
+        if (ing.ingredient_recipe_id) {
+          const intermediateRecipe = intermediateRecipes.find(r => r.id === ing.ingredient_recipe_id);
+          return {
+            id: ing.id,
+            ingredientRecipeId: ing.ingredient_recipe_id,
+            bakerPercentage: ing.baker_percentage || ing.quantity,
+            type: 'intermediate' as const,
+            name: intermediateRecipe?.name || ing.ingredient_recipe?.name || 'Produit intermédiaire',
+          };
+        }
+        
         const material = rawMaterials.find(m => m.id === ing.raw_material_id);
         return {
           id: ing.id,
           rawMaterialId: ing.raw_material_id,
           bakerPercentage: ing.baker_percentage || ing.quantity,
           type: (material?.type === 'farine' ? 'farine' : 'ingredient') as 'farine' | 'ingredient',
+          name: material?.name || 'Inconnu',
         };
       });
       setIngredients(mappedIngredients);
     }
-  }, [existingIngredients, rawMaterials, isInitialized, ingredients.length]);
+  }, [existingIngredients, rawMaterials, intermediateRecipes, isInitialized, ingredients.length]);
 
   // Separate flour and other ingredients
   const flourMaterials = rawMaterials?.filter(m => m.type === 'farine') || [];
@@ -94,17 +115,25 @@ export default function EditRecipe() {
   const availableOtherMaterials = otherMaterials.filter(m => 
     !ingredients.some(ing => ing.rawMaterialId === m.id)
   );
+  // Filter out already added intermediate recipes (and exclude current recipe being edited)
+  const availableIntermediates = intermediateRecipes?.filter(r =>
+    r.id !== id && !ingredients.some(ing => ing.ingredientRecipeId === r.id)
+  ) || [];
 
   // Calculate flour total and sort by descending percentage
   const flourIngredients = ingredients
     .filter(ing => ing.type === 'farine')
     .sort((a, b) => b.bakerPercentage - a.bakerPercentage);
   const otherIngredients = ingredients
-    .filter(ing => ing.type !== 'farine')
+    .filter(ing => ing.type === 'ingredient')
+    .sort((a, b) => b.bakerPercentage - a.bakerPercentage);
+  const intermediateIngredients = ingredients
+    .filter(ing => ing.type === 'intermediate')
     .sort((a, b) => b.bakerPercentage - a.bakerPercentage);
   const totalFlourPercentage = flourIngredients.reduce((sum, ing) => sum + ing.bakerPercentage, 0);
   const totalOtherPercentage = otherIngredients.reduce((sum, ing) => sum + ing.bakerPercentage, 0);
-  const totalBakerPercentage = totalFlourPercentage + totalOtherPercentage;
+  const totalIntermediatePercentage = intermediateIngredients.reduce((sum, ing) => sum + ing.bakerPercentage, 0);
+  const totalBakerPercentage = totalFlourPercentage + totalOtherPercentage + totalIntermediatePercentage;
 
   const isFlourValid = totalFlourPercentage === 100;
 
@@ -123,22 +152,47 @@ export default function EditRecipe() {
     setIngredients([...ingredients, {
       rawMaterialId: selectedIngredient,
       bakerPercentage: percentage,
-      type: material.type === 'farine' ? 'farine' : 'ingredient',
+      type: (material.type === 'farine' ? 'farine' : 'ingredient') as 'farine' | 'ingredient',
+      name: material.name,
     }]);
     setSelectedIngredient('');
     setIngredientPercentage('');
   };
 
-  const handleUpdatePercentage = (rawMaterialId: string, newPercentage: number) => {
-    setIngredients(ingredients.map(ing => 
-      ing.rawMaterialId === rawMaterialId 
-        ? { ...ing, bakerPercentage: newPercentage }
-        : ing
-    ));
+  const handleAddIntermediate = () => {
+    if (!selectedIntermediate || !intermediatePercentage) return;
+    
+    const percentage = parseFloat(intermediatePercentage);
+    if (isNaN(percentage) || percentage <= 0) {
+      toast.error('Veuillez entrer un pourcentage valide');
+      return;
+    }
+
+    const recipe = intermediateRecipes?.find(r => r.id === selectedIntermediate);
+    if (!recipe) return;
+
+    setIngredients([...ingredients, {
+      ingredientRecipeId: selectedIntermediate,
+      bakerPercentage: percentage,
+      type: 'intermediate',
+      name: recipe.name,
+    }]);
+    setSelectedIntermediate('');
+    setIntermediatePercentage('');
   };
 
-  const handleRemoveIngredient = (rawMaterialId: string) => {
-    setIngredients(ingredients.filter(ing => ing.rawMaterialId !== rawMaterialId));
+  const handleUpdatePercentage = (ingredientId: string, newPercentage: number) => {
+    setIngredients(ingredients.map(ing => {
+      const matchId = ing.rawMaterialId || ing.ingredientRecipeId;
+      return matchId === ingredientId ? { ...ing, bakerPercentage: newPercentage } : ing;
+    }));
+  };
+
+  const handleRemoveIngredient = (ingredientId: string) => {
+    setIngredients(ingredients.filter(ing => {
+      const matchId = ing.rawMaterialId || ing.ingredientRecipeId;
+      return matchId !== ingredientId;
+    }));
   };
 
   const handleSubmit = async () => {

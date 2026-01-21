@@ -114,18 +114,28 @@ export default function RecipesList() {
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredRecipes?.map((recipe) => (
+          {filteredRecipes?.map((recipe) => {
+            const isIntermediate = (recipe as any).recipe_type === 'intermediate';
+            return (
             <Card 
               key={recipe.id} 
               className={cn(
                 "hover:shadow-md transition-shadow cursor-pointer",
-                !recipe.is_active && "opacity-60"
+                !recipe.is_active && "opacity-60",
+                isIntermediate && "border-amber-200 bg-amber-50/30"
               )}
             >
               <CardHeader className="pb-2">
                 <div className="flex items-start justify-between">
                   <div>
-                    <CardTitle className="text-lg">{recipe.name}</CardTitle>
+                    <div className="flex items-center gap-2">
+                      <CardTitle className="text-lg">{recipe.name}</CardTitle>
+                      {isIntermediate && (
+                        <Badge variant="outline" className="text-amber-700 border-amber-300 text-xs">
+                          PI
+                        </Badge>
+                      )}
+                    </div>
                     {recipe.code && (
                       <CardDescription className="font-mono">{recipe.code}</CardDescription>
                     )}
@@ -205,7 +215,8 @@ export default function RecipesList() {
                 </div>
               </CardContent>
             </Card>
-          ))}
+          );
+          })}
         </div>
       )}
 

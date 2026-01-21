@@ -667,10 +667,11 @@ export type Database = {
           baker_percentage: number | null
           created_at: string
           id: string
+          ingredient_recipe_id: string | null
           notes: string | null
           order_index: number
           quantity: number
-          raw_material_id: string
+          raw_material_id: string | null
           recipe_id: string
           unit: string
           updated_at: string
@@ -679,10 +680,11 @@ export type Database = {
           baker_percentage?: number | null
           created_at?: string
           id?: string
+          ingredient_recipe_id?: string | null
           notes?: string | null
           order_index?: number
           quantity: number
-          raw_material_id: string
+          raw_material_id?: string | null
           recipe_id: string
           unit?: string
           updated_at?: string
@@ -691,15 +693,37 @@ export type Database = {
           baker_percentage?: number | null
           created_at?: string
           id?: string
+          ingredient_recipe_id?: string | null
           notes?: string | null
           order_index?: number
           quantity?: number
-          raw_material_id?: string
+          raw_material_id?: string | null
           recipe_id?: string
           unit?: string
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "recipe_ingredients_ingredient_recipe_id_fkey"
+            columns: ["ingredient_recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipe_baker_nutrition"
+            referencedColumns: ["recipe_id"]
+          },
+          {
+            foreignKeyName: "recipe_ingredients_ingredient_recipe_id_fkey"
+            columns: ["ingredient_recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipe_nutrition"
+            referencedColumns: ["recipe_id"]
+          },
+          {
+            foreignKeyName: "recipe_ingredients_ingredient_recipe_id_fkey"
+            columns: ["ingredient_recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipes"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "recipe_ingredients_raw_material_id_fkey"
             columns: ["raw_material_id"]
@@ -744,6 +768,7 @@ export type Database = {
           preparation_notes: string | null
           process: string | null
           process_losses: number | null
+          recipe_type: string
           reference_flour_id: string | null
           status: string | null
           updated_at: string
@@ -763,6 +788,7 @@ export type Database = {
           preparation_notes?: string | null
           process?: string | null
           process_losses?: number | null
+          recipe_type?: string
           reference_flour_id?: string | null
           status?: string | null
           updated_at?: string
@@ -782,6 +808,7 @@ export type Database = {
           preparation_notes?: string | null
           process?: string | null
           process_losses?: number | null
+          recipe_type?: string
           reference_flour_id?: string | null
           status?: string | null
           updated_at?: string

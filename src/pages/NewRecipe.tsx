@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, X, ChefHat, Wheat, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Plus, X, ChefHat, Wheat, AlertCircle, Beaker, Package } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -15,20 +15,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useCreateRecipe, useCreateRecipeIngredient } from '@/hooks/useRecipes';
+import { useCreateRecipe, useCreateRecipeIngredient, useIntermediateRecipes } from '@/hooks/useRecipes';
 import { useAllRawMaterials } from '@/hooks/useSuppliers';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
 interface IngredientEntry {
-  rawMaterialId: string;
+  rawMaterialId?: string;
+  ingredientRecipeId?: string;
   bakerPercentage: number;
-  type: 'farine' | 'ingredient';
+  type: 'farine' | 'ingredient' | 'intermediate';
+  name: string;
 }
 
 export default function NewRecipe() {
   const navigate = useNavigate();
   const { data: rawMaterials, isLoading: loadingMaterials } = useAllRawMaterials();
+  const { data: intermediateRecipes } = useIntermediateRecipes();
   const createRecipe = useCreateRecipe();
   const createIngredient = useCreateRecipeIngredient();
 
@@ -37,6 +40,7 @@ export default function NewRecipe() {
     code: '',
     description: '',
     process: '',
+    recipeType: 'finished' as 'finished' | 'intermediate',
     status: 'draft' as 'draft' | 'validated',
     bakingRatio: '0.90',
     processLosses: '0',
@@ -45,6 +49,8 @@ export default function NewRecipe() {
   const [ingredients, setIngredients] = useState<IngredientEntry[]>([]);
   const [selectedIngredient, setSelectedIngredient] = useState('');
   const [ingredientPercentage, setIngredientPercentage] = useState('');
+  const [selectedIntermediate, setSelectedIntermediate] = useState('');
+  const [intermediatePercentage, setIntermediatePercentage] = useState('');
 
   // Separate flour and other ingredients
   const flourMaterials = rawMaterials?.filter(m => m.type === 'farine') || [];
@@ -57,13 +63,19 @@ export default function NewRecipe() {
   const availableOtherMaterials = otherMaterials.filter(m => 
     !ingredients.some(ing => ing.rawMaterialId === m.id)
   );
+  // Filter out already added intermediate recipes
+  const availableIntermediates = intermediateRecipes?.filter(r =>
+    !ingredients.some(ing => ing.ingredientRecipeId === r.id)
+  ) || [];
 
   // Calculate flour total
   const flourIngredients = ingredients.filter(ing => ing.type === 'farine');
-  const otherIngredients = ingredients.filter(ing => ing.type !== 'farine');
+  const otherIngredients = ingredients.filter(ing => ing.type === 'ingredient');
+  const intermediateIngredients = ingredients.filter(ing => ing.type === 'intermediate');
   const totalFlourPercentage = flourIngredients.reduce((sum, ing) => sum + ing.bakerPercentage, 0);
   const totalOtherPercentage = otherIngredients.reduce((sum, ing) => sum + ing.bakerPercentage, 0);
-  const totalBakerPercentage = totalFlourPercentage + totalOtherPercentage;
+  const totalIntermediatePercentage = intermediateIngredients.reduce((sum, ing) => sum + ing.bakerPercentage, 0);
+  const totalBakerPercentage = totalFlourPercentage + totalOtherPercentage + totalIntermediatePercentage;
 
   const isFlourValid = totalFlourPercentage === 100;
 
@@ -82,10 +94,33 @@ export default function NewRecipe() {
     setIngredients([...ingredients, {
       rawMaterialId: selectedIngredient,
       bakerPercentage: percentage,
-      type: material.type || 'ingredient',
+      type: (material.type === 'farine' ? 'farine' : 'ingredient') as 'farine' | 'ingredient',
+      name: material.name,
     }]);
     setSelectedIngredient('');
     setIngredientPercentage('');
+  };
+
+  const handleAddIntermediate = () => {
+    if (!selectedIntermediate || !intermediatePercentage) return;
+    
+    const percentage = parseFloat(intermediatePercentage);
+    if (isNaN(percentage) || percentage <= 0) {
+      toast.error('Veuillez entrer un pourcentage valide');
+      return;
+    }
+
+    const recipe = intermediateRecipes?.find(r => r.id === selectedIntermediate);
+    if (!recipe) return;
+
+    setIngredients([...ingredients, {
+      ingredientRecipeId: selectedIntermediate,
+      bakerPercentage: percentage,
+      type: 'intermediate',
+      name: recipe.name,
+    }]);
+    setSelectedIntermediate('');
+    setIntermediatePercentage('');
   };
 
   const handleRemoveIngredient = (index: number) => {
@@ -109,29 +144,32 @@ export default function NewRecipe() {
     }
 
     try {
-      // Create recipe (no reference_flour_id for multi-flour)
+      // Create recipe
       const recipe = await createRecipe.mutateAsync({
         name: formData.name.trim(),
         code: formData.code.trim() || null,
         description: formData.description.trim() || null,
         process: formData.process.trim() || null,
+        recipe_type: formData.recipeType,
         status: formData.status,
-        reference_flour_id: null, // Multi-flour doesn't need single reference
+        reference_flour_id: null,
         baking_ratio: parseFloat(formData.bakingRatio) || 0.9,
         process_losses: parseFloat(formData.processLosses) || 0,
         yield_quantity: 1,
         yield_unit: 'kg',
       });
 
-      // Add all ingredients (flours first, then others)
-      const allIngredients = [...flourIngredients, ...otherIngredients];
+      // Add all ingredients (flours first, then others, then intermediates)
+      const allIngredients = [...flourIngredients, ...otherIngredients, ...intermediateIngredients];
       for (let i = 0; i < allIngredients.length; i++) {
+        const ing = allIngredients[i];
         await createIngredient.mutateAsync({
           recipe_id: recipe.id,
-          raw_material_id: allIngredients[i].rawMaterialId,
-          quantity: allIngredients[i].bakerPercentage,
+          raw_material_id: ing.rawMaterialId || null,
+          ingredient_recipe_id: ing.ingredientRecipeId || null,
+          quantity: ing.bakerPercentage,
           unit: '%',
-          baker_percentage: allIngredients[i].bakerPercentage,
+          baker_percentage: ing.bakerPercentage,
           order_index: i,
         });
       }
@@ -191,6 +229,40 @@ export default function NewRecipe() {
                   value={formData.code}
                   onChange={(e) => setFormData({ ...formData, code: e.target.value })}
                 />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="recipeType">Type de recette *</Label>
+                <Select 
+                  value={formData.recipeType} 
+                  onValueChange={(value: 'finished' | 'intermediate') => 
+                    setFormData({ ...formData, recipeType: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="finished">
+                      <div className="flex items-center gap-2">
+                        <Package className="h-4 w-4" />
+                        <span>Produit fini</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="intermediate">
+                      <div className="flex items-center gap-2">
+                        <Beaker className="h-4 w-4" />
+                        <span>Produit intermédiaire</span>
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  {formData.recipeType === 'intermediate' 
+                    ? 'Poolish, levain, purée... Utilisable comme ingrédient dans d\'autres recettes.'
+                    : 'Produit vendable avec fiche technique et étiquette.'
+                  }
+                </p>
               </div>
 
               <div className="space-y-2">
@@ -437,14 +509,14 @@ export default function NewRecipe() {
                 </Button>
               </div>
 
-              {/* Ingredients list */}
+              {/* Ingredients list - sorted by percentage descending */}
               <div className="space-y-2">
-                {otherIngredients.map((ing) => (
+                {[...otherIngredients].sort((a, b) => b.bakerPercentage - a.bakerPercentage).map((ing) => (
                   <div 
                     key={ing.rawMaterialId}
                     className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
                   >
-                    <span>{getMaterialName(ing.rawMaterialId)}</span>
+                    <span>{ing.name}</span>
                     <div className="flex items-center gap-2">
                       <span className="font-mono">{ing.bakerPercentage}%</span>
                       <Button 
@@ -467,19 +539,105 @@ export default function NewRecipe() {
               </div>
 
               {/* Total */}
-              {ingredients.length > 0 && (
+              {(otherIngredients.length > 0 || intermediateIngredients.length > 0) && (
                 <div className="pt-4 border-t">
                   <div className="flex items-center justify-between">
                     <span className="font-medium">Total pourcentages boulangers</span>
                     <span className="font-mono text-lg font-bold">{totalBakerPercentage.toFixed(1)}%</span>
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">
-                    = 100% (farines) + {totalOtherPercentage.toFixed(1)}% (autres ingrédients)
+                    = 100% (farines) + {totalOtherPercentage.toFixed(1)}% (ingrédients) + {totalIntermediatePercentage.toFixed(1)}% (PI)
                   </p>
                 </div>
               )}
             </CardContent>
           </Card>
+
+          {/* Intermediate Products Section - only for finished products */}
+          {formData.recipeType === 'finished' && availableIntermediates.length > 0 && (
+            <Card className="border-amber-200 bg-amber-50/50">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Beaker className="h-5 w-5 text-amber-600" />
+                  Produits intermédiaires
+                </CardTitle>
+                <CardDescription>
+                  Intégrez des poolish, levains ou autres préparations
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Add intermediate form */}
+                <div className="flex gap-2">
+                  <div className="flex-1">
+                    <Select 
+                      value={selectedIntermediate} 
+                      onValueChange={setSelectedIntermediate}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Sélectionner un produit intermédiaire..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableIntermediates.map(r => (
+                          <SelectItem key={r.id} value={r.id}>
+                            <div className="flex items-center gap-2">
+                              <Beaker className="h-3 w-3" />
+                              {r.name}
+                              {r.code && <span className="text-muted-foreground">({r.code})</span>}
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="w-24">
+                    <Input
+                      type="number"
+                      step="0.1"
+                      min="0"
+                      placeholder="%"
+                      value={intermediatePercentage}
+                      onChange={(e) => setIntermediatePercentage(e.target.value)}
+                    />
+                  </div>
+                  <Button 
+                    onClick={handleAddIntermediate}
+                    size="icon"
+                    disabled={!selectedIntermediate || !intermediatePercentage}
+                    className="bg-amber-600 hover:bg-amber-700"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+
+                {/* Intermediate list */}
+                <div className="space-y-2">
+                  {intermediateIngredients.map((ing) => (
+                    <div 
+                      key={ing.ingredientRecipeId}
+                      className="flex items-center justify-between p-3 bg-amber-100 rounded-lg border border-amber-200"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Beaker className="h-4 w-4 text-amber-600" />
+                        <span className="font-medium">{ing.name}</span>
+                        <Badge variant="outline" className="text-amber-700 border-amber-300">PI</Badge>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono font-bold text-amber-700">{ing.bakerPercentage}%</span>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8"
+                          onClick={() => handleRemoveIngredient(ingredients.indexOf(ing))}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Validation Alert */}
           {!isFlourValid && flourIngredients.length > 0 && (

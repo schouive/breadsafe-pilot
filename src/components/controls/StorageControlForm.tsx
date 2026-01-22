@@ -306,9 +306,9 @@ export function StorageControlForm({ controlPoint, isOpen, onClose, onSubmit }: 
               </div>
             ) : (
               [...(coldRooms || [])].sort((a, b) => {
-                // Positif (MP) en haut, Négatif en bas
-                if (a.type === 'positif' && b.type === 'negatif') return -1;
-                if (a.type === 'negatif' && b.type === 'positif') return 1;
+                // Réfrigéré (MP) en haut, Négatif en bas
+                if (a.type === 'negatif' && b.type !== 'negatif') return 1;
+                if (a.type !== 'negatif' && b.type === 'negatif') return -1;
                 return a.name.localeCompare(b.name);
               }).map((room) => {
                 const conformityInfo = getConformityInfo(room.id);

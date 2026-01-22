@@ -48,6 +48,9 @@ export default function NewRecipe() {
   });
 
   const [ingredients, setIngredients] = useState<IngredientEntry[]>([]);
+  // Separate states for flour and other ingredients to avoid field interference
+  const [selectedFlour, setSelectedFlour] = useState('');
+  const [flourPercentage, setFlourPercentage] = useState('');
   const [selectedIngredient, setSelectedIngredient] = useState('');
   const [ingredientPercentage, setIngredientPercentage] = useState('');
   const [selectedIntermediate, setSelectedIntermediate] = useState('');
@@ -88,7 +91,29 @@ export default function NewRecipe() {
   const isTotalWeightValid = !isFlourBased ? Math.abs(totalBakerPercentage - 100) < 0.01 : true;
   const isRecipeValid = isFlourBased ? isFlourValid : isTotalWeightValid;
 
-  const handleAddIngredient = (type: 'farine' | 'ingredient') => {
+  const handleAddFlour = () => {
+    if (!selectedFlour || !flourPercentage) return;
+    
+    const percentage = parseFloat(flourPercentage);
+    if (isNaN(percentage) || percentage <= 0) {
+      toast.error('Veuillez entrer un pourcentage valide');
+      return;
+    }
+
+    const material = rawMaterials?.find(m => m.id === selectedFlour);
+    if (!material) return;
+
+    setIngredients([...ingredients, {
+      rawMaterialId: selectedFlour,
+      bakerPercentage: percentage,
+      type: 'farine',
+      name: material.name,
+    }]);
+    setSelectedFlour('');
+    setFlourPercentage('');
+  };
+
+  const handleAddIngredient = () => {
     if (!selectedIngredient || !ingredientPercentage) return;
     
     const percentage = parseFloat(ingredientPercentage);
@@ -426,8 +451,8 @@ export default function NewRecipe() {
               <div className="flex gap-2">
                 <div className="flex-1">
                   <Select 
-                    value={selectedIngredient} 
-                    onValueChange={setSelectedIngredient}
+                    value={selectedFlour} 
+                    onValueChange={setSelectedFlour}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Sélectionner une farine..." />
@@ -454,14 +479,14 @@ export default function NewRecipe() {
                     min="0"
                     max="100"
                     placeholder="%"
-                    value={ingredientPercentage}
-                    onChange={(e) => setIngredientPercentage(e.target.value)}
+                    value={flourPercentage}
+                    onChange={(e) => setFlourPercentage(e.target.value)}
                   />
                 </div>
                 <Button 
-                  onClick={() => handleAddIngredient('farine')}
+                  onClick={handleAddFlour}
                   size="icon"
-                  disabled={!selectedIngredient || !ingredientPercentage || !availableFlours.some(m => m.id === selectedIngredient)}
+                  disabled={!selectedFlour || !flourPercentage || !availableFlours.some(m => m.id === selectedFlour)}
                 >
                   <Plus className="h-4 w-4" />
                 </Button>
@@ -579,7 +604,7 @@ export default function NewRecipe() {
                   />
                 </div>
                 <Button 
-                  onClick={() => handleAddIngredient('ingredient')}
+                  onClick={handleAddIngredient}
                   size="icon"
                   disabled={!selectedIngredient || !ingredientPercentage || !(isFlourBased ? availableOtherMaterials : availableAllMaterials).some(m => m.id === selectedIngredient)}
                 >

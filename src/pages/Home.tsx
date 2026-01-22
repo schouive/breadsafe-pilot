@@ -1,8 +1,5 @@
 import { useNavigate } from 'react-router-dom';
 import { 
-  ClipboardCheck, 
-  BookOpen, 
-  Settings,
   ChevronRight,
   Shield,
   Tag,
@@ -19,9 +16,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { LogOut, User } from 'lucide-react';
+import { LogOut } from 'lucide-react';
 import logo from '@/assets/logo-breadshop.png';
 import { useAuth } from '@/hooks/useAuth';
+import { getRoleLabel } from '@/types/roles';
 
 interface ModuleCardProps {
   title: string;
@@ -61,13 +59,7 @@ function ModuleCard({ title, description, icon: Icon, color, bgColor, href }: Mo
 }
 
 export default function Home() {
-  const { profile, roles, signOut } = useAuth();
-
-  const getRoleLabel = () => {
-    if (roles.includes('admin')) return 'Administrateur';
-    if (roles.includes('quality_assistant')) return 'Assistant Qualité';
-    return 'Opérateur';
-  };
+  const { profile, roles, signOut, canAccessModule } = useAuth();
 
   const getInitials = (name: string) => {
     return name
@@ -78,7 +70,8 @@ export default function Home() {
       .slice(0, 2);
   };
 
-  const modules: ModuleCardProps[] = [
+  // Filtrer les modules selon les permissions
+  const allModules: ModuleCardProps[] = [
     {
       title: 'HACCP',
       description: 'Contrôles qualité, températures, non-conformités et traçabilité des points critiques',
@@ -104,6 +97,14 @@ export default function Home() {
       href: '/settings',
     },
   ];
+
+  // Filtrer les modules accessibles
+  const modules = allModules.filter((module) => {
+    if (module.href === '/haccp') return canAccessModule('haccp');
+    if (module.href === '/products') return canAccessModule('products');
+    if (module.href === '/settings') return canAccessModule('settings');
+    return true;
+  });
 
   return (
     <div className="min-h-screen bg-background">
@@ -137,7 +138,7 @@ export default function Home() {
                 <div className="flex flex-col">
                   <span>{profile?.full_name}</span>
                   <span className="text-xs font-normal text-muted-foreground">
-                    {getRoleLabel()}
+                    {roles[0] ? getRoleLabel(roles[0]) : 'Utilisateur'}
                   </span>
                 </div>
               </DropdownMenuLabel>

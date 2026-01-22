@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { User, Bell, Shield, Database, Users, Building, Snowflake, Plus, Trash2, Edit2, X, Check } from 'lucide-react';
+import { Bell, Shield, Database, Building, Snowflake, Plus, Edit2, X, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -26,9 +26,13 @@ import { useAllColdRooms, useCreateColdRoom, useUpdateColdRoom, ColdRoom } from 
 import { cn } from '@/lib/utils';
 import { SupplierManagement } from '@/components/settings/SupplierManagement';
 import { RawMaterialManagement } from '@/components/settings/RawMaterialManagement';
+import { UserManagement } from '@/components/settings/UserManagement';
+import { AuditLogViewer } from '@/components/settings/AuditLogViewer';
 import { TemperatureInput } from '@/components/ui/TemperatureInput';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function Settings() {
+  const { canPerform, canAccessModule } = useAuth();
   const { data: coldRooms, isLoading: loadingRooms } = useAllColdRooms();
   const createColdRoom = useCreateColdRoom();
   const updateColdRoom = useUpdateColdRoom();
@@ -225,50 +229,11 @@ export default function Settings() {
         </CardContent>
       </Card>
 
-      {/* Users */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Users className="h-5 w-5 text-primary" />
-              <div>
-                <CardTitle>Utilisateurs</CardTitle>
-                <CardDescription>Gérez les accès à l'application</CardDescription>
-              </div>
-            </div>
-            <Button size="sm">Ajouter</Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {[
-              { name: 'Direction Générale', email: 'dg@breadshop.fr', role: 'admin', status: 'active' },
-              { name: 'Assistant Qualité', email: 'qualite@breadshop.fr', role: 'quality_assistant', status: 'active' },
-              { name: 'Marie Dupont', email: 'marie.d@breadshop.fr', role: 'operator', status: 'active' },
-              { name: 'Jean Pierre', email: 'jean.p@breadshop.fr', role: 'operator', status: 'active' },
-            ].map((user, index) => (
-              <div key={index} className="flex items-center justify-between py-3 border-b border-border last:border-0">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                    <User className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <p className="font-medium">{user.name}</p>
-                    <p className="text-sm text-muted-foreground">{user.email}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Badge variant="outline">
-                    {user.role === 'admin' ? 'Administrateur' : 
-                     user.role === 'quality_assistant' ? 'Assistant Qualité' : 'Opérateur'}
-                  </Badge>
-                  <Button variant="ghost" size="sm">Modifier</Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      {/* Users Management - Réservé aux admins */}
+      {canPerform('canManageUsers') && <UserManagement />}
+
+      {/* Audit Logs - Pour admins et qualité */}
+      {canPerform('canViewAuditLogs') && <AuditLogViewer />}
 
       {/* Notifications */}
       <Card>

@@ -38,6 +38,10 @@ export interface RawMaterial {
   salt: number | null;
   price: number | null;
   price_unit: string | null;
+  // New fields for purchase unit management
+  purchase_unit: string | null;
+  purchase_price: number | null;
+  density: number | null;
   is_active: boolean;
 }
 
@@ -172,7 +176,7 @@ export function useRawMaterials(supplierId?: string) {
       const { data, error } = await query;
       
       if (error) throw error;
-      return data as RawMaterial[];
+      return data as unknown as RawMaterial[];
     },
     enabled: !supplierId || supplierId.length > 0,
   });
@@ -194,7 +198,7 @@ export function useAllRawMaterials() {
         .order('name');
       
       if (error) throw error;
-      return data as RawMaterialWithSupplier[];
+      return data as unknown as RawMaterialWithSupplier[];
     },
   });
 }
@@ -216,7 +220,7 @@ export function useRawMaterialsBySupplier() {
         .order('name');
       
       if (error) throw error;
-      return data as RawMaterialWithSupplier[];
+      return data as unknown as RawMaterialWithSupplier[];
     },
   });
 }

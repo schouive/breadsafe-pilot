@@ -50,7 +50,11 @@ const ALLERGEN_LIST = [
   'Mollusques', 'Crustacés', 'Poisson', 'Sulfites'
 ];
 
-const PRICE_UNITS = ['kg', 'L', 'pièce', 'unité', 'boîte', 'sachet'];
+const PURCHASE_UNITS = [
+  { value: 'kg', label: 'Kilogramme (kg)' },
+  { value: 'L', label: 'Litre (L)' },
+  { value: 'piece', label: 'Pièce' },
+];
 
 const MATERIAL_TYPES = [
   { value: 'farine', label: 'Farine' },
@@ -76,8 +80,10 @@ interface FormData {
   fiber: string;
   protein: string;
   salt: string;
-  price: string;
-  price_unit: string;
+  // New purchase fields
+  purchase_unit: string;
+  purchase_price: string;
+  density: string;
   requires_cold_storage: boolean;
   requires_dlc_check: boolean;
   storage_temp_min: string;
@@ -103,13 +109,36 @@ const initialFormData: FormData = {
   fiber: '',
   protein: '',
   salt: '',
-  price: '',
-  price_unit: 'kg',
+  purchase_unit: 'kg',
+  purchase_price: '',
+  density: '',
   requires_cold_storage: false,
   requires_dlc_check: false,
   storage_temp_min: '',
   storage_temp_max: '',
 };
+
+// Calculate price in €/kg based on purchase unit and density
+function calculatePricePerKg(purchasePrice: number | null, purchaseUnit: string, density: number | null): number | null {
+  if (!purchasePrice) return null;
+  
+  switch (purchaseUnit) {
+    case 'kg':
+      return purchasePrice;
+    case 'L':
+      // Price per liter -> price per kg using density
+      // density = mass/volume (kg/L), so price_kg = price_L / density
+      if (density && density > 0) {
+        return purchasePrice / density;
+      }
+      return null;
+    case 'piece':
+      // For piece, we need weight info - for now just store the price
+      return purchasePrice;
+    default:
+      return purchasePrice;
+  }
+}
 
 export function RawMaterialManagement() {
   const { data: materials, isLoading } = useAllRawMaterials();
@@ -148,8 +177,9 @@ export function RawMaterialManagement() {
       fiber: material.fiber?.toString() || '',
       protein: material.protein?.toString() || '',
       salt: material.salt?.toString() || '',
-      price: material.price?.toString() || '',
-      price_unit: material.price_unit || 'kg',
+      purchase_unit: material.purchase_unit || 'kg',
+      purchase_price: material.purchase_price?.toString() || '',
+      density: material.density?.toString() || '',
       requires_cold_storage: material.requires_cold_storage,
       requires_dlc_check: material.requires_dlc_check,
       storage_temp_min: material.storage_temp_min?.toString() || '',
@@ -159,6 +189,11 @@ export function RawMaterialManagement() {
 
   const handleAdd = async () => {
     if (!formData.name.trim()) return;
+    
+    // Calculate the reference price in €/kg
+    const purchasePrice = formData.purchase_price ? parseFloat(formData.purchase_price) : null;
+    const density = formData.density ? parseFloat(formData.density) : null;
+    const pricePerKg = calculatePricePerKg(purchasePrice, formData.purchase_unit, density);
     
     await createMaterial.mutateAsync({
       name: formData.name.trim(),
@@ -179,8 +214,11 @@ export function RawMaterialManagement() {
       fiber: formData.fiber ? parseFloat(formData.fiber) : null,
       protein: formData.protein ? parseFloat(formData.protein) : null,
       salt: formData.salt ? parseFloat(formData.salt) : null,
-      price: formData.price ? parseFloat(formData.price) : null,
-      price_unit: formData.price_unit || null,
+      price: pricePerKg,
+      price_unit: 'kg', // Always store reference price in €/kg
+      purchase_unit: formData.purchase_unit || null,
+      purchase_price: purchasePrice,
+      density: density,
       requires_cold_storage: formData.requires_cold_storage,
       requires_dlc_check: formData.requires_dlc_check,
       storage_temp_min: formData.storage_temp_min ? parseFloat(formData.storage_temp_min) : null,
@@ -193,6 +231,11 @@ export function RawMaterialManagement() {
 
   const handleUpdate = async () => {
     if (!editingMaterial) return;
+    
+    // Calculate the reference price in €/kg
+    const purchasePrice = formData.purchase_price ? parseFloat(formData.purchase_price) : null;
+    const density = formData.density ? parseFloat(formData.density) : null;
+    const pricePerKg = calculatePricePerKg(purchasePrice, formData.purchase_unit, density);
     
     await updateMaterial.mutateAsync({
       id: editingMaterial.id,
@@ -214,8 +257,11 @@ export function RawMaterialManagement() {
       fiber: formData.fiber ? parseFloat(formData.fiber) : null,
       protein: formData.protein ? parseFloat(formData.protein) : null,
       salt: formData.salt ? parseFloat(formData.salt) : null,
-      price: formData.price ? parseFloat(formData.price) : null,
-      price_unit: formData.price_unit || null,
+      price: pricePerKg,
+      price_unit: 'kg', // Always store reference price in €/kg
+      purchase_unit: formData.purchase_unit || null,
+      purchase_price: purchasePrice,
+      density: density,
       requires_cold_storage: formData.requires_cold_storage,
       requires_dlc_check: formData.requires_dlc_check,
       storage_temp_min: formData.storage_temp_min ? parseFloat(formData.storage_temp_min) : null,
@@ -311,38 +357,87 @@ export function RawMaterialManagement() {
           </Select>
         </div>
 
-        <div className="space-y-2">
-          <Label>Prix</Label>
-          <div className="flex gap-2">
-            <div className="flex-1">
-              <Input
-                id="price"
-                type="number"
-                step="0.01"
-                min="0"
-                placeholder="0.00"
-                value={formData.price}
-                onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-              />
-            </div>
-            <div className="w-28">
+        {/* Purchase Unit and Price Section */}
+        <div className="space-y-4 p-4 bg-muted/30 rounded-lg">
+          <Label className="text-base font-semibold">Prix d'achat</Label>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="purchase_unit">Unité d'achat</Label>
               <Select 
-                value={formData.price_unit} 
-                onValueChange={(value) => setFormData({ ...formData, price_unit: value })}
+                value={formData.purchase_unit} 
+                onValueChange={(value) => setFormData({ ...formData, purchase_unit: value })}
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Unité" />
+                <SelectTrigger id="purchase_unit">
+                  <SelectValue placeholder="Sélectionnez l'unité" />
                 </SelectTrigger>
                 <SelectContent>
-                  {PRICE_UNITS.map(unit => (
-                    <SelectItem key={unit} value={unit}>
-                      € / {unit}
+                  {PURCHASE_UNITS.map(unit => (
+                    <SelectItem key={unit.value} value={unit.value}>
+                      {unit.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="purchase_price">Prix d'achat (€/{formData.purchase_unit})</Label>
+              <Input
+                id="purchase_price"
+                type="number"
+                step="0.01"
+                min="0"
+                placeholder="0.00"
+                value={formData.purchase_price}
+                onChange={(e) => setFormData({ ...formData, purchase_price: e.target.value })}
+              />
+            </div>
           </div>
+
+          {/* Density field - shown only when purchase_unit is 'L' */}
+          {formData.purchase_unit === 'L' && (
+            <div className="space-y-2">
+              <Label htmlFor="density">Densité (kg/L) *</Label>
+              <Input
+                id="density"
+                type="number"
+                step="0.001"
+                min="0.001"
+                placeholder="Ex: 1.0 pour l'eau, 0.92 pour l'huile"
+                value={formData.density}
+                onChange={(e) => setFormData({ ...formData, density: e.target.value })}
+              />
+              <p className="text-xs text-muted-foreground">
+                La densité est obligatoire pour les matières achetées au litre. Elle permet de convertir le prix en €/kg.
+              </p>
+            </div>
+          )}
+
+          {/* Calculated price display */}
+          {formData.purchase_price && (
+            <div className="p-3 bg-primary/5 rounded-lg border border-primary/20">
+              <p className="text-sm font-medium text-foreground">
+                Prix de référence (€/kg) :{' '}
+                <span className="text-primary font-bold">
+                  {(() => {
+                    const purchasePrice = parseFloat(formData.purchase_price);
+                    const density = formData.density ? parseFloat(formData.density) : null;
+                    const priceKg = calculatePricePerKg(purchasePrice, formData.purchase_unit, density);
+                    if (priceKg !== null) {
+                      return `${priceKg.toFixed(2)} €/kg`;
+                    }
+                    if (formData.purchase_unit === 'L' && !density) {
+                      return 'Densité requise';
+                    }
+                    return `${purchasePrice.toFixed(2)} €/${formData.purchase_unit}`;
+                  })()}
+                </span>
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Ce prix sera utilisé pour tous les calculs de coût des recettes.
+              </p>
+            </div>
+          )}
         </div>
 
         <div className="space-y-2">

@@ -614,6 +614,7 @@ export type Database = {
           category: string | null
           composition: string | null
           created_at: string
+          density: number | null
           description: string | null
           energy_kcal: number | null
           energy_kj: number | null
@@ -625,6 +626,8 @@ export type Database = {
           price: number | null
           price_unit: string | null
           protein: number | null
+          purchase_price: number | null
+          purchase_unit: string | null
           requires_cold_storage: boolean
           requires_dlc_check: boolean
           salt: number | null
@@ -644,6 +647,7 @@ export type Database = {
           category?: string | null
           composition?: string | null
           created_at?: string
+          density?: number | null
           description?: string | null
           energy_kcal?: number | null
           energy_kj?: number | null
@@ -655,6 +659,8 @@ export type Database = {
           price?: number | null
           price_unit?: string | null
           protein?: number | null
+          purchase_price?: number | null
+          purchase_unit?: string | null
           requires_cold_storage?: boolean
           requires_dlc_check?: boolean
           salt?: number | null
@@ -674,6 +680,7 @@ export type Database = {
           category?: string | null
           composition?: string | null
           created_at?: string
+          density?: number | null
           description?: string | null
           energy_kcal?: number | null
           energy_kj?: number | null
@@ -685,6 +692,8 @@ export type Database = {
           price?: number | null
           price_unit?: string | null
           protein?: number | null
+          purchase_price?: number | null
+          purchase_unit?: string | null
           requires_cold_storage?: boolean
           requires_dlc_check?: boolean
           salt?: number | null

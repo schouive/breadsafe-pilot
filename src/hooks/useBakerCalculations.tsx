@@ -110,6 +110,13 @@ export function useBakerCalculations(
     const calculatedIngredients: BakerCalculation[] = ingredients.map((ing) => {
       const bakerPercentage = ing.baker_percentage || 0;
       const rm = ing.raw_materials;
+      const isIntermediate = !!ing.ingredient_recipe_id;
+      
+      // For intermediate products, use the recipe name; for raw materials, use the material name
+      const ingredientName = isIntermediate 
+        ? (ing.ingredient_recipe?.name || 'PI sans nom')
+        : (rm?.name || 'Inconnu');
+      
       const type = (rm?.type || 'ingredient') as 'farine' | 'ingredient';
       
       // For flours: quantity = totalFlourQuantity * (flour% / 100)
@@ -134,7 +141,7 @@ export function useBakerCalculations(
 
       return {
         ingredientId: ing.id,
-        ingredientName: rm?.name || 'Inconnu',
+        ingredientName,
         type,
         bakerPercentage,
         quantityKg,
@@ -246,12 +253,18 @@ export function useBakerCalculations(
 
     // Sort ingredients by weight (descending) for label
     const sortedIngredients = ingredients
-      .map((ing) => ({
-        name: ing.raw_materials?.name || 'Inconnu',
-        composition: ing.raw_materials?.composition || null,
-        weightKg: totalFlourQuantityKg * ((ing.baker_percentage || 0) / 100),
-        allergens: ing.raw_materials?.allergens || [],
-      }))
+      .map((ing) => {
+        const isIntermediate = !!ing.ingredient_recipe_id;
+        const name = isIntermediate 
+          ? (ing.ingredient_recipe?.name || 'PI sans nom')
+          : (ing.raw_materials?.name || 'Inconnu');
+        return {
+          name,
+          composition: ing.raw_materials?.composition || null,
+          weightKg: totalFlourQuantityKg * ((ing.baker_percentage || 0) / 100),
+          allergens: ing.raw_materials?.allergens || [],
+        };
+      })
       .sort((a, b) => b.weightKg - a.weightKg);
 
     return {

@@ -159,6 +159,29 @@ export function useUpdateColdRoom() {
   });
 }
 
+export function useDeleteColdRoom() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('cold_rooms')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cold_rooms'] });
+      queryClient.invalidateQueries({ queryKey: ['cold_rooms_all'] });
+      toast.success('Chambre froide supprimée');
+    },
+    onError: (error) => {
+      toast.error('Erreur lors de la suppression: ' + error.message);
+    },
+  });
+}
+
 export function useRecordTemperature() {
   const queryClient = useQueryClient();
   

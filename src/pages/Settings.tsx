@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Bell, Shield, Database, Building, Snowflake, Plus, Edit2, X, Check } from 'lucide-react';
+import { Bell, Shield, Database, Building, Snowflake, Plus, Edit2, X, Check, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -22,7 +22,17 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
-import { useAllColdRooms, useCreateColdRoom, useUpdateColdRoom, ColdRoom } from '@/hooks/useColdRooms';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { useAllColdRooms, useCreateColdRoom, useUpdateColdRoom, useDeleteColdRoom, ColdRoom } from '@/hooks/useColdRooms';
 import { cn } from '@/lib/utils';
 import { SupplierManagement } from '@/components/settings/SupplierManagement';
 import { RawMaterialManagement } from '@/components/settings/RawMaterialManagement';
@@ -36,9 +46,11 @@ export default function Settings() {
   const { data: coldRooms, isLoading: loadingRooms } = useAllColdRooms();
   const createColdRoom = useCreateColdRoom();
   const updateColdRoom = useUpdateColdRoom();
+  const deleteColdRoom = useDeleteColdRoom();
   
   const [isAddRoomOpen, setIsAddRoomOpen] = useState(false);
   const [editingRoom, setEditingRoom] = useState<ColdRoom | null>(null);
+  const [deletingRoom, setDeletingRoom] = useState<ColdRoom | null>(null);
   
   // New room form state
   const [newRoomName, setNewRoomName] = useState('');
@@ -79,6 +91,12 @@ export default function Settings() {
       id: room.id,
       is_active: !room.is_active,
     });
+  };
+
+  const handleDeleteRoom = async () => {
+    if (!deletingRoom) return;
+    await deleteColdRoom.mutateAsync(deletingRoom.id);
+    setDeletingRoom(null);
   };
 
   const resetNewRoomForm = () => {
@@ -175,6 +193,14 @@ export default function Settings() {
                       onClick={() => handleToggleRoomActive(room)}
                     >
                       {room.is_active ? <X className="h-4 w-4" /> : <Check className="h-4 w-4" />}
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                      onClick={() => setDeletingRoom(room)}
+                    >
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>
@@ -459,6 +485,28 @@ export default function Settings() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Cold Room Confirmation */}
+      <AlertDialog open={!!deletingRoom} onOpenChange={(open) => !open && setDeletingRoom(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer cette chambre froide ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Êtes-vous sûr de vouloir supprimer <strong>{deletingRoom?.name}</strong> ?
+              Cette action est irréversible. Les enregistrements de température associés seront également supprimés.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteRoom}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteColdRoom.isPending ? 'Suppression...' : 'Supprimer'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

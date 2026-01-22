@@ -74,10 +74,6 @@ export function useCreateLabelData() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['label-data'] });
-      toast({
-        title: 'Données étiquette créées',
-        description: 'Les données d\'étiquette ont été enregistrées.',
-      });
     },
     onError: (error) => {
       toast({
@@ -107,10 +103,6 @@ export function useUpdateLabelData() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['label-data'] });
-      toast({
-        title: 'Données mises à jour',
-        description: 'Les modifications ont été enregistrées.',
-      });
     },
     onError: (error) => {
       toast({
@@ -139,10 +131,6 @@ export function useUpsertLabelData() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['label-data'] });
-      toast({
-        title: 'Données enregistrées',
-        description: 'Les données d\'étiquette ont été sauvegardées.',
-      });
     },
     onError: (error) => {
       toast({

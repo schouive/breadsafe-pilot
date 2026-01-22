@@ -201,7 +201,6 @@ export default function NewRecipe() {
         });
       }
 
-      toast.success('Recette créée avec succès');
       navigate('/products/recipes');
     } catch (error) {
       console.error('Error creating recipe:', error);

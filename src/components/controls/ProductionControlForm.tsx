@@ -70,7 +70,6 @@ export function ProductionControlForm({ onSuccess, onCancel }: ProductionControl
       // Invalidate cache to refresh the list
       await queryClient.invalidateQueries({ queryKey: ['control_records'] });
 
-      toast.success('Contrôle de production enregistré');
       onSuccess?.();
       navigate('/haccp/controls/CP_PRODUCTION');
     } catch (error) {

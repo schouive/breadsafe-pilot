@@ -296,6 +296,7 @@ export function useDuplicateRecipe() {
 export function useRecipeIngredients(recipeId: string | undefined) {
   return useQuery({
     queryKey: ['recipe-ingredients', recipeId],
+    staleTime: 0, // Force fresh data
     queryFn: async () => {
       if (!recipeId) return [];
       

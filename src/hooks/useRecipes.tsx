@@ -121,10 +121,6 @@ export function useCreateRecipe() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['recipes'] });
-      toast({
-        title: 'Recette créée',
-        description: 'La recette a été ajoutée avec succès.',
-      });
     },
     onError: (error) => {
       toast({
@@ -154,10 +150,6 @@ export function useUpdateRecipe() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['recipes'] });
-      toast({
-        title: 'Recette modifiée',
-        description: 'Les modifications ont été enregistrées.',
-      });
     },
     onError: (error) => {
       toast({
@@ -184,10 +176,6 @@ export function useDeleteRecipe() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['recipes'] });
-      toast({
-        title: 'Recette supprimée',
-        description: 'La recette a été supprimée.',
-      });
     },
     onError: (error) => {
       toast({
@@ -277,10 +265,6 @@ export function useDuplicateRecipe() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['recipes'] });
-      toast({
-        title: 'Recette dupliquée',
-        description: 'La copie de la recette a été créée avec succès.',
-      });
     },
     onError: (error) => {
       toast({
@@ -507,10 +491,6 @@ export function useCreateProductSheet() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['product-sheets'] });
-      toast({
-        title: 'Fiche produit créée',
-        description: 'La fiche produit a été ajoutée avec succès.',
-      });
     },
     onError: (error) => {
       toast({
@@ -540,10 +520,6 @@ export function useUpdateProductSheet() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['product-sheets'] });
-      toast({
-        title: 'Fiche produit modifiée',
-        description: 'Les modifications ont été enregistrées.',
-      });
     },
     onError: (error) => {
       toast({
@@ -570,10 +546,6 @@ export function useDeleteProductSheet() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['product-sheets'] });
-      toast({
-        title: 'Fiche produit supprimée',
-        description: 'La fiche produit a été supprimée.',
-      });
     },
     onError: (error) => {
       toast({

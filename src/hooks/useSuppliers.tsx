@@ -96,7 +96,6 @@ export function useCreateSupplier() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['suppliers'] });
-      toast.success('Fournisseur ajouté');
     },
     onError: (error) => {
       toast.error('Erreur lors de l\'ajout du fournisseur');
@@ -122,7 +121,6 @@ export function useUpdateSupplier() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['suppliers'] });
-      toast.success('Fournisseur mis à jour');
     },
     onError: (error) => {
       toast.error('Erreur lors de la mise à jour');
@@ -145,7 +143,6 @@ export function useDeleteSupplier() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['suppliers'] });
-      toast.success('Fournisseur supprimé');
     },
     onError: (error) => {
       toast.error('Erreur lors de la suppression. Ce fournisseur est peut-être utilisé par des matières premières.');
@@ -237,7 +234,6 @@ export function useCreateRawMaterial() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['raw_materials'] });
-      toast.success('Matière première ajoutée');
     },
     onError: (error) => {
       toast.error('Erreur lors de l\'ajout de la matière première');
@@ -263,7 +259,6 @@ export function useUpdateRawMaterial() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['raw_materials'] });
-      toast.success('Matière première mise à jour');
     },
     onError: (error) => {
       toast.error('Erreur lors de la mise à jour');
@@ -286,7 +281,6 @@ export function useDeleteRawMaterial() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['raw_materials'] });
-      toast.success('Matière première supprimée');
     },
     onError: (error) => {
       toast.error('Erreur lors de la suppression. Cette matière première est peut-être utilisée dans des recettes.');

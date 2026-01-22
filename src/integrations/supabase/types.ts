@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      audit_logs: {
+        Row: {
+          action: string
+          created_at: string
+          entity_id: string | null
+          entity_type: string
+          id: string
+          ip_address: string | null
+          new_values: Json | null
+          old_values: Json | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          entity_id?: string | null
+          entity_type: string
+          id?: string
+          ip_address?: string | null
+          new_values?: Json | null
+          old_values?: Json | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string
+          id?: string
+          ip_address?: string | null
+          new_values?: Json | null
+          old_values?: Json | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       carton_labels: {
         Row: {
           created_at: string
@@ -541,6 +580,8 @@ export type Database = {
           email: string
           full_name: string
           id: string
+          is_active: boolean
+          last_sign_in_at: string | null
           updated_at: string
         }
         Insert: {
@@ -549,6 +590,8 @@ export type Database = {
           email: string
           full_name: string
           id: string
+          is_active?: boolean
+          last_sign_in_at?: string | null
           updated_at?: string
         }
         Update: {
@@ -557,6 +600,8 @@ export type Database = {
           email?: string
           full_name?: string
           id?: string
+          is_active?: boolean
+          last_sign_in_at?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -975,6 +1020,13 @@ export type Database = {
       }
     }
     Functions: {
+      has_any_role: {
+        Args: {
+          _roles: Database["public"]["Enums"]["app_role"][]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

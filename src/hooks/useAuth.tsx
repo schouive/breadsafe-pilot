@@ -1,14 +1,14 @@
 import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-
-type AppRole = 'operator' | 'quality_assistant' | 'admin';
+import { AppRole, hasModuleAccess, hasPermission, RolePermissions } from '@/types/roles';
 
 interface Profile {
   id: string;
   full_name: string;
   email: string;
   avatar_url: string | null;
+  is_active?: boolean;
 }
 
 interface AuthContextType {
@@ -21,6 +21,8 @@ interface AuthContextType {
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   hasRole: (role: AppRole) => boolean;
+  canAccessModule: (module: keyof RolePermissions['modules'], access?: 'read' | 'write' | 'full') => boolean;
+  canPerform: (permission: keyof Omit<RolePermissions, 'modules'>) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -124,6 +126,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const hasRole = (role: AppRole) => roles.includes(role);
+  
+  const canAccessModule = (
+    module: keyof RolePermissions['modules'], 
+    access: 'read' | 'write' | 'full' = 'read'
+  ) => hasModuleAccess(roles, module, access);
+  
+  const canPerform = (permission: keyof Omit<RolePermissions, 'modules'>) => 
+    hasPermission(roles, permission);
 
   return (
     <AuthContext.Provider
@@ -137,6 +147,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         signUp,
         signOut,
         hasRole,
+        canAccessModule,
+        canPerform,
       }}
     >
       {children}

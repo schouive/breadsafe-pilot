@@ -40,6 +40,10 @@ export function RecipeDetailSheet({ open, onOpenChange, recipe }: RecipeDetailSh
   
   const [isAddIngredientOpen, setIsAddIngredientOpen] = useState(false);
 
+  // Debug: log what data the component receives
+  console.log('RecipeDetailSheet - recipe.id:', recipe?.id);
+  console.log('RecipeDetailSheet - ingredients received:', ingredients);
+
   if (!recipe) return null;
 
   // Collect all unique allergens from ingredients

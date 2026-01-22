@@ -128,6 +128,8 @@ export default function StorageTemperatures() {
     link.download = `temperatures_stockage_${format(new Date(), 'yyyy-MM-dd')}.csv`;
     link.click();
     URL.revokeObjectURL(url);
+    
+    toast.success('Export CSV téléchargé');
   };
 
   // Export audit report
@@ -199,6 +201,8 @@ Ce document fait partie des enregistrements obligatoires pour la certification I
     link.download = `rapport_audit_temperatures_${format(new Date(), 'yyyy-MM-dd')}.txt`;
     link.click();
     URL.revokeObjectURL(url);
+    
+    toast.success('Rapport d\'audit téléchargé');
   };
 
   const selectedRoomData = coldRooms?.find(r => r.id === selectedRoom);

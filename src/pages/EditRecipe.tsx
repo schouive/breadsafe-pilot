@@ -277,6 +277,7 @@ export default function EditRecipe() {
         });
       }
 
+      toast.success('Recette modifiée avec succès');
       navigate('/products/recipes');
     } catch (error) {
       console.error('Error updating recipe:', error);

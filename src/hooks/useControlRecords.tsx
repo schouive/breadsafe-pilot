@@ -134,6 +134,7 @@ export function useCreateControlRecord() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['control_records'] });
+      toast.success('Contrôle enregistré');
     },
     onError: (error) => {
       console.error('Error saving control:', error);
@@ -209,6 +210,7 @@ export function useCreateReceptionControl() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['control_records'] });
+      toast.success('Contrôle réception enregistré');
     },
     onError: (error) => {
       console.error('Error saving reception control:', error);
@@ -237,6 +239,7 @@ export function useDeleteControlRecord() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['control_records'] });
+      toast.success('Contrôle supprimé');
     },
     onError: (error) => {
       console.error('Error deleting control:', error);
@@ -277,6 +280,7 @@ export function useUpdateControlRecord() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['control_records'] });
+      toast.success('Contrôle mis à jour');
     },
     onError: (error) => {
       console.error('Error updating control:', error);

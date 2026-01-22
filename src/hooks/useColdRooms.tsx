@@ -125,6 +125,7 @@ export function useCreateColdRoom() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cold_rooms'] });
       queryClient.invalidateQueries({ queryKey: ['cold_rooms_all'] });
+      toast.success('Chambre froide ajoutée');
     },
     onError: (error) => {
       toast.error('Erreur lors de l\'ajout: ' + error.message);
@@ -150,6 +151,7 @@ export function useUpdateColdRoom() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cold_rooms'] });
       queryClient.invalidateQueries({ queryKey: ['cold_rooms_all'] });
+      toast.success('Chambre froide mise à jour');
     },
     onError: (error) => {
       toast.error('Erreur lors de la mise à jour: ' + error.message);
@@ -179,6 +181,7 @@ export function useRecordTemperature() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['storage_temperature_records'] });
+      toast.success('Température enregistrée');
     },
     onError: (error) => {
       toast.error('Erreur lors de l\'enregistrement: ' + error.message);

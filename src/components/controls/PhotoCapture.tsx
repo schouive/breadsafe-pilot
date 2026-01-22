@@ -85,6 +85,7 @@ export function PhotoCapture({
     const url = await uploadPhoto(file);
     if (url) {
       onPhotosChange([...photos, url]);
+      toast.success('Photo ajoutée');
     } else {
       toast.error('Erreur lors de l\'envoi de la photo');
     }
@@ -95,6 +96,7 @@ export function PhotoCapture({
   const handleRemovePhoto = (index: number) => {
     const newPhotos = photos.filter((_, i) => i !== index);
     onPhotosChange(newPhotos);
+    toast.success('Photo supprimée');
   };
 
   const handleCameraPhotos = (urls: string[]) => {

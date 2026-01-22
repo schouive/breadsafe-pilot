@@ -232,6 +232,10 @@ export function CameraCapture({
       }
     }
 
+    if (uploadedUrls.length > 0) {
+      toast.success(`${uploadedUrls.length} photo(s) ajoutée(s)`);
+    }
+
     if (failedCount > 0) {
       toast.error(`${failedCount} photo(s) n'ont pas pu être envoyée(s)`);
     }

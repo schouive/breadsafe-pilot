@@ -158,6 +158,7 @@ export function useUpdateNonConformity() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['non_conformities'] });
+      toast.success('Non-conformité mise à jour');
     },
     onError: (error) => {
       toast.error('Erreur lors de la mise à jour: ' + error.message);

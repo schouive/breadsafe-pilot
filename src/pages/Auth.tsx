@@ -62,6 +62,7 @@ export default function Auth() {
         toast.error(error.message);
       }
     } else {
+      toast.success('Connexion réussie');
       navigate('/');
     }
   };
@@ -78,6 +79,7 @@ export default function Auth() {
         toast.error(error.message);
       }
     } else {
+      toast.success('Compte créé avec succès');
       navigate('/');
     }
   };

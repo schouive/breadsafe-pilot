@@ -213,6 +213,10 @@ export function useCreateCartonLabel() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['carton-labels'] });
+      toast({
+        title: 'Étiquette carton créée',
+        description: 'L\'étiquette a été créée avec succès.',
+      });
     },
     onError: (error) => {
       toast({
@@ -242,6 +246,10 @@ export function useUpdateCartonLabel() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['carton-labels'] });
+      toast({
+        title: 'Étiquette modifiée',
+        description: 'Les modifications ont été enregistrées.',
+      });
     },
     onError: (error) => {
       toast({
@@ -298,6 +306,10 @@ export function useValidateCartonLabel() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['carton-labels'] });
+      toast({
+        title: 'Étiquette validée',
+        description: 'L\'étiquette est maintenant imprimable.',
+      });
     },
     onError: (error) => {
       toast({
@@ -324,6 +336,10 @@ export function useDeleteCartonLabel() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['carton-labels'] });
+      toast({
+        title: 'Étiquette supprimée',
+        description: 'L\'étiquette a été supprimée.',
+      });
     },
     onError: (error) => {
       toast({
@@ -413,6 +429,10 @@ export function useRefreshCartonLabelSnapshot() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['carton-labels'] });
+      toast({
+        title: 'Données actualisées',
+        description: 'Les données de la fiche technique ont été mises à jour.',
+      });
     },
     onError: (error) => {
       toast({

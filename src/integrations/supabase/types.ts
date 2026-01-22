@@ -984,7 +984,12 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "operator" | "quality_assistant" | "admin"
+      app_role:
+        | "operator"
+        | "quality_assistant"
+        | "admin"
+        | "bureau_methodes"
+        | "auditor"
       control_point_code:
         | "CP_RECEPTION"
         | "CP5_CORPS_ETRANGER"
@@ -1123,7 +1128,13 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["operator", "quality_assistant", "admin"],
+      app_role: [
+        "operator",
+        "quality_assistant",
+        "admin",
+        "bureau_methodes",
+        "auditor",
+      ],
       control_point_code: [
         "CP_RECEPTION",
         "CP5_CORPS_ETRANGER",

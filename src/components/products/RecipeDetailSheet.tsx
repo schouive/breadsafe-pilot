@@ -154,7 +154,7 @@ export function RecipeDetailSheet({ open, onOpenChange, recipe }: RecipeDetailSh
                     </TableRow>
                   </TableHeader>
                 <TableBody>
-                    {ingredients?.map((ingredient) => {
+                    {[...(ingredients || [])].sort((a, b) => (b.baker_percentage || 0) - (a.baker_percentage || 0)).map((ingredient) => {
                       // Check if this is an intermediate recipe ingredient
                       const isIntermediate = !!ingredient.ingredient_recipe_id;
                       // Debug log to verify data structure

@@ -319,13 +319,17 @@ export function useRecipeIngredients(recipeId: string | undefined) {
       const piIngredients = ingredients.filter(ing => ing.ingredient_recipe_id);
       const piRecipeIds = piIngredients.map(ing => ing.ingredient_recipe_id).filter(Boolean) as string[];
       
+      console.log('PI Recipe IDs to fetch:', piRecipeIds);
+      
       let recipesMap: Record<string, { id: string; name: string; code: string | null; recipe_type: string }> = {};
       
       if (piRecipeIds.length > 0) {
-        const { data: recipes } = await supabase
+        const { data: recipes, error: recipesError } = await supabase
           .from('recipes')
           .select('id, name, code, recipe_type')
           .in('id', piRecipeIds);
+        
+        console.log('Fetched PI recipes:', recipes, 'Error:', recipesError);
         
         if (recipes) {
           recipesMap = recipes.reduce((acc, r) => {
@@ -336,10 +340,14 @@ export function useRecipeIngredients(recipeId: string | undefined) {
       }
       
       // Merge ingredient_recipe data into ingredients
-      return ingredients.map(ing => ({
+      const result = ingredients.map(ing => ({
         ...ing,
         ingredient_recipe: ing.ingredient_recipe_id ? recipesMap[ing.ingredient_recipe_id] || null : null,
       }));
+      
+      console.log('Final ingredients with PI data:', result.filter(i => i.ingredient_recipe_id));
+      
+      return result;
     },
     enabled: !!recipeId,
   });

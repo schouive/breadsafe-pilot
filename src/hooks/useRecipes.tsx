@@ -299,7 +299,7 @@ export function useRecipeIngredients(recipeId: string | undefined) {
     queryFn: async () => {
       if (!recipeId) return [];
       
-      // Fetch ingredients with raw materials AND intermediate recipes via direct join
+      // Fetch ingredients with raw materials
       const { data: ingredients, error } = await supabase
         .from('recipe_ingredients')
         .select(`
@@ -307,20 +307,39 @@ export function useRecipeIngredients(recipeId: string | undefined) {
           raw_materials (
             *,
             suppliers (name)
-          ),
-          ingredient_recipe:recipes!recipe_ingredients_ingredient_recipe_id_fkey (
-            id,
-            name,
-            code,
-            recipe_type
           )
         `)
         .eq('recipe_id', recipeId)
         .order('order_index');
       
       if (error) throw error;
+      if (!ingredients) return [];
       
-      return ingredients || [];
+      // Fetch intermediate recipe names separately for PI ingredients
+      const piIngredients = ingredients.filter(ing => ing.ingredient_recipe_id);
+      const piRecipeIds = piIngredients.map(ing => ing.ingredient_recipe_id).filter(Boolean) as string[];
+      
+      let recipesMap: Record<string, { id: string; name: string; code: string | null; recipe_type: string }> = {};
+      
+      if (piRecipeIds.length > 0) {
+        const { data: recipes } = await supabase
+          .from('recipes')
+          .select('id, name, code, recipe_type')
+          .in('id', piRecipeIds);
+        
+        if (recipes) {
+          recipesMap = recipes.reduce((acc, r) => {
+            acc[r.id] = r;
+            return acc;
+          }, {} as typeof recipesMap);
+        }
+      }
+      
+      // Merge ingredient_recipe data into ingredients
+      return ingredients.map(ing => ({
+        ...ing,
+        ingredient_recipe: ing.ingredient_recipe_id ? recipesMap[ing.ingredient_recipe_id] || null : null,
+      }));
     },
     enabled: !!recipeId,
   });

@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Calendar, CheckCircle, XCircle, AlertTriangle, Thermometer, Snowflake, Camera, ChevronRight, Clock, Package } from 'lucide-react';
+import { ArrowLeft, Plus, Calendar, CheckCircle, XCircle, AlertTriangle, Thermometer, Snowflake, Camera, ChevronRight, Clock, Package, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -16,6 +16,7 @@ import { CONTROL_POINTS, ControlStatus } from '@/types/haccp';
 import { useAuth } from '@/hooks/useAuth';
 import { useControlRecordsByCode, useCreateControlRecord, useCreateReceptionControl, ReceptionFormData, ControlRecordFromDB } from '@/hooks/useControlRecords';
 import { useStorageTemperatureRecordsWithRooms, StorageTemperatureRecordWithRoom } from '@/hooks/useColdRooms';
+import { useOperatorNames } from '@/hooks/useOperatorNames';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
@@ -67,6 +68,20 @@ export default function ControlHistory() {
   
   // Fetch storage temperature records for storage control
   const { data: storageRecords, isLoading: storageLoading } = useStorageTemperatureRecordsWithRooms(50);
+
+  // Get all operator IDs for name lookup
+  const operatorIds = useMemo(() => {
+    const ids: string[] = [];
+    if (records) {
+      records.forEach(r => r.operator_id && ids.push(r.operator_id));
+    }
+    if (storageRecords) {
+      storageRecords.forEach(r => r.operator_id && ids.push(r.operator_id));
+    }
+    return ids;
+  }, [records, storageRecords]);
+
+  const { data: operatorNames } = useOperatorNames(operatorIds);
   
   const createControlRecord = useCreateControlRecord();
   const createReceptionControl = useCreateReceptionControl();
@@ -221,6 +236,12 @@ export default function ControlHistory() {
                               {record.notes}
                             </p>
                           )}
+                          {operatorNames?.[record.operator_id] && (
+                            <div className="flex items-center gap-1.5 mt-1.5 text-sm text-muted-foreground">
+                              <User className="h-3.5 w-3.5" />
+                              <span>{operatorNames[record.operator_id]}</span>
+                            </div>
+                          )}
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
@@ -275,6 +296,12 @@ export default function ControlHistory() {
                               <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
                                 {record.notes}
                               </p>
+                            )}
+                            {operatorNames?.[record.operator_id] && (
+                              <div className="flex items-center gap-1.5 mt-1.5 text-sm text-muted-foreground">
+                                <User className="h-3.5 w-3.5" />
+                                <span>{operatorNames[record.operator_id]}</span>
+                              </div>
                             )}
                           </div>
                         </div>
@@ -362,6 +389,12 @@ export default function ControlHistory() {
                               {record.notes}
                             </p>
                           )}
+                          {operatorNames?.[record.operator_id] && (
+                            <div className="flex items-center gap-1.5 mt-1.5 text-sm text-muted-foreground">
+                              <User className="h-3.5 w-3.5" />
+                              <span>{operatorNames[record.operator_id]}</span>
+                            </div>
+                          )}
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
@@ -432,6 +465,12 @@ export default function ControlHistory() {
                             <p className="text-sm text-muted-foreground">
                               Fournisseur: {record.supplier}
                             </p>
+                          )}
+                          {operatorNames?.[record.operator_id] && (
+                            <div className="flex items-center gap-1.5 mt-1.5 text-sm text-muted-foreground">
+                              <User className="h-3.5 w-3.5" />
+                              <span>{operatorNames[record.operator_id]}</span>
+                            </div>
                           )}
                         </div>
                       </div>

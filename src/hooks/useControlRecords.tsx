@@ -261,6 +261,9 @@ export function useUpdateControlRecord() {
         status: ControlStatus;
         temperature: number | null;
         notes: string | null;
+        lot_number: string | null;
+        supplier: string | null;
+        product: string | null;
         temperature_conforme: boolean | null;
         integrite_conforme: boolean | null;
         integrite_notes: string | null;
@@ -280,6 +283,7 @@ export function useUpdateControlRecord() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['control_records'] });
+      queryClient.invalidateQueries({ queryKey: ['storage_temperature_records'] });
       toast.success('Contrôle mis à jour');
     },
     onError: (error) => {

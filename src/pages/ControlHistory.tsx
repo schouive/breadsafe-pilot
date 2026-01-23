@@ -9,6 +9,7 @@ import { ReceptionControlForm } from '@/components/controls/ReceptionControlForm
 import { StorageControlForm, StorageFormData } from '@/components/controls/StorageControlForm';
 import { ProductionControlForm } from '@/components/controls/ProductionControlForm';
 import { ControlDetailModal } from '@/components/controls/ControlDetailModal';
+import { ControlEditForm } from '@/components/controls/ControlEditForm';
 import { CONTROL_POINTS, ControlPoint, ControlStatus } from '@/types/haccp';
 import { useAuth } from '@/hooks/useAuth';
 import { useControlRecordsByCode, useCreateControlRecord, useCreateReceptionControl, ReceptionFormData, ControlRecordFromDB } from '@/hooks/useControlRecords';
@@ -50,6 +51,7 @@ export default function ControlHistory() {
   const [isStorageFormOpen, setIsStorageFormOpen] = useState(false);
   const [isProductionFormOpen, setIsProductionFormOpen] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState<ControlRecordFromDB | null>(null);
+  const [editingRecord, setEditingRecord] = useState<ControlRecordFromDB | null>(null);
 
   const controlPoint = CONTROL_POINTS.find(cp => cp.code === code);
   const isStorageControl = code === 'CP_STOCKAGE';
@@ -492,6 +494,17 @@ export default function ControlHistory() {
         record={selectedRecord}
         isOpen={selectedRecord !== null}
         onClose={() => setSelectedRecord(null)}
+        onEdit={(record) => {
+          setSelectedRecord(null);
+          setEditingRecord(record);
+        }}
+      />
+
+      {/* Control Edit Form */}
+      <ControlEditForm
+        record={editingRecord}
+        isOpen={editingRecord !== null}
+        onClose={() => setEditingRecord(null)}
       />
     </div>
   );

@@ -27,6 +27,7 @@ export interface ControlRecordFromDB {
   allergenes_conformes: boolean | null;
   allergenes_notes: string | null;
   raw_material_id: string | null;
+  corps_etranger_detecte: boolean | null;
   created_at: string;
 }
 
@@ -272,6 +273,7 @@ export function useUpdateControlRecord() {
         dlc_notes: string | null;
         allergenes_conformes: boolean | null;
         allergenes_notes: string | null;
+        corps_etranger_detecte: boolean | null;
       }>;
     }) => {
       const { error } = await supabase

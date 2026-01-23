@@ -9,7 +9,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { TemperatureInput } from '@/components/ui/TemperatureInput';
 import { ControlRecordFromDB, useUpdateControlRecord } from '@/hooks/useControlRecords';
-import { ControlStatus, CONTROL_POINTS } from '@/types/haccp';
+import { ControlStatus } from '@/types/haccp';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { CalendarIcon, CheckCircle, AlertTriangle, XCircle, Loader2 } from 'lucide-react';
@@ -57,13 +57,16 @@ export function ControlEditForm({ record, isOpen, onClose }: ControlEditFormProp
   const [dlcNotes, setDlcNotes] = useState('');
   const [allergenesConformes, setAllergenesConformes] = useState<boolean | null>(null);
   const [allergenesNotes, setAllergenesNotes] = useState('');
+  const [corpsEtrangerDetecte, setCorpsEtrangerDetecte] = useState<boolean | null>(null);
 
   const updateRecord = useUpdateControlRecord();
 
   // Determine control type
   const isReceptionControl = record?.control_point_code === 'CP_RECEPTION';
   const isCP8Control = record?.control_point_code === 'CP8_DLC_PERIMEE';
-  const isTemperatureControl = isReceptionControl || record?.control_point_code === 'CP5_CORPS_ETRANGER';
+  const isCP5Control = record?.control_point_code === 'CP5_CORPS_ETRANGER';
+  const isProductionControl = record?.control_point_code === 'CP_PRODUCTION';
+  const hasTemperature = isReceptionControl || record?.temperature !== null;
 
   // Populate form with record data
   useEffect(() => {
@@ -82,6 +85,7 @@ export function ControlEditForm({ record, isOpen, onClose }: ControlEditFormProp
       setDlcNotes(record.dlc_notes || '');
       setAllergenesConformes(record.allergenes_conformes);
       setAllergenesNotes(record.allergenes_notes || '');
+      setCorpsEtrangerDetecte(record.corps_etranger_detecte);
     }
   }, [record]);
 
@@ -92,6 +96,13 @@ export function ControlEditForm({ record, isOpen, onClose }: ControlEditFormProp
       setStatus(newStatus);
     }
   }, [dlcDate, isCP8Control]);
+
+  // Auto-calculate CP5 status when corps étranger changes
+  useEffect(() => {
+    if (isCP5Control && corpsEtrangerDetecte !== null) {
+      setStatus(corpsEtrangerDetecte ? 'nonconforme' : 'conforme');
+    }
+  }, [corpsEtrangerDetecte, isCP5Control]);
 
   const handleSubmit = async () => {
     if (!record) return;
@@ -115,6 +126,7 @@ export function ControlEditForm({ record, isOpen, onClose }: ControlEditFormProp
         dlc_notes: dlcNotes || null,
         allergenes_conformes: allergenesConformes,
         allergenes_notes: allergenesNotes || null,
+        corps_etranger_detecte: corpsEtrangerDetecte,
       },
     });
     onClose();
@@ -130,8 +142,8 @@ export function ControlEditForm({ record, isOpen, onClose }: ControlEditFormProp
         </DialogHeader>
 
         <div className="space-y-4 py-4">
-          {/* Status */}
-          {!isCP8Control && (
+          {/* Status - hidden for CP8 and CP5 (auto-calculated) */}
+          {!isCP8Control && !isCP5Control && (
             <div className="space-y-2">
               <Label>Statut</Label>
               <RadioGroup
@@ -163,7 +175,7 @@ export function ControlEditForm({ record, isOpen, onClose }: ControlEditFormProp
           )}
 
           {/* Temperature */}
-          {(isTemperatureControl || record.temperature !== null) && (
+          {hasTemperature && (
             <div className="space-y-2">
               <Label>Température (°C)</Label>
               <TemperatureInput
@@ -171,6 +183,37 @@ export function ControlEditForm({ record, isOpen, onClose }: ControlEditFormProp
                 onChange={setTemperatureStr}
                 showUnit
               />
+            </div>
+          )}
+
+          {/* CP5 - Corps étranger */}
+          {isCP5Control && (
+            <div className="space-y-2">
+              <Label>Corps étranger détecté ?</Label>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant={corpsEtrangerDetecte === false ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setCorpsEtrangerDetecte(false)}
+                  className={corpsEtrangerDetecte === false ? 'bg-success hover:bg-success/90' : ''}
+                >
+                  Non (Conforme)
+                </Button>
+                <Button
+                  type="button"
+                  variant={corpsEtrangerDetecte === true ? 'destructive' : 'outline'}
+                  size="sm"
+                  onClick={() => setCorpsEtrangerDetecte(true)}
+                >
+                  Oui (Non-conforme)
+                </Button>
+              </div>
+              {corpsEtrangerDetecte && (
+                <p className="text-xs text-destructive">
+                  Action: Éjecter, chercher le corps étranger et le conserver
+                </p>
+              )}
             </div>
           )}
 

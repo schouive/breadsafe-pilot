@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Calendar, User, CheckCircle, XCircle, AlertTriangle, Thermometer, Snowflake, Camera, ChevronRight, Clock, Package } from 'lucide-react';
+import { ArrowLeft, Plus, Calendar, CheckCircle, XCircle, AlertTriangle, Thermometer, Snowflake, Camera, ChevronRight, Clock, Package } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -10,10 +10,12 @@ import { StorageControlForm, StorageFormData } from '@/components/controls/Stora
 import { ProductionControlForm } from '@/components/controls/ProductionControlForm';
 import { ControlDetailModal } from '@/components/controls/ControlDetailModal';
 import { ControlEditForm } from '@/components/controls/ControlEditForm';
-import { CONTROL_POINTS, ControlPoint, ControlStatus } from '@/types/haccp';
+import { StorageRecordDetailModal } from '@/components/controls/StorageRecordDetailModal';
+import { StorageRecordEditForm } from '@/components/controls/StorageRecordEditForm';
+import { CONTROL_POINTS, ControlStatus } from '@/types/haccp';
 import { useAuth } from '@/hooks/useAuth';
 import { useControlRecordsByCode, useCreateControlRecord, useCreateReceptionControl, ReceptionFormData, ControlRecordFromDB } from '@/hooks/useControlRecords';
-import { useStorageTemperatureRecordsWithRooms } from '@/hooks/useColdRooms';
+import { useStorageTemperatureRecordsWithRooms, StorageTemperatureRecordWithRoom } from '@/hooks/useColdRooms';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
@@ -52,6 +54,8 @@ export default function ControlHistory() {
   const [isProductionFormOpen, setIsProductionFormOpen] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState<ControlRecordFromDB | null>(null);
   const [editingRecord, setEditingRecord] = useState<ControlRecordFromDB | null>(null);
+  const [selectedStorageRecord, setSelectedStorageRecord] = useState<StorageTemperatureRecordWithRoom | null>(null);
+  const [editingStorageRecord, setEditingStorageRecord] = useState<StorageTemperatureRecordWithRoom | null>(null);
 
   const controlPoint = CONTROL_POINTS.find(cp => cp.code === code);
   const isStorageControl = code === 'CP_STOCKAGE';
@@ -182,7 +186,11 @@ export default function ControlHistory() {
                 const StatusIcon = status.icon;
                 
                 return (
-                  <Card key={record.id} className={cn("p-4 border", status.class)}>
+                  <Card 
+                    key={record.id} 
+                    onClick={() => setSelectedStorageRecord(record)}
+                    className={cn("p-4 border cursor-pointer hover:shadow-md transition-shadow", status.class)}
+                  >
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex items-start gap-3">
                         <StatusIcon className="h-5 w-5 mt-0.5 shrink-0" />
@@ -215,14 +223,17 @@ export default function ControlHistory() {
                           )}
                         </div>
                       </div>
-                      <div className="text-right text-sm text-muted-foreground shrink-0">
-                        <div className="flex items-center gap-1">
-                          <Calendar className="h-3.5 w-3.5" />
-                          {format(new Date(record.recorded_at), 'dd MMM yyyy', { locale: fr })}
+                      <div className="flex items-center gap-2">
+                        <div className="text-right text-sm text-muted-foreground shrink-0">
+                          <div className="flex items-center gap-1">
+                            <Calendar className="h-3.5 w-3.5" />
+                            {format(new Date(record.recorded_at), 'dd MMM yyyy', { locale: fr })}
+                          </div>
+                          <div className="mt-0.5">
+                            {format(new Date(record.recorded_at), 'HH:mm', { locale: fr })}
+                          </div>
                         </div>
-                        <div className="mt-0.5">
-                          {format(new Date(record.recorded_at), 'HH:mm', { locale: fr })}
-                        </div>
+                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
                       </div>
                     </div>
                   </Card>
@@ -505,6 +516,24 @@ export default function ControlHistory() {
         record={editingRecord}
         isOpen={editingRecord !== null}
         onClose={() => setEditingRecord(null)}
+      />
+
+      {/* Storage Record Detail Modal */}
+      <StorageRecordDetailModal
+        record={selectedStorageRecord}
+        isOpen={selectedStorageRecord !== null}
+        onClose={() => setSelectedStorageRecord(null)}
+        onEdit={(record) => {
+          setSelectedStorageRecord(null);
+          setEditingStorageRecord(record);
+        }}
+      />
+
+      {/* Storage Record Edit Form */}
+      <StorageRecordEditForm
+        record={editingStorageRecord}
+        isOpen={editingStorageRecord !== null}
+        onClose={() => setEditingStorageRecord(null)}
       />
     </div>
   );

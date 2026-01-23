@@ -77,7 +77,7 @@ export default function Dashboard() {
     timestamp: new Date(record.recorded_at),
     operatorId: record.operator_id,
     operatorName: 'Opérateur',
-    status: record.is_conforme ? 'conforme' as ControlStatus : 'nonconforme' as ControlStatus,
+    status: record.status as ControlStatus,
     value: record.temperature,
     notes: record.notes,
     coldRoomName: record.cold_rooms?.name,

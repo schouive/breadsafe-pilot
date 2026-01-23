@@ -214,3 +214,61 @@ export function useRecordTemperature() {
     },
   });
 }
+
+export function useUpdateStorageTemperatureRecord() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ id, data }: { 
+      id: string; 
+      data: { 
+        temperature?: number; 
+        is_conforme?: boolean;
+        status?: 'conforme' | 'acceptable' | 'nonconforme';
+        notes?: string | null;
+        cold_room_id?: string;
+      } 
+    }) => {
+      const { data: result, error } = await supabase
+        .from('storage_temperature_records')
+        .update(data)
+        .eq('id', id)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return result;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['storage_temperature_records'] });
+      queryClient.invalidateQueries({ queryKey: ['storage_temperature_records_with_rooms'] });
+      toast.success('Relevé de température modifié');
+    },
+    onError: (error) => {
+      toast.error('Erreur lors de la modification: ' + error.message);
+    },
+  });
+}
+
+export function useDeleteStorageTemperatureRecord() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('storage_temperature_records')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['storage_temperature_records'] });
+      queryClient.invalidateQueries({ queryKey: ['storage_temperature_records_with_rooms'] });
+      toast.success('Relevé de température supprimé');
+    },
+    onError: (error) => {
+      toast.error('Erreur lors de la suppression: ' + error.message);
+    },
+  });
+}

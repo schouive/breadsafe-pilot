@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Bell, Shield, Database, Building, Snowflake, Plus, Edit2, X, Check, Trash2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Bell, Shield, Database, Building, Snowflake, Plus, Edit2, X, Check, Trash2, Download, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -42,6 +43,7 @@ import { TemperatureInput } from '@/components/ui/TemperatureInput';
 import { useAuth } from '@/hooks/useAuth';
 
 export default function Settings() {
+  const navigate = useNavigate();
   const { canPerform, canAccessModule } = useAuth();
   const { data: coldRooms, isLoading: loadingRooms } = useAllColdRooms();
   const createColdRoom = useCreateColdRoom();
@@ -340,12 +342,20 @@ export default function Settings() {
             <Button variant="outline" size="sm">Configurer</Button>
           </div>
 
-          <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
-            <div>
-              <p className="font-medium">Export des données</p>
-              <p className="text-sm text-muted-foreground">Téléchargez toutes vos données HACCP</p>
+          <div 
+            className="flex items-center justify-between p-4 bg-muted/50 rounded-lg cursor-pointer hover:bg-muted transition-colors"
+            onClick={() => navigate('/settings/export')}
+          >
+            <div className="flex items-center gap-3">
+              <Download className="h-5 w-5 text-primary" />
+              <div>
+                <p className="font-medium">Export des données</p>
+                <p className="text-sm text-muted-foreground">Garantissez la réversibilité de vos données (CSV, Excel, JSON)</p>
+              </div>
             </div>
-            <Button variant="outline" size="sm">Exporter</Button>
+            <Button variant="outline" size="sm">
+              <ArrowRight className="h-4 w-4" />
+            </Button>
           </div>
         </CardContent>
       </Card>

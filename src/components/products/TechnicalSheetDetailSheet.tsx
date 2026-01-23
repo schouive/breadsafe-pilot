@@ -30,6 +30,7 @@ import {
 import { ProductSheet } from '@/hooks/useRecipes';
 import { generateTechnicalSheetPDF, printTechnicalSheet } from '@/lib/technicalSheetPdf';
 import { generateIngredientLists, markdownToUppercase } from '@/lib/ingredientListGenerator';
+import { OptimizedImage } from '@/components/ui/OptimizedImage';
 
 interface SnapshotNutrition {
   energyKcal: number | null;
@@ -130,10 +131,12 @@ export function TechnicalSheetDetailSheet({ open, onOpenChange, sheet }: Technic
           {/* Product Image */}
           {sheetData.product_image_url && (
             <div className="w-full h-48 rounded-lg overflow-hidden border">
-              <img 
+              <OptimizedImage 
                 src={sheetData.product_image_url} 
                 alt={sheetData.product_name}
                 className="w-full h-full object-contain bg-muted/30"
+                containerClassName="w-full h-full"
+                lazy={true}
               />
             </div>
           )}

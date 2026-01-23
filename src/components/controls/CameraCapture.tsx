@@ -4,6 +4,7 @@ import { X, Check, Trash2, Camera, SwitchCamera } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { optimizeImage } from '@/lib/imageOptimization';
 
 interface CameraCaptureProps {
   onPhotosConfirmed: (urls: string[]) => void;
@@ -187,12 +188,20 @@ export function CameraCapture({
 
   const uploadPhoto = async (blob: Blob): Promise<string | null> => {
     try {
+      // Optimize image before upload (resize to 1200px, compress to 75% JPEG)
+      const optimized = await optimizeImage(blob, {
+        maxWidth: 1200,
+        maxHeight: 1200,
+        quality: 0.75,
+        format: 'jpeg'
+      });
+
       const fileName = `${userId}/${Date.now()}-${Math.random().toString(36).substring(7)}.jpg`;
 
       const { error: uploadError } = await supabase.storage
         .from('control-photos')
-        .upload(fileName, blob, {
-          cacheControl: '3600',
+        .upload(fileName, optimized.blob, {
+          cacheControl: '31536000', // Cache for 1 year (immutable content)
           upsert: false,
           contentType: 'image/jpeg'
         });

@@ -33,9 +33,9 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ControlRecordFromDB, useDeleteControlRecord } from '@/hooks/useControlRecords';
-import { CONTROL_POINTS
- } from '@/types/haccp';
+import { CONTROL_POINTS } from '@/types/haccp';
 import { Button } from '@/components/ui/button';
+import { OptimizedImage } from '@/components/ui/OptimizedImage';
 
 interface ControlDetailModalProps {
   record: ControlRecordFromDB | null;
@@ -276,10 +276,12 @@ export function ControlDetailModal({ record, isOpen, onClose, onEdit }: ControlD
                     onClick={() => openLightbox(idx)}
                     className="aspect-square rounded-lg overflow-hidden border hover:opacity-90 transition-opacity cursor-pointer"
                   >
-                    <img
+                    <OptimizedImage
                       src={photo}
                       alt={`Photo ${idx + 1}`}
                       className="w-full h-full object-cover"
+                      containerClassName="w-full h-full"
+                      lazy={true}
                     />
                   </button>
                 ))}
@@ -326,10 +328,13 @@ export function ControlDetailModal({ record, isOpen, onClose, onEdit }: ControlD
           className="max-w-[90vw] max-h-[90vh] flex items-center justify-center"
           onClick={(e) => e.stopPropagation()}
         >
-          <img
+          <OptimizedImage
             src={record.photos[currentPhotoIndex]}
             alt={`Photo ${currentPhotoIndex + 1}`}
             className="max-w-full max-h-[90vh] object-contain rounded-lg"
+            containerClassName="max-w-full max-h-[90vh]"
+            lazy={false}
+            showPlaceholder={true}
           />
         </div>
 

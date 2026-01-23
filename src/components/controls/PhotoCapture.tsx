@@ -4,6 +4,8 @@ import { Camera, X, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { CameraCapture } from './CameraCapture';
+import { optimizeImage } from '@/lib/imageOptimization';
+import { OptimizedImage } from '@/components/ui/OptimizedImage';
 
 interface PhotoCaptureProps {
   photos: string[];
@@ -26,19 +28,22 @@ export function PhotoCapture({
     if (!file) return null;
 
     try {
-      let fileExt = file.name.split('.').pop();
-      if (!fileExt || fileExt === file.name) {
-        const mimeExt = file.type.split('/')[1];
-        fileExt = mimeExt === 'jpeg' ? 'jpg' : (mimeExt || 'jpg');
-      }
-      const fileName = `${userId}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+      // Optimize image before upload (resize to 1200px, compress to 75% JPEG)
+      const optimized = await optimizeImage(file, {
+        maxWidth: 1200,
+        maxHeight: 1200,
+        quality: 0.75,
+        format: 'jpeg'
+      });
+
+      const fileName = `${userId}/${Date.now()}-${Math.random().toString(36).substring(7)}.jpg`;
 
       const { error: uploadError } = await supabase.storage
         .from('control-photos')
-        .upload(fileName, file, {
-          cacheControl: '3600',
+        .upload(fileName, optimized.blob, {
+          cacheControl: '31536000', // Cache for 1 year (immutable content)
           upsert: false,
-          contentType: file.type || 'image/jpeg'
+          contentType: 'image/jpeg'
         });
 
       if (uploadError) {
@@ -127,15 +132,17 @@ export function PhotoCapture({
                   key={index}
                   className="relative aspect-square rounded-lg overflow-hidden bg-muted group"
                 >
-                  <img
+                  <OptimizedImage
                     src={photo}
                     alt={`Photo ${index + 1}`}
                     className="w-full h-full object-cover"
+                    containerClassName="w-full h-full"
+                    lazy={true}
                   />
                   <button
                     type="button"
                     onClick={() => handleRemovePhoto(index)}
-                    className="absolute top-1 right-1 p-1 bg-destructive text-destructive-foreground rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="absolute top-1 right-1 p-1 bg-destructive text-destructive-foreground rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-20"
                   >
                     <X className="h-3 w-3" />
                   </button>

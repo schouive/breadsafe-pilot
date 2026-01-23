@@ -34,6 +34,7 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import { generateIngredientLists, markdownToUppercase } from '@/lib/ingredientListGenerator';
 import { supabase } from '@/integrations/supabase/client';
+import { optimizeImage } from '@/lib/imageOptimization';
 
 const WEIGHT_UNITS = ['g', 'kg', 'L', 'mL', 'cl'];
 
@@ -237,13 +238,23 @@ export function TechnicalSheetFormDialog({
       
       // Upload image if new one was selected
       if (imageFile) {
-        const fileExt = imageFile.name.split('.').pop();
-        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+        // Optimize image before upload
+        const optimized = await optimizeImage(imageFile, {
+          maxWidth: 1200,
+          maxHeight: 1200,
+          quality: 0.8,
+          format: 'jpeg'
+        });
+        
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.jpg`;
         const filePath = `product-images/${fileName}`;
         
         const { error: uploadError } = await supabase.storage
           .from('control-photos')
-          .upload(filePath, imageFile);
+          .upload(filePath, optimized.blob, {
+            cacheControl: '31536000', // Cache for 1 year
+            contentType: 'image/jpeg'
+          });
         
         if (uploadError) throw uploadError;
         

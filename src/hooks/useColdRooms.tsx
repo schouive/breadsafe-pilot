@@ -19,6 +19,7 @@ export interface StorageTemperatureRecord {
   operator_id: string;
   temperature: number;
   is_conforme: boolean;
+  status: 'conforme' | 'acceptable' | 'nonconforme';
   notes: string | null;
   recorded_at: string;
   created_at: string;
@@ -191,6 +192,7 @@ export function useRecordTemperature() {
       operator_id: string; 
       temperature: number; 
       is_conforme: boolean;
+      status: 'conforme' | 'acceptable' | 'nonconforme';
       notes?: string;
     }) => {
       const { data: result, error } = await supabase
@@ -204,6 +206,7 @@ export function useRecordTemperature() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['storage_temperature_records'] });
+      queryClient.invalidateQueries({ queryKey: ['storage_temperature_records_with_rooms'] });
       toast.success('Température enregistrée');
     },
     onError: (error) => {

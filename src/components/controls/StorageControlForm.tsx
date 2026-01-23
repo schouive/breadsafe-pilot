@@ -181,11 +181,14 @@ export function StorageControlForm({ controlPoint, isOpen, onClose, onSubmit }: 
           ? `${input.notes ? input.notes + ' | ' : ''}Action corrective: ${input.correctiveAction}`
           : (input.notes || undefined);
 
+        const recordStatus = status === 'pending' ? 'conforme' : status;
+        
         await recordTemperature.mutateAsync({
           cold_room_id: room.id,
           operator_id: user.id,
           temperature: tempValue,
           is_conforme: isConforme,
+          status: recordStatus,
           notes: notesWithAction,
         });
 

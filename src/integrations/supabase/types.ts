@@ -891,6 +891,7 @@ export type Database = {
           notes: string | null
           operator_id: string
           recorded_at: string
+          status: string
           temperature: number
         }
         Insert: {
@@ -901,6 +902,7 @@ export type Database = {
           notes?: string | null
           operator_id: string
           recorded_at?: string
+          status?: string
           temperature: number
         }
         Update: {
@@ -911,6 +913,7 @@ export type Database = {
           notes?: string | null
           operator_id?: string
           recorded_at?: string
+          status?: string
           temperature?: number
         }
         Relationships: [

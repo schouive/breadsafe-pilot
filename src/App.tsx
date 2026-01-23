@@ -20,6 +20,7 @@ import Planning from "./pages/Planning";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
 import StorageTemperatures from "./pages/StorageTemperatures";
+import DataExport from "./pages/DataExport";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
@@ -196,6 +197,16 @@ function AppRoutes() {
           <ProtectedRoute>
             <SettingsLayout>
               <Settings />
+            </SettingsLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/settings/export"
+        element={
+          <ProtectedRoute>
+            <SettingsLayout>
+              <DataExport />
             </SettingsLayout>
           </ProtectedRoute>
         }

@@ -14,9 +14,9 @@ interface HACCPLayoutProps {
 }
 
 const haccpNavigation = [
-  { name: 'Tableau de bord', href: '/haccp', icon: LayoutDashboard },
   { name: 'Contrôles', href: '/haccp/controls', icon: ClipboardCheck },
   { name: 'Non-conformités', href: '/haccp/non-conformities', icon: AlertTriangle, badgeKey: 'nc_count' },
+  { name: 'Tableau de bord', href: '/haccp/dashboard', icon: LayoutDashboard },
   { name: 'Températures', href: '/haccp/temperatures', icon: Thermometer },
   { name: 'Planning', href: '/haccp/planning', icon: Calendar },
   { name: 'Rapports', href: '/haccp/reports', icon: BarChart3 },

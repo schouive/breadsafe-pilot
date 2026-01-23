@@ -65,6 +65,10 @@ function AppRoutes() {
       {/* HACCP Module Routes */}
       <Route
         path="/haccp"
+        element={<Navigate to="/haccp/controls" replace />}
+      />
+      <Route
+        path="/haccp/dashboard"
         element={
           <ProtectedRoute>
             <HACCPLayout>

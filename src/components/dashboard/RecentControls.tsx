@@ -15,6 +15,7 @@ import {
   Camera
 } from 'lucide-react';
 import { ControlDetailModal } from '@/components/controls/ControlDetailModal';
+import { ControlEditForm } from '@/components/controls/ControlEditForm';
 import { ControlRecordFromDB } from '@/hooks/useControlRecords';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -62,6 +63,7 @@ const controlTypeIcons: Record<string, React.ElementType> = {
 export function RecentControls({ controls }: RecentControlsProps) {
   const [selectedRecordId, setSelectedRecordId] = useState<string | null>(null);
   const [selectedRecord, setSelectedRecord] = useState<ControlRecordFromDB | null>(null);
+  const [editingRecord, setEditingRecord] = useState<ControlRecordFromDB | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleControlClick = async (control: ControlRecord) => {
@@ -92,6 +94,12 @@ export function RecentControls({ controls }: RecentControlsProps) {
   const handleCloseModal = () => {
     setSelectedRecordId(null);
     setSelectedRecord(null);
+  };
+
+  const handleEditRecord = (record: ControlRecordFromDB) => {
+    setSelectedRecordId(null);
+    setSelectedRecord(null);
+    setEditingRecord(record);
   };
 
   return (
@@ -170,6 +178,13 @@ export function RecentControls({ controls }: RecentControlsProps) {
         record={selectedRecord}
         isOpen={selectedRecordId !== null}
         onClose={handleCloseModal}
+        onEdit={handleEditRecord}
+      />
+
+      <ControlEditForm
+        record={editingRecord}
+        isOpen={editingRecord !== null}
+        onClose={() => setEditingRecord(null)}
       />
     </>
   );

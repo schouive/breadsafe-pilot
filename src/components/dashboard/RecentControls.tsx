@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { ControlRecord, CONTROL_POINTS } from '@/types/haccp';
 import { formatDistanceToNow } from 'date-fns';
@@ -16,7 +16,11 @@ import {
 } from 'lucide-react';
 import { ControlDetailModal } from '@/components/controls/ControlDetailModal';
 import { ControlEditForm } from '@/components/controls/ControlEditForm';
+import { StorageRecordDetailModal } from '@/components/controls/StorageRecordDetailModal';
+import { StorageRecordEditForm } from '@/components/controls/StorageRecordEditForm';
 import { ControlRecordFromDB } from '@/hooks/useControlRecords';
+import { StorageTemperatureRecordWithRoom } from '@/hooks/useColdRooms';
+import { useOperatorNames } from '@/hooks/useOperatorNames';
 import { supabase } from '@/integrations/supabase/client';
 
 interface RecentControlsProps {
@@ -64,11 +68,35 @@ export function RecentControls({ controls }: RecentControlsProps) {
   const [selectedRecordId, setSelectedRecordId] = useState<string | null>(null);
   const [selectedRecord, setSelectedRecord] = useState<ControlRecordFromDB | null>(null);
   const [editingRecord, setEditingRecord] = useState<ControlRecordFromDB | null>(null);
+  const [selectedStorageRecord, setSelectedStorageRecord] = useState<StorageTemperatureRecordWithRoom | null>(null);
+  const [editingStorageRecord, setEditingStorageRecord] = useState<StorageTemperatureRecordWithRoom | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Collect all operator IDs for name lookup
+  const operatorIds = useMemo(() => {
+    return [...new Set(controls.map(c => c.operatorId).filter(Boolean))];
+  }, [controls]);
+
+  const { data: operatorNames } = useOperatorNames(operatorIds);
+
   const handleControlClick = async (control: ControlRecord) => {
-    // For storage controls, we don't have full details in control_records table
+    // For storage controls, fetch from storage_temperature_records
     if (control.controlPointCode === 'CP_STOCKAGE') {
+      setIsLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('storage_temperature_records')
+          .select('*, cold_rooms(*)')
+          .eq('id', control.id)
+          .single();
+
+        if (error) throw error;
+        setSelectedStorageRecord(data as StorageTemperatureRecordWithRoom);
+      } catch (error) {
+        console.error('Error fetching storage record details:', error);
+      } finally {
+        setIsLoading(false);
+      }
       return;
     }
 
@@ -96,10 +124,19 @@ export function RecentControls({ controls }: RecentControlsProps) {
     setSelectedRecord(null);
   };
 
+  const handleCloseStorageModal = () => {
+    setSelectedStorageRecord(null);
+  };
+
   const handleEditRecord = (record: ControlRecordFromDB) => {
     setSelectedRecordId(null);
     setSelectedRecord(null);
     setEditingRecord(record);
+  };
+
+  const handleEditStorageRecord = (record: StorageTemperatureRecordWithRoom) => {
+    setSelectedStorageRecord(null);
+    setEditingStorageRecord(record);
   };
 
   return (
@@ -118,7 +155,8 @@ export function RecentControls({ controls }: RecentControlsProps) {
               const cp = CONTROL_POINTS.find(c => c.code === control.controlPointCode);
               const StatusIcon = statusIcons[control.status];
               const status = statusConfig[control.status];
-              const isClickable = control.controlPointCode !== 'CP_STOCKAGE';
+              const isClickable = true; // All controls are now clickable
+              const displayOperatorName = operatorNames?.[control.operatorId] || control.operatorName || 'Opérateur';
               
               // Display name: for storage controls show cold room name, otherwise control point name
               const displayName = control.coldRoomName 
@@ -150,7 +188,7 @@ export function RecentControls({ controls }: RecentControlsProps) {
                       {displayName}
                     </p>
                     <p className="text-xs opacity-70 mt-0.5">
-                      {control.operatorName} • {formatDistanceToNow(control.timestamp, { 
+                      {displayOperatorName} • {formatDistanceToNow(control.timestamp, { 
                         addSuffix: true, 
                         locale: fr 
                       })}
@@ -185,6 +223,19 @@ export function RecentControls({ controls }: RecentControlsProps) {
         record={editingRecord}
         isOpen={editingRecord !== null}
         onClose={() => setEditingRecord(null)}
+      />
+
+      <StorageRecordDetailModal
+        record={selectedStorageRecord}
+        isOpen={selectedStorageRecord !== null}
+        onClose={handleCloseStorageModal}
+        onEdit={handleEditStorageRecord}
+      />
+
+      <StorageRecordEditForm
+        record={editingStorageRecord}
+        isOpen={editingStorageRecord !== null}
+        onClose={() => setEditingStorageRecord(null)}
       />
     </>
   );

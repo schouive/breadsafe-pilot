@@ -7,6 +7,7 @@ import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { HACCPLayout } from "@/components/layout/HACCPLayout";
 import { ProductsLayout } from "@/components/layout/ProductsLayout";
 import { SettingsLayout } from "@/components/layout/SettingsLayout";
+import { OfflineIndicator } from "@/components/layout/OfflineIndicator";
 import Home from "./pages/Home";
 import Dashboard from "./pages/Dashboard";
 import Controls from "./pages/Controls";
@@ -65,7 +66,7 @@ function AppRoutes() {
       {/* HACCP Module Routes */}
       <Route
         path="/haccp"
-        element={<Navigate to="/haccp/controls" replace />}
+        element={<Navigate to="/haccp/dashboard" replace />}
       />
       <Route
         path="/haccp/dashboard"
@@ -237,6 +238,7 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <AppRoutes />
+          <OfflineIndicator />
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>

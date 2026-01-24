@@ -59,7 +59,21 @@ function ModuleCard({ title, description, icon: Icon, color, bgColor, href }: Mo
 }
 
 export default function Home() {
-  const { profile, roles, signOut, canAccessModule } = useAuth();
+  const navigate = useNavigate();
+  const { profile, roles, signOut, canAccessModule, hasRole } = useAuth();
+
+  // Vérifier si c'est un opérateur uniquement
+  const isOperatorOnly = hasRole('operator') && 
+    !hasRole('admin') && 
+    !hasRole('quality_assistant') && 
+    !hasRole('bureau_methodes') && 
+    !hasRole('auditor');
+
+  // Rediriger automatiquement les opérateurs vers les contrôles
+  if (isOperatorOnly) {
+    navigate('/haccp/controls', { replace: true });
+    return null;
+  }
 
   const getInitials = (name: string) => {
     return name

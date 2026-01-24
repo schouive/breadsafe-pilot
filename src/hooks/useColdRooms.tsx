@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { addPendingRecord, cacheData, getCachedData } from '@/lib/offlineDb';
 
 export interface ColdRoom {
   id: string;
@@ -29,14 +30,24 @@ export function useColdRooms() {
   return useQuery({
     queryKey: ['cold_rooms'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('cold_rooms')
-        .select('*')
-        .eq('is_active', true)
-        .order('name');
-      
-      if (error) throw error;
-      return data as ColdRoom[];
+      try {
+        const { data, error } = await supabase
+          .from('cold_rooms')
+          .select('*')
+          .eq('is_active', true)
+          .order('name');
+        
+        if (error) throw error;
+        
+        // Cache for offline
+        await cacheData('cold_rooms_active', data);
+        
+        return data as ColdRoom[];
+      } catch (error) {
+        const cached = await getCachedData<ColdRoom[]>('cold_rooms_active');
+        if (cached) return cached;
+        throw error;
+      }
     },
   });
 }
@@ -45,13 +56,22 @@ export function useAllColdRooms() {
   return useQuery({
     queryKey: ['cold_rooms_all'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('cold_rooms')
-        .select('*')
-        .order('name');
-      
-      if (error) throw error;
-      return data as ColdRoom[];
+      try {
+        const { data, error } = await supabase
+          .from('cold_rooms')
+          .select('*')
+          .order('name');
+        
+        if (error) throw error;
+        
+        await cacheData('cold_rooms_all', data);
+        
+        return data as ColdRoom[];
+      } catch (error) {
+        const cached = await getCachedData<ColdRoom[]>('cold_rooms_all');
+        if (cached) return cached;
+        throw error;
+      }
     },
   });
 }
@@ -64,23 +84,34 @@ export function useStorageTemperatureRecords(coldRoomId?: string, limit?: number
   return useQuery({
     queryKey: ['storage_temperature_records', coldRoomId, limit],
     queryFn: async () => {
-      let query = supabase
-        .from('storage_temperature_records')
-        .select('*')
-        .order('recorded_at', { ascending: false });
+      const cacheKey = `storage_records_${coldRoomId || 'all'}_${limit || 'all'}`;
       
-      if (coldRoomId) {
-        query = query.eq('cold_room_id', coldRoomId);
+      try {
+        let query = supabase
+          .from('storage_temperature_records')
+          .select('*')
+          .order('recorded_at', { ascending: false });
+        
+        if (coldRoomId) {
+          query = query.eq('cold_room_id', coldRoomId);
+        }
+        
+        if (limit) {
+          query = query.limit(limit);
+        }
+        
+        const { data, error } = await query;
+        
+        if (error) throw error;
+        
+        await cacheData(cacheKey, data);
+        
+        return data as StorageTemperatureRecord[];
+      } catch (error) {
+        const cached = await getCachedData<StorageTemperatureRecord[]>(cacheKey);
+        if (cached) return cached;
+        throw error;
       }
-      
-      if (limit) {
-        query = query.limit(limit);
-      }
-      
-      const { data, error } = await query;
-      
-      if (error) throw error;
-      return data as StorageTemperatureRecord[];
     },
   });
 }
@@ -89,22 +120,33 @@ export function useStorageTemperatureRecordsWithRooms(limit?: number) {
   return useQuery({
     queryKey: ['storage_temperature_records_with_rooms', limit],
     queryFn: async () => {
-      let query = supabase
-        .from('storage_temperature_records')
-        .select(`
-          *,
-          cold_rooms (*)
-        `)
-        .order('recorded_at', { ascending: false });
+      const cacheKey = `storage_records_with_rooms_${limit || 'all'}`;
       
-      if (limit) {
-        query = query.limit(limit);
+      try {
+        let query = supabase
+          .from('storage_temperature_records')
+          .select(`
+            *,
+            cold_rooms (*)
+          `)
+          .order('recorded_at', { ascending: false });
+        
+        if (limit) {
+          query = query.limit(limit);
+        }
+        
+        const { data, error } = await query;
+        
+        if (error) throw error;
+        
+        await cacheData(cacheKey, data);
+        
+        return data as StorageTemperatureRecordWithRoom[];
+      } catch (error) {
+        const cached = await getCachedData<StorageTemperatureRecordWithRoom[]>(cacheKey);
+        if (cached) return cached;
+        throw error;
       }
-      
-      const { data, error } = await query;
-      
-      if (error) throw error;
-      return data as StorageTemperatureRecordWithRoom[];
     },
   });
 }
@@ -195,6 +237,16 @@ export function useRecordTemperature() {
       status: 'conforme' | 'acceptable' | 'nonconforme';
       notes?: string;
     }) => {
+      if (!navigator.onLine) {
+        await addPendingRecord('storage_temperature_records', 'insert', {
+          ...data,
+          id: `offline_${Date.now()}`,
+          recorded_at: new Date().toISOString(),
+          created_at: new Date().toISOString(),
+        });
+        return null;
+      }
+
       const { data: result, error } = await supabase
         .from('storage_temperature_records')
         .insert(data)
@@ -207,10 +259,21 @@ export function useRecordTemperature() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['storage_temperature_records'] });
       queryClient.invalidateQueries({ queryKey: ['storage_temperature_records_with_rooms'] });
-      toast.success('Température enregistrée');
+      toast.success(navigator.onLine ? 'Température enregistrée' : 'Température sauvegardée (hors ligne)');
     },
-    onError: (error) => {
-      toast.error('Erreur lors de l\'enregistrement: ' + error.message);
+    onError: async (error, variables) => {
+      console.error('Error recording temperature:', error);
+      try {
+        await addPendingRecord('storage_temperature_records', 'insert', {
+          ...variables,
+          id: `offline_${Date.now()}`,
+          recorded_at: new Date().toISOString(),
+          created_at: new Date().toISOString(),
+        });
+        toast.warning('Température sauvegardée localement');
+      } catch {
+        toast.error('Erreur lors de l\'enregistrement: ' + error.message);
+      }
     },
   });
 }
@@ -229,6 +292,11 @@ export function useUpdateStorageTemperatureRecord() {
         cold_room_id?: string;
       } 
     }) => {
+      if (!navigator.onLine) {
+        await addPendingRecord('storage_temperature_records', 'update', { id, ...data });
+        return null;
+      }
+
       const { data: result, error } = await supabase
         .from('storage_temperature_records')
         .update(data)
@@ -242,10 +310,16 @@ export function useUpdateStorageTemperatureRecord() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['storage_temperature_records'] });
       queryClient.invalidateQueries({ queryKey: ['storage_temperature_records_with_rooms'] });
-      toast.success('Relevé de température modifié');
+      toast.success(navigator.onLine ? 'Relevé de température modifié' : 'Modification sauvegardée (hors ligne)');
     },
-    onError: (error) => {
-      toast.error('Erreur lors de la modification: ' + error.message);
+    onError: async (error, variables) => {
+      console.error('Error updating temperature:', error);
+      try {
+        await addPendingRecord('storage_temperature_records', 'update', { id: variables.id, ...variables.data });
+        toast.warning('Modification sauvegardée localement');
+      } catch {
+        toast.error('Erreur lors de la modification: ' + error.message);
+      }
     },
   });
 }
@@ -255,6 +329,11 @@ export function useDeleteStorageTemperatureRecord() {
   
   return useMutation({
     mutationFn: async (id: string) => {
+      if (!navigator.onLine) {
+        await addPendingRecord('storage_temperature_records', 'delete', { id });
+        return;
+      }
+
       const { error } = await supabase
         .from('storage_temperature_records')
         .delete()

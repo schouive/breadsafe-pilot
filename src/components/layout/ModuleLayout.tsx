@@ -48,7 +48,14 @@ export function ModuleLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { profile, roles, signOut } = useAuth();
+  const { profile, roles, signOut, hasRole } = useAuth();
+
+  // Vérifier si c'est un opérateur uniquement
+  const isOperatorOnly = hasRole('operator') && 
+    !hasRole('admin') && 
+    !hasRole('quality_assistant') && 
+    !hasRole('bureau_methodes') && 
+    !hasRole('auditor');
 
   const getRoleLabel = () => {
     if (roles.includes('admin')) return 'Administrateur';
@@ -113,17 +120,19 @@ export function ModuleLayout({
             </Button>
           </div>
 
-          {/* Back to Home */}
-          <div className="px-3 pt-4">
-            <Button
-              variant="ghost"
-              className="w-full justify-start gap-3 text-muted-foreground hover:text-foreground"
-              onClick={() => navigate('/')}
-            >
-              <Home className="h-4 w-4" />
-              Retour à l'accueil
-            </Button>
-          </div>
+          {/* Back to Home - masqué pour les opérateurs */}
+          {!isOperatorOnly && (
+            <div className="px-3 pt-4">
+              <Button
+                variant="ghost"
+                className="w-full justify-start gap-3 text-muted-foreground hover:text-foreground"
+                onClick={() => navigate('/')}
+              >
+                <Home className="h-4 w-4" />
+                Retour à l'accueil
+              </Button>
+            </div>
+          )}
 
           {/* Navigation */}
           <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">

@@ -164,13 +164,13 @@ function formatNetWeight(weight: number | null, unit: string | null): string {
 }
 
 /**
- * Format storage instructions into 2 lines
+ * Format storage instructions (single line)
  */
-function formatConservationLines(storage: string | null, thawing: string | null): [string, string] {
-  const line1 = storage ? removeAccents(storage) : '';
-  const line2 = thawing ? removeAccents(`Decongelation: ${thawing}`) : '';
-  
-  return [line1, line2];
+function formatConservation(storage: string | null, thawing: string | null): string {
+  const parts: string[] = [];
+  if (storage) parts.push(storage);
+  if (thawing) parts.push(`Decongelation: ${thawing}`);
+  return removeAccents(parts.join(' - '));
 }
 
 /**
@@ -231,7 +231,6 @@ function generateLabelRow(label: CartonLabel): string[] {
   const ingredients = cleanHtmlFromIngredients(label.snapshot_ingredients_html);
   const ingredientLines = splitIntoLines(ingredients, MAX_LINE_LENGTH, 4);
   const nutritionLines = formatNutritionLines(label.snapshot_nutrition as Record<string, number> | null);
-  const conservationLines = formatConservationLines(label.snapshot_storage_instructions, label.snapshot_thawing_instructions);
   const secondaryAllergens = label.snapshot_allergens_secondary as string[] | null;
   
   return [
@@ -249,8 +248,7 @@ function generateLabelRow(label: CartonLabel): string[] {
     nutritionLines[2],
     nutritionLines[3],
     formatNetWeight(label.snapshot_net_weight, label.snapshot_net_weight_unit),
-    conservationLines[0],
-    conservationLines[1],
+    formatConservation(label.snapshot_storage_instructions, label.snapshot_thawing_instructions),
   ];
 }
 
@@ -281,8 +279,7 @@ export function generateZebraCSV(labels: CartonLabel[]): string {
     'nutrition_l3',
     'nutrition_l4',
     'poids_net',
-    'conservation_l1',
-    'conservation_l2',
+    'mode_conservation',
   ];
   
   // Generate rows

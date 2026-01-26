@@ -70,6 +70,7 @@ export function useCartonLabels() {
           product_sheets (
             id,
             product_name,
+            product_reference,
             version,
             is_published,
             snapshot_ingredients,
@@ -101,6 +102,7 @@ export function useCartonLabel(id: string | undefined) {
           product_sheets (
             id,
             product_name,
+            product_reference,
             version,
             is_published,
             snapshot_ingredients,

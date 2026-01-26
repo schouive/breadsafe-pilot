@@ -1,9 +1,8 @@
-import { ChefHat, Eye, Edit2, Copy, Trash2, CheckCircle, FileEdit, Euro } from 'lucide-react';
+import { ChefHat, Eye, Edit2, Copy, Trash2, CheckCircle, FileEdit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Recipe } from '@/hooks/useRecipes';
-import { useIntermediateProductCostsMap } from '@/hooks/useIntermediateProductCost';
 import { cn } from '@/lib/utils';
 
 interface RecipesGridProps {
@@ -23,13 +22,10 @@ export function RecipesGrid({
   onDelete,
   isDuplicating 
 }: RecipesGridProps) {
-  const { costsMap } = useIntermediateProductCostsMap();
-
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {recipes.map((recipe) => {
         const isIntermediate = (recipe as any).recipe_type === 'intermediate';
-        const piCost = isIntermediate ? costsMap[recipe.id] : null;
         
         return (
           <Card 
@@ -89,18 +85,6 @@ export function RecipesGrid({
                 )}
               </div>
 
-              {/* PI Price per kg */}
-              {isIntermediate && piCost && (
-                <div className="flex items-center gap-2 mb-4 p-2 rounded-md bg-amber-100/50 border border-amber-200">
-                  <Euro className="h-4 w-4 text-amber-700" />
-                  <span className="text-sm font-medium text-amber-800">
-                    {piCost.pricePerKg.toFixed(2)} €/kg
-                  </span>
-                  <span className="text-xs text-amber-600">
-                    (coût calculé)
-                  </span>
-                </div>
-              )}
 
               <div className="flex gap-2">
                 <Button 

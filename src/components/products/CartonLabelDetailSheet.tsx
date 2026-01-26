@@ -20,10 +20,11 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { CartonLabel, useValidateCartonLabel, useRefreshCartonLabelSnapshot } from '@/hooks/useCartonLabels';
-import { Check, X, RefreshCw, Printer, CheckCircle, AlertTriangle, Recycle, Loader2, Eye } from 'lucide-react';
+import { Check, X, RefreshCw, Printer, CheckCircle, AlertTriangle, Recycle, Loader2, Eye, Download } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { CartonLabelPreview } from './CartonLabelPreview';
+import { toast } from 'sonner';
 
 interface CartonLabelDetailSheetProps {
   open: boolean;
@@ -74,6 +75,22 @@ export function CartonLabelDetailSheet({
       printWindow.document.close();
       printWindow.print();
     }
+  };
+
+  const handleExportJSON = () => {
+    const zebraData = generateZebraJSON(label);
+    const blob = new Blob([JSON.stringify(zebraData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `etiquette-${label.label_title.replace(/\s+/g, '-').toLowerCase()}-${format(new Date(), 'yyyy-MM-dd')}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    toast.success('Export JSON généré', {
+      description: 'Fichier téléchargé pour imprimante Zebra (64x102mm)'
+    });
   };
 
   return (
@@ -299,10 +316,16 @@ export function CartonLabelDetailSheet({
               </Button>
             )}
             {label.status === 'validated' && (
-              <Button onClick={handlePrint}>
-                <Printer className="h-4 w-4 mr-2" />
-                Imprimer
-              </Button>
+              <>
+                <Button onClick={handlePrint}>
+                  <Printer className="h-4 w-4 mr-2" />
+                  Imprimer
+                </Button>
+                <Button variant="outline" onClick={handleExportJSON}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Export Zebra JSON
+                </Button>
+              </>
             )}
           </div>
         </SheetContent>
@@ -494,4 +517,84 @@ function generatePrintContent(label: CartonLabel): string {
     </body>
     </html>
   `;
+}
+
+/**
+ * Generate JSON data for Zebra label printer
+ * Format: 64x102mm (width x height)
+ */
+function generateZebraJSON(label: CartonLabel) {
+  const nutrition = label.snapshot_nutrition as Record<string, number> | null;
+  const secondaryAllergens = label.snapshot_allergens_secondary as string[] | null;
+
+  // Clean HTML from ingredients to plain text with allergens in uppercase
+  const ingredientsText = label.snapshot_ingredients_html
+    ? label.snapshot_ingredients_html
+        .replace(/<strong>/g, '')
+        .replace(/<\/strong>/g, '')
+        .replace(/<[^>]*>/g, '')
+        .trim()
+    : '';
+
+  return {
+    // Label metadata
+    metadata: {
+      version: '1.0',
+      format: '64x102mm',
+      exportDate: new Date().toISOString(),
+      labelId: label.id,
+      labelVersion: label.version,
+      productSheetVersion: label.snapshot_product_sheet_version,
+    },
+    
+    // Header information
+    header: {
+      company: 'BREADSHOP SAS',
+      productName: label.label_title,
+    },
+    
+    // Ingredients section
+    ingredients: {
+      text: ingredientsText,
+      mayContain: secondaryAllergens || [],
+    },
+    
+    // Nutritional values per 100g
+    nutrition: nutrition ? {
+      energyKj: Math.round(nutrition.per_100g_energy_kj || 0),
+      energyKcal: Math.round(nutrition.per_100g_energy_kcal || 0),
+      fat: Number((nutrition.per_100g_fat || 0).toFixed(1)),
+      saturatedFat: Number((nutrition.per_100g_saturated_fat || 0).toFixed(1)),
+      carbohydrates: Number((nutrition.per_100g_carbohydrates || 0).toFixed(1)),
+      sugars: Number((nutrition.per_100g_sugars || 0).toFixed(1)),
+      fiber: Number((nutrition.per_100g_fiber || 0).toFixed(1)),
+      protein: Number((nutrition.per_100g_protein || 0).toFixed(1)),
+      salt: Number((nutrition.per_100g_salt || 0).toFixed(2)),
+    } : null,
+    
+    // Weight information
+    weight: {
+      netWeight: label.snapshot_net_weight,
+      unit: label.snapshot_net_weight_unit || 'kg',
+    },
+    
+    // Storage instructions
+    storage: {
+      conservation: label.snapshot_storage_instructions || null,
+      thawing: label.snapshot_thawing_instructions || null,
+    },
+    
+    // Required elements
+    regulatory: {
+      triman: true,
+      recyclable: 'Sac et carton recyclables',
+    },
+    
+    // Variable fields (to be filled at print time)
+    variableFields: {
+      barcode: null, // To be set by printing software
+      bestBefore: null, // DDM - to be set by printing software
+      lotNumber: null, // To be set by printing software
+    },
+  };
 }

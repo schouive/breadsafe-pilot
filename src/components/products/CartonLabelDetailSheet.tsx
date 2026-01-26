@@ -521,7 +521,7 @@ function generatePrintContent(label: CartonLabel): string {
 
 /**
  * Generate CSV data for Zebra label printer
- * Format: 64x102mm (width x height)
+ * Format: 64x102mm - One row per product with specified columns
  */
 function generateZebraCSV(label: CartonLabel): string {
   const nutrition = label.snapshot_nutrition as Record<string, number> | null;
@@ -536,7 +536,23 @@ function generateZebraCSV(label: CartonLabel): string {
         .trim()
     : '';
 
-  // Helper to escape CSV values
+  // Format nutritional values as a compact string
+  const nutritionText = nutrition
+    ? `Énergie: ${Math.round(nutrition.per_100g_energy_kj || 0)}kJ/${Math.round(nutrition.per_100g_energy_kcal || 0)}kcal | MG: ${(nutrition.per_100g_fat || 0).toFixed(1)}g (dont AGS: ${(nutrition.per_100g_saturated_fat || 0).toFixed(1)}g) | Glucides: ${(nutrition.per_100g_carbohydrates || 0).toFixed(1)}g (dont sucres: ${(nutrition.per_100g_sugars || 0).toFixed(1)}g) | Fibres: ${(nutrition.per_100g_fiber || 0).toFixed(1)}g | Protéines: ${(nutrition.per_100g_protein || 0).toFixed(1)}g | Sel: ${(nutrition.per_100g_salt || 0).toFixed(2)}g`
+    : '';
+
+  // Format net weight with unit
+  const poidsNet = label.snapshot_net_weight 
+    ? `${label.snapshot_net_weight} ${label.snapshot_net_weight_unit || 'kg'}`
+    : '';
+
+  // Format storage instructions
+  const conservation = [
+    label.snapshot_storage_instructions,
+    label.snapshot_thawing_instructions ? `Décongélation: ${label.snapshot_thawing_instructions}` : ''
+  ].filter(Boolean).join(' | ');
+
+  // Helper to escape CSV values (semicolon delimiter)
   const escapeCSV = (value: string | number | null | undefined): string => {
     if (value === null || value === undefined) return '';
     const str = String(value);
@@ -546,37 +562,32 @@ function generateZebraCSV(label: CartonLabel): string {
     return str;
   };
 
-  // CSV headers and values
-  const rows: string[][] = [
-    ['Champ', 'Valeur'],
-    ['Format', '64x102mm'],
-    ['Date export', new Date().toISOString()],
-    ['ID étiquette', label.id],
-    ['Version étiquette', String(label.version)],
-    ['Version fiche technique', String(label.snapshot_product_sheet_version || '')],
-    ['Entreprise', 'BREADSHOP SAS'],
-    ['Nom produit', label.label_title],
-    ['Ingrédients', ingredientsText],
-    ['Traces allergènes', secondaryAllergens?.join(', ') || ''],
-    ['Énergie (kJ)', nutrition ? String(Math.round(nutrition.per_100g_energy_kj || 0)) : ''],
-    ['Énergie (kcal)', nutrition ? String(Math.round(nutrition.per_100g_energy_kcal || 0)) : ''],
-    ['Matières grasses (g)', nutrition ? (nutrition.per_100g_fat || 0).toFixed(1) : ''],
-    ['dont AG saturés (g)', nutrition ? (nutrition.per_100g_saturated_fat || 0).toFixed(1) : ''],
-    ['Glucides (g)', nutrition ? (nutrition.per_100g_carbohydrates || 0).toFixed(1) : ''],
-    ['dont sucres (g)', nutrition ? (nutrition.per_100g_sugars || 0).toFixed(1) : ''],
-    ['Fibres (g)', nutrition ? (nutrition.per_100g_fiber || 0).toFixed(1) : ''],
-    ['Protéines (g)', nutrition ? (nutrition.per_100g_protein || 0).toFixed(1) : ''],
-    ['Sel (g)', nutrition ? (nutrition.per_100g_salt || 0).toFixed(2) : ''],
-    ['Poids net', String(label.snapshot_net_weight || '')],
-    ['Unité poids', label.snapshot_net_weight_unit || 'kg'],
-    ['Conservation', label.snapshot_storage_instructions || ''],
-    ['Décongélation', label.snapshot_thawing_instructions || ''],
-    ['Logo Triman', 'Oui'],
-    ['Mention recyclage', 'Sac et carton recyclables'],
-    ['Code-barres', ''],
-    ['DDM', ''],
-    ['Numéro de lot', ''],
+  // CSV headers
+  const headers = [
+    'nom_produit',
+    'reference',
+    'ingredients_inco',
+    'allergenes_secondaires',
+    'valeurs_nutritionnelles',
+    'poids_net',
+    'mode_conservation',
+    'mentions_triman'
   ];
 
-  return rows.map(row => row.map(escapeCSV).join(';')).join('\n');
+  // CSV values
+  const values = [
+    label.label_title,
+    (label.product_sheets as { product_reference?: string })?.product_reference || '',
+    ingredientsText,
+    secondaryAllergens?.join(', ') || '',
+    nutritionText,
+    poidsNet,
+    conservation,
+    'Logo Triman - Sac et carton recyclables'
+  ];
+
+  return [
+    headers.join(';'),
+    values.map(escapeCSV).join(';')
+  ].join('\n');
 }

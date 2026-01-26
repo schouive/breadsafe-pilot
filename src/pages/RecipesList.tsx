@@ -28,9 +28,10 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useRecipes, useRecipeIngredients, useDeleteRecipe, useDuplicateRecipe, Recipe } from '@/hooks/useRecipes';
 import { useBakerCalculations } from '@/hooks/useBakerCalculations';
-import { useIntermediateProductCostsMap } from '@/hooks/useIntermediateProductCost';
+import { useIntermediateProductCostsMap, IntermediateProductCost } from '@/hooks/useIntermediateProductCost';
 import { useNutriScore, getNutriScoreColor, getNutriScoreTextColor } from '@/hooks/useNutriScore';
 import { cn } from '@/lib/utils';
+import { RecipesGrid } from '@/components/products/RecipesGrid';
 
 export default function RecipesList() {
   const navigate = useNavigate();
@@ -114,111 +115,17 @@ export default function RecipesList() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredRecipes?.map((recipe) => {
-            const isIntermediate = (recipe as any).recipe_type === 'intermediate';
-            return (
-            <Card 
-              key={recipe.id} 
-              className={cn(
-                "hover:shadow-md transition-shadow cursor-pointer",
-                !recipe.is_active && "opacity-60",
-                isIntermediate && "border-amber-200 bg-amber-50/30"
-              )}
-            >
-              <CardHeader className="pb-2">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <CardTitle className="text-lg">{recipe.name}</CardTitle>
-                      {isIntermediate && (
-                        <Badge variant="outline" className="text-amber-700 border-amber-300 text-xs">
-                          PI
-                        </Badge>
-                      )}
-                    </div>
-                    {recipe.code && (
-                      <CardDescription className="font-mono">{recipe.code}</CardDescription>
-                    )}
-                  </div>
-                  <Badge 
-                    variant={recipe.status === 'validated' ? 'default' : 'secondary'}
-                    className={cn(
-                      recipe.status === 'validated' && "bg-success text-success-foreground"
-                    )}
-                  >
-                    {recipe.status === 'validated' ? (
-                      <>
-                        <CheckCircle className="h-3 w-3 mr-1" />
-                        Validée
-                      </>
-                    ) : (
-                      <>
-                        <FileEdit className="h-3 w-3 mr-1" />
-                        Brouillon
-                      </>
-                    )}
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {recipe.description && (
-                  <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
-                    {recipe.description}
-                  </p>
-                )}
-                
-                <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
-                  <span>Ratio cuisson: {recipe.baking_ratio || 0.9}</span>
-                  {recipe.process_losses > 0 && (
-                    <span>• Pertes: {recipe.process_losses}%</span>
-                  )}
-                </div>
-
-                <div className="flex gap-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="flex-1"
-                    onClick={() => {
-                      setSelectedRecipe(recipe);
-                      setCalcDialogOpen(true);
-                    }}
-                  >
-                    <Eye className="h-4 w-4 mr-1" />
-                    Voir
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="icon"
-                    onClick={() => navigate(`/products/recipes/edit/${recipe.id}`)}
-                    title="Modifier la recette"
-                  >
-                    <Edit2 className="h-4 w-4" />
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="icon"
-                    onClick={() => duplicateRecipe.mutate(recipe.id)}
-                    disabled={duplicateRecipe.isPending}
-                    title="Dupliquer la recette"
-                  >
-                    <Copy className="h-4 w-4" />
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="icon"
-                    onClick={() => setDeleteRecipeId(recipe.id)}
-                    title="Supprimer la recette"
-                  >
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          );
-          })}
-        </div>
+        <RecipesGrid 
+          recipes={filteredRecipes || []}
+          onView={(recipe) => {
+            setSelectedRecipe(recipe);
+            setCalcDialogOpen(true);
+          }}
+          onEdit={(recipe) => navigate(`/products/recipes/edit/${recipe.id}`)}
+          onDuplicate={(recipe) => duplicateRecipe.mutate(recipe.id)}
+          onDelete={(recipe) => setDeleteRecipeId(recipe.id)}
+          isDuplicating={duplicateRecipe.isPending}
+        />
       )}
 
       {/* Calculation Dialog */}

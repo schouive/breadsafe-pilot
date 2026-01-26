@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Trash2, Scale, AlertTriangle, ChefHat, Beaker } from 'lucide-react';
+import { Plus, Trash2, Scale, AlertTriangle, ChefHat, Beaker, Euro } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -24,6 +24,7 @@ import {
   useDeleteRecipeIngredient,
   Recipe,
 } from '@/hooks/useRecipes';
+import { useIntermediateProductCostsMap } from '@/hooks/useIntermediateProductCost';
 import { IngredientFormDialog } from './IngredientFormDialog';
 import { NutritionTable } from './NutritionTable';
 
@@ -36,6 +37,7 @@ interface RecipeDetailSheetProps {
 export function RecipeDetailSheet({ open, onOpenChange, recipe }: RecipeDetailSheetProps) {
   const { data: ingredients, isLoading: loadingIngredients } = useRecipeIngredients(recipe?.id);
   const { data: nutrition } = useRecipeNutrition(recipe?.id);
+  const { costsMap } = useIntermediateProductCostsMap();
   const deleteIngredient = useDeleteRecipeIngredient();
   
   const [isAddIngredientOpen, setIsAddIngredientOpen] = useState(false);
@@ -45,6 +47,10 @@ export function RecipeDetailSheet({ open, onOpenChange, recipe }: RecipeDetailSh
   console.log('RecipeDetailSheet - ingredients received:', ingredients);
 
   if (!recipe) return null;
+
+  // Check if this recipe is a PI and get its cost
+  const isRecipeIntermediate = (recipe as any).recipe_type === 'intermediate';
+  const recipePiCost = isRecipeIntermediate ? costsMap[recipe.id] : null;
 
   // Collect all unique allergens from ingredients
   const allAllergens = ingredients?.reduce((acc, ing) => {
@@ -79,6 +85,22 @@ export function RecipeDetailSheet({ open, onOpenChange, recipe }: RecipeDetailSh
           </SheetHeader>
 
           <div className="mt-6 space-y-6">
+            {/* PI Cost info */}
+            {isRecipeIntermediate && recipePiCost && (
+              <div className="flex items-center gap-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                <Euro className="h-5 w-5 text-amber-700" />
+                <div>
+                  <p className="font-medium text-amber-800">Prix calculé du PI</p>
+                  <p className="text-lg font-bold text-amber-900">
+                    {recipePiCost.pricePerKg.toFixed(2)} €/kg
+                  </p>
+                  <p className="text-xs text-amber-600">
+                    Coût total: {recipePiCost.totalCostEuros.toFixed(2)} € • Poids: {recipePiCost.totalWeightKg.toFixed(2)} kg
+                  </p>
+                </div>
+              </div>
+            )}
+
             {/* Recipe info */}
             <div className="flex items-center gap-4 p-4 bg-muted/50 rounded-lg">
               <Scale className="h-5 w-5 text-muted-foreground" />

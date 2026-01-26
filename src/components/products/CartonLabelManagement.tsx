@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Package, Edit2, Trash2, Eye, Check, X, RefreshCw, AlertTriangle } from 'lucide-react';
+import { Plus, Package, Edit2, Trash2, Eye, Check, X, AlertTriangle, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -18,6 +18,8 @@ import {
 } from '@/components/ui/alert-dialog';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { downloadZebraCSV } from '@/lib/zebraLabelExport';
+import { toast } from 'sonner';
 
 export function CartonLabelManagement() {
   const { data: labels, isLoading } = useCartonLabels();
@@ -40,6 +42,24 @@ export function CartonLabelManagement() {
     return sheetVersion && snapshotVersion && sheetVersion > snapshotVersion;
   };
 
+  const validatedCount = labels?.filter(l => l.status === 'validated').length || 0;
+
+  const handleExportCSV = () => {
+    if (!labels || labels.length === 0) {
+      toast.error('Aucune étiquette à exporter');
+      return;
+    }
+    
+    const result = downloadZebraCSV(labels);
+    if (result.success) {
+      toast.success('Export CSV généré', {
+        description: `${result.count} étiquette(s) exportée(s) vers etiquettes_carton.csv`
+      });
+    } else {
+      toast.error(result.message);
+    }
+  };
+
   return (
     <>
       <Card>
@@ -54,10 +74,18 @@ export function CartonLabelManagement() {
                 </CardDescription>
               </div>
             </div>
-            <Button onClick={() => setIsAddOpen(true)} className="w-full sm:w-auto shrink-0">
-              <Plus className="h-4 w-4 mr-2" />
-              <span className="truncate">Nouvelle étiquette</span>
-            </Button>
+            <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+              {validatedCount > 0 && (
+                <Button variant="outline" onClick={handleExportCSV} className="w-full sm:w-auto shrink-0">
+                  <Download className="h-4 w-4 mr-2" />
+                  <span className="truncate">Export Zebra ({validatedCount})</span>
+                </Button>
+              )}
+              <Button onClick={() => setIsAddOpen(true)} className="w-full sm:w-auto shrink-0">
+                <Plus className="h-4 w-4 mr-2" />
+                <span className="truncate">Nouvelle étiquette</span>
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent>

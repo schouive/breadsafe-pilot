@@ -20,11 +20,10 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { CartonLabel, useValidateCartonLabel, useRefreshCartonLabelSnapshot } from '@/hooks/useCartonLabels';
-import { Check, X, RefreshCw, Printer, CheckCircle, AlertTriangle, Recycle, Loader2, Eye, Download } from 'lucide-react';
+import { Check, X, RefreshCw, Printer, CheckCircle, AlertTriangle, Recycle, Loader2, Eye } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { CartonLabelPreview } from './CartonLabelPreview';
-import { toast } from 'sonner';
 
 interface CartonLabelDetailSheetProps {
   open: boolean;
@@ -75,22 +74,6 @@ export function CartonLabelDetailSheet({
       printWindow.document.close();
       printWindow.print();
     }
-  };
-
-  const handleExportCSV = () => {
-    const csvContent = generateZebraCSV(label);
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `etiquette-${label.label_title.replace(/\s+/g, '-').toLowerCase()}-${format(new Date(), 'yyyy-MM-dd')}.csv`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    toast.success('Export CSV généré', {
-      description: 'Fichier téléchargé pour imprimante Zebra (64x102mm)'
-    });
   };
 
   return (
@@ -316,16 +299,10 @@ export function CartonLabelDetailSheet({
               </Button>
             )}
             {label.status === 'validated' && (
-              <>
-                <Button onClick={handlePrint}>
-                  <Printer className="h-4 w-4 mr-2" />
-                  Imprimer
-                </Button>
-                <Button variant="outline" onClick={handleExportCSV}>
-                  <Download className="h-4 w-4 mr-2" />
-                  Export Zebra CSV
-                </Button>
-              </>
+              <Button onClick={handlePrint}>
+                <Printer className="h-4 w-4 mr-2" />
+                Imprimer
+              </Button>
             )}
           </div>
         </SheetContent>
@@ -517,77 +494,4 @@ function generatePrintContent(label: CartonLabel): string {
     </body>
     </html>
   `;
-}
-
-/**
- * Generate CSV data for Zebra label printer
- * Format: 64x102mm - One row per product with specified columns
- */
-function generateZebraCSV(label: CartonLabel): string {
-  const nutrition = label.snapshot_nutrition as Record<string, number> | null;
-  const secondaryAllergens = label.snapshot_allergens_secondary as string[] | null;
-
-  // Clean HTML from ingredients to plain text
-  const ingredientsText = label.snapshot_ingredients_html
-    ? label.snapshot_ingredients_html
-        .replace(/<strong>/g, '')
-        .replace(/<\/strong>/g, '')
-        .replace(/<[^>]*>/g, '')
-        .trim()
-    : '';
-
-  // Format nutritional values as a compact string
-  const nutritionText = nutrition
-    ? `Énergie: ${Math.round(nutrition.per_100g_energy_kj || 0)}kJ/${Math.round(nutrition.per_100g_energy_kcal || 0)}kcal | MG: ${(nutrition.per_100g_fat || 0).toFixed(1)}g (dont AGS: ${(nutrition.per_100g_saturated_fat || 0).toFixed(1)}g) | Glucides: ${(nutrition.per_100g_carbohydrates || 0).toFixed(1)}g (dont sucres: ${(nutrition.per_100g_sugars || 0).toFixed(1)}g) | Fibres: ${(nutrition.per_100g_fiber || 0).toFixed(1)}g | Protéines: ${(nutrition.per_100g_protein || 0).toFixed(1)}g | Sel: ${(nutrition.per_100g_salt || 0).toFixed(2)}g`
-    : '';
-
-  // Format net weight with unit
-  const poidsNet = label.snapshot_net_weight 
-    ? `${label.snapshot_net_weight} ${label.snapshot_net_weight_unit || 'kg'}`
-    : '';
-
-  // Format storage instructions
-  const conservation = [
-    label.snapshot_storage_instructions,
-    label.snapshot_thawing_instructions ? `Décongélation: ${label.snapshot_thawing_instructions}` : ''
-  ].filter(Boolean).join(' | ');
-
-  // Helper to escape CSV values (semicolon delimiter)
-  const escapeCSV = (value: string | number | null | undefined): string => {
-    if (value === null || value === undefined) return '';
-    const str = String(value);
-    if (str.includes(';') || str.includes('"') || str.includes('\n')) {
-      return `"${str.replace(/"/g, '""')}"`;
-    }
-    return str;
-  };
-
-  // CSV headers
-  const headers = [
-    'nom_produit',
-    'reference',
-    'ingredients_inco',
-    'allergenes_secondaires',
-    'valeurs_nutritionnelles',
-    'poids_net',
-    'mode_conservation',
-    'mentions_triman'
-  ];
-
-  // CSV values
-  const values = [
-    label.label_title,
-    (label.product_sheets as { product_reference?: string })?.product_reference || '',
-    ingredientsText,
-    secondaryAllergens?.join(', ') || '',
-    nutritionText,
-    poidsNet,
-    conservation,
-    'Logo Triman - Sac et carton recyclables'
-  ];
-
-  return [
-    headers.join(';'),
-    values.map(escapeCSV).join(';')
-  ].join('\n');
 }

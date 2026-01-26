@@ -164,20 +164,21 @@ function formatNetWeight(weight: number | null, unit: string | null): string {
 }
 
 /**
- * Format storage instructions
+ * Format storage instructions into 2 lines
  */
-function formatConservation(storage: string | null, thawing: string | null): string {
-  const parts: string[] = [];
+function formatConservationLines(storage: string | null, thawing: string | null): [string, string] {
+  const line1 = storage ? removeAccents(storage) : '';
+  const line2 = thawing ? removeAccents(`Decongelation: ${thawing}`) : '';
   
-  if (storage) {
-    parts.push(storage);
-  }
-  
-  if (thawing) {
-    parts.push(`Decongelation: ${thawing}`);
-  }
-  
-  return removeAccents(parts.join(' | '));
+  return [line1, line2];
+}
+
+/**
+ * Format allergens list
+ */
+function formatAllergens(allergens: string[] | null): string {
+  if (!allergens || allergens.length === 0) return '';
+  return removeAccents(allergens.join(', '));
 }
 
 /**
@@ -191,15 +192,9 @@ function escapeCSV(value: string): string {
 }
 
 /**
- * Generate a product reference code from the label
+ * Generate a product code from the label
  */
 function getProductCode(label: CartonLabel): string {
-  // Try to get product_reference from product_sheets
-  const productSheet = label.product_sheets as { product_reference?: string } | undefined;
-  if (productSheet?.product_reference) {
-    return removeAccents(productSheet.product_reference);
-  }
-  
   // Fallback: generate from label title
   return removeAccents(
     label.label_title
@@ -210,27 +205,52 @@ function getProductCode(label: CartonLabel): string {
 }
 
 /**
+ * Get product reference from product sheet
+ */
+function getProductReference(label: CartonLabel): string {
+  const productSheet = label.product_sheets as { product_reference?: string } | undefined;
+  if (productSheet?.product_reference) {
+    return removeAccents(productSheet.product_reference);
+  }
+  return '';
+}
+
+/**
+ * Get primary allergens from product sheet snapshot
+ */
+function getPrimaryAllergens(label: CartonLabel): string {
+  const productSheet = label.product_sheets as { snapshot_allergens?: { main?: string[] } } | undefined;
+  const allergens = productSheet?.snapshot_allergens?.main || [];
+  return formatAllergens(allergens);
+}
+
+/**
  * Generate CSV row for a single label
  */
 function generateLabelRow(label: CartonLabel): string[] {
   const ingredients = cleanHtmlFromIngredients(label.snapshot_ingredients_html);
   const ingredientLines = splitIntoLines(ingredients, MAX_LINE_LENGTH, 4);
   const nutritionLines = formatNutritionLines(label.snapshot_nutrition as Record<string, number> | null);
+  const conservationLines = formatConservationLines(label.snapshot_storage_instructions, label.snapshot_thawing_instructions);
+  const secondaryAllergens = label.snapshot_allergens_secondary as string[] | null;
   
   return [
     getProductCode(label),
     removeAccents(label.label_title),
+    getProductReference(label),
     ingredientLines[0],
     ingredientLines[1],
     ingredientLines[2],
     ingredientLines[3],
+    getPrimaryAllergens(label),
+    formatAllergens(secondaryAllergens),
     nutritionLines[0],
     nutritionLines[1],
     nutritionLines[2],
     nutritionLines[3],
     formatNetWeight(label.snapshot_net_weight, label.snapshot_net_weight_unit),
-    formatConservation(label.snapshot_storage_instructions, label.snapshot_thawing_instructions),
-    'Logo Triman - Sac et carton recyclables',
+    conservationLines[0],
+    conservationLines[1],
   ];
 }
 
@@ -249,17 +269,20 @@ export function generateZebraCSV(labels: CartonLabel[]): string {
   const headers = [
     'code_produit',
     'nom_produit',
+    'reference_produit',
     'ingredients_l1',
     'ingredients_l2',
     'ingredients_l3',
     'ingredients_l4',
+    'allergenes_primaires',
+    'allergenes_secondaires',
     'nutrition_l1',
     'nutrition_l2',
     'nutrition_l3',
     'nutrition_l4',
     'poids_net',
-    'mode_conservation',
-    'mentions_triman',
+    'conservation_l1',
+    'conservation_l2',
   ];
   
   // Generate rows

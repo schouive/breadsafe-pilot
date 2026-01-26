@@ -28,6 +28,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useRecipes, useRecipeIngredients, useDeleteRecipe, useDuplicateRecipe, Recipe } from '@/hooks/useRecipes';
 import { useBakerCalculations } from '@/hooks/useBakerCalculations';
+import { useIntermediateProductCostsMap } from '@/hooks/useIntermediateProductCost';
 import { useNutriScore, getNutriScoreColor, getNutriScoreTextColor } from '@/hooks/useNutriScore';
 import { cn } from '@/lib/utils';
 
@@ -272,6 +273,7 @@ function RecipeCalculationDialog({
   onClose: () => void;
 }) {
   const { data: ingredients } = useRecipeIngredients(recipe.id);
+  const { costsMap } = useIntermediateProductCostsMap();
   const [flourQuantity, setFlourQuantity] = useState('100');
   const [unitWeight, setUnitWeight] = useState('');
 
@@ -280,7 +282,8 @@ function RecipeCalculationDialog({
     parseFloat(flourQuantity) || 0,
     parseFloat(unitWeight) || 0,
     recipe.baking_ratio || 0.9,
-    recipe.process_losses || 0
+    recipe.process_losses || 0,
+    costsMap
   );
 
   // Brand colors from Breadshop identity - matching FT style

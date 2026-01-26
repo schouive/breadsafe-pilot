@@ -1,10 +1,12 @@
 import { useMemo } from 'react';
 import { RecipeIngredient } from './useRecipes';
+import { IntermediateProductCost } from './useIntermediateProductCost';
 
 export interface BakerCalculation {
   ingredientId: string;
   ingredientName: string;
   type: 'farine' | 'ingredient';
+  isIntermediateProduct: boolean;
   bakerPercentage: number;
   quantityKg: number;
   costEuros: number;
@@ -68,12 +70,25 @@ export interface RecipeCalculationResult {
  * - User inputs total flour quantity in kg (this represents 100%)
  * - All ingredient quantities are calculated from this base
  */
+/**
+ * Multi-flour baker's percentage calculation hook
+ * 
+ * Business Logic:
+ * - Flours must total 100% (base of calculation)
+ * - Other ingredients are expressed as % of total flour
+ * - User inputs total flour quantity in kg (this represents 100%)
+ * - All ingredient quantities are calculated from this base
+ * - Intermediate Products (PI) use their calculated price per kg from useIntermediateProductCost
+ * 
+ * @param piCostsMap - Map of PI recipe ID to cost data (from useIntermediateProductCostsMap)
+ */
 export function useBakerCalculations(
   ingredients: RecipeIngredient[] | undefined,
   totalFlourQuantityKg: number,
   unitWeightGrams: number,
   bakingRatio: number = 0.9,
-  processLosses: number = 0
+  processLosses: number = 0,
+  piCostsMap: Record<string, IntermediateProductCost> = {}
 ): RecipeCalculationResult {
   return useMemo(() => {
     if (!ingredients || ingredients.length === 0 || totalFlourQuantityKg <= 0) {
@@ -125,24 +140,62 @@ export function useBakerCalculations(
       const quantityKg = totalFlourQuantityKg * (bakerPercentage / 100);
       const quantityGrams = quantityKg * 1000;
       
-      const pricePerKg = rm?.price || 0;
-      const costEuros = quantityKg * pricePerKg;
+      // Get price per kg - for PI, use calculated price; for raw materials, use stored price
+      let pricePerKg = 0;
+      let energyKcal = 0;
+      let energyKj = 0;
+      let fat = 0;
+      let saturatedFat = 0;
+      let carbohydrates = 0;
+      let sugars = 0;
+      let fiber = 0;
+      let protein = 0;
+      let salt = 0;
+      let allergens: string[] = [];
+      let allergensSecondary: string[] = [];
 
-      // Nutritional values (based on quantity in grams, values per 100g)
-      const energyKcal = (quantityGrams * (rm?.energy_kcal || 0)) / 100;
-      const energyKj = (quantityGrams * (rm?.energy_kj || 0)) / 100;
-      const fat = (quantityGrams * (rm?.fat || 0)) / 100;
-      const saturatedFat = (quantityGrams * (rm?.saturated_fat || 0)) / 100;
-      const carbohydrates = (quantityGrams * (rm?.carbohydrates || 0)) / 100;
-      const sugars = (quantityGrams * (rm?.sugars || 0)) / 100;
-      const fiber = (quantityGrams * (rm?.fiber || 0)) / 100;
-      const protein = (quantityGrams * (rm?.protein || 0)) / 100;
-      const salt = (quantityGrams * (rm?.salt || 0)) / 100;
+      if (isIntermediate && ing.ingredient_recipe_id) {
+        // Use PI cost data if available
+        const piCost = piCostsMap[ing.ingredient_recipe_id];
+        if (piCost) {
+          pricePerKg = piCost.pricePerKg;
+          // Nutritional values from PI (values are already per 100g in piCost)
+          energyKcal = (quantityGrams * piCost.nutritionPer100g.energyKcal) / 100;
+          energyKj = (quantityGrams * piCost.nutritionPer100g.energyKj) / 100;
+          fat = (quantityGrams * piCost.nutritionPer100g.fat) / 100;
+          saturatedFat = (quantityGrams * piCost.nutritionPer100g.saturatedFat) / 100;
+          carbohydrates = (quantityGrams * piCost.nutritionPer100g.carbohydrates) / 100;
+          sugars = (quantityGrams * piCost.nutritionPer100g.sugars) / 100;
+          fiber = (quantityGrams * piCost.nutritionPer100g.fiber) / 100;
+          protein = (quantityGrams * piCost.nutritionPer100g.protein) / 100;
+          salt = (quantityGrams * piCost.nutritionPer100g.salt) / 100;
+          allergens = piCost.allergens;
+          allergensSecondary = piCost.allergensSecondary;
+        }
+      } else if (rm) {
+        // Use raw material data
+        pricePerKg = rm.price || 0;
+        // Nutritional values (based on quantity in grams, values per 100g)
+        energyKcal = (quantityGrams * (rm.energy_kcal || 0)) / 100;
+        energyKj = (quantityGrams * (rm.energy_kj || 0)) / 100;
+        fat = (quantityGrams * (rm.fat || 0)) / 100;
+        saturatedFat = (quantityGrams * (rm.saturated_fat || 0)) / 100;
+        carbohydrates = (quantityGrams * (rm.carbohydrates || 0)) / 100;
+        sugars = (quantityGrams * (rm.sugars || 0)) / 100;
+        fiber = (quantityGrams * (rm.fiber || 0)) / 100;
+        protein = (quantityGrams * (rm.protein || 0)) / 100;
+        salt = (quantityGrams * (rm.salt || 0)) / 100;
+        allergens = rm.allergens || [];
+        allergensSecondary = rm.allergens_secondary || [];
+      }
+
+      const costEuros = quantityKg * pricePerKg;
 
       return {
         ingredientId: ing.id,
         ingredientName,
         type,
+        isIntermediateProduct: isIntermediate,
         bakerPercentage,
         quantityKg,
         costEuros,
@@ -155,8 +208,8 @@ export function useBakerCalculations(
         fiber,
         protein,
         salt,
-        allergens: rm?.allergens || [],
-        allergensSecondary: rm?.allergens_secondary || [],
+        allergens,
+        allergensSecondary,
       };
     });
 
@@ -282,9 +335,9 @@ export function useBakerCalculations(
       nutritionPer100g,
       allAllergens,
       allAllergensSecondary,
-      sortedIngredients,
-    };
-  }, [ingredients, totalFlourQuantityKg, unitWeightGrams, bakingRatio, processLosses]);
+        sortedIngredients,
+      };
+    }, [ingredients, totalFlourQuantityKg, unitWeightGrams, bakingRatio, processLosses, piCostsMap]);
 }
 
 // Generate ingredient list for label (with allergens in UPPERCASE)

@@ -330,54 +330,14 @@ export function ControlDetailModal({ record, isOpen, onClose, onEdit }: ControlD
     {/* Lightbox plein écran avec support swipe - utilise un portail pour être hors du Dialog */}
     {lightboxOpen && record.photos && record.photos.length > 0 && createPortal(
       <div 
-        className="fixed inset-0 z-[9999] bg-black flex items-center justify-center"
+        className="fixed inset-0 z-[9999] bg-black"
         role="dialog"
         aria-modal="true"
         aria-label="Visionneuse de photos"
       >
-        {/* Bouton fermer - très grand et très accessible */}
-        <button
-          type="button"
-          className="absolute top-4 right-4 z-[10000] w-14 h-14 flex items-center justify-center rounded-full bg-white/20 text-white border-2 border-white/50 touch-auto"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            closeLightbox();
-          }}
-          onTouchEnd={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            closeLightbox();
-          }}
-          aria-label="Fermer"
-        >
-          <X className="h-8 w-8" />
-        </button>
-
-        {/* Navigation précédent */}
-        {record.photos.length > 1 && (
-          <button
-            type="button"
-            className="absolute left-3 top-1/2 -translate-y-1/2 z-[10000] w-14 h-14 flex items-center justify-center rounded-full bg-white/20 text-white border-2 border-white/50 touch-auto"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              goToPrevious();
-            }}
-            onTouchEnd={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              goToPrevious();
-            }}
-            aria-label="Photo précédente"
-          >
-            <ChevronLeft className="h-8 w-8" />
-          </button>
-        )}
-
-        {/* Container image avec swipe - zone tactile pour swiper */}
+        {/* Zone centrale pour l'image et le swipe - positionnée AVANT les boutons pour ne pas les masquer */}
         <div 
-          className="absolute inset-0 flex items-center justify-center px-20 py-24 touch-pan-x"
+          className="absolute inset-0 flex items-center justify-center p-4"
           onTouchStart={onTouchStart}
           onTouchMove={onTouchMove}
           onTouchEnd={onTouchEnd}
@@ -385,42 +345,67 @@ export function ControlDetailModal({ record, isOpen, onClose, onEdit }: ControlD
           <OptimizedImage
             src={record.photos[currentPhotoIndex]}
             alt={`Photo ${currentPhotoIndex + 1}`}
-            className="max-w-full max-h-full object-contain pointer-events-none"
+            className="max-w-full max-h-full object-contain"
             containerClassName="max-w-full max-h-full flex items-center justify-center"
             lazy={false}
             showPlaceholder={true}
           />
         </div>
 
-        {/* Navigation suivant */}
-        {record.photos.length > 1 && (
+        {/* Bouton fermer - positionné APRÈS pour être au-dessus */}
+        <div 
+          className="absolute top-4 right-4 z-[10001]"
+          style={{ pointerEvents: 'auto' }}
+        >
           <button
             type="button"
-            className="absolute right-3 top-1/2 -translate-y-1/2 z-[10000] w-14 h-14 flex items-center justify-center rounded-full bg-white/20 text-white border-2 border-white/50 touch-auto"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              goToNext();
-            }}
-            onTouchEnd={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              goToNext();
-            }}
-            aria-label="Photo suivante"
+            className="w-12 h-12 flex items-center justify-center rounded-full bg-black/70 text-white border-2 border-white active:bg-white/30"
+            onClick={closeLightbox}
+            aria-label="Fermer"
           >
-            <ChevronRight className="h-8 w-8" />
+            <X className="h-6 w-6" />
           </button>
+        </div>
+
+        {/* Navigation précédent */}
+        {record.photos.length > 1 && (
+          <div 
+            className="absolute left-2 top-1/2 -translate-y-1/2 z-[10001]"
+            style={{ pointerEvents: 'auto' }}
+          >
+            <button
+              type="button"
+              className="w-12 h-12 flex items-center justify-center rounded-full bg-black/70 text-white border-2 border-white active:bg-white/30"
+              onClick={goToPrevious}
+              aria-label="Photo précédente"
+            >
+              <ChevronLeft className="h-6 w-6" />
+            </button>
+          </div>
         )}
 
-        {/* Indicateur de position et instruction swipe */}
+        {/* Navigation suivant */}
         {record.photos.length > 1 && (
-          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 z-[10000] pointer-events-none">
-            <div className="text-white text-lg font-medium bg-black/50 px-4 py-2 rounded-full">
+          <div 
+            className="absolute right-2 top-1/2 -translate-y-1/2 z-[10001]"
+            style={{ pointerEvents: 'auto' }}
+          >
+            <button
+              type="button"
+              className="w-12 h-12 flex items-center justify-center rounded-full bg-black/70 text-white border-2 border-white active:bg-white/30"
+              onClick={goToNext}
+              aria-label="Photo suivante"
+            >
+              <ChevronRight className="h-6 w-6" />
+            </button>
+          </div>
+        )}
+
+        {/* Indicateur de position */}
+        {record.photos.length > 1 && (
+          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-[10001] pointer-events-none">
+            <div className="text-white text-lg font-medium bg-black/70 px-4 py-2 rounded-full border border-white/30">
               {currentPhotoIndex + 1} / {record.photos.length}
-            </div>
-            <div className="text-white/70 text-sm">
-              ← Glissez pour naviguer →
             </div>
           </div>
         )}

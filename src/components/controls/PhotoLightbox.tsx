@@ -100,21 +100,42 @@ export function PhotoLightbox({ photos, initialIndex, isOpen, onClose }: PhotoLi
 
   return createPortal(
     <div 
-      className="fixed inset-0 z-[99999] bg-black/95"
-      onClick={stopAllPropagation}
-      onMouseDown={stopAllPropagation}
+      className="fixed inset-0 z-[99999]"
+      style={{ 
+        backgroundColor: 'rgba(0, 0, 0, 0.98)',
+        // Force this element to capture ALL pointer events
+        pointerEvents: 'auto',
+        touchAction: 'none'
+      }}
+      onMouseDown={(e) => e.stopPropagation()}
+      onMouseUp={(e) => e.stopPropagation()}
+      onClick={(e) => e.stopPropagation()}
       onTouchStart={(e) => e.stopPropagation()}
+      onTouchEnd={(e) => e.stopPropagation()}
+      onPointerDown={(e) => e.stopPropagation()}
+      onPointerUp={(e) => e.stopPropagation()}
       role="dialog"
       aria-modal="true"
       aria-label="Visionneuse de photos"
     >
+      {/* Invisible backdrop that captures ALL clicks to prevent pass-through */}
+      <div 
+        className="absolute inset-0" 
+        style={{ pointerEvents: 'auto' }}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+        }}
+      />
+
       {/* Close button */}
       <button
         type="button"
-        className="absolute top-4 right-4 z-[100000] w-16 h-16 flex items-center justify-center rounded-full bg-white text-black shadow-2xl active:scale-95 transition-transform"
-        onMouseDown={stopAllPropagation}
+        className="absolute top-4 right-4 z-[100001] w-16 h-16 flex items-center justify-center rounded-full bg-white text-black shadow-2xl"
+        style={{ pointerEvents: 'auto' }}
         onClick={(e) => {
-          stopAllPropagation(e);
+          e.preventDefault();
+          e.stopPropagation();
           onClose();
         }}
         aria-label="Fermer"
@@ -126,10 +147,11 @@ export function PhotoLightbox({ photos, initialIndex, isOpen, onClose }: PhotoLi
       {photos.length > 1 && (
         <button
           type="button"
-          className="absolute left-2 top-1/2 -translate-y-1/2 z-[100000] w-16 h-16 flex items-center justify-center rounded-full bg-white text-black shadow-2xl active:scale-95 transition-transform"
-          onMouseDown={stopAllPropagation}
+          className="absolute left-2 top-1/2 -translate-y-1/2 z-[100001] w-16 h-16 flex items-center justify-center rounded-full bg-white text-black shadow-2xl"
+          style={{ pointerEvents: 'auto' }}
           onClick={(e) => {
-            stopAllPropagation(e);
+            e.preventDefault();
+            e.stopPropagation();
             goToPrevious();
           }}
           aria-label="Photo précédente"
@@ -140,10 +162,18 @@ export function PhotoLightbox({ photos, initialIndex, isOpen, onClose }: PhotoLi
 
       {/* Image container with swipe support */}
       <div 
-        className="absolute inset-0 flex items-center justify-center p-20"
+        className="absolute inset-0 flex items-center justify-center"
+        style={{ 
+          padding: '80px 80px 100px 80px',
+          pointerEvents: 'auto' 
+        }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+        }}
       >
         <OptimizedImage
           src={photos[currentIndex]}
@@ -159,10 +189,11 @@ export function PhotoLightbox({ photos, initialIndex, isOpen, onClose }: PhotoLi
       {photos.length > 1 && (
         <button
           type="button"
-          className="absolute right-2 top-1/2 -translate-y-1/2 z-[100000] w-16 h-16 flex items-center justify-center rounded-full bg-white text-black shadow-2xl active:scale-95 transition-transform"
-          onMouseDown={stopAllPropagation}
+          className="absolute right-2 top-1/2 -translate-y-1/2 z-[100001] w-16 h-16 flex items-center justify-center rounded-full bg-white text-black shadow-2xl"
+          style={{ pointerEvents: 'auto' }}
           onClick={(e) => {
-            stopAllPropagation(e);
+            e.preventDefault();
+            e.stopPropagation();
             goToNext();
           }}
           aria-label="Photo suivante"
@@ -173,7 +204,7 @@ export function PhotoLightbox({ photos, initialIndex, isOpen, onClose }: PhotoLi
 
       {/* Position indicator */}
       {photos.length > 1 && (
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-[100000] pointer-events-none">
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-[100001]" style={{ pointerEvents: 'none' }}>
           <div className="text-white text-xl font-bold bg-black/80 px-6 py-3 rounded-full">
             {currentIndex + 1} / {photos.length}
           </div>

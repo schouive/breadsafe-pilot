@@ -334,77 +334,78 @@ export function ControlDetailModal({ record, isOpen, onClose, onEdit }: ControlD
         role="dialog"
         aria-modal="true"
         aria-label="Visionneuse de photos"
+        onClick={(e) => {
+          // Fermer seulement si on clique sur le fond noir (pas sur les boutons)
+          if (e.target === e.currentTarget) {
+            closeLightbox();
+          }
+        }}
       >
-        {/* Zone centrale pour l'image et le swipe - positionnée AVANT les boutons pour ne pas les masquer */}
+        {/* Zone centrale pour l'image et le swipe */}
         <div 
-          className="absolute inset-0 flex items-center justify-center p-4"
+          className="absolute inset-0 flex items-center justify-center p-16"
           onTouchStart={onTouchStart}
           onTouchMove={onTouchMove}
           onTouchEnd={onTouchEnd}
+          onClick={(e) => e.stopPropagation()}
         >
           <OptimizedImage
             src={record.photos[currentPhotoIndex]}
             alt={`Photo ${currentPhotoIndex + 1}`}
-            className="max-w-full max-h-full object-contain"
+            className="max-w-full max-h-full object-contain pointer-events-none"
             containerClassName="max-w-full max-h-full flex items-center justify-center"
             lazy={false}
             showPlaceholder={true}
           />
         </div>
 
-        {/* Bouton fermer - positionné APRÈS pour être au-dessus */}
-        <div 
-          className="absolute top-4 right-4 z-[10001]"
-          style={{ pointerEvents: 'auto' }}
+        {/* Bouton fermer */}
+        <button
+          type="button"
+          className="absolute top-4 right-4 z-[10001] w-14 h-14 flex items-center justify-center rounded-full bg-black/80 text-white border-2 border-white shadow-lg"
+          onClick={(e) => {
+            e.stopPropagation();
+            closeLightbox();
+          }}
+          aria-label="Fermer"
         >
-          <button
-            type="button"
-            className="w-12 h-12 flex items-center justify-center rounded-full bg-black/70 text-white border-2 border-white active:bg-white/30"
-            onClick={closeLightbox}
-            aria-label="Fermer"
-          >
-            <X className="h-6 w-6" />
-          </button>
-        </div>
+          <X className="h-7 w-7" />
+        </button>
 
         {/* Navigation précédent */}
         {record.photos.length > 1 && (
-          <div 
-            className="absolute left-2 top-1/2 -translate-y-1/2 z-[10001]"
-            style={{ pointerEvents: 'auto' }}
+          <button
+            type="button"
+            className="absolute left-3 top-1/2 -translate-y-1/2 z-[10001] w-14 h-14 flex items-center justify-center rounded-full bg-black/80 text-white border-2 border-white shadow-lg"
+            onClick={(e) => {
+              e.stopPropagation();
+              goToPrevious();
+            }}
+            aria-label="Photo précédente"
           >
-            <button
-              type="button"
-              className="w-12 h-12 flex items-center justify-center rounded-full bg-black/70 text-white border-2 border-white active:bg-white/30"
-              onClick={goToPrevious}
-              aria-label="Photo précédente"
-            >
-              <ChevronLeft className="h-6 w-6" />
-            </button>
-          </div>
+            <ChevronLeft className="h-7 w-7" />
+          </button>
         )}
 
         {/* Navigation suivant */}
         {record.photos.length > 1 && (
-          <div 
-            className="absolute right-2 top-1/2 -translate-y-1/2 z-[10001]"
-            style={{ pointerEvents: 'auto' }}
+          <button
+            type="button"
+            className="absolute right-3 top-1/2 -translate-y-1/2 z-[10001] w-14 h-14 flex items-center justify-center rounded-full bg-black/80 text-white border-2 border-white shadow-lg"
+            onClick={(e) => {
+              e.stopPropagation();
+              goToNext();
+            }}
+            aria-label="Photo suivante"
           >
-            <button
-              type="button"
-              className="w-12 h-12 flex items-center justify-center rounded-full bg-black/70 text-white border-2 border-white active:bg-white/30"
-              onClick={goToNext}
-              aria-label="Photo suivante"
-            >
-              <ChevronRight className="h-6 w-6" />
-            </button>
-          </div>
+            <ChevronRight className="h-7 w-7" />
+          </button>
         )}
 
         {/* Indicateur de position */}
         {record.photos.length > 1 && (
           <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-[10001] pointer-events-none">
-            <div className="text-white text-lg font-medium bg-black/70 px-4 py-2 rounded-full border border-white/30">
+            <div className="text-white text-lg font-medium bg-black/80 px-4 py-2 rounded-full border border-white/30">
               {currentPhotoIndex + 1} / {record.photos.length}
             </div>
           </div>

@@ -119,9 +119,20 @@ export function ControlDetailModal({ record, isOpen, onClose, onEdit }: ControlD
     }
   };
 
+  // Empêcher la fermeture du Dialog si le lightbox est ouvert
+  const handleDialogChange = (open: boolean) => {
+    if (!open && lightboxOpen) {
+      // Ne pas fermer le dialog si le lightbox est ouvert
+      return;
+    }
+    if (!open) {
+      onClose();
+    }
+  };
+
   return (
     <>
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={handleDialogChange}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader className="flex-row items-center justify-between pr-8">
           <DialogTitle className="flex items-center gap-2">

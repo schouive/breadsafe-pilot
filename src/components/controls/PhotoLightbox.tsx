@@ -24,27 +24,38 @@ export function PhotoLightbox({ photos, initialIndex, isOpen, onClose }: PhotoLi
     }
   }, [isOpen, initialIndex]);
 
+  // Prevent body scroll when lightbox is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = '';
+      };
+    }
+  }, [isOpen]);
+
   // Handle keyboard navigation
   useEffect(() => {
     if (!isOpen) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
+      e.stopPropagation();
       if (e.key === 'Escape') {
         e.preventDefault();
-        e.stopPropagation();
         onClose();
       } else if (e.key === 'ArrowLeft') {
         e.preventDefault();
-        goToPrevious();
+        setCurrentIndex((prev) => (prev === 0 ? photos.length - 1 : prev - 1));
       } else if (e.key === 'ArrowRight') {
         e.preventDefault();
-        goToNext();
+        setCurrentIndex((prev) => (prev === photos.length - 1 ? 0 : prev + 1));
       }
     };
 
-    document.addEventListener('keydown', handleKeyDown, true);
-    return () => document.removeEventListener('keydown', handleKeyDown, true);
-  }, [isOpen]);
+    // Use capture phase to intercept before Dialog
+    window.addEventListener('keydown', handleKeyDown, true);
+    return () => window.removeEventListener('keydown', handleKeyDown, true);
+  }, [isOpen, photos.length, onClose]);
 
   const goToPrevious = useCallback(() => {
     setCurrentIndex((prev) => (prev === 0 ? photos.length - 1 : prev - 1));
@@ -53,33 +64,6 @@ export function PhotoLightbox({ photos, initialIndex, isOpen, onClose }: PhotoLi
   const goToNext = useCallback(() => {
     setCurrentIndex((prev) => (prev === photos.length - 1 ? 0 : prev + 1));
   }, [photos.length]);
-
-  const handleClose = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    onClose();
-  }, [onClose]);
-
-  const handlePrevious = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    goToPrevious();
-  }, [goToPrevious]);
-
-  const handleNext = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    goToNext();
-  }, [goToNext]);
-
-  const handleBackdropClick = useCallback((e: React.MouseEvent) => {
-    // Only close if clicking directly on the backdrop
-    if (e.target === e.currentTarget) {
-      e.preventDefault();
-      e.stopPropagation();
-      onClose();
-    }
-  }, [onClose]);
 
   // Touch handlers
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
@@ -108,10 +92,18 @@ export function PhotoLightbox({ photos, initialIndex, isOpen, onClose }: PhotoLi
 
   if (!isOpen || photos.length === 0) return null;
 
+  // Stop all event propagation to prevent Dialog from intercepting
+  const stopAllPropagation = (e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
   return createPortal(
     <div 
-      className="fixed inset-0 z-[99999] bg-black flex items-center justify-center"
-      onClick={handleBackdropClick}
+      className="fixed inset-0 z-[99999] bg-black/95"
+      onClick={stopAllPropagation}
+      onMouseDown={stopAllPropagation}
+      onTouchStart={(e) => e.stopPropagation()}
       role="dialog"
       aria-modal="true"
       aria-label="Visionneuse de photos"
@@ -119,32 +111,39 @@ export function PhotoLightbox({ photos, initialIndex, isOpen, onClose }: PhotoLi
       {/* Close button */}
       <button
         type="button"
-        className="absolute top-4 right-4 z-[100000] w-14 h-14 flex items-center justify-center rounded-full bg-white text-black shadow-2xl border-2 border-gray-300 hover:bg-gray-100 active:bg-gray-200"
-        onClick={handleClose}
+        className="absolute top-4 right-4 z-[100000] w-16 h-16 flex items-center justify-center rounded-full bg-white text-black shadow-2xl active:scale-95 transition-transform"
+        onMouseDown={stopAllPropagation}
+        onClick={(e) => {
+          stopAllPropagation(e);
+          onClose();
+        }}
         aria-label="Fermer"
       >
-        <X className="h-8 w-8" />
+        <X className="h-8 w-8" strokeWidth={2.5} />
       </button>
 
       {/* Previous button */}
       {photos.length > 1 && (
         <button
           type="button"
-          className="absolute left-3 top-1/2 -translate-y-1/2 z-[100000] w-14 h-14 flex items-center justify-center rounded-full bg-white text-black shadow-2xl border-2 border-gray-300 hover:bg-gray-100 active:bg-gray-200"
-          onClick={handlePrevious}
+          className="absolute left-2 top-1/2 -translate-y-1/2 z-[100000] w-16 h-16 flex items-center justify-center rounded-full bg-white text-black shadow-2xl active:scale-95 transition-transform"
+          onMouseDown={stopAllPropagation}
+          onClick={(e) => {
+            stopAllPropagation(e);
+            goToPrevious();
+          }}
           aria-label="Photo précédente"
         >
-          <ChevronLeft className="h-8 w-8" />
+          <ChevronLeft className="h-10 w-10" strokeWidth={2.5} />
         </button>
       )}
 
       {/* Image container with swipe support */}
       <div 
-        className="flex items-center justify-center w-full h-full p-20"
+        className="absolute inset-0 flex items-center justify-center p-20"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
-        onClick={(e) => e.stopPropagation()}
       >
         <OptimizedImage
           src={photos[currentIndex]}
@@ -160,18 +159,22 @@ export function PhotoLightbox({ photos, initialIndex, isOpen, onClose }: PhotoLi
       {photos.length > 1 && (
         <button
           type="button"
-          className="absolute right-3 top-1/2 -translate-y-1/2 z-[100000] w-14 h-14 flex items-center justify-center rounded-full bg-white text-black shadow-2xl border-2 border-gray-300 hover:bg-gray-100 active:bg-gray-200"
-          onClick={handleNext}
+          className="absolute right-2 top-1/2 -translate-y-1/2 z-[100000] w-16 h-16 flex items-center justify-center rounded-full bg-white text-black shadow-2xl active:scale-95 transition-transform"
+          onMouseDown={stopAllPropagation}
+          onClick={(e) => {
+            stopAllPropagation(e);
+            goToNext();
+          }}
           aria-label="Photo suivante"
         >
-          <ChevronRight className="h-8 w-8" />
+          <ChevronRight className="h-10 w-10" strokeWidth={2.5} />
         </button>
       )}
 
       {/* Position indicator */}
       {photos.length > 1 && (
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-[100000] pointer-events-none">
-          <div className="text-white text-lg font-semibold bg-black/80 px-5 py-2 rounded-full border border-white/30">
+          <div className="text-white text-xl font-bold bg-black/80 px-6 py-3 rounded-full">
             {currentIndex + 1} / {photos.length}
           </div>
         </div>

@@ -1,5 +1,4 @@
-import { useState, useCallback } from 'react';
-import { createPortal } from 'react-dom';
+import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { 
   AlertDialog,
@@ -26,9 +25,6 @@ import {
   FileText,
   AlertCircle,
   ShieldCheck,
-  ChevronLeft,
-  ChevronRight,
-  X,
   Trash2,
   Pencil
 } from 'lucide-react';
@@ -37,6 +33,7 @@ import { ControlRecordFromDB, useDeleteControlRecord } from '@/hooks/useControlR
 import { CONTROL_POINTS } from '@/types/haccp';
 import { Button } from '@/components/ui/button';
 import { OptimizedImage } from '@/components/ui/OptimizedImage';
+import { PhotoLightbox } from './PhotoLightbox';
 
 interface ControlDetailModalProps {
   record: ControlRecordFromDB | null;
@@ -72,58 +69,8 @@ export function ControlDetailModal({ record, isOpen, onClose, onEdit }: ControlD
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [touchStart, setTouchStart] = useState<number | null>(null);
-  const [touchEnd, setTouchEnd] = useState<number | null>(null);
 
   const deleteRecord = useDeleteControlRecord();
-  
-  // Minimum swipe distance to trigger navigation (in pixels)
-  const minSwipeDistance = 50;
-
-  const closeLightbox = useCallback(() => {
-    setLightboxOpen(false);
-  }, []);
-
-  const goToPrevious = useCallback(() => {
-    if (record?.photos && record.photos.length > 0) {
-      setCurrentPhotoIndex((prev) => (prev === 0 ? record.photos!.length - 1 : prev - 1));
-    }
-  }, [record?.photos]);
-
-  const goToNext = useCallback(() => {
-    if (record?.photos && record.photos.length > 0) {
-      setCurrentPhotoIndex((prev) => (prev === record.photos!.length - 1 ? 0 : prev + 1));
-    }
-  }, [record?.photos]);
-
-  // Touch handlers for swipe on the image area only
-  const onTouchStart = useCallback((e: React.TouchEvent) => {
-    setTouchEnd(null);
-    setTouchStart(e.targetTouches[0].clientX);
-  }, []);
-
-  const onTouchMove = useCallback((e: React.TouchEvent) => {
-    setTouchEnd(e.targetTouches[0].clientX);
-  }, []);
-
-  const onTouchEnd = useCallback(() => {
-    if (!touchStart || !touchEnd) return;
-    
-    const distance = touchStart - touchEnd;
-    const isLeftSwipe = distance > minSwipeDistance;
-    const isRightSwipe = distance < -minSwipeDistance;
-    
-    if (isLeftSwipe && record?.photos && record.photos.length > 1) {
-      goToNext();
-    }
-    if (isRightSwipe && record?.photos && record.photos.length > 1) {
-      goToPrevious();
-    }
-    
-    // Reset touch state
-    setTouchStart(null);
-    setTouchEnd(null);
-  }, [touchStart, touchEnd, record?.photos, goToNext, goToPrevious, minSwipeDistance]);
   
   if (!record) return null;
 
@@ -327,92 +274,13 @@ export function ControlDetailModal({ record, isOpen, onClose, onEdit }: ControlD
       </DialogContent>
     </Dialog>
 
-    {/* Lightbox plein écran avec support swipe - utilise un portail pour être hors du Dialog */}
-    {lightboxOpen && record.photos && record.photos.length > 0 && createPortal(
-      <div 
-        className="fixed inset-0 z-[9999] bg-black"
-        role="dialog"
-        aria-modal="true"
-        aria-label="Visionneuse de photos"
-        onClick={(e) => {
-          // Fermer seulement si on clique sur le fond noir (pas sur les boutons)
-          if (e.target === e.currentTarget) {
-            closeLightbox();
-          }
-        }}
-      >
-        {/* Zone centrale pour l'image et le swipe */}
-        <div 
-          className="absolute inset-0 flex items-center justify-center p-16"
-          onTouchStart={onTouchStart}
-          onTouchMove={onTouchMove}
-          onTouchEnd={onTouchEnd}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <OptimizedImage
-            src={record.photos[currentPhotoIndex]}
-            alt={`Photo ${currentPhotoIndex + 1}`}
-            className="max-w-full max-h-full object-contain pointer-events-none"
-            containerClassName="max-w-full max-h-full flex items-center justify-center"
-            lazy={false}
-            showPlaceholder={true}
-          />
-        </div>
-
-        {/* Bouton fermer */}
-        <button
-          type="button"
-          className="absolute top-4 right-4 z-[10001] w-14 h-14 flex items-center justify-center rounded-full bg-black/80 text-white border-2 border-white shadow-lg"
-          onClick={(e) => {
-            e.stopPropagation();
-            closeLightbox();
-          }}
-          aria-label="Fermer"
-        >
-          <X className="h-7 w-7" />
-        </button>
-
-        {/* Navigation précédent */}
-        {record.photos.length > 1 && (
-          <button
-            type="button"
-            className="absolute left-3 top-1/2 -translate-y-1/2 z-[10001] w-14 h-14 flex items-center justify-center rounded-full bg-black/80 text-white border-2 border-white shadow-lg"
-            onClick={(e) => {
-              e.stopPropagation();
-              goToPrevious();
-            }}
-            aria-label="Photo précédente"
-          >
-            <ChevronLeft className="h-7 w-7" />
-          </button>
-        )}
-
-        {/* Navigation suivant */}
-        {record.photos.length > 1 && (
-          <button
-            type="button"
-            className="absolute right-3 top-1/2 -translate-y-1/2 z-[10001] w-14 h-14 flex items-center justify-center rounded-full bg-black/80 text-white border-2 border-white shadow-lg"
-            onClick={(e) => {
-              e.stopPropagation();
-              goToNext();
-            }}
-            aria-label="Photo suivante"
-          >
-            <ChevronRight className="h-7 w-7" />
-          </button>
-        )}
-
-        {/* Indicateur de position */}
-        {record.photos.length > 1 && (
-          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-[10001] pointer-events-none">
-            <div className="text-white text-lg font-medium bg-black/80 px-4 py-2 rounded-full border border-white/30">
-              {currentPhotoIndex + 1} / {record.photos.length}
-            </div>
-          </div>
-        )}
-      </div>,
-      document.body
-    )}
+    {/* Lightbox séparé pour éviter les conflits avec le Dialog parent */}
+    <PhotoLightbox
+      photos={record.photos || []}
+      initialIndex={currentPhotoIndex}
+      isOpen={lightboxOpen}
+      onClose={() => setLightboxOpen(false)}
+    />
 
     {/* Confirmation de suppression */}
     <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>

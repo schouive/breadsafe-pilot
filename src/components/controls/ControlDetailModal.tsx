@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { 
   AlertDialog,
@@ -78,6 +79,51 @@ export function ControlDetailModal({ record, isOpen, onClose, onEdit }: ControlD
   
   // Minimum swipe distance to trigger navigation (in pixels)
   const minSwipeDistance = 50;
+
+  const closeLightbox = useCallback(() => {
+    setLightboxOpen(false);
+  }, []);
+
+  const goToPrevious = useCallback(() => {
+    if (record?.photos && record.photos.length > 0) {
+      setCurrentPhotoIndex((prev) => (prev === 0 ? record.photos!.length - 1 : prev - 1));
+    }
+  }, [record?.photos]);
+
+  const goToNext = useCallback(() => {
+    if (record?.photos && record.photos.length > 0) {
+      setCurrentPhotoIndex((prev) => (prev === record.photos!.length - 1 ? 0 : prev + 1));
+    }
+  }, [record?.photos]);
+
+  // Touch handlers for swipe on the image area only
+  const onTouchStart = useCallback((e: React.TouchEvent) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  }, []);
+
+  const onTouchMove = useCallback((e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  }, []);
+
+  const onTouchEnd = useCallback(() => {
+    if (!touchStart || !touchEnd) return;
+    
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+    
+    if (isLeftSwipe && record?.photos && record.photos.length > 1) {
+      goToNext();
+    }
+    if (isRightSwipe && record?.photos && record.photos.length > 1) {
+      goToPrevious();
+    }
+    
+    // Reset touch state
+    setTouchStart(null);
+    setTouchEnd(null);
+  }, [touchStart, touchEnd, record?.photos, goToNext, goToPrevious, minSwipeDistance]);
   
   if (!record) return null;
 
@@ -111,55 +157,6 @@ export function ControlDetailModal({ record, isOpen, onClose, onEdit }: ControlD
   const openLightbox = (index: number) => {
     setCurrentPhotoIndex(index);
     setLightboxOpen(true);
-  };
-
-  const closeLightbox = (e?: React.MouseEvent | React.TouchEvent) => {
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-    setLightboxOpen(false);
-  };
-
-  const goToPrevious = () => {
-    if (record.photos && record.photos.length > 0) {
-      setCurrentPhotoIndex((prev) => (prev === 0 ? record.photos!.length - 1 : prev - 1));
-    }
-  };
-
-  const goToNext = () => {
-    if (record.photos && record.photos.length > 0) {
-      setCurrentPhotoIndex((prev) => (prev === record.photos!.length - 1 ? 0 : prev + 1));
-    }
-  };
-
-  // Touch handlers for swipe
-  const onTouchStart = (e: React.TouchEvent) => {
-    setTouchEnd(null);
-    setTouchStart(e.targetTouches[0].clientX);
-  };
-
-  const onTouchMove = (e: React.TouchEvent) => {
-    setTouchEnd(e.targetTouches[0].clientX);
-  };
-
-  const onTouchEnd = () => {
-    if (!touchStart || !touchEnd) return;
-    
-    const distance = touchStart - touchEnd;
-    const isLeftSwipe = distance > minSwipeDistance;
-    const isRightSwipe = distance < -minSwipeDistance;
-    
-    if (isLeftSwipe && record.photos && record.photos.length > 1) {
-      goToNext();
-    }
-    if (isRightSwipe && record.photos && record.photos.length > 1) {
-      goToPrevious();
-    }
-    
-    // Reset touch state
-    setTouchStart(null);
-    setTouchEnd(null);
   };
 
   const handleDelete = async () => {
@@ -330,19 +327,28 @@ export function ControlDetailModal({ record, isOpen, onClose, onEdit }: ControlD
       </DialogContent>
     </Dialog>
 
-    {/* Lightbox plein écran avec support swipe */}
-    {lightboxOpen && record.photos && record.photos.length > 0 && (
+    {/* Lightbox plein écran avec support swipe - utilise un portail pour être hors du Dialog */}
+    {lightboxOpen && record.photos && record.photos.length > 0 && createPortal(
       <div 
-        className="fixed inset-0 z-[100] bg-black flex items-center justify-center touch-none"
-        onTouchStart={onTouchStart}
-        onTouchMove={onTouchMove}
-        onTouchEnd={onTouchEnd}
+        className="fixed inset-0 z-[9999] bg-black flex items-center justify-center"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Visionneuse de photos"
       >
-        {/* Bouton fermer - plus grand et plus accessible */}
+        {/* Bouton fermer - très grand et très accessible */}
         <button
           type="button"
-          className="absolute top-4 right-4 z-20 w-12 h-12 flex items-center justify-center rounded-full bg-black/50 text-white active:bg-black/70"
-          onClick={closeLightbox}
+          className="absolute top-4 right-4 z-[10000] w-14 h-14 flex items-center justify-center rounded-full bg-white/20 text-white border-2 border-white/50 touch-auto"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            closeLightbox();
+          }}
+          onTouchEnd={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            closeLightbox();
+          }}
           aria-label="Fermer"
         >
           <X className="h-8 w-8" />
@@ -352,8 +358,14 @@ export function ControlDetailModal({ record, isOpen, onClose, onEdit }: ControlD
         {record.photos.length > 1 && (
           <button
             type="button"
-            className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-12 h-12 flex items-center justify-center rounded-full bg-black/50 text-white active:bg-black/70"
+            className="absolute left-3 top-1/2 -translate-y-1/2 z-[10000] w-14 h-14 flex items-center justify-center rounded-full bg-white/20 text-white border-2 border-white/50 touch-auto"
             onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              goToPrevious();
+            }}
+            onTouchEnd={(e) => {
+              e.preventDefault();
               e.stopPropagation();
               goToPrevious();
             }}
@@ -363,14 +375,17 @@ export function ControlDetailModal({ record, isOpen, onClose, onEdit }: ControlD
           </button>
         )}
 
-        {/* Container image avec swipe */}
+        {/* Container image avec swipe - zone tactile pour swiper */}
         <div 
-          className="w-full h-full flex items-center justify-center px-16 py-20"
+          className="absolute inset-0 flex items-center justify-center px-20 py-24 touch-pan-x"
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={onTouchEnd}
         >
           <OptimizedImage
             src={record.photos[currentPhotoIndex]}
             alt={`Photo ${currentPhotoIndex + 1}`}
-            className="max-w-full max-h-full object-contain"
+            className="max-w-full max-h-full object-contain pointer-events-none"
             containerClassName="max-w-full max-h-full flex items-center justify-center"
             lazy={false}
             showPlaceholder={true}
@@ -381,8 +396,14 @@ export function ControlDetailModal({ record, isOpen, onClose, onEdit }: ControlD
         {record.photos.length > 1 && (
           <button
             type="button"
-            className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-12 h-12 flex items-center justify-center rounded-full bg-black/50 text-white active:bg-black/70"
+            className="absolute right-3 top-1/2 -translate-y-1/2 z-[10000] w-14 h-14 flex items-center justify-center rounded-full bg-white/20 text-white border-2 border-white/50 touch-auto"
             onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              goToNext();
+            }}
+            onTouchEnd={(e) => {
+              e.preventDefault();
               e.stopPropagation();
               goToNext();
             }}
@@ -394,16 +415,17 @@ export function ControlDetailModal({ record, isOpen, onClose, onEdit }: ControlD
 
         {/* Indicateur de position et instruction swipe */}
         {record.photos.length > 1 && (
-          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 z-20">
-            <div className="text-white text-base font-medium">
+          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 z-[10000] pointer-events-none">
+            <div className="text-white text-lg font-medium bg-black/50 px-4 py-2 rounded-full">
               {currentPhotoIndex + 1} / {record.photos.length}
             </div>
-            <div className="text-white/60 text-xs">
-              Glissez pour naviguer
+            <div className="text-white/70 text-sm">
+              ← Glissez pour naviguer →
             </div>
           </div>
         )}
-      </div>
+      </div>,
+      document.body
     )}
 
     {/* Confirmation de suppression */}

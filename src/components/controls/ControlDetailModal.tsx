@@ -71,8 +71,13 @@ export function ControlDetailModal({ record, isOpen, onClose, onEdit }: ControlD
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
 
   const deleteRecord = useDeleteControlRecord();
+  
+  // Minimum swipe distance to trigger navigation (in pixels)
+  const minSwipeDistance = 50;
   
   if (!record) return null;
 
@@ -108,7 +113,11 @@ export function ControlDetailModal({ record, isOpen, onClose, onEdit }: ControlD
     setLightboxOpen(true);
   };
 
-  const closeLightbox = () => {
+  const closeLightbox = (e?: React.MouseEvent | React.TouchEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     setLightboxOpen(false);
   };
 
@@ -122,6 +131,35 @@ export function ControlDetailModal({ record, isOpen, onClose, onEdit }: ControlD
     if (record.photos && record.photos.length > 0) {
       setCurrentPhotoIndex((prev) => (prev === record.photos!.length - 1 ? 0 : prev + 1));
     }
+  };
+
+  // Touch handlers for swipe
+  const onTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+    
+    if (isLeftSwipe && record.photos && record.photos.length > 1) {
+      goToNext();
+    }
+    if (isRightSwipe && record.photos && record.photos.length > 1) {
+      goToPrevious();
+    }
+    
+    // Reset touch state
+    setTouchStart(null);
+    setTouchEnd(null);
   };
 
   const handleDelete = async () => {
@@ -292,47 +330,48 @@ export function ControlDetailModal({ record, isOpen, onClose, onEdit }: ControlD
       </DialogContent>
     </Dialog>
 
-    {/* Lightbox plein écran */}
+    {/* Lightbox plein écran avec support swipe */}
     {lightboxOpen && record.photos && record.photos.length > 0 && (
       <div 
-        className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center"
-        onClick={closeLightbox}
+        className="fixed inset-0 z-[100] bg-black flex items-center justify-center touch-none"
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
       >
-        {/* Bouton fermer */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="absolute top-4 right-4 text-white hover:bg-white/20 z-10"
+        {/* Bouton fermer - plus grand et plus accessible */}
+        <button
+          type="button"
+          className="absolute top-4 right-4 z-20 w-12 h-12 flex items-center justify-center rounded-full bg-black/50 text-white active:bg-black/70"
           onClick={closeLightbox}
+          aria-label="Fermer"
         >
-          <X className="h-6 w-6" />
-        </Button>
+          <X className="h-8 w-8" />
+        </button>
 
         {/* Navigation précédent */}
         {record.photos.length > 1 && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute left-4 text-white hover:bg-white/20 z-10"
+          <button
+            type="button"
+            className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-12 h-12 flex items-center justify-center rounded-full bg-black/50 text-white active:bg-black/70"
             onClick={(e) => {
               e.stopPropagation();
               goToPrevious();
             }}
+            aria-label="Photo précédente"
           >
             <ChevronLeft className="h-8 w-8" />
-          </Button>
+          </button>
         )}
 
-        {/* Image */}
+        {/* Container image avec swipe */}
         <div 
-          className="max-w-[90vw] max-h-[90vh] flex items-center justify-center"
-          onClick={(e) => e.stopPropagation()}
+          className="w-full h-full flex items-center justify-center px-16 py-20"
         >
           <OptimizedImage
             src={record.photos[currentPhotoIndex]}
             alt={`Photo ${currentPhotoIndex + 1}`}
-            className="max-w-full max-h-[90vh] object-contain rounded-lg"
-            containerClassName="max-w-full max-h-[90vh]"
+            className="max-w-full max-h-full object-contain"
+            containerClassName="max-w-full max-h-full flex items-center justify-center"
             lazy={false}
             showPlaceholder={true}
           />
@@ -340,23 +379,28 @@ export function ControlDetailModal({ record, isOpen, onClose, onEdit }: ControlD
 
         {/* Navigation suivant */}
         {record.photos.length > 1 && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute right-4 text-white hover:bg-white/20 z-10"
+          <button
+            type="button"
+            className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-12 h-12 flex items-center justify-center rounded-full bg-black/50 text-white active:bg-black/70"
             onClick={(e) => {
               e.stopPropagation();
               goToNext();
             }}
+            aria-label="Photo suivante"
           >
             <ChevronRight className="h-8 w-8" />
-          </Button>
+          </button>
         )}
 
-        {/* Indicateur de position */}
+        {/* Indicateur de position et instruction swipe */}
         {record.photos.length > 1 && (
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white text-sm">
-            {currentPhotoIndex + 1} / {record.photos.length}
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 z-20">
+            <div className="text-white text-base font-medium">
+              {currentPhotoIndex + 1} / {record.photos.length}
+            </div>
+            <div className="text-white/60 text-xs">
+              Glissez pour naviguer
+            </div>
           </div>
         )}
       </div>

@@ -132,8 +132,21 @@ export function ControlDetailModal({ record, isOpen, onClose, onEdit }: ControlD
 
   return (
     <>
-    <Dialog open={isOpen} onOpenChange={handleDialogChange}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+    <Dialog open={isOpen} onOpenChange={handleDialogChange} modal={!lightboxOpen}>
+      <DialogContent 
+        className="max-w-lg max-h-[90vh] overflow-y-auto"
+        style={lightboxOpen ? { pointerEvents: 'none', opacity: 0 } : undefined}
+        onInteractOutside={(e) => {
+          if (lightboxOpen) {
+            e.preventDefault();
+          }
+        }}
+        onEscapeKeyDown={(e) => {
+          if (lightboxOpen) {
+            e.preventDefault();
+          }
+        }}
+      >
         <DialogHeader className="flex-row items-center justify-between pr-8">
           <DialogTitle className="flex items-center gap-2">
             <StatusIcon className={cn("h-5 w-5", status.class.split(' ')[1])} />

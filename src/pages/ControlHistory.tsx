@@ -437,55 +437,66 @@ export default function ControlHistory() {
                     onClick={() => setSelectedRecord(record)}
                     className={cn("p-4 border cursor-pointer hover:shadow-md transition-shadow", status.class)}
                   >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex items-start gap-3">
-                        <StatusIcon className="h-5 w-5 mt-0.5 shrink-0" />
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <Badge variant="outline" className={status.class}>
-                              {status.label}
-                            </Badge>
-                            {record.temperature !== null && (
-                              <span className="text-sm font-medium">
-                                {record.temperature}°C
-                              </span>
+                  <div className="space-y-3">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex items-start gap-3">
+                          <StatusIcon className="h-5 w-5 mt-0.5 shrink-0" />
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline" className={status.class}>
+                                {status.label}
+                              </Badge>
+                              {record.temperature !== null && (
+                                <span className="text-sm font-medium">
+                                  {record.temperature}°C
+                                </span>
+                              )}
+                            </div>
+                            {record.notes && (
+                              <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                                {record.notes}
+                              </p>
+                            )}
+                            {record.product && (
+                              <p className="text-sm text-muted-foreground mt-1">
+                                Produit: {record.product}
+                              </p>
+                            )}
+                            {record.supplier && (
+                              <p className="text-sm text-muted-foreground">
+                                Fournisseur: {record.supplier}
+                              </p>
+                            )}
+                            {operatorNames?.[record.operator_id] && (
+                              <div className="flex items-center gap-1.5 mt-1.5 text-sm text-muted-foreground">
+                                <User className="h-3.5 w-3.5" />
+                                <span>{operatorNames[record.operator_id]}</span>
+                              </div>
                             )}
                           </div>
-                          {record.notes && (
-                            <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                              {record.notes}
-                            </p>
-                          )}
-                          {record.product && (
-                            <p className="text-sm text-muted-foreground mt-1">
-                              Produit: {record.product}
-                            </p>
-                          )}
-                          {record.supplier && (
-                            <p className="text-sm text-muted-foreground">
-                              Fournisseur: {record.supplier}
-                            </p>
-                          )}
-                          {operatorNames?.[record.operator_id] && (
-                            <div className="flex items-center gap-1.5 mt-1.5 text-sm text-muted-foreground">
-                              <User className="h-3.5 w-3.5" />
-                              <span>{operatorNames[record.operator_id]}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="text-right text-sm text-muted-foreground shrink-0">
+                            <div className="flex items-center gap-1">
+                              <Calendar className="h-3.5 w-3.5" />
+                              {format(new Date(record.timestamp), 'dd MMM yyyy', { locale: fr })}
                             </div>
-                          )}
+                            <div className="mt-0.5">
+                              {format(new Date(record.timestamp), 'HH:mm', { locale: fr })}
+                            </div>
+                          </div>
+                          <ChevronRight className="h-4 w-4 text-muted-foreground" />
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <div className="text-right text-sm text-muted-foreground shrink-0">
-                          <div className="flex items-center gap-1">
-                            <Calendar className="h-3.5 w-3.5" />
-                            {format(new Date(record.timestamp), 'dd MMM yyyy', { locale: fr })}
-                          </div>
-                          <div className="mt-0.5">
-                            {format(new Date(record.timestamp), 'HH:mm', { locale: fr })}
-                          </div>
+                      {/* Photos preview for reception controls */}
+                      {record.photos && record.photos.length > 0 && (
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <Camera className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm text-muted-foreground">
+                            {record.photos.length} photo{record.photos.length > 1 ? 's' : ''}
+                          </span>
                         </div>
-                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                      </div>
+                      )}
                     </div>
                   </Card>
                 );

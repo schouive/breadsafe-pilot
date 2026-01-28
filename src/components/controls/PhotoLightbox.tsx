@@ -131,7 +131,7 @@ export function PhotoLightbox({ photos, initialIndex, isOpen, onClose }: PhotoLi
       {/* Close button */}
       <button
         type="button"
-        className="absolute top-4 right-4 z-[100001] w-16 h-16 flex items-center justify-center rounded-full bg-white text-black shadow-2xl"
+        className="absolute top-4 right-4 z-[100001] w-10 h-10 flex items-center justify-center rounded-full bg-white/90 text-black shadow-lg hover:bg-white transition-colors"
         style={{ pointerEvents: 'auto' }}
         onClick={(e) => {
           e.preventDefault();
@@ -140,14 +140,14 @@ export function PhotoLightbox({ photos, initialIndex, isOpen, onClose }: PhotoLi
         }}
         aria-label="Fermer"
       >
-        <X className="h-8 w-8" strokeWidth={2.5} />
+        <X className="h-5 w-5" strokeWidth={2} />
       </button>
 
       {/* Previous button */}
       {photos.length > 1 && (
         <button
           type="button"
-          className="absolute left-2 top-1/2 -translate-y-1/2 z-[100001] w-16 h-16 flex items-center justify-center rounded-full bg-white text-black shadow-2xl"
+          className="absolute left-3 top-1/2 -translate-y-1/2 z-[100001] w-10 h-10 flex items-center justify-center rounded-full bg-white/90 text-black shadow-lg hover:bg-white transition-colors"
           style={{ pointerEvents: 'auto' }}
           onClick={(e) => {
             e.preventDefault();
@@ -156,7 +156,7 @@ export function PhotoLightbox({ photos, initialIndex, isOpen, onClose }: PhotoLi
           }}
           aria-label="Photo précédente"
         >
-          <ChevronLeft className="h-10 w-10" strokeWidth={2.5} />
+          <ChevronLeft className="h-6 w-6" strokeWidth={2} />
         </button>
       )}
 
@@ -189,7 +189,7 @@ export function PhotoLightbox({ photos, initialIndex, isOpen, onClose }: PhotoLi
       {photos.length > 1 && (
         <button
           type="button"
-          className="absolute right-2 top-1/2 -translate-y-1/2 z-[100001] w-16 h-16 flex items-center justify-center rounded-full bg-white text-black shadow-2xl"
+          className="absolute right-3 top-1/2 -translate-y-1/2 z-[100001] w-10 h-10 flex items-center justify-center rounded-full bg-white/90 text-black shadow-lg hover:bg-white transition-colors"
           style={{ pointerEvents: 'auto' }}
           onClick={(e) => {
             e.preventDefault();
@@ -198,14 +198,14 @@ export function PhotoLightbox({ photos, initialIndex, isOpen, onClose }: PhotoLi
           }}
           aria-label="Photo suivante"
         >
-          <ChevronRight className="h-10 w-10" strokeWidth={2.5} />
+          <ChevronRight className="h-6 w-6" strokeWidth={2} />
         </button>
       )}
 
       {/* Position indicator */}
       {photos.length > 1 && (
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-[100001]" style={{ pointerEvents: 'none' }}>
-          <div className="text-white text-xl font-bold bg-black/80 px-6 py-3 rounded-full">
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-[100001]" style={{ pointerEvents: 'none' }}>
+          <div className="text-white text-sm font-medium bg-black/70 px-4 py-2 rounded-full">
             {currentIndex + 1} / {photos.length}
           </div>
         </div>

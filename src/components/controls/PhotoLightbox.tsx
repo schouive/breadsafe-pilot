@@ -1,6 +1,6 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, X, ZoomIn } from 'lucide-react';
 import { OptimizedImage } from '@/components/ui/OptimizedImage';
 
 interface PhotoLightboxProps {
@@ -14,15 +14,34 @@ export function PhotoLightbox({ photos, initialIndex, isOpen, onClose }: PhotoLi
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
+  
+  // Zoom state
+  const [scale, setScale] = useState(1);
+  const [initialPinchDistance, setInitialPinchDistance] = useState<number | null>(null);
+  const [initialScale, setInitialScale] = useState(1);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [isPanning, setIsPanning] = useState(false);
+  const [lastPanPosition, setLastPanPosition] = useState({ x: 0, y: 0 });
+  const imageContainerRef = useRef<HTMLDivElement>(null);
 
   const minSwipeDistance = 50;
+  const maxScale = 4;
+  const minScale = 1;
 
-  // Reset index when opening with a new initial index
+  // Reset zoom when changing photos or closing
+  const resetZoom = useCallback(() => {
+    setScale(1);
+    setPosition({ x: 0, y: 0 });
+    setInitialPinchDistance(null);
+  }, []);
+
+  // Reset index and zoom when opening with a new initial index
   useEffect(() => {
     if (isOpen) {
       setCurrentIndex(initialIndex);
+      resetZoom();
     }
-  }, [isOpen, initialIndex]);
+  }, [isOpen, initialIndex, resetZoom]);
 
   // Prevent body scroll when lightbox is open
   useEffect(() => {
@@ -42,53 +61,134 @@ export function PhotoLightbox({ photos, initialIndex, isOpen, onClose }: PhotoLi
       e.stopPropagation();
       if (e.key === 'Escape') {
         e.preventDefault();
-        onClose();
-      } else if (e.key === 'ArrowLeft') {
+        if (scale > 1) {
+          resetZoom();
+        } else {
+          onClose();
+        }
+      } else if (e.key === 'ArrowLeft' && scale === 1) {
         e.preventDefault();
         setCurrentIndex((prev) => (prev === 0 ? photos.length - 1 : prev - 1));
-      } else if (e.key === 'ArrowRight') {
+      } else if (e.key === 'ArrowRight' && scale === 1) {
         e.preventDefault();
         setCurrentIndex((prev) => (prev === photos.length - 1 ? 0 : prev + 1));
       }
     };
 
-    // Use capture phase to intercept before Dialog
     window.addEventListener('keydown', handleKeyDown, true);
     return () => window.removeEventListener('keydown', handleKeyDown, true);
-  }, [isOpen, photos.length, onClose]);
+  }, [isOpen, photos.length, onClose, scale, resetZoom]);
 
   const goToPrevious = useCallback(() => {
+    if (scale > 1) return;
+    resetZoom();
     setCurrentIndex((prev) => (prev === 0 ? photos.length - 1 : prev - 1));
-  }, [photos.length]);
+  }, [photos.length, scale, resetZoom]);
 
   const goToNext = useCallback(() => {
+    if (scale > 1) return;
+    resetZoom();
     setCurrentIndex((prev) => (prev === photos.length - 1 ? 0 : prev + 1));
-  }, [photos.length]);
+  }, [photos.length, scale, resetZoom]);
 
-  // Touch handlers
+  // Calculate distance between two touch points
+  const getDistance = (touches: React.TouchList): number => {
+    if (touches.length < 2) return 0;
+    const dx = touches[0].clientX - touches[1].clientX;
+    const dy = touches[0].clientY - touches[1].clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+  };
+
+  // Touch handlers for swipe and pinch-to-zoom
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    setTouchEnd(null);
-    setTouchStart(e.targetTouches[0].clientX);
-  }, []);
+    if (e.touches.length === 2) {
+      // Pinch start
+      const distance = getDistance(e.touches);
+      setInitialPinchDistance(distance);
+      setInitialScale(scale);
+    } else if (e.touches.length === 1) {
+      if (scale > 1) {
+        // Pan start when zoomed
+        setIsPanning(true);
+        setLastPanPosition({
+          x: e.touches[0].clientX,
+          y: e.touches[0].clientY
+        });
+      } else {
+        // Swipe start
+        setTouchEnd(null);
+        setTouchStart(e.touches[0].clientX);
+      }
+    }
+  }, [scale]);
 
   const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    setTouchEnd(e.targetTouches[0].clientX);
-  }, []);
+    if (e.touches.length === 2 && initialPinchDistance !== null) {
+      // Pinch zoom
+      e.preventDefault();
+      const distance = getDistance(e.touches);
+      const newScale = Math.min(maxScale, Math.max(minScale, initialScale * (distance / initialPinchDistance)));
+      setScale(newScale);
+      
+      // Reset position if zooming out to 1
+      if (newScale <= 1) {
+        setPosition({ x: 0, y: 0 });
+      }
+    } else if (e.touches.length === 1) {
+      if (isPanning && scale > 1) {
+        // Pan while zoomed
+        e.preventDefault();
+        const deltaX = e.touches[0].clientX - lastPanPosition.x;
+        const deltaY = e.touches[0].clientY - lastPanPosition.y;
+        
+        setPosition(prev => ({
+          x: prev.x + deltaX,
+          y: prev.y + deltaY
+        }));
+        
+        setLastPanPosition({
+          x: e.touches[0].clientX,
+          y: e.touches[0].clientY
+        });
+      } else if (scale === 1) {
+        // Swipe
+        setTouchEnd(e.touches[0].clientX);
+      }
+    }
+  }, [initialPinchDistance, initialScale, isPanning, lastPanPosition, scale]);
 
   const handleTouchEnd = useCallback(() => {
-    if (!touchStart || !touchEnd) return;
+    setInitialPinchDistance(null);
+    setIsPanning(false);
     
-    const distance = touchStart - touchEnd;
-    
-    if (distance > minSwipeDistance && photos.length > 1) {
-      goToNext();
-    } else if (distance < -minSwipeDistance && photos.length > 1) {
-      goToPrevious();
+    if (scale === 1 && touchStart !== null && touchEnd !== null) {
+      const distance = touchStart - touchEnd;
+      
+      if (distance > minSwipeDistance && photos.length > 1) {
+        goToNext();
+      } else if (distance < -minSwipeDistance && photos.length > 1) {
+        goToPrevious();
+      }
     }
     
     setTouchStart(null);
     setTouchEnd(null);
-  }, [touchStart, touchEnd, photos.length, goToNext, goToPrevious]);
+  }, [touchStart, touchEnd, photos.length, goToNext, goToPrevious, scale]);
+
+  // Double tap to zoom
+  const lastTapRef = useRef<number>(0);
+  const handleDoubleTap = useCallback((e: React.TouchEvent) => {
+    const now = Date.now();
+    if (now - lastTapRef.current < 300) {
+      e.preventDefault();
+      if (scale > 1) {
+        resetZoom();
+      } else {
+        setScale(2.5);
+      }
+    }
+    lastTapRef.current = now;
+  }, [scale, resetZoom]);
 
   if (!isOpen || photos.length === 0) return null;
 
@@ -160,14 +260,18 @@ export function PhotoLightbox({ photos, initialIndex, isOpen, onClose }: PhotoLi
         </button>
       )}
 
-      {/* Image container with swipe support */}
+      {/* Image container with swipe and zoom support */}
       <div 
+        ref={imageContainerRef}
         className="absolute inset-0 flex items-center justify-center"
         style={{ 
-          padding: '80px 80px 100px 80px',
+          padding: '60px 16px 80px 16px',
           pointerEvents: 'auto' 
         }}
-        onTouchStart={handleTouchStart}
+        onTouchStart={(e) => {
+          handleDoubleTap(e);
+          handleTouchStart(e);
+        }}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
         onClick={(e) => {
@@ -175,15 +279,54 @@ export function PhotoLightbox({ photos, initialIndex, isOpen, onClose }: PhotoLi
           e.stopPropagation();
         }}
       >
-        <OptimizedImage
-          src={photos[currentIndex]}
-          alt={`Photo ${currentIndex + 1}`}
-          className="max-w-full max-h-full object-contain pointer-events-none select-none"
-          containerClassName="max-w-full max-h-full flex items-center justify-center"
-          lazy={false}
-          showPlaceholder={true}
-        />
+        <div
+          style={{
+            transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
+            transition: scale === 1 ? 'transform 0.2s ease-out' : 'none',
+            transformOrigin: 'center center',
+            maxWidth: '100%',
+            maxHeight: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+        >
+          <OptimizedImage
+            src={photos[currentIndex]}
+            alt={`Photo ${currentIndex + 1}`}
+            className="max-w-full max-h-full object-contain pointer-events-none select-none"
+            containerClassName="max-w-full max-h-full flex items-center justify-center"
+            lazy={false}
+            showPlaceholder={true}
+          />
+        </div>
       </div>
+
+      {/* Zoom indicator */}
+      {scale > 1 && (
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[100001]" style={{ pointerEvents: 'none' }}>
+          <div className="text-white text-xs font-medium bg-black/60 px-3 py-1.5 rounded-full flex items-center gap-1.5">
+            <ZoomIn className="h-3.5 w-3.5" />
+            {Math.round(scale * 100)}%
+          </div>
+        </div>
+      )}
+
+      {/* Reset zoom button */}
+      {scale > 1 && (
+        <button
+          type="button"
+          className="absolute bottom-20 left-1/2 -translate-x-1/2 z-[100001] px-4 py-2 rounded-full bg-white/90 text-black text-sm font-medium shadow-lg"
+          style={{ pointerEvents: 'auto' }}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            resetZoom();
+          }}
+        >
+          Réinitialiser le zoom
+        </button>
+      )}
 
       {/* Next button */}
       {photos.length > 1 && (

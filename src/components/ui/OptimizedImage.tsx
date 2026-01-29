@@ -104,6 +104,7 @@ export function OptimizedImage({
     <div 
       ref={containerRef}
       className={cn('relative overflow-hidden', containerClassName)}
+      style={imgProps.style}
     >
       {/* Placeholder/Loading state */}
       {showPlaceholder && isLoading && !hasError && (
@@ -139,6 +140,7 @@ export function OptimizedImage({
             isLoading ? 'opacity-0' : 'opacity-100',
             className
           )}
+          style={imgProps.style}
           {...imgProps}
         />
       )}

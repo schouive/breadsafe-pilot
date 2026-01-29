@@ -13,6 +13,8 @@ export type RecipeIngredient = Tables<'recipe_ingredients'> & {
     name: string;
     code: string | null;
     recipe_type: string;
+    inco_declaration_mode: string | null;
+    inco_name: string | null;
   } | null;
 };
 export type RecipeNutrition = Tables<'recipe_nutrition'>;
@@ -322,12 +324,12 @@ export function useRecipeIngredients(recipeId: string | undefined) {
       
       console.log('PI Recipe IDs to fetch:', piRecipeIds);
       
-      let recipesMap: Record<string, { id: string; name: string; code: string | null; recipe_type: string }> = {};
+      let recipesMap: Record<string, { id: string; name: string; code: string | null; recipe_type: string; inco_declaration_mode: string | null; inco_name: string | null }> = {};
       
       if (piRecipeIds.length > 0) {
         const { data: recipes, error: recipesError } = await supabase
           .from('recipes')
-          .select('id, name, code, recipe_type')
+          .select('id, name, code, recipe_type, inco_declaration_mode, inco_name')
           .in('id', piRecipeIds);
         
         console.log('Fetched PI recipes:', recipes, 'Error:', recipesError);

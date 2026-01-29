@@ -621,6 +621,7 @@ export type Database = {
           fat: number | null
           fiber: number | null
           id: string
+          inco_name: string | null
           is_active: boolean
           name: string
           price: number | null
@@ -654,6 +655,7 @@ export type Database = {
           fat?: number | null
           fiber?: number | null
           id?: string
+          inco_name?: string | null
           is_active?: boolean
           name: string
           price?: number | null
@@ -687,6 +689,7 @@ export type Database = {
           fat?: number | null
           fiber?: number | null
           id?: string
+          inco_name?: string | null
           is_active?: boolean
           name?: string
           price?: number | null
@@ -818,6 +821,8 @@ export type Database = {
           created_by: string | null
           description: string | null
           id: string
+          inco_declaration_mode: string | null
+          inco_name: string | null
           is_active: boolean
           name: string
           preparation_notes: string | null
@@ -839,6 +844,8 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           id?: string
+          inco_declaration_mode?: string | null
+          inco_name?: string | null
           is_active?: boolean
           name: string
           preparation_notes?: string | null
@@ -860,6 +867,8 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           id?: string
+          inco_declaration_mode?: string | null
+          inco_name?: string | null
           is_active?: boolean
           name?: string
           preparation_notes?: string | null

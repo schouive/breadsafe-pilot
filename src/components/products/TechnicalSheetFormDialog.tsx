@@ -80,6 +80,9 @@ export function TechnicalSheetFormDialog({
   const { data: recipeIngredients } = useRecipeIngredients(selectedRecipeId || undefined);
   const { data: recipeNutrition } = useRecipeNutrition(selectedRecipeId || undefined);
   
+  // State to store fetched PI sub-ingredients
+  const [piSubIngredients, setPiSubIngredients] = useState<Record<string, any[]>>({});
+  
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -106,6 +109,48 @@ export function TechnicalSheetFormDialog({
     origin_country: '',
     is_published: false,
   });
+  // Fetch sub-ingredients for all PI in the recipe
+  useEffect(() => {
+    const fetchPiSubIngredients = async () => {
+      if (!recipeIngredients) return;
+      
+      const piIngredients = recipeIngredients.filter(ing => ing.ingredient_recipe_id);
+      if (piIngredients.length === 0) {
+        setPiSubIngredients({});
+        return;
+      }
+
+      const newPiSubIngredients: Record<string, any[]> = {};
+      
+      for (const piIng of piIngredients) {
+        if (!piIng.ingredient_recipe_id) continue;
+        
+        const { data: subIngredients, error } = await supabase
+          .from('recipe_ingredients')
+          .select(`
+            *,
+            raw_materials (
+              id,
+              name,
+              inco_name,
+              composition,
+              allergens,
+              allergens_secondary
+            )
+          `)
+          .eq('recipe_id', piIng.ingredient_recipe_id)
+          .order('order_index');
+        
+        if (!error && subIngredients) {
+          newPiSubIngredients[piIng.ingredient_recipe_id] = subIngredients;
+        }
+      }
+      
+      setPiSubIngredients(newPiSubIngredients);
+    };
+
+    fetchPiSubIngredients();
+  }, [recipeIngredients]);
 
   // Calculate derived data from selected recipe - two versions of ingredient lists
   const { ingredientsListTechnical, ingredientsListCondensed, ingredientsListCondensedHtml, allergens, allergensSecondary } = useMemo(() => {
@@ -119,27 +164,43 @@ export function TechnicalSheetFormDialog({
       };
     }
 
-    // Collect all allergens first
-    const allAllergens = [...new Set(
-      recipeIngredients.flatMap((ing) => ing.raw_materials?.allergens || [])
-    )].sort();
+    // Collect all allergens from direct ingredients and PI sub-ingredients
+    const allAllergens = [...new Set([
+      ...recipeIngredients.flatMap((ing) => ing.raw_materials?.allergens || []),
+      ...Object.values(piSubIngredients).flat().flatMap((subIng: any) => subIng.raw_materials?.allergens || [])
+    ])].sort();
     
-    const allAllergensSecondary = [...new Set(
-      recipeIngredients.flatMap((ing) => ing.raw_materials?.allergens_secondary || [])
-    )].filter(a => !allAllergens.includes(a)).sort();
+    const allAllergensSecondary = [...new Set([
+      ...recipeIngredients.flatMap((ing) => ing.raw_materials?.allergens_secondary || []),
+      ...Object.values(piSubIngredients).flat().flatMap((subIng: any) => subIng.raw_materials?.allergens_secondary || [])
+    ])].filter(a => !allAllergens.includes(a)).sort();
 
     // Prepare ingredients for the generator
     // Handle both raw materials AND intermediate products (PI)
     const ingredientsForGenerator = recipeIngredients.map((ing) => {
-      // For intermediate products (PI), use the recipe name and fetch its data
+      // For intermediate products (PI), include INCO mode and sub-ingredients
       if (ing.ingredient_recipe_id && ing.ingredient_recipe) {
+        const piRecipe = ing.ingredient_recipe;
+        const subIngs = piSubIngredients[ing.ingredient_recipe_id] || [];
+        
         return {
-          name: ing.ingredient_recipe.name,
-          composition: null, // PI compositions are handled differently - they get decomposed
+          name: piRecipe.name,
+          composition: null,
           bakerPercentage: ing.baker_percentage || 0,
-          allergens: [] as string[], // PI allergens will be resolved from the PI's ingredients
-          allergensSecondary: [] as string[],
+          allergens: subIngs.flatMap((sub: any) => sub.raw_materials?.allergens || []),
+          allergensSecondary: subIngs.flatMap((sub: any) => sub.raw_materials?.allergens_secondary || []),
           isIntermediateProduct: true,
+          incoDeclarationMode: (piRecipe.inco_declaration_mode as 'simple' | 'detailed' | null) || 'detailed',
+          incoName: piRecipe.inco_name || null,
+          // Include sub-ingredients for detailed mode
+          subIngredients: subIngs.map((subIng: any) => ({
+            name: subIng.raw_materials?.name || 'Inconnu',
+            incoName: subIng.raw_materials?.inco_name || null,
+            composition: subIng.raw_materials?.composition || null,
+            bakerPercentage: subIng.baker_percentage || 0,
+            allergens: subIng.raw_materials?.allergens || [],
+            allergensSecondary: subIng.raw_materials?.allergens_secondary || [],
+          })),
         };
       }
       // For regular raw materials
@@ -163,7 +224,7 @@ export function TechnicalSheetFormDialog({
       allergens: allAllergens,
       allergensSecondary: allAllergensSecondary
     };
-  }, [recipeIngredients]);
+  }, [recipeIngredients, piSubIngredients]);
 
   // Get selected recipe details
   const selectedRecipe = useMemo(() => {

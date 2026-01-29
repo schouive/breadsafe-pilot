@@ -302,7 +302,7 @@ export function useRecipeIngredients(recipeId: string | undefined) {
     queryFn: async () => {
       if (!recipeId) return [];
       
-      // Fetch ingredients with raw materials
+      // Fetch ingredients with raw materials (including inco_name for INCO generation)
       const { data: ingredients, error } = await supabase
         .from('recipe_ingredients')
         .select(`

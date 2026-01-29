@@ -209,10 +209,11 @@ export async function generateTechnicalSheetPDF(sheet: ProductSheet): Promise<vo
     // Center the image in its column
     const imgX = imageColumnX + ((pageWidth - margin - imageColumnX) - imgWidth) / 2;
     
-    // Draw a light border around the image
+    // Draw white background for the image
+    doc.setFillColor(255, 255, 255);
     doc.setDrawColor(226, 232, 240); // Slate 200
     doc.setLineWidth(0.5);
-    doc.roundedRect(imgX - 2, sectionStartY - 2, imgWidth + 4, imgHeight + 4, 2, 2, 'S');
+    doc.roundedRect(imgX - 2, sectionStartY - 2, imgWidth + 4, imgHeight + 4, 2, 2, 'FD');
     
     doc.addImage(productImageData.base64, 'PNG', imgX, sectionStartY, imgWidth, imgHeight);
     imageEndY = sectionStartY + imgHeight + 6;
@@ -585,6 +586,7 @@ export async function printTechnicalSheet(sheet: any): Promise<void> {
       object-fit: contain;
       border-radius: 8px;
       border: 1px solid #e2e8f0;
+      background-color: #ffffff;
     }
     
     .content { padding: 0 20px; }

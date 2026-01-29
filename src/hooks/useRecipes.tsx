@@ -13,6 +13,8 @@ export type RecipeIngredient = Tables<'recipe_ingredients'> & {
     name: string;
     code: string | null;
     recipe_type: string;
+    inco_declaration_mode: string | null;
+    inco_name: string | null;
   } | null;
 };
 export type RecipeNutrition = Tables<'recipe_nutrition'>;
@@ -322,12 +324,12 @@ export function useRecipeIngredients(recipeId: string | undefined) {
       
       console.log('PI Recipe IDs to fetch:', piRecipeIds);
       
-      let recipesMap: Record<string, { id: string; name: string; code: string | null; recipe_type: string }> = {};
+      let recipesMap: Record<string, { id: string; name: string; code: string | null; recipe_type: string; inco_declaration_mode: string | null; inco_name: string | null }> = {};
       
       if (piRecipeIds.length > 0) {
         const { data: recipes, error: recipesError } = await supabase
           .from('recipes')
-          .select('id, name, code, recipe_type')
+          .select('id, name, code, recipe_type, inco_declaration_mode, inco_name')
           .in('id', piRecipeIds);
         
         console.log('Fetched PI recipes:', recipes, 'Error:', recipesError);
@@ -422,6 +424,59 @@ export function useDeleteRecipeIngredient() {
       queryClient.invalidateQueries({ queryKey: ['recipe-ingredients', recipeId] });
       queryClient.invalidateQueries({ queryKey: ['recipe-nutrition'] });
     },
+  });
+}
+
+// Hook to fetch PI ingredients with their raw materials (for INCO generation)
+export function usePIIngredients(piRecipeIds: string[]) {
+  return useQuery({
+    queryKey: ['pi-ingredients', piRecipeIds],
+    queryFn: async () => {
+      if (piRecipeIds.length === 0) return {};
+      
+      const result: Record<string, Array<{
+        name: string;
+        incoName: string | null;
+        composition: string | null;
+        bakerPercentage: number;
+        allergens: string[];
+        allergensSecondary: string[];
+      }>> = {};
+      
+      for (const piId of piRecipeIds) {
+        const { data: ingredients, error } = await supabase
+          .from('recipe_ingredients')
+          .select(`
+            *,
+            raw_materials (
+              name,
+              inco_name,
+              composition,
+              allergens,
+              allergens_secondary
+            )
+          `)
+          .eq('recipe_id', piId)
+          .order('order_index');
+        
+        if (error) {
+          console.error(`Error fetching PI ingredients for ${piId}:`, error);
+          continue;
+        }
+        
+        result[piId] = (ingredients || []).map(ing => ({
+          name: ing.raw_materials?.name || 'Inconnu',
+          incoName: ing.raw_materials?.inco_name || null,
+          composition: ing.raw_materials?.composition || null,
+          bakerPercentage: ing.baker_percentage || 0,
+          allergens: ing.raw_materials?.allergens || [],
+          allergensSecondary: ing.raw_materials?.allergens_secondary || [],
+        }));
+      }
+      
+      return result;
+    },
+    enabled: piRecipeIds.length > 0,
   });
 }
 

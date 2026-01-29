@@ -27,6 +27,11 @@ interface IngredientInput {
   allergens: string[];       // Primary allergens
   allergensSecondary?: string[]; // Secondary allergens (from composition)
   type?: string; // 'farine' or 'ingredient'
+  // For intermediate products (PI)
+  isIntermediateProduct?: boolean;
+  incoDeclarationMode?: 'simple' | 'detailed' | null;
+  incoName?: string | null;
+  subIngredients?: IngredientInput[]; // Sub-ingredients for detailed mode
 }
 
 interface FlatIngredient {
@@ -506,6 +511,91 @@ function flattenIngredients(
   for (const ing of ingredients) {
     // Skip enzymes at the top level too
     if (isEnzymeToExclude(ing.name)) {
+      continue;
+    }
+
+    // Handle Intermediate Products (PI) based on INCO declaration mode
+    if (ing.isIntermediateProduct) {
+      const mode = ing.incoDeclarationMode || 'detailed';
+      
+      if (mode === 'simple' && ing.incoName) {
+        // Simple mode: use the INCO name directly
+        const { isAllergen, foundAllergens } = containsAllergen(ing.incoName, allAllergens);
+        flatIngredients.push({
+          name: cleanIngredientName(ing.incoName),
+          weight: ing.bakerPercentage,
+          isPrimaryAllergen: ing.allergens && ing.allergens.length > 0,
+          isSecondaryAllergen: isAllergen && !(ing.allergens && ing.allergens.length > 0),
+          allergenNames: [...foundAllergens, ...(ing.allergens || [])],
+          isAdditive: false,
+          canonicalKey: normalizeText(ing.incoName),
+          isFromPrimaryIngredient: true,
+        });
+      } else if (mode === 'detailed' && ing.subIngredients && ing.subIngredients.length > 0) {
+        // Detailed mode: decompose into sub-ingredients
+        // Distribute the PI's weight proportionally among its sub-ingredients
+        const totalSubPercentage = ing.subIngredients.reduce((sum, sub) => sum + sub.bakerPercentage, 0);
+        
+        for (const subIng of ing.subIngredients) {
+          // Skip enzymes in sub-ingredients
+          if (isEnzymeToExclude(subIng.name)) {
+            continue;
+          }
+          
+          // Calculate proportional weight based on PI's total percentage
+          const proportionalWeight = totalSubPercentage > 0 
+            ? (subIng.bakerPercentage / totalSubPercentage) * ing.bakerPercentage 
+            : ing.bakerPercentage / ing.subIngredients.length;
+          
+          // Check if sub-ingredient has composition to decompose
+          const hasComposition = subIng.composition && subIng.composition.trim() !== '';
+          const shouldDecompose = hasComposition && (
+            isIntermediateMaterial(subIng.name) || 
+            subIng.composition!.includes(',')
+          );
+
+          if (shouldDecompose) {
+            const subSubIngredients = parseComposition(
+              subIng.composition!,
+              proportionalWeight,
+              [...(subIng.allergens || []), ...allAllergens]
+            );
+            flatIngredients.push(...subSubIngredients);
+          } else if (hasComposition) {
+            if (isEnzymeToExclude(subIng.composition!)) {
+              continue;
+            }
+            const { isAllergen, foundAllergens } = containsAllergen(subIng.composition!, allAllergens);
+            const cleanedName = cleanIngredientName(subIng.composition!);
+            flatIngredients.push({
+              name: cleanedName,
+              weight: proportionalWeight,
+              isPrimaryAllergen: (subIng.allergens && subIng.allergens.length > 0),
+              isSecondaryAllergen: isAllergen && !(subIng.allergens && subIng.allergens.length > 0),
+              allergenNames: [...foundAllergens, ...(subIng.allergens || [])],
+              isAdditive: false,
+              canonicalKey: normalizeText(cleanedName),
+              isFromPrimaryIngredient: false,
+            });
+          } else {
+            const { isAllergen, foundAllergens } = containsAllergen(subIng.name, allAllergens);
+            // Use INCO name if available, otherwise use raw material name
+            const displayName = subIng.incoName || subIng.name;
+            const cleanedName = cleanIngredientName(displayName);
+            flatIngredients.push({
+              name: cleanedName,
+              weight: proportionalWeight,
+              isPrimaryAllergen: (subIng.allergens && subIng.allergens.length > 0),
+              isSecondaryAllergen: isAllergen && !(subIng.allergens && subIng.allergens.length > 0),
+              allergenNames: [...foundAllergens, ...(subIng.allergens || [])],
+              isAdditive: false,
+              canonicalKey: normalizeText(cleanedName),
+              isFromPrimaryIngredient: false,
+            });
+          }
+        }
+      }
+      // If detailed mode but no sub-ingredients, skip (shouldn't happen in normal use)
       continue;
     }
     

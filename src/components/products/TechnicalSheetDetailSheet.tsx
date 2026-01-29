@@ -130,15 +130,11 @@ export function TechnicalSheetDetailSheet({ open, onOpenChange, sheet }: Technic
         <div className="mt-6 space-y-6">
           {/* Product Image - Force white background for PNG transparency */}
           {sheetData.product_image_url && (
-            <div 
-              className="w-full h-48 rounded-lg overflow-hidden border"
-              style={{ backgroundColor: '#ffffff' }}
-            >
+            <div className="w-full h-48 rounded-lg overflow-hidden border bg-white-force">
               <img 
                 src={sheetData.product_image_url} 
                 alt={sheetData.product_name}
-                className="w-full h-full object-contain"
-                style={{ backgroundColor: '#ffffff' }}
+                className="w-full h-full object-contain bg-white-force"
                 loading="lazy"
               />
             </div>

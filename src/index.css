@@ -168,6 +168,11 @@
   .glass {
     @apply backdrop-blur-md bg-background/80;
   }
+
+  /* Force white background for product images (PNG transparency fix) */
+  .bg-white-force {
+    background-color: #ffffff !important;
+  }
 }
 
 @layer utilities {

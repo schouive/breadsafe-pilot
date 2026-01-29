@@ -129,13 +129,29 @@ export function TechnicalSheetFormDialog({
     )].filter(a => !allAllergens.includes(a)).sort();
 
     // Prepare ingredients for the generator
-    const ingredientsForGenerator = recipeIngredients.map((ing) => ({
-      name: ing.raw_materials?.name || 'Inconnu',
-      composition: ing.raw_materials?.composition || null,
-      bakerPercentage: ing.baker_percentage || 0,
-      allergens: ing.raw_materials?.allergens || [],
-      allergensSecondary: ing.raw_materials?.allergens_secondary || [],
-    }));
+    // Handle both raw materials AND intermediate products (PI)
+    const ingredientsForGenerator = recipeIngredients.map((ing) => {
+      // For intermediate products (PI), use the recipe name and fetch its data
+      if (ing.ingredient_recipe_id && ing.ingredient_recipe) {
+        return {
+          name: ing.ingredient_recipe.name,
+          composition: null, // PI compositions are handled differently - they get decomposed
+          bakerPercentage: ing.baker_percentage || 0,
+          allergens: [] as string[], // PI allergens will be resolved from the PI's ingredients
+          allergensSecondary: [] as string[],
+          isIntermediateProduct: true,
+        };
+      }
+      // For regular raw materials
+      return {
+        name: ing.raw_materials?.name || 'Inconnu',
+        composition: ing.raw_materials?.composition || null,
+        bakerPercentage: ing.baker_percentage || 0,
+        allergens: ing.raw_materials?.allergens || [],
+        allergensSecondary: ing.raw_materials?.allergens_secondary || [],
+        isIntermediateProduct: false,
+      };
+    });
 
     // Generate both technical and condensed lists
     const lists = generateIngredientLists(ingredientsForGenerator, allAllergens);
@@ -266,13 +282,27 @@ export function TechnicalSheetFormDialog({
       }
 
       // Build snapshot data for new FT
-      const snapshotIngredients: SnapshotIngredient[] = recipeIngredients?.map(ing => ({
-        name: ing.raw_materials?.name || 'Inconnu',
-        composition: ing.raw_materials?.composition || null,
-        bakerPercentage: ing.baker_percentage || 0,
-        allergens: ing.raw_materials?.allergens || [],
-        allergensSecondary: ing.raw_materials?.allergens_secondary || [],
-      })) || [];
+      // Handle both raw materials AND intermediate products (PI)
+      const snapshotIngredients: SnapshotIngredient[] = recipeIngredients?.map(ing => {
+        // For intermediate products (PI), use the recipe name
+        if (ing.ingredient_recipe_id && ing.ingredient_recipe) {
+          return {
+            name: ing.ingredient_recipe.name,
+            composition: null,
+            bakerPercentage: ing.baker_percentage || 0,
+            allergens: [],
+            allergensSecondary: [],
+          };
+        }
+        // For regular raw materials
+        return {
+          name: ing.raw_materials?.name || 'Inconnu',
+          composition: ing.raw_materials?.composition || null,
+          bakerPercentage: ing.baker_percentage || 0,
+          allergens: ing.raw_materials?.allergens || [],
+          allergensSecondary: ing.raw_materials?.allergens_secondary || [],
+        };
+      }) || [];
 
       const snapshotNutrition: SnapshotNutrition = {
         energyKcal: recipeNutrition?.per_100g_energy_kcal || null,

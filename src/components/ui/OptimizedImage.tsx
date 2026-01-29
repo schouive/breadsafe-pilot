@@ -100,26 +100,30 @@ export function OptimizedImage({
   // Don't render image until in view (for lazy loading)
   const shouldRenderImage = !lazy || isInView;
 
+  // Extract backgroundColor from style if provided
+  const bgStyle = imgProps.style?.backgroundColor;
+  const containerStyle = bgStyle ? { backgroundColor: bgStyle } : undefined;
+
   return (
     <div 
       ref={containerRef}
       className={cn('relative overflow-hidden', containerClassName)}
-      style={imgProps.style}
+      style={containerStyle}
     >
       {/* Placeholder/Loading state */}
       {showPlaceholder && isLoading && !hasError && (
-        <div className="absolute inset-0 z-10">
+        <div className="absolute inset-0 z-10" style={containerStyle}>
           {placeholderType === 'skeleton' ? (
-            <Skeleton className="w-full h-full" />
+            <Skeleton className="w-full h-full" style={containerStyle} />
           ) : (
-            <div className="w-full h-full bg-muted animate-pulse" />
+            <div className="w-full h-full bg-muted animate-pulse" style={containerStyle} />
           )}
         </div>
       )}
 
       {/* Error state */}
       {hasError && showErrorState && (
-        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-muted/50 text-muted-foreground">
+        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-muted/50 text-muted-foreground" style={containerStyle}>
           <ImageOff className="h-8 w-8 mb-2 opacity-50" />
           <span className="text-xs">Image non disponible</span>
         </div>
@@ -140,14 +144,14 @@ export function OptimizedImage({
             isLoading ? 'opacity-0' : 'opacity-100',
             className
           )}
-          style={imgProps.style}
+          style={containerStyle}
           {...imgProps}
         />
       )}
 
       {/* Placeholder for lazy loading before in view */}
       {!shouldRenderImage && (
-        <div className={cn('bg-muted', className)} style={{ aspectRatio: 'auto' }} />
+        <div className={cn('bg-muted', className)} style={{ aspectRatio: 'auto', ...containerStyle }} />
       )}
     </div>
   );

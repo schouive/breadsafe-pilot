@@ -504,6 +504,7 @@ function cleanIngredientName(name: string): string {
 
 /**
  * Get the display name for an ingredient (use incoName if available)
+ * CRITICAL: Always use INCO name for labels, never internal technical names
  */
 function getDisplayName(ing: IngredientInput): string {
   // For intermediate products in simple mode, use the PI's inco_name
@@ -512,6 +513,20 @@ function getDisplayName(ing: IngredientInput): string {
   }
   // Use inco_name if available, otherwise use the regular name
   return ing.incoName || ing.name;
+}
+
+/**
+ * Get the canonical key for deduplication (use INCO name as key)
+ * This ensures "Farine tradition" and "Farine T55" both deduplicate to "farine de blé"
+ */
+function getDeduplicationKey(ing: IngredientInput): string {
+  // For intermediate products in simple mode, use the PI's inco_name
+  if (ing.isIntermediateProduct && ing.incoDeclarationMode === 'simple' && ing.piIncoName) {
+    return normalizeText(ing.piIncoName);
+  }
+  // Use inco_name if available for deduplication, otherwise fall back to name
+  const displayName = ing.incoName || ing.name;
+  return normalizeText(displayName);
 }
 
 /**
@@ -533,22 +548,25 @@ function flattenIngredients(
     if (ing.isIntermediateProduct) {
       if (ing.incoDeclarationMode === 'simple' && ing.piIncoName) {
         // Simple mode: use the PI's INCO name as a single ingredient
-        const { isAllergen, foundAllergens } = containsAllergen(ing.piIncoName, allAllergens);
+        const incoName = ing.piIncoName;
+        const { isAllergen, foundAllergens } = containsAllergen(incoName, allAllergens);
         flatIngredients.push({
-          name: ing.piIncoName,
+          name: incoName,
           weight: ing.bakerPercentage,
           isPrimaryAllergen: false,
           isSecondaryAllergen: isAllergen,
           allergenNames: foundAllergens,
           isAdditive: false,
-          canonicalKey: normalizeText(ing.piIncoName),
+          canonicalKey: normalizeText(incoName), // INCO name as key for deduplication
           isFromPrimaryIngredient: true,
         });
       } else if (ing.incoDeclarationMode === 'detailed' && ing.piIngredients) {
         // Detailed mode: decompose into PI's component ingredients
         for (const piIng of ing.piIngredients) {
           const piWeight = ing.bakerPercentage * (piIng.bakerPercentage / 100);
+          // CRITICAL: Use INCO name for display and deduplication
           const displayName = getDisplayName(piIng);
+          const deduplicationKey = piIng.incoName ? normalizeText(piIng.incoName) : normalizeText(displayName);
           
           // Skip enzymes
           if (isEnzymeToExclude(displayName)) {
@@ -579,7 +597,7 @@ function flattenIngredients(
               isSecondaryAllergen: isAllergen && !(piIng.allergens && piIng.allergens.length > 0),
               allergenNames: [...foundAllergens, ...piIng.allergens],
               isAdditive: false,
-              canonicalKey: normalizeText(cleanedName),
+              canonicalKey: deduplicationKey, // Use INCO name as key for deduplication
               isFromPrimaryIngredient: false,
             });
           }
@@ -592,7 +610,9 @@ function flattenIngredients(
     }
     
     // Handle regular raw materials
+    // CRITICAL: Use INCO name for display and deduplication
     const displayName = getDisplayName(ing);
+    const deduplicationKey = getDeduplicationKey(ing);
     const hasComposition = ing.composition && ing.composition.trim() !== '';
     const shouldDecompose = hasComposition && (
       isIntermediateMaterial(ing.name) || 
@@ -627,7 +647,7 @@ function flattenIngredients(
         isSecondaryAllergen: isAllergen && !isPrimaryAllergen,
         allergenNames: [...foundAllergens, ...ing.allergens],
         isAdditive: false,
-        canonicalKey: normalizeText(cleanedName),
+        canonicalKey: normalizeText(cleanedName), // Use normalized composition for dedup
         isFromPrimaryIngredient: true,
       });
     } else {
@@ -642,7 +662,7 @@ function flattenIngredients(
         isSecondaryAllergen: isAllergen && !isPrimaryAllergen && ing.allergens.length === 0,
         allergenNames: [...foundAllergens, ...ing.allergens],
         isAdditive: false,
-        canonicalKey: normalizeText(cleanedName),
+        canonicalKey: deduplicationKey, // Use INCO name as key for deduplication
         isFromPrimaryIngredient: true,
       });
     }

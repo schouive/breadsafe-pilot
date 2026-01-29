@@ -63,7 +63,6 @@ const MATERIAL_TYPES = [
 
 interface FormData {
   name: string;
-  inco_name: string;
   type: 'farine' | 'ingredient';
   supplier_id: string;
   category: string;
@@ -93,7 +92,6 @@ interface FormData {
 
 const initialFormData: FormData = {
   name: '',
-  inco_name: '',
   type: 'ingredient',
   supplier_id: '',
   category: '',
@@ -162,7 +160,6 @@ export function RawMaterialManagement() {
     setEditingMaterial(material);
     setFormData({
       name: material.name,
-      inco_name: (material as any).inco_name || '',
       type: material.type || 'ingredient',
       supplier_id: material.supplier_id || '',
       category: material.category || '',
@@ -201,7 +198,6 @@ export function RawMaterialManagement() {
     await createMaterial.mutateAsync({
       name: formData.name.trim(),
       type: formData.type,
-      ...(formData.inco_name.trim() ? { inco_name: formData.inco_name.trim() } : {}) as any,
       supplier_id: formData.supplier_id || null,
       category: formData.category || null,
       unit: formData.unit || null,
@@ -245,7 +241,6 @@ export function RawMaterialManagement() {
       id: editingMaterial.id,
       name: formData.name.trim(),
       type: formData.type,
-      ...(formData.inco_name !== undefined ? { inco_name: formData.inco_name.trim() || null } : {}) as any,
       supplier_id: formData.supplier_id || null,
       category: formData.category || null,
       unit: formData.unit || null,
@@ -316,19 +311,6 @@ export function RawMaterialManagement() {
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
           />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="inco_name">Nom INCO (pour étiquetage)</Label>
-          <Input
-            id="inco_name"
-            placeholder="Ex: farine de blé (si différent du nom technique)"
-            value={formData.inco_name}
-            onChange={(e) => setFormData({ ...formData, inco_name: e.target.value })}
-          />
-          <p className="text-xs text-muted-foreground">
-            Nom qui apparaîtra sur les étiquettes. Laisser vide pour utiliser le nom technique.
-          </p>
         </div>
 
         <div className="space-y-2">

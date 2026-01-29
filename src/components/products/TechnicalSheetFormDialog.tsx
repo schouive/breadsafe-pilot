@@ -28,11 +28,12 @@ import {
   useRecipeNutrition,
   useCreateProductSheet,
   useUpdateProductSheet,
+  usePIIngredients,
   ProductSheet,
   Recipe,
 } from '@/hooks/useRecipes';
 import { useAuth } from '@/hooks/useAuth';
-import { generateIngredientLists, markdownToUppercase } from '@/lib/ingredientListGenerator';
+import { generateIngredientLists, IngredientInput } from '@/lib/ingredientListGenerator';
 import { supabase } from '@/integrations/supabase/client';
 import { optimizeImage } from '@/lib/imageOptimization';
 
@@ -80,6 +81,17 @@ export function TechnicalSheetFormDialog({
   const { data: recipeIngredients } = useRecipeIngredients(selectedRecipeId || undefined);
   const { data: recipeNutrition } = useRecipeNutrition(selectedRecipeId || undefined);
   
+  // Collect PI recipe IDs for fetching their ingredients
+  const piRecipeIds = useMemo(() => {
+    if (!recipeIngredients) return [];
+    return recipeIngredients
+      .filter(ing => ing.ingredient_recipe_id)
+      .map(ing => ing.ingredient_recipe_id as string);
+  }, [recipeIngredients]);
+  
+  // Fetch PI ingredients for detailed decomposition
+  const { data: piIngredientsMap } = usePIIngredients(piRecipeIds);
+  
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -119,7 +131,7 @@ export function TechnicalSheetFormDialog({
       };
     }
 
-    // Collect all allergens first
+    // Collect all allergens first (from direct raw materials)
     const allAllergens = [...new Set(
       recipeIngredients.flatMap((ing) => ing.raw_materials?.allergens || [])
     )].sort();
@@ -128,23 +140,41 @@ export function TechnicalSheetFormDialog({
       recipeIngredients.flatMap((ing) => ing.raw_materials?.allergens_secondary || [])
     )].filter(a => !allAllergens.includes(a)).sort();
 
-    // Prepare ingredients for the generator
-    // Handle both raw materials AND intermediate products (PI)
-    const ingredientsForGenerator = recipeIngredients.map((ing) => {
-      // For intermediate products (PI), use the recipe name and fetch its data
+    // Prepare ingredients for the generator with full INCO support
+    const ingredientsForGenerator: IngredientInput[] = recipeIngredients.map((ing) => {
+      // For intermediate products (PI), include INCO mode and decomposition data
       if (ing.ingredient_recipe_id && ing.ingredient_recipe) {
+        const piRecipe = ing.ingredient_recipe;
+        const incoMode = (piRecipe.inco_declaration_mode as 'simple' | 'detailed') || 'detailed';
+        
+        // Get PI ingredients for detailed mode
+        const piIngredients = piIngredientsMap?.[ing.ingredient_recipe_id] || [];
+        
         return {
-          name: ing.ingredient_recipe.name,
-          composition: null, // PI compositions are handled differently - they get decomposed
+          name: piRecipe.name,
+          incoName: null,
+          composition: null,
           bakerPercentage: ing.baker_percentage || 0,
-          allergens: [] as string[], // PI allergens will be resolved from the PI's ingredients
+          allergens: [] as string[],
           allergensSecondary: [] as string[],
           isIntermediateProduct: true,
+          incoDeclarationMode: incoMode,
+          piIncoName: piRecipe.inco_name || null,
+          piIngredients: piIngredients.map(piIng => ({
+            name: piIng.name,
+            incoName: piIng.incoName,
+            composition: piIng.composition,
+            bakerPercentage: piIng.bakerPercentage,
+            allergens: piIng.allergens,
+            allergensSecondary: piIng.allergensSecondary,
+          })),
         };
       }
+      
       // For regular raw materials
       return {
         name: ing.raw_materials?.name || 'Inconnu',
+        incoName: (ing.raw_materials as any)?.inco_name || null,
         composition: ing.raw_materials?.composition || null,
         bakerPercentage: ing.baker_percentage || 0,
         allergens: ing.raw_materials?.allergens || [],
@@ -163,7 +193,7 @@ export function TechnicalSheetFormDialog({
       allergens: allAllergens,
       allergensSecondary: allAllergensSecondary
     };
-  }, [recipeIngredients]);
+  }, [recipeIngredients, piIngredientsMap]);
 
   // Get selected recipe details
   const selectedRecipe = useMemo(() => {

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, X, ChefHat, Wheat, AlertCircle, Beaker, Package, Scale, Percent } from 'lucide-react';
+import { ArrowLeft, Plus, X, ChefHat, Wheat, AlertCircle, Beaker, Package, Scale, Percent, FileText, Tag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -45,6 +45,9 @@ export default function NewRecipe() {
     status: 'draft' as 'draft' | 'validated',
     bakingRatio: '0.90',
     processLosses: '0',
+    // INCO fields for intermediate products
+    incoDeclarationMode: 'detailed' as 'simple' | 'detailed',
+    incoName: '',
   });
 
   const [ingredients, setIngredients] = useState<IngredientEntry[]>([]);
@@ -209,6 +212,11 @@ export default function NewRecipe() {
         process_losses: parseFloat(formData.processLosses) || 0,
         yield_quantity: 1,
         yield_unit: 'kg',
+        // INCO fields for intermediate products
+        inco_declaration_mode: formData.recipeType === 'intermediate' ? formData.incoDeclarationMode : null,
+        inco_name: formData.recipeType === 'intermediate' && formData.incoDeclarationMode === 'simple' 
+          ? formData.incoName.trim() || null 
+          : null,
       });
 
       // Add all ingredients (flours first, then others, then intermediates)
@@ -316,6 +324,65 @@ export default function NewRecipe() {
                   }
                 </p>
               </div>
+
+              {/* INCO fields for intermediate products */}
+              {formData.recipeType === 'intermediate' && (
+                <div className="p-4 bg-amber-50 dark:bg-amber-950/20 rounded-lg border border-amber-200 dark:border-amber-800 space-y-4">
+                  <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400">
+                    <Tag className="h-4 w-4" />
+                    <span className="font-medium text-sm">Déclaration INCO</span>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="incoDeclarationMode">Mode de déclaration *</Label>
+                    <Select 
+                      value={formData.incoDeclarationMode} 
+                      onValueChange={(value: 'simple' | 'detailed') => 
+                        setFormData({ ...formData, incoDeclarationMode: value })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="simple">
+                          <div className="flex items-center gap-2">
+                            <FileText className="h-4 w-4" />
+                            <span>Simple (nom générique)</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="detailed">
+                          <div className="flex items-center gap-2">
+                            <Beaker className="h-4 w-4" />
+                            <span>Détaillée (décomposition)</span>
+                          </div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">
+                      {formData.incoDeclarationMode === 'simple' 
+                        ? 'Le PI sera affiché sous un nom générique (ex: "pâte fermentée")'
+                        : 'Le PI sera décomposé en ses matières premières composantes'
+                      }
+                    </p>
+                  </div>
+
+                  {formData.incoDeclarationMode === 'simple' && (
+                    <div className="space-y-2">
+                      <Label htmlFor="incoName">Nom INCO (pour étiquetage) *</Label>
+                      <Input
+                        id="incoName"
+                        placeholder="Ex: pâte fermentée, purée de pommes de terre"
+                        value={formData.incoName}
+                        onChange={(e) => setFormData({ ...formData, incoName: e.target.value })}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Ce nom apparaîtra sur les étiquettes des produits finis utilisant ce PI
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
 
               <div className="space-y-2">
                 <Label htmlFor="calculationMode">Mode de calcul *</Label>

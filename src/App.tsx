@@ -31,6 +31,7 @@ const Auth = lazy(() => import("./pages/Auth"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const ProductSheetManagement = lazy(() => import("@/components/products/ProductSheetManagement").then(m => ({ default: m.ProductSheetManagement })));
 const CartonLabelManagement = lazy(() => import("@/components/products/CartonLabelManagement").then(m => ({ default: m.CartonLabelManagement })));
+const RecipeComparator = lazy(() => import("./pages/RecipeComparator"));
 
 const queryClient = new QueryClient();
 
@@ -184,6 +185,16 @@ function AppRoutes() {
             <ProtectedRoute>
               <ProductsLayout>
                 <EditRecipe />
+              </ProductsLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/products/comparator"
+          element={
+            <ProtectedRoute>
+              <ProductsLayout>
+                <RecipeComparator />
               </ProductsLayout>
             </ProtectedRoute>
           }

@@ -1,8 +1,7 @@
 import { 
   BookOpen,
   FileText,
-  Package,
-  BarChart3
+  Package
 } from 'lucide-react';
 import { ModuleLayout } from './ModuleLayout';
 
@@ -12,7 +11,6 @@ interface ProductsLayoutProps {
 
 const productsNavigation = [
   { name: 'Recettes', href: '/products/recipes', icon: BookOpen },
-  { name: 'Comparateur', href: '/products/comparator', icon: BarChart3 },
   { name: 'Fiche technique', href: '/products/technical-sheet', icon: FileText },
   { name: 'Étiquettes carton', href: '/products/carton-labels', icon: Package },
 ];

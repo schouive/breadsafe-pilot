@@ -60,6 +60,76 @@ export function useAllRawMaterials() {
   });
 }
 
+// Fonction récursive pour éclater les PI et leurs sous-PI
+async function flattenPIIngredients(
+  recipeId: string,
+  parentRatio: number,
+  baseFlourKg: number,
+  visitedRecipes: Set<string> = new Set()
+): Promise<Array<{
+  rawMaterialId: string;
+  rawMaterialName: string;
+  rawMaterialType: string | null;
+  quantityKg: number;
+}>> {
+  // Éviter les boucles infinies
+  if (visitedRecipes.has(recipeId)) return [];
+  visitedRecipes.add(recipeId);
+
+  const { data: ingredients } = await supabase
+    .from('recipe_ingredients')
+    .select(`
+      raw_material_id,
+      ingredient_recipe_id,
+      baker_percentage,
+      raw_materials (id, name, type)
+    `)
+    .eq('recipe_id', recipeId);
+
+  if (!ingredients) return [];
+
+  const result: Array<{
+    rawMaterialId: string;
+    rawMaterialName: string;
+    rawMaterialType: string | null;
+    quantityKg: number;
+  }> = [];
+
+  // Calculer le total farine de ce PI
+  const piFlourPercentage = ingredients
+    .filter(ing => ing.raw_materials?.type === 'farine')
+    .reduce((sum, ing) => sum + (ing.baker_percentage || 0), 0);
+
+  for (const ing of ingredients) {
+    if (ing.ingredient_recipe_id) {
+      // C'est un sous-PI - récursion
+      const subPiPercentage = ing.baker_percentage || 0;
+      const subPiRatio = piFlourPercentage > 0 
+        ? (subPiPercentage / piFlourPercentage) * parentRatio
+        : 0;
+
+      const subPiIngredients = await flattenPIIngredients(
+        ing.ingredient_recipe_id,
+        subPiRatio,
+        baseFlourKg,
+        visitedRecipes
+      );
+      result.push(...subPiIngredients);
+    } else if (ing.raw_materials && ing.raw_material_id) {
+      // Ingrédient direct du PI
+      const adjustedPercentage = (ing.baker_percentage || 0) * parentRatio;
+      result.push({
+        rawMaterialId: ing.raw_material_id,
+        rawMaterialName: ing.raw_materials.name,
+        rawMaterialType: ing.raw_materials.type,
+        quantityKg: (adjustedPercentage / 100) * baseFlourKg,
+      });
+    }
+  }
+
+  return result;
+}
+
 // Hook pour récupérer les recettes avec leurs ingrédients
 export function useRecipesWithIngredients(recipeIds: string[]) {
   return useQuery({
@@ -91,162 +161,124 @@ export function useRecipesWithIngredients(recipeIds: string[]) {
       
       if (ingredientsError) throw ingredientsError;
 
-      // Récupérer les ingrédients des PI (produits intermédiaires)
-      const piRecipeIds = [...new Set(
-        (ingredients || [])
-          .filter(ing => ing.ingredient_recipe_id)
-          .map(ing => ing.ingredient_recipe_id)
-      )].filter(Boolean) as string[];
+      // Base: 100kg de farine
+      const baseFlourKg = 100;
 
-      let piIngredients: any[] = [];
-      let piRecipes: any[] = [];
+      // Mapper les recettes avec leurs ingrédients éclatés (récursivement)
+      const result: RecipeWithIngredients[] = await Promise.all(
+        recipes.map(async (recipe) => {
+          const recipeIngredients = (ingredients || []).filter(
+            ing => ing.recipe_id === recipe.id
+          );
 
-      if (piRecipeIds.length > 0) {
-        const { data: piData, error: piError } = await supabase
-          .from('recipe_ingredients')
-          .select(`
-            id,
-            recipe_id,
-            raw_material_id,
-            ingredient_recipe_id,
-            baker_percentage,
-            raw_materials (id, name, type)
-          `)
-          .in('recipe_id', piRecipeIds);
-        
-        if (!piError && piData) {
-          piIngredients = piData;
-        }
+          // Calculer le total farine direct pour la base
+          const directFlourPercentage = recipeIngredients
+            .filter(ing => ing.raw_materials?.type === 'farine')
+            .reduce((sum, ing) => sum + (ing.baker_percentage || 0), 0);
 
-        const { data: piRecipesData } = await supabase
-          .from('recipes')
-          .select('id, name, code')
-          .in('id', piRecipeIds);
-        
-        if (piRecipesData) {
-          piRecipes = piRecipesData;
-        }
-      }
+          // Éclater les ingrédients (y compris PI récursivement)
+          const flattenedIngredients: Array<{
+            rawMaterialId: string | null;
+            rawMaterialName: string;
+            rawMaterialType: string | null;
+            ingredientRecipeId: string | null;
+            bakerPercentage: number;
+            quantityKg: number;
+          }> = [];
 
-      // Mapper les recettes avec leurs ingrédients éclatés
-      const result: RecipeWithIngredients[] = recipes.map(recipe => {
-        const recipeIngredients = (ingredients || []).filter(
-          ing => ing.recipe_id === recipe.id
-        );
+          for (const ing of recipeIngredients) {
+            if (ing.ingredient_recipe_id) {
+              // C'est un PI - éclater récursivement
+              const piPercentage = ing.baker_percentage || 0;
+              
+              // Récupérer le total farine du PI pour calculer le ratio
+              const { data: piIngsForRatio } = await supabase
+                .from('recipe_ingredients')
+                .select('baker_percentage, raw_materials (type)')
+                .eq('recipe_id', ing.ingredient_recipe_id);
+              
+              const piFlourPercentage = (piIngsForRatio || [])
+                .filter(pi => pi.raw_materials?.type === 'farine')
+                .reduce((sum, pi) => sum + (pi.baker_percentage || 0), 0);
 
-        // Calculer le total farine pour la base (100kg)
-        const flourIngredients = recipeIngredients.filter(
-          ing => ing.raw_materials?.type === 'farine'
-        );
-        const totalFlourPercentage = flourIngredients.reduce(
-          (sum, ing) => sum + (ing.baker_percentage || 0), 0
-        );
+              const piRatio = piFlourPercentage > 0 
+                ? piPercentage / piFlourPercentage 
+                : 0;
 
-        // Base: 100kg de farine
-        const baseFlourKg = 100;
-        const flourMultiplier = totalFlourPercentage > 0 ? baseFlourKg / totalFlourPercentage : 0;
+              const piIngredients = await flattenPIIngredients(
+                ing.ingredient_recipe_id,
+                piRatio,
+                baseFlourKg
+              );
 
-        // Éclater les ingrédients (y compris PI)
-        const flattenedIngredients: Array<{
-          rawMaterialId: string | null;
-          rawMaterialName: string;
-          rawMaterialType: string | null;
-          ingredientRecipeId: string | null;
-          bakerPercentage: number;
-          quantityKg: number;
-        }> = [];
-
-        recipeIngredients.forEach(ing => {
-          if (ing.ingredient_recipe_id) {
-            // C'est un PI - éclater ses ingrédients
-            const piIngs = piIngredients.filter(
-              pi => pi.recipe_id === ing.ingredient_recipe_id
-            );
-            const piRecipe = piRecipes.find(r => r.id === ing.ingredient_recipe_id);
-            
-            // Calculer le ratio de PI par rapport au total farine de la recette parente
-            const piPercentage = ing.baker_percentage || 0;
-            
-            // Total farine du PI
-            const piFlourPercentage = piIngs
-              .filter(pi => pi.raw_materials?.type === 'farine')
-              .reduce((sum, pi) => sum + (pi.baker_percentage || 0), 0);
-            
-            // Ratio pour convertir les % PI en quantités de la recette parente
-            const piRatio = piFlourPercentage > 0 
-              ? (piPercentage / piFlourPercentage) 
-              : 0;
-
-            piIngs.forEach(piIng => {
-              if (piIng.raw_materials) {
-                const adjustedPercentage = (piIng.baker_percentage || 0) * piRatio;
+              piIngredients.forEach(piIng => {
                 flattenedIngredients.push({
-                  rawMaterialId: piIng.raw_material_id,
-                  rawMaterialName: piIng.raw_materials.name,
-                  rawMaterialType: piIng.raw_materials.type,
+                  rawMaterialId: piIng.rawMaterialId,
+                  rawMaterialName: piIng.rawMaterialName,
+                  rawMaterialType: piIng.rawMaterialType,
                   ingredientRecipeId: ing.ingredient_recipe_id,
-                  bakerPercentage: adjustedPercentage,
-                  quantityKg: (adjustedPercentage / 100) * baseFlourKg,
+                  bakerPercentage: (piIng.quantityKg / baseFlourKg) * 100,
+                  quantityKg: piIng.quantityKg,
                 });
-              }
-            });
-          } else if (ing.raw_materials) {
-            // Ingrédient direct
-            const percentage = ing.baker_percentage || 0;
-            flattenedIngredients.push({
-              rawMaterialId: ing.raw_material_id,
-              rawMaterialName: ing.raw_materials.name,
-              rawMaterialType: ing.raw_materials.type,
-              ingredientRecipeId: null,
-              bakerPercentage: percentage,
-              quantityKg: (percentage / 100) * baseFlourKg,
-            });
-          }
-        });
-
-        // Dédupliquer et agréger par MP
-        const aggregatedMap = new Map<string, typeof flattenedIngredients[0]>();
-        flattenedIngredients.forEach(ing => {
-          if (ing.rawMaterialId) {
-            const existing = aggregatedMap.get(ing.rawMaterialId);
-            if (existing) {
-              existing.quantityKg += ing.quantityKg;
-              existing.bakerPercentage += ing.bakerPercentage;
-            } else {
-              aggregatedMap.set(ing.rawMaterialId, { ...ing });
+              });
+            } else if (ing.raw_materials) {
+              // Ingrédient direct
+              const percentage = ing.baker_percentage || 0;
+              flattenedIngredients.push({
+                rawMaterialId: ing.raw_material_id,
+                rawMaterialName: ing.raw_materials.name,
+                rawMaterialType: ing.raw_materials.type,
+                ingredientRecipeId: null,
+                bakerPercentage: percentage,
+                quantityKg: (percentage / 100) * baseFlourKg,
+              });
             }
           }
-        });
 
-        const aggregatedIngredients = Array.from(aggregatedMap.values());
+          // Dédupliquer et agréger par MP
+          const aggregatedMap = new Map<string, typeof flattenedIngredients[0]>();
+          flattenedIngredients.forEach(ing => {
+            if (ing.rawMaterialId) {
+              const existing = aggregatedMap.get(ing.rawMaterialId);
+              if (existing) {
+                existing.quantityKg += ing.quantityKg;
+                existing.bakerPercentage += ing.bakerPercentage;
+              } else {
+                aggregatedMap.set(ing.rawMaterialId, { ...ing });
+              }
+            }
+          });
 
-        // Calculer les totaux
-        const totalFlourKg = aggregatedIngredients
-          .filter(ing => ing.rawMaterialType === 'farine')
-          .reduce((sum, ing) => sum + ing.quantityKg, 0);
+          const aggregatedIngredients = Array.from(aggregatedMap.values());
 
-        // Identifier l'eau (par nom ou type)
-        const totalWaterKg = aggregatedIngredients
-          .filter(ing => 
-            ing.rawMaterialName.toLowerCase() === 'eau' ||
-            ing.rawMaterialName.toLowerCase().includes('water')
-          )
-          .reduce((sum, ing) => sum + ing.quantityKg, 0);
+          // Calculer les totaux (incluant les MP des PI)
+          const totalFlourKg = aggregatedIngredients
+            .filter(ing => ing.rawMaterialType === 'farine')
+            .reduce((sum, ing) => sum + ing.quantityKg, 0);
 
-        const totalDoughKg = aggregatedIngredients.reduce(
-          (sum, ing) => sum + ing.quantityKg, 0
-        );
+          // Identifier l'eau (par nom ou type)
+          const totalWaterKg = aggregatedIngredients
+            .filter(ing => 
+              ing.rawMaterialName.toLowerCase() === 'eau' ||
+              ing.rawMaterialName.toLowerCase().includes('water')
+            )
+            .reduce((sum, ing) => sum + ing.quantityKg, 0);
 
-        return {
-          id: recipe.id,
-          name: recipe.name,
-          code: recipe.code,
-          ingredients: aggregatedIngredients,
-          totalFlourKg,
-          totalWaterKg,
-          totalDoughKg,
-        };
-      });
+          const totalDoughKg = aggregatedIngredients.reduce(
+            (sum, ing) => sum + ing.quantityKg, 0
+          );
+
+          return {
+            id: recipe.id,
+            name: recipe.name,
+            code: recipe.code,
+            ingredients: aggregatedIngredients,
+            totalFlourKg,
+            totalWaterKg,
+            totalDoughKg,
+          };
+        })
+      );
 
       return result;
     },

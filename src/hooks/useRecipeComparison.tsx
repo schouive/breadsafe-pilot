@@ -95,17 +95,18 @@ async function flattenPIIngredients(
     quantityKg: number;
   }> = [];
 
-  // Calculer le total farine de ce PI
-  const piFlourPercentage = ingredients
-    .filter(ing => ing.raw_materials?.type === 'farine')
-    .reduce((sum, ing) => sum + (ing.baker_percentage || 0), 0);
+  // Calculer le total des pourcentages du PI (pour normaliser)
+  const piTotalPercentage = ingredients.reduce(
+    (sum, ing) => sum + (ing.baker_percentage || 0), 0
+  );
 
   for (const ing of ingredients) {
     if (ing.ingredient_recipe_id) {
       // C'est un sous-PI - récursion
+      // Le ratio du sous-PI est basé sur sa proportion dans le PI parent
       const subPiPercentage = ing.baker_percentage || 0;
-      const subPiRatio = piFlourPercentage > 0 
-        ? (subPiPercentage / piFlourPercentage) * parentRatio
+      const subPiRatio = piTotalPercentage > 0 
+        ? (subPiPercentage / piTotalPercentage) * parentRatio
         : 0;
 
       const subPiIngredients = await flattenPIIngredients(
@@ -117,12 +118,15 @@ async function flattenPIIngredients(
       result.push(...subPiIngredients);
     } else if (ing.raw_materials && ing.raw_material_id) {
       // Ingrédient direct du PI
-      const adjustedPercentage = (ing.baker_percentage || 0) * parentRatio;
+      // La quantité est calculée proportionnellement au parentRatio
+      const ingredientRatio = piTotalPercentage > 0
+        ? ((ing.baker_percentage || 0) / piTotalPercentage) * parentRatio
+        : 0;
       result.push({
         rawMaterialId: ing.raw_material_id,
         rawMaterialName: ing.raw_materials.name,
         rawMaterialType: ing.raw_materials.type,
-        quantityKg: (adjustedPercentage / 100) * baseFlourKg,
+        quantityKg: ingredientRatio * baseFlourKg,
       });
     }
   }
@@ -191,19 +195,10 @@ export function useRecipesWithIngredients(recipeIds: string[]) {
               // C'est un PI - éclater récursivement
               const piPercentage = ing.baker_percentage || 0;
               
-              // Récupérer le total farine du PI pour calculer le ratio
-              const { data: piIngsForRatio } = await supabase
-                .from('recipe_ingredients')
-                .select('baker_percentage, raw_materials (type)')
-                .eq('recipe_id', ing.ingredient_recipe_id);
-              
-              const piFlourPercentage = (piIngsForRatio || [])
-                .filter(pi => pi.raw_materials?.type === 'farine')
-                .reduce((sum, pi) => sum + (pi.baker_percentage || 0), 0);
-
-              const piRatio = piFlourPercentage > 0 
-                ? piPercentage / piFlourPercentage 
-                : 0;
+              // Le piRatio est simplement le pourcentage du PI divisé par 100
+              // Car le PI représente piPercentage% de la farine de la recette parente
+              // Ses ingrédients doivent être mis à l'échelle en conséquence
+              const piRatio = piPercentage / 100;
 
               const piIngredients = await flattenPIIngredients(
                 ing.ingredient_recipe_id,

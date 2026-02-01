@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
+
 import {
   Select,
   SelectContent,
@@ -161,7 +161,7 @@ export default function RecipeData() {
                 </Badge>
               )}
             </CardHeader>
-            {showRecipeSelector && (
+          {showRecipeSelector && (
               <CardContent className="pt-0">
                 <div className="space-y-3">
                   <div className="relative">
@@ -179,25 +179,29 @@ export default function RecipeData() {
                     </Button>
                   </div>
                   <ScrollArea className="h-48">
-                    <div className="space-y-2">
-                      {filteredRecipes.map(recipe => (
-                        <div
-                          key={recipe.id}
-                          className="flex items-center space-x-2 p-2 rounded hover:bg-muted/50 cursor-pointer"
-                          onClick={() => toggleRecipe(recipe.id)}
-                        >
-                          <Checkbox
-                            checked={selectedRecipeIds.includes(recipe.id)}
-                            onCheckedChange={() => toggleRecipe(recipe.id)}
-                          />
-                          <div className="flex-1 min-w-0">
+                    <div className="space-y-1">
+                      {filteredRecipes.map(recipe => {
+                        const isSelected = selectedRecipeIds.includes(recipe.id);
+                        return (
+                          <button
+                            key={recipe.id}
+                            type="button"
+                            className={`w-full text-left p-3 rounded-md transition-colors ${
+                              isSelected 
+                                ? 'bg-primary text-primary-foreground' 
+                                : 'bg-muted/30 hover:bg-muted'
+                            }`}
+                            onClick={() => toggleRecipe(recipe.id)}
+                          >
                             <p className="text-sm font-medium truncate">{recipe.name}</p>
                             {recipe.code && (
-                              <p className="text-xs text-muted-foreground">{recipe.code}</p>
+                              <p className={`text-xs ${isSelected ? 'text-primary-foreground/70' : 'text-muted-foreground'}`}>
+                                {recipe.code}
+                              </p>
                             )}
-                          </div>
-                        </div>
-                      ))}
+                          </button>
+                        );
+                      })}
                     </div>
                   </ScrollArea>
                 </div>

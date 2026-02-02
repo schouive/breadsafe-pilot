@@ -7,7 +7,6 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Cell,
   ReferenceLine,
 } from 'recharts';
 
@@ -28,13 +27,7 @@ interface ComparisonChartProps {
   referenceLabel: string;
 }
 
-const CHART_COLORS = [
-  'hsl(var(--primary))',
-  'hsl(var(--chart-2))',
-  'hsl(var(--chart-3))',
-  'hsl(var(--chart-4))',
-  'hsl(var(--chart-5))',
-];
+const CHART_COLOR = 'hsl(var(--primary))';
 
 export function ComparisonChart({
   data,
@@ -43,11 +36,10 @@ export function ComparisonChart({
   referenceLabel,
 }: ComparisonChartProps) {
   const chartData = useMemo(() => {
-    return data.map((result, index) => ({
+    return data.map((result) => ({
       name: result.recipeCode || result.recipeName.substring(0, 12),
       fullName: result.recipeName,
       value: displayMode === 'percentage' ? result.percentage : result.ratio,
-      color: CHART_COLORS[index % CHART_COLORS.length],
     }));
   }, [data, displayMode]);
 
@@ -84,19 +76,16 @@ export function ComparisonChart({
           barCategoryGap="20%"
         >
           <defs>
-            {CHART_COLORS.map((color, index) => (
-              <linearGradient
-                key={`gradient-${index}`}
-                id={`barGradient-${index}`}
-                x1="0"
-                y1="0"
-                x2="0"
-                y2="1"
-              >
-                <stop offset="0%" stopColor={color} stopOpacity={1} />
-                <stop offset="100%" stopColor={color} stopOpacity={0.7} />
-              </linearGradient>
-            ))}
+            <linearGradient
+              id="barGradient"
+              x1="0"
+              y1="0"
+              x2="0"
+              y2="1"
+            >
+              <stop offset="0%" stopColor={CHART_COLOR} stopOpacity={1} />
+              <stop offset="100%" stopColor={CHART_COLOR} stopOpacity={0.7} />
+            </linearGradient>
           </defs>
           <CartesianGrid
             strokeDasharray="3 3"
@@ -183,16 +172,10 @@ export function ComparisonChart({
             dataKey="value"
             radius={[8, 8, 0, 0]}
             maxBarSize={60}
-          >
-            {chartData.map((entry, index) => (
-              <Cell
-                key={`cell-${index}`}
-                fill={`url(#barGradient-${index % CHART_COLORS.length})`}
-                stroke={entry.color}
-                strokeWidth={1}
-              />
-            ))}
-          </Bar>
+            fill="url(#barGradient)"
+            stroke={CHART_COLOR}
+            strokeWidth={1}
+          />
         </BarChart>
       </ResponsiveContainer>
     </div>

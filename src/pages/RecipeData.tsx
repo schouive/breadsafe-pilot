@@ -2,7 +2,6 @@ import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-
 import {
   Select,
   SelectContent,
@@ -20,9 +19,9 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import { BarChart3, Filter, Search, ChevronDown, ChevronUp } from 'lucide-react';
+import { BarChart3, Filter, Search, ChevronDown, ChevronUp, Printer, FileDown } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useActiveRecipes } from '@/hooks/useRecipes';
 import {
   useRecipesWithIngredients,
@@ -30,19 +29,13 @@ import {
   extractUniqueMaterials,
   ReferenceType,
 } from '@/hooks/useRecipeComparison';
+import { ComparisonChart } from '@/components/recipes/ComparisonChart';
+import { exportComparisonToPdf, printComparison } from '@/lib/recipeComparisonExport';
 
 const REFERENCE_OPTIONS: { value: ReferenceType; label: string }[] = [
   { value: 'flour', label: 'Farine totale' },
   { value: 'water', label: 'Eau totale' },
   { value: 'dough', label: 'Poids total pâte' },
-];
-
-const CHART_COLORS = [
-  'hsl(var(--primary))',
-  'hsl(var(--chart-2))',
-  'hsl(var(--chart-3))',
-  'hsl(var(--chart-4))',
-  'hsl(var(--chart-5))',
 ];
 
 export default function RecipeData() {
@@ -108,15 +101,26 @@ export default function RecipeData() {
     }
   };
 
-  // Données pour le graphique
-  const chartData = useMemo(() => {
-    return comparisonResults.map((result, index) => ({
-      name: result.recipeCode || result.recipeName.substring(0, 15),
-      fullName: result.recipeName,
-      value: displayMode === 'percentage' ? result.percentage : result.ratio,
-      color: CHART_COLORS[index % CHART_COLORS.length],
-    }));
-  }, [comparisonResults, displayMode]);
+  // Handlers pour export
+  const handleExportPdf = () => {
+    if (comparisonResults.length === 0) return;
+    exportComparisonToPdf({
+      results: comparisonResults,
+      materialName: selectedMaterialName,
+      referenceLabel,
+      displayMode,
+    });
+  };
+
+  const handlePrint = () => {
+    if (comparisonResults.length === 0) return;
+    printComparison({
+      results: comparisonResults,
+      materialName: selectedMaterialName,
+      referenceLabel,
+      displayMode,
+    });
+  };
 
   // Nom de la MP sélectionnée
   const selectedMaterialName = availableMaterials.find(m => m.id === selectedMaterialId)?.name || '';
@@ -302,68 +306,46 @@ export default function RecipeData() {
 
         {/* Résultats */}
         <div className="lg:col-span-2 space-y-4">
+          {/* Actions d'export */}
+          {comparisonResults.length > 0 && (
+            <div className="flex justify-end gap-2">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="outline" size="sm" onClick={handlePrint}>
+                      <Printer className="h-4 w-4 mr-2" />
+                      Imprimer
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Imprimer le rapport comparatif</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="default" size="sm" onClick={handleExportPdf}>
+                      <FileDown className="h-4 w-4 mr-2" />
+                      Export PDF
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Télécharger le rapport en PDF</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+          )}
+
           {/* Histogramme */}
           <Card>
-            <CardHeader>
-              <CardTitle className="text-base">
-                {selectedMaterialName 
-                  ? `${selectedMaterialName} / ${referenceLabel}`
-                  : 'Histogramme comparatif'
-                }
-              </CardTitle>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">Histogramme comparatif</CardTitle>
             </CardHeader>
             <CardContent>
-              {comparisonResults.length > 0 ? (
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                    <XAxis 
-                      dataKey="name" 
-                      angle={-45} 
-                      textAnchor="end"
-                      height={80}
-                      interval={0}
-                      tick={{ fontSize: 12 }}
-                    />
-                    <YAxis 
-                      tickFormatter={(v) => displayMode === 'percentage' ? `${v.toFixed(1)}%` : v.toFixed(3)}
-                    />
-                    <Tooltip
-                      content={({ active, payload }) => {
-                        if (active && payload && payload.length) {
-                          const data = payload[0].payload;
-                          return (
-                            <div className="bg-popover border rounded-lg shadow-lg p-3">
-                              <p className="font-medium">{data.fullName}</p>
-                              <p className="text-sm text-muted-foreground">
-                                {displayMode === 'percentage' 
-                                  ? `${data.value.toFixed(2)}%`
-                                  : data.value.toFixed(4)
-                                }
-                              </p>
-                            </div>
-                          );
-                        }
-                        return null;
-                      }}
-                    />
-                    <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-                      {chartData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="h-[300px] flex items-center justify-center text-muted-foreground">
-                  {selectedRecipeIds.length === 0 
-                    ? 'Sélectionnez des recettes pour commencer'
-                    : selectedMaterialId 
-                      ? 'Aucune donnée à afficher'
-                      : 'Sélectionnez une matière première'
-                  }
-                </div>
-              )}
+              <ComparisonChart
+                data={comparisonResults}
+                displayMode={displayMode}
+                materialName={selectedMaterialName || 'Matière première'}
+                referenceLabel={referenceLabel}
+              />
             </CardContent>
           </Card>
 

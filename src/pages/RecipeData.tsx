@@ -45,7 +45,6 @@ export default function RecipeData() {
   const [referenceType, setReferenceType] = useState<ReferenceType>('flour');
   const [displayMode, setDisplayMode] = useState<'percentage' | 'decimal'>('percentage');
   const [recipeSearch, setRecipeSearch] = useState('');
-  const [materialSearch, setMaterialSearch] = useState('');
   const [showRecipeSelector, setShowRecipeSelector] = useState(true);
 
   // Données
@@ -74,14 +73,6 @@ export default function RecipeData() {
       r.code?.toLowerCase().includes(search)
     );
   }, [allRecipes, recipeSearch]);
-
-  // Filtrer les MP pour la recherche
-  const filteredMaterials = useMemo(() => {
-    const search = materialSearch.toLowerCase();
-    return availableMaterials.filter(m =>
-      m.name.toLowerCase().includes(search)
-    );
-  }, [availableMaterials, materialSearch]);
 
   // Toggle sélection recette
   const toggleRecipe = (recipeId: string) => {
@@ -226,37 +217,26 @@ export default function RecipeData() {
               <div className="space-y-2">
                 <Label>Matière première</Label>
                 {availableMaterials.length > 0 ? (
-                  <>
-                    <div className="relative mb-2">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        placeholder="Filtrer..."
-                        value={materialSearch}
-                        onChange={(e) => setMaterialSearch(e.target.value)}
-                        className="pl-9"
-                      />
-                    </div>
-                    <Select
-                      value={selectedMaterialId || ''}
-                      onValueChange={(v) => setSelectedMaterialId(v || null)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Sélectionner une MP" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {filteredMaterials.map(m => (
-                          <SelectItem key={m.id} value={m.id}>
-                            <span className="flex items-center gap-2">
-                              {m.name}
-                              {m.type === 'farine' && (
-                                <Badge variant="outline" className="text-xs">Farine</Badge>
-                              )}
-                            </span>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </>
+                  <Select
+                    value={selectedMaterialId || ''}
+                    onValueChange={(v) => setSelectedMaterialId(v || null)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sélectionner une MP" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableMaterials.map(m => (
+                        <SelectItem key={m.id} value={m.id}>
+                          <span className="flex items-center gap-2">
+                            {m.name}
+                            {m.type === 'farine' && (
+                              <Badge variant="outline" className="text-xs">Farine</Badge>
+                            )}
+                          </span>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 ) : (
                   <p className="text-sm text-muted-foreground">
                     Sélectionnez d'abord des recettes

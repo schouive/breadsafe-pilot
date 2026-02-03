@@ -306,10 +306,23 @@ export async function generateTechnicalSheetPDF(sheet: ProductSheet): Promise<vo
 
   yPos += 8;
 
-  // ========== TWO-COLUMN LAYOUT: NUTRITION + LOGISTICS (matching print) ==========
+  // ========== TWO-COLUMN LAYOUT: NUTRITION + LOGISTICS (matching print exactly) ==========
   const snapshotNutrition: SnapshotNutrition | null = sheetData.snapshot_nutrition;
   const leftColX = margin;
   const rightColX = pageWidth / 2 + 5;
+  const columnWidth = (pageWidth - 2 * margin - 10) / 2;
+  
+  // Calculate heights to check if we need a page break
+  const nutritionTableHeight = snapshotNutrition ? 85 : 0; // Approx height of nutrition table
+  const logisticsHeight = 60; // Approx height of logistics section
+  const twoColumnsHeight = Math.max(nutritionTableHeight, logisticsHeight);
+  
+  // Page break if the two-columns section would be cut
+  if (yPos + twoColumnsHeight > pageHeight - 40) {
+    doc.addPage();
+    yPos = 20;
+  }
+  
   const savedYPos = yPos;
 
   // LEFT COLUMN: Nutrition table
@@ -352,16 +365,16 @@ export async function generateTechnicalSheetPDF(sheet: ProductSheet): Promise<vo
     });
   }
 
-  // RIGHT COLUMN: Logistics
-  yPos = savedYPos;
+  // RIGHT COLUMN: Logistics (at the same Y position as nutrition - side by side)
+  let rightColYPos = savedYPos;
   doc.setTextColor(...textColor);
   doc.setFontSize(11);
   doc.setFont('helvetica', 'bold');
-  doc.text('CONDITIONNEMENT & LOGISTIQUE', rightColX, yPos);
-  yPos += 2;
+  doc.text('CONDITIONNEMENT & LOGISTIQUE', rightColX, rightColYPos);
+  rightColYPos += 2;
   doc.setDrawColor(226, 232, 240);
-  doc.line(rightColX, yPos, rightColX + 72, yPos);
-  yPos += 8;
+  doc.line(rightColX, rightColYPos, rightColX + 72, rightColYPos);
+  rightColYPos += 8;
 
   const cartonsPerPallet = sheetData.cartons_per_layer && sheetData.layers_per_pallet 
     ? sheetData.cartons_per_layer * sheetData.layers_per_pallet 
@@ -380,23 +393,29 @@ export async function generateTechnicalSheetPDF(sheet: ProductSheet): Promise<vo
   for (const item of logisticsData) {
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(...mutedColor);
-    doc.text(item[0], rightColX, yPos);
+    doc.text(item[0], rightColX, rightColYPos);
     
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(...textColor);
-    doc.text(item[1], rightColX + 48, yPos);
-    yPos += 7;
+    doc.text(item[1], rightColX + 48, rightColYPos);
+    rightColYPos += 7;
   }
 
   // Determine where to continue after two-column section
   const nutritionEndY = snapshotNutrition ? (doc as any).lastAutoTable?.finalY || savedYPos : savedYPos;
-  yPos = Math.max(nutritionEndY, yPos) + 12;
+  yPos = Math.max(nutritionEndY, rightColYPos) + 12;
 
   // ========== CONSERVATION SECTION (matching print exactly) ==========
   const hasConservation = sheetData.storage_instructions || sheetData.thawing_instructions || sheetData.usage_instructions || sheetData.dlc_ddm_days;
   if (hasConservation) {
+    // Calculate conservation section height
+    const conservationContentHeight = 40 + 
+      (sheetData.storage_instructions ? 20 : 0) +
+      (sheetData.thawing_instructions ? 20 : 0) +
+      (sheetData.usage_instructions ? 20 : 0);
+    
     // Check if we need a new page
-    if (yPos > pageHeight - 70) {
+    if (yPos + conservationContentHeight > pageHeight - 35) {
       doc.addPage();
       yPos = 20;
     }
@@ -537,6 +556,16 @@ export async function printTechnicalSheet(sheet: any): Promise<void> {
       body { 
         -webkit-print-color-adjust: exact; 
         print-color-adjust: exact; 
+      }
+      /* Prevent page breaks inside important sections */
+      .two-columns, .section {
+        page-break-inside: avoid;
+        break-inside: avoid;
+      }
+      /* Ensure nutrition table and logistics stay together */
+      .two-columns {
+        page-break-before: auto;
+        break-before: auto;
       }
     }
     

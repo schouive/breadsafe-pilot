@@ -90,24 +90,24 @@ export async function generateTechnicalSheetPDF(sheet: ProductSheet): Promise<vo
   const sheetData = sheet as any;
   
   const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
   const margin = 15;
   let yPos = 15;
 
-  // Brand colors - matching print version
+  // Brand colors - matching print version exactly
   const primaryColor = [71, 85, 105] as [number, number, number]; // Slate 600
   const textColor = [30, 41, 59] as [number, number, number]; // Slate 800
   const mutedColor = [100, 116, 139] as [number, number, number]; // Slate 500
   const lightMutedColor = [148, 163, 184] as [number, number, number]; // Slate 400
+  const accentColor = [98, 119, 156] as [number, number, number]; // Blue accent
 
-  // ========== HEADER - CENTERED ON PAGE ==========
+  // ========== HEADER - MATCHING PRINT VERSION EXACTLY ==========
   // Logo positioning (left side)
-  let logoWidth = 0;
-  let logoHeight = 20;
+  let logoHeight = 18;
   try {
     const logoData = await loadImageAsBase64WithDimensions(logoImage);
     const aspectRatio = logoData.width / logoData.height;
-    logoHeight = 18;
-    logoWidth = logoHeight * aspectRatio;
+    const logoWidth = logoHeight * aspectRatio;
     doc.addImage(logoData.base64, 'PNG', margin, yPos, logoWidth, logoHeight);
   } catch (e) {
     console.warn('Could not load logo for PDF');
@@ -118,75 +118,73 @@ export async function generateTechnicalSheetPDF(sheet: ProductSheet): Promise<vo
   
   // Company name - centered on page
   doc.setTextColor(...mutedColor);
-  doc.setFontSize(11);
+  doc.setFontSize(13);
   doc.setFont('helvetica', 'bold');
   doc.text('BREADSHOP SAS', pageCenter, yPos + 6, { align: 'center' });
   
   // Document type label
-  doc.setFontSize(7);
+  doc.setFontSize(8);
   doc.setTextColor(...lightMutedColor);
   doc.setFont('helvetica', 'normal');
-  doc.text('FICHE TECHNIQUE PRODUIT', pageCenter, yPos + 11, { align: 'center' });
+  doc.text('FICHE TECHNIQUE PRODUIT', pageCenter, yPos + 12, { align: 'center' });
   
-  // Product name - centered on page, prominent
+  // Product name - centered on page, prominent (22pt like print)
   doc.setTextColor(15, 23, 42); // Slate 900
-  doc.setFontSize(18);
+  doc.setFontSize(22);
   doc.setFont('helvetica', 'bold');
   const productName = sheetData.product_name || 'Sans nom';
-  const maxTitleWidth = pageWidth - 2 * margin - 40;
-  const truncatedName = doc.getTextWidth(productName) > maxTitleWidth 
-    ? productName.substring(0, 40) + '...' 
-    : productName;
-  doc.text(truncatedName, pageCenter, yPos + 22, { align: 'center' });
+  doc.text(productName, pageCenter, yPos + 24, { align: 'center' });
   
   // Version badge (top right)
   if (sheetData.version) {
     const versionText = `v${sheetData.version}`;
     doc.setFillColor(241, 245, 249); // Slate 100
-    doc.setFontSize(8);
-    const versionWidth = doc.getTextWidth(versionText) + 8;
-    doc.roundedRect(pageWidth - margin - versionWidth, yPos, versionWidth, 12, 2, 2, 'F');
+    doc.setFontSize(9);
+    const versionWidth = doc.getTextWidth(versionText) + 10;
+    doc.roundedRect(pageWidth - margin - versionWidth, yPos, versionWidth, 14, 2, 2, 'F');
     doc.setTextColor(...mutedColor);
     doc.setFont('helvetica', 'bold');
-    doc.text(versionText, pageWidth - margin - versionWidth + 4, yPos + 8);
+    doc.text(versionText, pageWidth - margin - versionWidth + 5, yPos + 9);
   }
   
   // Header separator line
-  yPos += 30;
+  yPos += 32;
   doc.setDrawColor(226, 232, 240); // Slate 200
   doc.setLineWidth(0.5);
   doc.line(margin, yPos, pageWidth - margin, yPos);
   yPos += 10;
 
-  // Description section (if present)
+  // Description section (if present) - matching print style with left border
   if (sheetData.description) {
     doc.setFillColor(248, 250, 252); // Slate 50
-    doc.setDrawColor(98, 119, 156);
-    const descriptionLines = doc.splitTextToSize(sheetData.description, pageWidth - 2 * margin - 10);
-    const descHeight = descriptionLines.length * 5 + 8;
+    const descriptionLines = doc.splitTextToSize(sheetData.description, pageWidth - 2 * margin - 12);
+    const descHeight = descriptionLines.length * 5 + 10;
     doc.rect(margin, yPos - 2, pageWidth - 2 * margin, descHeight, 'F');
-    doc.setLineWidth(1);
+    
+    // Left accent border
+    doc.setDrawColor(...accentColor);
+    doc.setLineWidth(1.5);
     doc.line(margin, yPos - 2, margin, yPos - 2 + descHeight);
     
     doc.setTextColor(...mutedColor);
-    doc.setFontSize(9);
+    doc.setFontSize(10);
     doc.setFont('helvetica', 'italic');
-    doc.text(descriptionLines, margin + 5, yPos + 4);
+    doc.text(descriptionLines, margin + 6, yPos + 5);
     yPos += descHeight + 8;
   }
   
-  // ========== IDENTIFICATION SECTION WITH PRODUCT IMAGE ==========
+  // ========== IDENTIFICATION SECTION - MATCHING PRINT LAYOUT ==========
   doc.setTextColor(...textColor);
-  doc.setFontSize(10);
+  doc.setFontSize(11);
   doc.setFont('helvetica', 'bold');
   doc.text('IDENTIFICATION PRODUIT', margin, yPos);
   yPos += 2;
   doc.setDrawColor(226, 232, 240);
   doc.setLineWidth(0.3);
-  doc.line(margin, yPos, margin + 50, yPos);
-  yPos += 6;
+  doc.line(margin, yPos, margin + 55, yPos);
+  yPos += 8;
 
-  // Calculate if we have an image to show
+  // Try to load product image
   let productImageData: { base64: string; width: number; height: number } | null = null;
   if (sheetData.product_image_url) {
     try {
@@ -205,13 +203,11 @@ export async function generateTechnicalSheetPDF(sheet: ProductSheet): Promise<vo
     ['Pays d\'origine', sheetData.origin_country || '—'],
   ];
 
-  // If we have an image, use two-column layout: info on left, image on right
-  const infoColumnWidth = productImageData ? (pageWidth - 2 * margin) * 0.6 : pageWidth - 2 * margin;
-  const imageColumnX = margin + infoColumnWidth + 10;
   const sectionStartY = yPos;
+  const infoColumnWidth = productImageData ? 100 : pageWidth - 2 * margin;
 
   // Left column: Product info
-  doc.setFontSize(9);
+  doc.setFontSize(10);
   for (let i = 0; i < productInfo.length; i++) {
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(...mutedColor);
@@ -220,14 +216,14 @@ export async function generateTechnicalSheetPDF(sheet: ProductSheet): Promise<vo
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(...textColor);
     doc.text(productInfo[i][1], margin + 48, yPos);
-    yPos += 6;
+    yPos += 7;
   }
 
-  // Right column: Product image
+  // Right column: Product image (matching print: 280x200 max, white background)
   let imageEndY = yPos;
   if (productImageData) {
-    const imgMaxHeight = 90; // Tripled from 45
-    const imgMaxWidth = (pageWidth - 2 * margin) * 0.45; // Increased from 0.35
+    const imgMaxHeight = 50; // ~200px in PDF scale
+    const imgMaxWidth = 70;  // ~280px in PDF scale
     const aspectRatio = productImageData.width / productImageData.height;
     let imgWidth = imgMaxWidth;
     let imgHeight = imgWidth / aspectRatio;
@@ -236,25 +232,23 @@ export async function generateTechnicalSheetPDF(sheet: ProductSheet): Promise<vo
       imgWidth = imgHeight * aspectRatio;
     }
     
-    // Center the image in its column
-    const imgX = imageColumnX + ((pageWidth - margin - imageColumnX) - imgWidth) / 2;
+    const imgX = pageWidth - margin - imgWidth - 5;
     
-    // Draw white background for the image
+    // Draw white background with border (like print)
     doc.setFillColor(255, 255, 255);
-    doc.setDrawColor(226, 232, 240); // Slate 200
+    doc.setDrawColor(226, 232, 240);
     doc.setLineWidth(0.5);
-    doc.roundedRect(imgX - 2, sectionStartY - 2, imgWidth + 4, imgHeight + 4, 2, 2, 'FD');
+    doc.roundedRect(imgX - 3, sectionStartY - 3, imgWidth + 6, imgHeight + 6, 3, 3, 'FD');
     
     doc.addImage(productImageData.base64, 'PNG', imgX, sectionStartY, imgWidth, imgHeight);
-    imageEndY = sectionStartY + imgHeight + 6;
+    imageEndY = sectionStartY + imgHeight + 8;
   }
 
-  // Use the maximum Y position between info and image
   yPos = Math.max(yPos, imageEndY) + 4;
 
   // Recipe source
   if (sheetData.snapshot_recipe_name) {
-    doc.setFontSize(9);
+    doc.setFontSize(10);
     doc.setFont('helvetica', 'italic');
     doc.setTextColor(...mutedColor);
     doc.text(`Recette source: ${sheetData.snapshot_recipe_name}${sheetData.snapshot_recipe_code ? ` (${sheetData.snapshot_recipe_code})` : ''}`, margin, yPos);
@@ -263,16 +257,16 @@ export async function generateTechnicalSheetPDF(sheet: ProductSheet): Promise<vo
 
   // ========== INGREDIENTS SECTION ==========
   doc.setTextColor(...textColor);
-  doc.setFontSize(10);
+  doc.setFontSize(11);
   doc.setFont('helvetica', 'bold');
   doc.text('LISTE DES INGRÉDIENTS (INCO)', margin, yPos);
   yPos += 2;
   doc.setDrawColor(226, 232, 240);
-  doc.line(margin, yPos, margin + 60, yPos);
-  yPos += 6;
+  doc.line(margin, yPos, margin + 65, yPos);
+  yPos += 8;
 
   if (sheetData.ingredients_declaration) {
-    doc.setFontSize(9);
+    doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(...textColor);
     const ingredientsText = sheetData.ingredients_declaration
@@ -280,54 +274,53 @@ export async function generateTechnicalSheetPDF(sheet: ProductSheet): Promise<vo
       .replace(/<[^>]*>/g, '');
     const ingredientLines = doc.splitTextToSize(ingredientsText, pageWidth - 2 * margin);
     doc.text(ingredientLines, margin, yPos);
-    yPos += ingredientLines.length * 4.5 + 6;
+    yPos += ingredientLines.length * 5 + 6;
   }
 
-  // Allergens
+  // Allergens - matching print style with blue title
   const snapshotAllergens = sheetData.snapshot_allergens as { main?: string[]; secondary?: string[] } | null;
   if (snapshotAllergens && (snapshotAllergens.main?.length || snapshotAllergens.secondary?.length)) {
-    doc.setFontSize(10);
+    doc.setFontSize(11);
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(98, 119, 156); // Blue
+    doc.setTextColor(...accentColor);
     doc.text('Allergènes', margin, yPos);
-    yPos += 5;
+    yPos += 6;
     
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
     doc.setTextColor(...textColor);
     if (snapshotAllergens.main && snapshotAllergens.main.length > 0) {
       doc.setFont('helvetica', 'bold');
       doc.text('Contient: ', margin, yPos);
       doc.setFont('helvetica', 'normal');
       doc.text(snapshotAllergens.main.map(a => a.toLowerCase()).join(', '), margin + doc.getTextWidth('Contient: '), yPos);
-      yPos += 5;
+      yPos += 6;
     }
     if (snapshotAllergens.secondary && snapshotAllergens.secondary.length > 0) {
       doc.setFont('helvetica', 'bold');
       doc.text('Peut contenir des traces de: ', margin, yPos);
       doc.setFont('helvetica', 'normal');
       doc.text(snapshotAllergens.secondary.map(a => a.toLowerCase()).join(', '), margin + doc.getTextWidth('Peut contenir des traces de: '), yPos);
-      yPos += 5;
+      yPos += 6;
     }
   }
 
-  yPos += 10;
+  yPos += 8;
 
-  // ========== TWO-COLUMN LAYOUT: NUTRITION + LOGISTICS ==========
+  // ========== TWO-COLUMN LAYOUT: NUTRITION + LOGISTICS (matching print) ==========
   const snapshotNutrition: SnapshotNutrition | null = sheetData.snapshot_nutrition;
   const leftColX = margin;
   const rightColX = pageWidth / 2 + 5;
   const savedYPos = yPos;
 
-  // LEFT COLUMN: Nutrition
+  // LEFT COLUMN: Nutrition table
   if (snapshotNutrition) {
     doc.setTextColor(...textColor);
-    doc.setFontSize(10);
+    doc.setFontSize(11);
     doc.setFont('helvetica', 'bold');
     doc.text('VALEURS NUTRITIONNELLES (100G)', leftColX, yPos);
     yPos += 2;
     doc.setDrawColor(226, 232, 240);
-    doc.line(leftColX, yPos, leftColX + 70, yPos);
+    doc.line(leftColX, yPos, leftColX + 72, yPos);
     yPos += 4;
 
     const nutritionData = [
@@ -346,27 +339,29 @@ export async function generateTechnicalSheetPDF(sheet: ProductSheet): Promise<vo
       head: [['Nutriment', 'Pour 100g']],
       body: nutritionData,
       theme: 'striped',
-      styles: { fontSize: 8, cellPadding: 2 },
+      styles: { fontSize: 9, cellPadding: 2.5 },
       headStyles: { fillColor: primaryColor, textColor: [255, 255, 255], fontStyle: 'bold' },
+      bodyStyles: { textColor: textColor },
+      alternateRowStyles: { fillColor: [248, 250, 252] },
       columnStyles: {
         0: { cellWidth: 50 },
-        1: { cellWidth: 35, halign: 'right' },
+        1: { cellWidth: 38, halign: 'right' },
       },
       margin: { left: leftColX },
-      tableWidth: 85,
+      tableWidth: 88,
     });
   }
 
   // RIGHT COLUMN: Logistics
   yPos = savedYPos;
   doc.setTextColor(...textColor);
-  doc.setFontSize(10);
+  doc.setFontSize(11);
   doc.setFont('helvetica', 'bold');
   doc.text('CONDITIONNEMENT & LOGISTIQUE', rightColX, yPos);
   yPos += 2;
   doc.setDrawColor(226, 232, 240);
-  doc.line(rightColX, yPos, rightColX + 70, yPos);
-  yPos += 6;
+  doc.line(rightColX, yPos, rightColX + 72, yPos);
+  yPos += 8;
 
   const cartonsPerPallet = sheetData.cartons_per_layer && sheetData.layers_per_pallet 
     ? sheetData.cartons_per_layer * sheetData.layers_per_pallet 
@@ -381,7 +376,7 @@ export async function generateTechnicalSheetPDF(sheet: ProductSheet): Promise<vo
     ['Dimensions carton', sheetData.carton_dimensions || '—'],
   ];
 
-  doc.setFontSize(9);
+  doc.setFontSize(10);
   for (const item of logisticsData) {
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(...mutedColor);
@@ -389,38 +384,37 @@ export async function generateTechnicalSheetPDF(sheet: ProductSheet): Promise<vo
     
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(...textColor);
-    doc.text(item[1], rightColX + 45, yPos);
-    yPos += 6;
+    doc.text(item[1], rightColX + 48, yPos);
+    yPos += 7;
   }
 
   // Determine where to continue after two-column section
   const nutritionEndY = snapshotNutrition ? (doc as any).lastAutoTable?.finalY || savedYPos : savedYPos;
   yPos = Math.max(nutritionEndY, yPos) + 12;
 
-  // ========== CONSERVATION SECTION ========== (matching print version exactly)
+  // ========== CONSERVATION SECTION (matching print exactly) ==========
   const hasConservation = sheetData.storage_instructions || sheetData.thawing_instructions || sheetData.usage_instructions || sheetData.dlc_ddm_days;
   if (hasConservation) {
     // Check if we need a new page
-    const pageHeight = doc.internal.pageSize.getHeight();
-    if (yPos > pageHeight - 80) {
+    if (yPos > pageHeight - 70) {
       doc.addPage();
       yPos = 20;
     }
 
     doc.setTextColor(...textColor);
-    doc.setFontSize(10);
+    doc.setFontSize(11);
     doc.setFont('helvetica', 'bold');
     doc.text('CONSERVATION & UTILISATION', margin, yPos);
     yPos += 2;
     doc.setDrawColor(226, 232, 240);
     doc.setLineWidth(0.3);
-    doc.line(margin, yPos, margin + 60, yPos);
+    doc.line(margin, yPos, margin + 62, yPos);
     yPos += 8;
 
-    doc.setFontSize(9);
+    doc.setFontSize(10);
     const contentWidth = pageWidth - 2 * margin;
 
-    // DLC/DDM - matching print style: bold block
+    // DLC/DDM
     if (sheetData.dlc_ddm_days) {
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(...textColor);
@@ -428,69 +422,68 @@ export async function generateTechnicalSheetPDF(sheet: ProductSheet): Promise<vo
       yPos += 8;
     }
 
-    // Conservation - matching print style: label on same line, then content
+    // Conservation
     if (sheetData.storage_instructions) {
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(...textColor);
       doc.text('Conservation:', margin, yPos);
       doc.setFont('helvetica', 'normal');
-      const storageLines = doc.splitTextToSize(sheetData.storage_instructions, contentWidth - 30);
-      doc.text(storageLines, margin + 28, yPos);
+      const storageLines = doc.splitTextToSize(sheetData.storage_instructions, contentWidth - 32);
+      doc.text(storageLines, margin + 30, yPos);
       yPos += storageLines.length * 5 + 6;
     }
 
-    // Décongélation - matching print style
+    // Décongélation
     if (sheetData.thawing_instructions) {
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(...textColor);
       doc.text('Décongélation:', margin, yPos);
       doc.setFont('helvetica', 'normal');
-      const thawingLines = doc.splitTextToSize(sheetData.thawing_instructions, contentWidth - 35);
-      doc.text(thawingLines, margin + 32, yPos);
+      const thawingLines = doc.splitTextToSize(sheetData.thawing_instructions, contentWidth - 36);
+      doc.text(thawingLines, margin + 34, yPos);
       yPos += thawingLines.length * 5 + 6;
     }
 
-    // Mise en œuvre - matching print style
+    // Mise en œuvre
     if (sheetData.usage_instructions) {
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(...textColor);
       doc.text('Mise en œuvre:', margin, yPos);
       doc.setFont('helvetica', 'normal');
-      const usageLines = doc.splitTextToSize(sheetData.usage_instructions, contentWidth - 35);
-      doc.text(usageLines, margin + 32, yPos);
+      const usageLines = doc.splitTextToSize(sheetData.usage_instructions, contentWidth - 36);
+      doc.text(usageLines, margin + 34, yPos);
       yPos += usageLines.length * 5 + 6;
     }
   }
 
-  // ========== FOOTER ==========
-  const pageHeight = doc.internal.pageSize.getHeight();
+  // ========== FOOTER (matching print exactly) ==========
   doc.setFillColor(248, 250, 252); // Slate 50
-  doc.rect(0, pageHeight - 22, pageWidth, 22, 'F');
+  doc.rect(0, pageHeight - 20, pageWidth, 20, 'F');
   doc.setDrawColor(226, 232, 240);
-  doc.line(0, pageHeight - 22, pageWidth, pageHeight - 22);
+  doc.line(0, pageHeight - 20, pageWidth, pageHeight - 20);
   
   doc.setTextColor(...mutedColor);
-  doc.setFontSize(8);
+  doc.setFontSize(9);
   doc.setFont('helvetica', 'normal');
   
   const dateStr = new Date().toLocaleDateString('fr-FR');
-  doc.text(`Document généré le ${dateStr}`, margin, pageHeight - 14);
+  doc.text(`Document généré le ${dateStr}`, margin, pageHeight - 12);
   
   if (sheetData.snapshot_created_at) {
-    doc.text(`Données figées le ${new Date(sheetData.snapshot_created_at).toLocaleDateString('fr-FR')}`, margin, pageHeight - 9);
+    doc.text(`Données figées le ${new Date(sheetData.snapshot_created_at).toLocaleDateString('fr-FR')}`, margin, pageHeight - 7);
   }
   
-  doc.text(`Version ${sheetData.version || 1}`, pageWidth - margin - 15, pageHeight - 11);
+  doc.text(`Version ${sheetData.version || 1}`, pageWidth - margin - 18, pageHeight - 10);
 
-  // Status
+  // Status - centered
   if (sheetData.is_published) {
     doc.setTextColor(22, 163, 74); // Green
     doc.setFont('helvetica', 'bold');
-    doc.text('✓ DOCUMENT VALIDÉ', pageWidth / 2, pageHeight - 11, { align: 'center' });
+    doc.text('✓ DOCUMENT VALIDÉ', pageWidth / 2, pageHeight - 10, { align: 'center' });
   } else {
     doc.setTextColor(239, 68, 68); // Red
     doc.setFont('helvetica', 'bold');
-    doc.text('BROUILLON', pageWidth / 2, pageHeight - 11, { align: 'center' });
+    doc.text('BROUILLON', pageWidth / 2, pageHeight - 10, { align: 'center' });
   }
 
   // Save the PDF

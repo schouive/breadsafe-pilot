@@ -17,6 +17,36 @@ interface SnapshotNutrition {
 
 // Helper function to load image as base64 and get its natural dimensions
 async function loadImageAsBase64WithDimensions(src: string): Promise<{ base64: string; width: number; height: number }> {
+  // For external URLs (like Supabase Storage), fetch the image as blob first to avoid CORS issues
+  if (src.startsWith('http')) {
+    try {
+      const response = await fetch(src);
+      if (!response.ok) throw new Error('Failed to fetch image');
+      const blob = await response.blob();
+      
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const img = new Image();
+          img.onload = () => {
+            resolve({
+              base64: reader.result as string,
+              width: img.naturalWidth,
+              height: img.naturalHeight
+            });
+          };
+          img.onerror = reject;
+          img.src = reader.result as string;
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    } catch (e) {
+      console.warn('Fetch failed, trying direct load:', e);
+      // Fall through to direct image loading
+    }
+  }
+
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.crossOrigin = 'Anonymous';

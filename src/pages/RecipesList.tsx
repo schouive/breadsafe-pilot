@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, ChefHat, Calculator, Eye, Trash2, CheckCircle, FileEdit, FileDown, Printer, Edit2, Copy, Search } from 'lucide-react';
+import { Plus, ChefHat, Calculator, Eye, Trash2, CheckCircle, FileEdit, FileDown, Printer, Edit2, Copy, Search, FlaskConical } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import logoImage from '@/assets/logo-breadshop.png';
@@ -53,6 +53,21 @@ export default function RecipesList() {
       (recipe.code && recipe.code.toLowerCase().includes(query))
     );
   });
+
+  // Separate and sort recipes by type (PF vs PI)
+  const { finishedRecipes, intermediateRecipes } = useMemo(() => {
+    if (!filteredRecipes) return { finishedRecipes: [], intermediateRecipes: [] };
+    
+    const finished = filteredRecipes
+      .filter(r => r.recipe_type === 'finished')
+      .sort((a, b) => a.name.localeCompare(b.name, 'fr'));
+    
+    const intermediate = filteredRecipes
+      .filter(r => r.recipe_type === 'intermediate')
+      .sort((a, b) => a.name.localeCompare(b.name, 'fr'));
+    
+    return { finishedRecipes: finished, intermediateRecipes: intermediate };
+  }, [filteredRecipes]);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -115,17 +130,55 @@ export default function RecipesList() {
           </CardContent>
         </Card>
       ) : (
-        <RecipesGrid 
-          recipes={filteredRecipes || []}
-          onView={(recipe) => {
-            setSelectedRecipe(recipe);
-            setCalcDialogOpen(true);
-          }}
-          onEdit={(recipe) => navigate(`/products/recipes/edit/${recipe.id}`)}
-          onDuplicate={(recipe) => duplicateRecipe.mutate(recipe.id)}
-          onDelete={(recipe) => setDeleteRecipeId(recipe.id)}
-          isDuplicating={duplicateRecipe.isPending}
-        />
+        <div className="space-y-8">
+          {/* Finished Products Section */}
+          {finishedRecipes.length > 0 && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 pb-2 border-b">
+                <ChefHat className="h-5 w-5 text-primary" />
+                <h2 className="font-semibold text-lg">Produits Finis</h2>
+                <Badge variant="secondary" className="ml-auto">
+                  {finishedRecipes.length}
+                </Badge>
+              </div>
+              <RecipesGrid 
+                recipes={finishedRecipes}
+                onView={(recipe) => {
+                  setSelectedRecipe(recipe);
+                  setCalcDialogOpen(true);
+                }}
+                onEdit={(recipe) => navigate(`/products/recipes/edit/${recipe.id}`)}
+                onDuplicate={(recipe) => duplicateRecipe.mutate(recipe.id)}
+                onDelete={(recipe) => setDeleteRecipeId(recipe.id)}
+                isDuplicating={duplicateRecipe.isPending}
+              />
+            </div>
+          )}
+
+          {/* Intermediate Products Section */}
+          {intermediateRecipes.length > 0 && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 pb-2 border-b">
+                <FlaskConical className="h-5 w-5 text-amber-600" />
+                <h2 className="font-semibold text-lg">Produits Intermédiaires</h2>
+                <Badge variant="secondary" className="ml-auto bg-amber-100 text-amber-700">
+                  {intermediateRecipes.length}
+                </Badge>
+              </div>
+              <RecipesGrid 
+                recipes={intermediateRecipes}
+                onView={(recipe) => {
+                  setSelectedRecipe(recipe);
+                  setCalcDialogOpen(true);
+                }}
+                onEdit={(recipe) => navigate(`/products/recipes/edit/${recipe.id}`)}
+                onDuplicate={(recipe) => duplicateRecipe.mutate(recipe.id)}
+                onDelete={(recipe) => setDeleteRecipeId(recipe.id)}
+                isDuplicating={duplicateRecipe.isPending}
+              />
+            </div>
+          )}
+        </div>
       )}
 
       {/* Calculation Dialog */}

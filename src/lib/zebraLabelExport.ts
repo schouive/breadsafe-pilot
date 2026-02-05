@@ -166,12 +166,9 @@ function formatNetWeight(weight: number | null, unit: string | null): string {
 /**
  * Format storage instructions into 2 lines max (same logic as ingredients)
  */
-function formatConservationLines(storage: string | null, thawing: string | null): string[] {
-  const parts: string[] = [];
-  if (storage) parts.push(storage);
-  if (thawing) parts.push(`Decongelation: ${thawing}`);
-  const fullText = parts.join(' - ');
-  return splitIntoLines(fullText, MAX_LINE_LENGTH, 2);
+function formatConservationLines(storage: string | null): string[] {
+  if (!storage) return ['', ''];
+  return splitIntoLines(storage, MAX_LINE_LENGTH, 2);
 }
 
 /**
@@ -232,7 +229,7 @@ function generateLabelRow(label: CartonLabel): string[] {
   const ingredients = cleanHtmlFromIngredients(label.snapshot_ingredients_html);
   const ingredientLines = splitIntoLines(ingredients, MAX_LINE_LENGTH, 4);
   const nutritionLines = formatNutritionLines(label.snapshot_nutrition as Record<string, number> | null);
-  const conservationLines = formatConservationLines(label.snapshot_storage_instructions, label.snapshot_thawing_instructions);
+  const conservationLines = formatConservationLines(label.snapshot_storage_instructions);
   const secondaryAllergens = label.snapshot_allergens_secondary as string[] | null;
   
   return [

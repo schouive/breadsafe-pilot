@@ -35,8 +35,24 @@ import { useAuth } from '@/hooks/useAuth';
 import { generateIngredientLists, markdownToUppercase } from '@/lib/ingredientListGenerator';
 import { supabase } from '@/integrations/supabase/client';
 import { optimizeImage } from '@/lib/imageOptimization';
-
 const WEIGHT_UNITS = ['g', 'kg', 'L', 'mL', 'cl'];
+
+const STORAGE_OPTIONS = [
+  { value: 'ambient', label: 'À conserver à température ambiante, de préférence inférieure à 30°C' },
+  { value: 'frozen', label: 'À conserver à -18°C' },
+  { value: 'other', label: 'Autre (saisie manuelle)' },
+];
+
+const DEFAULT_THAWING_INSTRUCTIONS = 'Décongeler à température ambiante, ne pas recongeler';
+
+// Helper to determine storage type from existing storage instructions
+function determineStorageType(storageInstructions: string | null): 'ambient' | 'frozen' | 'other' {
+  if (!storageInstructions) return 'ambient';
+  const normalized = storageInstructions.toLowerCase();
+  if (normalized.includes('-18') || normalized.includes('congel')) return 'frozen';
+  if (normalized.includes('ambiante') && normalized.includes('30')) return 'ambient';
+  return 'other';
+}
 
 interface SnapshotIngredient {
   name: string;
@@ -101,6 +117,7 @@ export function TechnicalSheetFormDialog({
     carton_dimensions: '',
     carton_weight: '',
     storage_instructions: '',
+    storage_type: 'ambient' as 'ambient' | 'frozen' | 'other',
     dlc_ddm_type: 'DLC',
     dlc_ddm_days: '',
     thawing_instructions: '',
@@ -251,6 +268,7 @@ export function TechnicalSheetFormDialog({
           carton_dimensions: (sheet as any).carton_dimensions || '',
           carton_weight: (sheet as any).carton_weight?.toString() || '',
           storage_instructions: sheet.storage_instructions || '',
+          storage_type: determineStorageType(sheet.storage_instructions),
           dlc_ddm_type: (sheet as any).dlc_ddm_type || 'DLC',
           dlc_ddm_days: (sheet as any).dlc_ddm_days?.toString() || '',
           thawing_instructions: (sheet as any).thawing_instructions || '',
@@ -279,6 +297,7 @@ export function TechnicalSheetFormDialog({
           carton_dimensions: '',
           carton_weight: '',
           storage_instructions: '',
+          storage_type: 'ambient' as 'ambient' | 'frozen' | 'other',
           dlc_ddm_type: 'DLC',
           dlc_ddm_days: '',
           thawing_instructions: '',
@@ -817,25 +836,60 @@ export function TechnicalSheetFormDialog({
 
             <div className="space-y-2">
               <Label htmlFor="storage">Conditions de conservation</Label>
-              <Textarea
-                id="storage"
-                placeholder="À conserver à -18°C. Ne pas recongeler après décongélation."
-                value={formData.storage_instructions}
-                onChange={(e) => setFormData({ ...formData, storage_instructions: e.target.value })}
-                rows={2}
-              />
+              <Select
+                value={formData.storage_type}
+                onValueChange={(value: 'ambient' | 'frozen' | 'other') => {
+                  const storageText = value === 'ambient' 
+                    ? STORAGE_OPTIONS[0].label 
+                    : value === 'frozen' 
+                      ? STORAGE_OPTIONS[1].label 
+                      : '';
+                  const thawingText = value === 'frozen' ? DEFAULT_THAWING_INSTRUCTIONS : '';
+                  setFormData({ 
+                    ...formData, 
+                    storage_type: value, 
+                    storage_instructions: storageText,
+                    thawing_instructions: thawingText
+                  });
+                }}
+              >
+                <SelectTrigger id="storage">
+                  <SelectValue placeholder="Sélectionnez les conditions de conservation" />
+                </SelectTrigger>
+                <SelectContent>
+                  {STORAGE_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="thawing">Mode de décongélation</Label>
-              <Textarea
-                id="thawing"
-                placeholder="Décongeler à température ambiante pendant 2 heures..."
-                value={formData.thawing_instructions}
-                onChange={(e) => setFormData({ ...formData, thawing_instructions: e.target.value })}
-                rows={2}
-              />
-            </div>
+            {formData.storage_type === 'other' && (
+              <div className="space-y-2">
+                <Label htmlFor="storage-custom">Saisie manuelle</Label>
+                <Textarea
+                  id="storage-custom"
+                  placeholder="Saisissez les conditions de conservation..."
+                  value={formData.storage_instructions}
+                  onChange={(e) => setFormData({ ...formData, storage_instructions: e.target.value })}
+                  rows={2}
+                />
+              </div>
+            )}
+
+            {formData.storage_type === 'frozen' && (
+              <div className="space-y-2">
+                <Label htmlFor="thawing">Mode de décongélation</Label>
+                <Textarea
+                  id="thawing"
+                  value={formData.thawing_instructions}
+                  onChange={(e) => setFormData({ ...formData, thawing_instructions: e.target.value })}
+                  rows={2}
+                />
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="usage">Conseils de mise en œuvre</Label>

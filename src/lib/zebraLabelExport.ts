@@ -278,7 +278,6 @@ export function generateZebraCSV(labels: CartonLabel[]): string {
     'ingredients_l5',
     'ingredients_l6',
     'ingredients_l7',
-    'ingredients_l8',
     'allergenes_primaires',
     'allergenes_secondaires',
     'nutrition_l1',

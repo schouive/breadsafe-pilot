@@ -14,7 +14,7 @@
 import { CartonLabel } from '@/hooks/useCartonLabels';
 
 // Maximum characters per line (optimized for 58mm usable width)
-const MAX_LINE_LENGTH = 50;
+const MAX_LINE_LENGTH = 60;
 
 /**
  * Remove all accents and special characters, keeping ASCII only

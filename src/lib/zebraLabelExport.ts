@@ -227,7 +227,7 @@ function getPrimaryAllergens(label: CartonLabel): string {
  */
 function generateLabelRow(label: CartonLabel): string[] {
   const ingredients = cleanHtmlFromIngredients(label.snapshot_ingredients_html);
-  const ingredientLines = splitIntoLines(ingredients, MAX_LINE_LENGTH, 8);
+  const ingredientLines = splitIntoLines(ingredients, MAX_LINE_LENGTH, 7);
   const nutritionLines = formatNutritionLines(label.snapshot_nutrition as Record<string, number> | null);
   const conservationLines = formatConservationLines(label.snapshot_storage_instructions);
   const secondaryAllergens = label.snapshot_allergens_secondary as string[] | null;
@@ -243,7 +243,6 @@ function generateLabelRow(label: CartonLabel): string[] {
     ingredientLines[4],
     ingredientLines[5],
     ingredientLines[6],
-    ingredientLines[7],
     getPrimaryAllergens(label),
     formatAllergens(secondaryAllergens),
     nutritionLines[0],

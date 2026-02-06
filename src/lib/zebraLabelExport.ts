@@ -56,7 +56,7 @@ export function removeAccents(str: string): string {
  * Split text into balanced lines at natural break points
  * Breaks on commas or spaces, never mid-word
  */
-export function splitIntoLines(text: string, maxLength: number = MAX_LINE_LENGTH, maxLines: number = 4): string[] {
+export function splitIntoLines(text: string, maxLength: number = MAX_LINE_LENGTH, maxLines: number = 10): string[] {
   if (!text) return Array(maxLines).fill('');
   
   const cleanText = removeAccents(text.trim());
@@ -227,7 +227,7 @@ function getPrimaryAllergens(label: CartonLabel): string {
  */
 function generateLabelRow(label: CartonLabel): string[] {
   const ingredients = cleanHtmlFromIngredients(label.snapshot_ingredients_html);
-  const ingredientLines = splitIntoLines(ingredients, MAX_LINE_LENGTH, 4);
+  const ingredientLines = splitIntoLines(ingredients, MAX_LINE_LENGTH, 8);
   const nutritionLines = formatNutritionLines(label.snapshot_nutrition as Record<string, number> | null);
   const conservationLines = formatConservationLines(label.snapshot_storage_instructions);
   const secondaryAllergens = label.snapshot_allergens_secondary as string[] | null;
@@ -240,6 +240,10 @@ function generateLabelRow(label: CartonLabel): string[] {
     ingredientLines[1],
     ingredientLines[2],
     ingredientLines[3],
+    ingredientLines[4],
+    ingredientLines[5],
+    ingredientLines[6],
+    ingredientLines[7],
     getPrimaryAllergens(label),
     formatAllergens(secondaryAllergens),
     nutritionLines[0],
@@ -272,6 +276,10 @@ export function generateZebraCSV(labels: CartonLabel[]): string {
     'ingredients_l2',
     'ingredients_l3',
     'ingredients_l4',
+    'ingredients_l5',
+    'ingredients_l6',
+    'ingredients_l7',
+    'ingredients_l8',
     'allergenes_primaires',
     'allergenes_secondaires',
     'nutrition_l1',

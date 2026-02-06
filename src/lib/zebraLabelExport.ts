@@ -56,7 +56,7 @@ export function removeAccents(str: string): string {
  * Split text into balanced lines at natural break points
  * Breaks on commas or spaces, never mid-word
  */
-export function splitIntoLines(text: string, maxLength: number = MAX_LINE_LENGTH, maxLines: number = 4): string[] {
+export function splitIntoLines(text: string, maxLength: number = MAX_LINE_LENGTH, maxLines: number = 10): string[] {
   if (!text) return Array(maxLines).fill('');
   
   const cleanText = removeAccents(text.trim());

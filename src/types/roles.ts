@@ -16,6 +16,7 @@ export interface RolePermissions {
     haccp: 'full' | 'read' | 'write' | 'none';
     products: 'full' | 'read' | 'write' | 'none';
     settings: 'full' | 'read' | 'none';
+    orders: 'full' | 'read' | 'write' | 'none';
   };
   // Actions spécifiques
   canManageUsers: boolean;
@@ -36,6 +37,7 @@ export const ROLE_DEFINITIONS: Record<AppRole, RoleDefinition> = {
         haccp: 'full',
         products: 'full',
         settings: 'full',
+        orders: 'full',
       },
       canManageUsers: true,
       canValidateNC: true,
@@ -53,6 +55,7 @@ export const ROLE_DEFINITIONS: Record<AppRole, RoleDefinition> = {
         haccp: 'full',
         products: 'read',
         settings: 'read',
+        orders: 'full',
       },
       canManageUsers: false,
       canValidateNC: true,
@@ -70,6 +73,7 @@ export const ROLE_DEFINITIONS: Record<AppRole, RoleDefinition> = {
         haccp: 'write',
         products: 'none',
         settings: 'none',
+        orders: 'write',
       },
       canManageUsers: false,
       canValidateNC: false,
@@ -87,6 +91,7 @@ export const ROLE_DEFINITIONS: Record<AppRole, RoleDefinition> = {
         haccp: 'read',
         products: 'full',
         settings: 'read',
+        orders: 'none',
       },
       canManageUsers: false,
       canValidateNC: false,
@@ -104,6 +109,7 @@ export const ROLE_DEFINITIONS: Record<AppRole, RoleDefinition> = {
         haccp: 'read',
         products: 'read',
         settings: 'none',
+        orders: 'read',
       },
       canManageUsers: false,
       canValidateNC: false,

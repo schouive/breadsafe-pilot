@@ -3,7 +3,8 @@ import {
   ChevronRight,
   Shield,
   Tag,
-  Cog
+  Cog,
+  ShoppingCart
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -69,12 +70,6 @@ export default function Home() {
     !hasRole('bureau_methodes') && 
     !hasRole('auditor');
 
-  // Rediriger automatiquement les opérateurs vers les contrôles
-  if (isOperatorOnly) {
-    navigate('/haccp/controls', { replace: true });
-    return null;
-  }
-
   const getInitials = (name: string) => {
     return name
       .split(' ')
@@ -93,6 +88,14 @@ export default function Home() {
       color: 'text-primary',
       bgColor: 'bg-primary/10',
       href: '/haccp',
+    },
+    {
+      title: 'Commandes',
+      description: 'Commandes fournisseurs et réception des marchandises',
+      icon: ShoppingCart,
+      color: 'text-primary',
+      bgColor: 'bg-primary/10',
+      href: '/orders',
     },
     {
       title: 'Recettes & Étiquetage',
@@ -115,6 +118,7 @@ export default function Home() {
   // Filtrer les modules accessibles
   const modules = allModules.filter((module) => {
     if (module.href === '/haccp') return canAccessModule('haccp');
+    if (module.href === '/orders') return canAccessModule('orders');
     if (module.href === '/products') return canAccessModule('products');
     if (module.href === '/settings') return canAccessModule('settings');
     return true;

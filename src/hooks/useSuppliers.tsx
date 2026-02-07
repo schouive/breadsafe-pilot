@@ -9,6 +9,7 @@ export interface Supplier {
   email: string | null;
   phone: string | null;
   address: string | null;
+  order_email: string | null;
   is_active: boolean;
 }
 

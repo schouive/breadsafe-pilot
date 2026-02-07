@@ -12,6 +12,7 @@ import { Loader2 } from "lucide-react";
 const HACCPLayout = lazy(() => import("@/components/layout/HACCPLayout").then(m => ({ default: m.HACCPLayout })));
 const ProductsLayout = lazy(() => import("@/components/layout/ProductsLayout").then(m => ({ default: m.ProductsLayout })));
 const SettingsLayout = lazy(() => import("@/components/layout/SettingsLayout").then(m => ({ default: m.SettingsLayout })));
+const OrdersLayout = lazy(() => import("@/components/layout/OrdersLayout").then(m => ({ default: m.OrdersLayout })));
 
 // Lazy load pages
 const Home = lazy(() => import("./pages/Home"));
@@ -32,6 +33,9 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const ProductSheetManagement = lazy(() => import("@/components/products/ProductSheetManagement").then(m => ({ default: m.ProductSheetManagement })));
 const CartonLabelManagement = lazy(() => import("@/components/products/CartonLabelManagement").then(m => ({ default: m.CartonLabelManagement })));
 const RecipeData = lazy(() => import("./pages/RecipeData"));
+const OrdersList = lazy(() => import("./pages/OrdersList"));
+const NewOrder = lazy(() => import("./pages/NewOrder"));
+const OrderReception = lazy(() => import("./pages/OrderReception"));
 
 const queryClient = new QueryClient();
 
@@ -150,6 +154,42 @@ function AppRoutes() {
               <HACCPLayout>
                 <Reports />
               </HACCPLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Orders Module Routes */}
+        <Route
+          path="/orders"
+          element={<Navigate to="/orders/list" replace />}
+        />
+        <Route
+          path="/orders/list"
+          element={
+            <ProtectedRoute>
+              <OrdersLayout>
+                <OrdersList />
+              </OrdersLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/orders/new"
+          element={
+            <ProtectedRoute>
+              <OrdersLayout>
+                <NewOrder />
+              </OrdersLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/orders/reception"
+          element={
+            <ProtectedRoute>
+              <OrdersLayout>
+                <OrderReception />
+              </OrdersLayout>
             </ProtectedRoute>
           }
         />

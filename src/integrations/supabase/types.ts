@@ -935,6 +935,195 @@ export type Database = {
           },
         ]
       }
+      supplier_order_lines: {
+        Row: {
+          created_at: string
+          id: string
+          order_id: string
+          quantity_ordered: number
+          raw_material_id: string
+          unit: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          order_id: string
+          quantity_ordered: number
+          raw_material_id: string
+          unit?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          order_id?: string
+          quantity_ordered?: number
+          raw_material_id?: string
+          unit?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_order_lines_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_order_lines_raw_material_id_fkey"
+            columns: ["raw_material_id"]
+            isOneToOne: false
+            referencedRelation: "raw_materials"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supplier_orders: {
+        Row: {
+          comment: string | null
+          created_at: string
+          created_by: string
+          expected_delivery_date: string | null
+          id: string
+          order_date: string
+          order_number: string
+          status: Database["public"]["Enums"]["order_status"]
+          supplier_id: string
+          updated_at: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          created_by: string
+          expected_delivery_date?: string | null
+          id?: string
+          order_date?: string
+          order_number?: string
+          status?: Database["public"]["Enums"]["order_status"]
+          supplier_id: string
+          updated_at?: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          created_by?: string
+          expected_delivery_date?: string | null
+          id?: string
+          order_date?: string
+          order_number?: string
+          status?: Database["public"]["Enums"]["order_status"]
+          supplier_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_orders_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supplier_reception_lines: {
+        Row: {
+          created_at: string
+          id: string
+          order_line_id: string | null
+          quantity_received: number
+          raw_material_id: string
+          reception_id: string
+          unit: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          order_line_id?: string | null
+          quantity_received: number
+          raw_material_id: string
+          reception_id: string
+          unit?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          order_line_id?: string | null
+          quantity_received?: number
+          raw_material_id?: string
+          reception_id?: string
+          unit?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_reception_lines_order_line_id_fkey"
+            columns: ["order_line_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_order_lines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_reception_lines_raw_material_id_fkey"
+            columns: ["raw_material_id"]
+            isOneToOne: false
+            referencedRelation: "raw_materials"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_reception_lines_reception_id_fkey"
+            columns: ["reception_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_receptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supplier_receptions: {
+        Row: {
+          created_at: string
+          delivery_note_number: string
+          id: string
+          notes: string | null
+          operator_id: string
+          order_id: string | null
+          received_at: string
+          supplier_id: string
+        }
+        Insert: {
+          created_at?: string
+          delivery_note_number: string
+          id?: string
+          notes?: string | null
+          operator_id: string
+          order_id?: string | null
+          received_at?: string
+          supplier_id: string
+        }
+        Update: {
+          created_at?: string
+          delivery_note_number?: string
+          id?: string
+          notes?: string | null
+          operator_id?: string
+          order_id?: string | null
+          received_at?: string
+          supplier_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_receptions_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_receptions_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       suppliers: {
         Row: {
           address: string | null
@@ -944,6 +1133,7 @@ export type Database = {
           id: string
           is_active: boolean
           name: string
+          order_email: string | null
           phone: string | null
           updated_at: string
         }
@@ -955,6 +1145,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           name: string
+          order_email?: string | null
           phone?: string | null
           updated_at?: string
         }
@@ -966,6 +1157,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           name?: string
+          order_email?: string | null
           phone?: string | null
           updated_at?: string
         }
@@ -1041,6 +1233,7 @@ export type Database = {
       }
     }
     Functions: {
+      generate_order_number: { Args: never; Returns: string }
       has_any_role: {
         Args: {
           _roles: Database["public"]["Enums"]["app_role"][]
@@ -1074,6 +1267,7 @@ export type Database = {
       control_status: "conforme" | "acceptable" | "nonconforme" | "pending"
       nc_severity: "minor" | "major" | "critical"
       nc_status: "open" | "in_progress" | "resolved" | "validated"
+      order_status: "sent" | "partially_received" | "received"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1220,6 +1414,7 @@ export const Constants = {
       control_status: ["conforme", "acceptable", "nonconforme", "pending"],
       nc_severity: ["minor", "major", "critical"],
       nc_status: ["open", "in_progress", "resolved", "validated"],
+      order_status: ["sent", "partially_received", "received"],
     },
   },
 } as const

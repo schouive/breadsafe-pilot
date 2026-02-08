@@ -35,7 +35,9 @@ import {
   X,
   Camera,
   Image as ImageIcon,
-  Loader2
+  Loader2,
+  ClipboardList,
+  ArrowRight
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -47,6 +49,9 @@ import { Separator } from '@/components/ui/separator';
 import { ReceptionFormData } from '@/hooks/useControlRecords';
 import { TemperatureInput } from '@/components/ui/TemperatureInput';
 import { supabase } from '@/integrations/supabase/client';
+import { useOpenOrdersBySupplier, SupplierOrder, OrderLineWithMaterial } from '@/hooks/useSupplierOrders';
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
 
 interface ReceptionControlFormProps {
   controlPoint: ControlPoint | null;
@@ -63,9 +68,14 @@ export function ReceptionControlForm({ controlPoint, isOpen, onClose, onSubmit }
   // Form state
   const [selectedSupplierId, setSelectedSupplierId] = useState('');
   const [selectedRawMaterialIds, setSelectedRawMaterialIds] = useState<string[]>([]);
+  const [linkedOrderId, setLinkedOrderId] = useState<string | null>(null);
+  const [linkedOrderNumber, setLinkedOrderNumber] = useState<string | null>(null);
   
   // Fetch raw materials for selected supplier
   const { data: rawMaterials, isLoading: loadingRawMaterials } = useRawMaterials(selectedSupplierId);
+  
+  // Fetch open orders for selected supplier
+  const { data: openOrders, isLoading: loadingOrders } = useOpenOrdersBySupplier(selectedSupplierId || undefined);
   
   // CP1 - Temperature
   const [temperature, setTemperature] = useState('');
@@ -113,10 +123,28 @@ export function ReceptionControlForm({ controlPoint, isOpen, onClose, onSubmit }
     setDialogHiddenForCamera(false);
   };
 
-  // Reset raw materials when supplier changes
+  // Reset raw materials and linked order when supplier changes
   useEffect(() => {
     setSelectedRawMaterialIds([]);
+    setLinkedOrderId(null);
+    setLinkedOrderNumber(null);
   }, [selectedSupplierId]);
+
+  // Handle selecting an open order → pre-fill raw materials
+  const handleSelectOrder = (order: SupplierOrder & { supplier_order_lines: OrderLineWithMaterial[] }) => {
+    setLinkedOrderId(order.id);
+    setLinkedOrderNumber(order.order_number);
+    const materialIds = order.supplier_order_lines
+      .map((ol) => ol.raw_material_id)
+      .filter((id) => rawMaterials?.some((rm) => rm.id === id));
+    setSelectedRawMaterialIds(materialIds);
+  };
+
+  const handleClearOrder = () => {
+    setLinkedOrderId(null);
+    setLinkedOrderNumber(null);
+    setSelectedRawMaterialIds([]);
+  };
 
   const selectedSupplier = suppliers?.find(s => s.id === selectedSupplierId);
   const selectedRawMaterials = rawMaterials?.filter(r => selectedRawMaterialIds.includes(r.id)) || [];
@@ -182,6 +210,8 @@ export function ReceptionControlForm({ controlPoint, isOpen, onClose, onSubmit }
   const resetForm = () => {
     setSelectedSupplierId('');
     setSelectedRawMaterialIds([]);
+    setLinkedOrderId(null);
+    setLinkedOrderNumber(null);
     setTemperature('');
     setTemperatureConforme(true);
     setIntegriteConforme(true);
@@ -242,6 +272,65 @@ export function ReceptionControlForm({ controlPoint, isOpen, onClose, onSubmit }
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* Open orders section - shown after supplier is selected */}
+              {selectedSupplierId && (
+                <div className="space-y-2">
+                  {linkedOrderNumber ? (
+                    <div className="flex items-center justify-between p-3 rounded-lg border bg-primary/5 border-primary/20">
+                      <div className="flex items-center gap-2">
+                        <ClipboardList className="h-4 w-4 text-primary" />
+                        <span className="text-sm font-medium">Commande {linkedOrderNumber}</span>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleClearOrder}
+                        className="h-7 px-2 text-xs"
+                      >
+                        <X className="h-3 w-3 mr-1" />
+                        Délier
+                      </Button>
+                    </div>
+                  ) : (
+                    <>
+                      {loadingOrders ? (
+                        <div className="flex items-center gap-2 p-3 rounded-lg border">
+                          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                          <span className="text-sm text-muted-foreground">Recherche de commandes...</span>
+                        </div>
+                      ) : openOrders && openOrders.length > 0 ? (
+                        <div className="space-y-1.5">
+                          <Label className="text-xs text-muted-foreground">Commandes en cours (optionnel)</Label>
+                          {openOrders.map((order) => (
+                            <button
+                              key={order.id}
+                              type="button"
+                              onClick={() => handleSelectOrder(order)}
+                              className="w-full flex items-center justify-between p-2.5 rounded-lg border bg-card hover:bg-accent/50 transition-colors text-left text-sm"
+                            >
+                              <div className="flex items-center gap-2">
+                                <ClipboardList className="h-4 w-4 text-muted-foreground" />
+                                <span className="font-mono font-medium text-xs">{order.order_number}</span>
+                                <span className="text-xs text-muted-foreground">
+                                  {format(new Date(order.order_date), 'dd/MM/yy', { locale: fr })}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-1.5">
+                                <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                                  {order.status === 'sent' ? 'Envoyée' : 'Partielle'}
+                                </Badge>
+                                <ArrowRight className="h-3 w-3 text-muted-foreground" />
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      ) : null}
+                    </>
+                  )}
+                </div>
+              )}
               
               <div className="space-y-2">
                 <Label htmlFor="product">Produits * (sélection multiple)</Label>

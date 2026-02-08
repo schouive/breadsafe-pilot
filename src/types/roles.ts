@@ -73,7 +73,7 @@ export const ROLE_DEFINITIONS: Record<AppRole, RoleDefinition> = {
         haccp: 'write',
         products: 'none',
         settings: 'none',
-        orders: 'write',
+        orders: 'none',
       },
       canManageUsers: false,
       canValidateNC: false,

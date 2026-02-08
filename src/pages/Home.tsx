@@ -91,7 +91,7 @@ export default function Home() {
     },
     {
       title: 'Commandes',
-      description: 'Commandes fournisseurs et réception des marchandises',
+      description: 'Création, suivi et gestion des commandes fournisseurs',
       icon: ShoppingCart,
       color: 'text-primary',
       bgColor: 'bg-primary/10',

@@ -35,6 +35,7 @@ const CartonLabelManagement = lazy(() => import("@/components/products/CartonLab
 const RecipeData = lazy(() => import("./pages/RecipeData"));
 const OrdersList = lazy(() => import("./pages/OrdersList"));
 const NewOrder = lazy(() => import("./pages/NewOrder"));
+const ReceptionHistory = lazy(() => import("./pages/ReceptionHistory"));
 
 
 const queryClient = new QueryClient();
@@ -113,6 +114,16 @@ function AppRoutes() {
             <ProtectedRoute>
               <HACCPLayout>
                 <ControlHistory />
+              </HACCPLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/haccp/reception-history"
+          element={
+            <ProtectedRoute>
+              <HACCPLayout>
+                <ReceptionHistory />
               </HACCPLayout>
             </ProtectedRoute>
           }

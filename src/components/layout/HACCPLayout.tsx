@@ -4,7 +4,8 @@ import {
   AlertTriangle, 
   Calendar, 
   BarChart3,
-  Thermometer
+  Thermometer,
+  History
 } from 'lucide-react';
 import { ModuleLayout } from './ModuleLayout';
 import { useOpenNonConformities } from '@/hooks/useNonConformities';
@@ -17,6 +18,7 @@ interface HACCPLayoutProps {
 const fullNavigation = [
   { name: 'Tableau de bord', href: '/haccp/dashboard', icon: LayoutDashboard },
   { name: 'Contrôles', href: '/haccp/controls', icon: ClipboardCheck },
+  { name: 'Historique réceptions', href: '/haccp/reception-history', icon: History },
   { name: 'Non-conformités', href: '/haccp/non-conformities', icon: AlertTriangle, badgeKey: 'nc_count' },
   { name: 'Températures', href: '/haccp/temperatures', icon: Thermometer },
   { name: 'Planning', href: '/haccp/planning', icon: Calendar },

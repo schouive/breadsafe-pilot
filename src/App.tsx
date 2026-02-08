@@ -35,7 +35,7 @@ const CartonLabelManagement = lazy(() => import("@/components/products/CartonLab
 const RecipeData = lazy(() => import("./pages/RecipeData"));
 const OrdersList = lazy(() => import("./pages/OrdersList"));
 const NewOrder = lazy(() => import("./pages/NewOrder"));
-const OrderReception = lazy(() => import("./pages/OrderReception"));
+
 
 const queryClient = new QueryClient();
 
@@ -179,16 +179,6 @@ function AppRoutes() {
             <ProtectedRoute>
               <OrdersLayout>
                 <NewOrder />
-              </OrdersLayout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/orders/reception"
-          element={
-            <ProtectedRoute>
-              <OrdersLayout>
-                <OrderReception />
               </OrdersLayout>
             </ProtectedRoute>
           }

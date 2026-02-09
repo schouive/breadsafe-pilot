@@ -16,7 +16,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useCreateRecipe, useCreateRecipeIngredient, useIntermediateRecipes } from '@/hooks/useRecipes';
-import { useAllRawMaterials } from '@/hooks/useSuppliers';
+import { useFoodRawMaterials } from '@/hooks/useSuppliers';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 

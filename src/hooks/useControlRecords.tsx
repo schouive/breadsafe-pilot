@@ -49,6 +49,8 @@ export interface ReceptionFormData {
   allergenesNotes?: string;
   notes?: string;
   photos: string[];
+  linkedOrderId?: string | null;
+  linkedOrderLines?: { raw_material_id: string; quantity_ordered: number; unit: string; order_line_id: string }[];
 }
 
 export function useControlRecords(limit: number = 20) {
@@ -288,10 +290,41 @@ export function useCreateReceptionControl() {
           });
       }
 
+      // If linked to a supplier order, create supplier_receptions + lines to trigger status update
+      if (data.linkedOrderId && data.supplierId && data.linkedOrderLines?.length) {
+        const { data: reception, error: receptionError } = await supabase
+          .from('supplier_receptions')
+          .insert({
+            supplier_id: data.supplierId,
+            order_id: data.linkedOrderId,
+            delivery_note_number: `CP-${new Date().toISOString().slice(0, 10)}`,
+            operator_id: userId,
+            notes: 'Réception via contrôle HACCP CP_RECEPTION',
+          })
+          .select('id')
+          .single();
+
+        if (!receptionError && reception) {
+          const receptionLines = data.linkedOrderLines.map((ol) => ({
+            reception_id: reception.id,
+            raw_material_id: ol.raw_material_id,
+            quantity_received: ol.quantity_ordered,
+            unit: ol.unit,
+            order_line_id: ol.order_line_id,
+          }));
+
+          await supabase
+            .from('supplier_reception_lines')
+            .insert(receptionLines);
+        }
+      }
+
       return insertedRecords;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['control_records'] });
+      queryClient.invalidateQueries({ queryKey: ['supplier_orders'] });
+      queryClient.invalidateQueries({ queryKey: ['received_quantities'] });
       toast.success(navigator.onLine ? 'Contrôle réception enregistré' : 'Contrôle sauvegardé (hors ligne)');
     },
     onError: async (error, variables) => {

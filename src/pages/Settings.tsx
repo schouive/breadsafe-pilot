@@ -37,6 +37,7 @@ import { useAllColdRooms, useCreateColdRoom, useUpdateColdRoom, useDeleteColdRoo
 import { cn } from '@/lib/utils';
 import { SupplierManagement } from '@/components/settings/SupplierManagement';
 import { RawMaterialManagement } from '@/components/settings/RawMaterialManagement';
+import { NonFoodProductManagement } from '@/components/settings/NonFoodProductManagement';
 import { UserManagement } from '@/components/settings/UserManagement';
 import { AuditLogViewer } from '@/components/settings/AuditLogViewer';
 import { TemperatureInput } from '@/components/ui/TemperatureInput';
@@ -217,6 +218,9 @@ export default function Settings() {
 
       {/* Raw Materials Management */}
       <RawMaterialManagement />
+
+      {/* Non-Food Products Management */}
+      <NonFoodProductManagement />
 
       {/* Company info */}
       <Card>

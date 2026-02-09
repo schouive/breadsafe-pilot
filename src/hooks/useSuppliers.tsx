@@ -17,6 +17,7 @@ export interface RawMaterial {
   id: string;
   name: string;
   type: 'farine' | 'ingredient';
+  type_produit: 'alimentaire_MP' | 'non_alimentaire';
   supplier_id: string | null;
   category: string | null;
   unit: string | null;
@@ -39,11 +40,13 @@ export interface RawMaterial {
   salt: number | null;
   price: number | null;
   price_unit: string | null;
-  // New fields for purchase unit management
   purchase_unit: string | null;
   purchase_price: number | null;
   density: number | null;
   order_unit: string | null;
+  supplier_reference: string | null;
+  internal_comment: string | null;
+  fds_url: string | null;
   is_active: boolean;
 }
 
@@ -181,6 +184,30 @@ export function useRawMaterials(supplierId?: string) {
       return data as unknown as RawMaterial[];
     },
     enabled: !supplierId || supplierId.length > 0,
+  });
+}
+
+// Food-only raw materials (for recipes, INCO, allergens)
+export function useFoodRawMaterials() {
+  return useQuery({
+    queryKey: ['raw_materials', 'food_only'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('raw_materials')
+        .select(`
+          *,
+          suppliers (
+            id,
+            name
+          )
+        `)
+        .eq('is_active', true)
+        .eq('type_produit', 'alimentaire_MP')
+        .order('name');
+      
+      if (error) throw error;
+      return data as unknown as RawMaterialWithSupplier[];
+    },
   });
 }
 

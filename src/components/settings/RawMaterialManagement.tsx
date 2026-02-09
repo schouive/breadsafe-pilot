@@ -153,7 +153,8 @@ function calculatePricePerKg(purchasePrice: number | null, purchaseUnit: string,
 }
 
 export function RawMaterialManagement() {
-  const { data: materials, isLoading } = useAllRawMaterials();
+  const { data: allMaterials, isLoading } = useAllRawMaterials();
+  const materials = allMaterials?.filter(m => (m as any).type_produit !== 'non_alimentaire');
   const { data: suppliers } = useSuppliers();
   const createMaterial = useCreateRawMaterial();
   const updateMaterial = useUpdateRawMaterial();
@@ -211,6 +212,7 @@ export function RawMaterialManagement() {
     await createMaterial.mutateAsync({
       name: formData.name.trim(),
       type: formData.type,
+      type_produit: 'alimentaire_MP',
       supplier_id: formData.supplier_id || null,
       category: formData.category || null,
       unit: formData.unit || null,
@@ -228,11 +230,14 @@ export function RawMaterialManagement() {
       protein: formData.protein ? parseFloat(formData.protein) : null,
       salt: formData.salt ? parseFloat(formData.salt) : null,
       price: pricePerKg,
-      price_unit: 'kg', // Always store reference price in €/kg
+      price_unit: 'kg',
       purchase_unit: formData.purchase_unit || null,
       purchase_price: purchasePrice,
       density: density,
       order_unit: formData.order_unit || null,
+      supplier_reference: null,
+      internal_comment: null,
+      fds_url: null,
       requires_cold_storage: formData.requires_cold_storage,
       requires_dlc_check: formData.requires_dlc_check,
       storage_temp_min: formData.storage_temp_min ? parseFloat(formData.storage_temp_min) : null,

@@ -16,7 +16,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useRecipe, useRecipeIngredients, useUpdateRecipe, useCreateRecipeIngredient, useDeleteRecipeIngredient, useIntermediateRecipes } from '@/hooks/useRecipes';
-import { useAllRawMaterials } from '@/hooks/useSuppliers';
+import { useFoodRawMaterials } from '@/hooks/useSuppliers';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
@@ -34,7 +34,7 @@ export default function EditRecipe() {
   const { id } = useParams<{ id: string }>();
   const { data: recipe, isLoading: loadingRecipe } = useRecipe(id);
   const { data: existingIngredients, isLoading: loadingIngredients } = useRecipeIngredients(id);
-  const { data: rawMaterials, isLoading: loadingMaterials } = useAllRawMaterials();
+  const { data: rawMaterials, isLoading: loadingMaterials } = useFoodRawMaterials();
   const { data: intermediateRecipes } = useIntermediateRecipes();
   const updateRecipe = useUpdateRecipe();
   const createIngredient = useCreateRecipeIngredient();

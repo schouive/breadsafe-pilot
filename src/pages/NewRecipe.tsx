@@ -16,7 +16,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useCreateRecipe, useCreateRecipeIngredient, useIntermediateRecipes } from '@/hooks/useRecipes';
-import { useAllRawMaterials } from '@/hooks/useSuppliers';
+import { useFoodRawMaterials } from '@/hooks/useSuppliers';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
@@ -30,7 +30,7 @@ interface IngredientEntry {
 
 export default function NewRecipe() {
   const navigate = useNavigate();
-  const { data: rawMaterials, isLoading: loadingMaterials } = useAllRawMaterials();
+  const { data: rawMaterials, isLoading: loadingMaterials } = useFoodRawMaterials();
   const { data: intermediateRecipes } = useIntermediateRecipes();
   const createRecipe = useCreateRecipe();
   const createIngredient = useCreateRecipeIngredient();

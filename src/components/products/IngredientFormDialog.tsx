@@ -18,7 +18,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useCreateRecipeIngredient } from '@/hooks/useRecipes';
-import { useAllRawMaterials } from '@/hooks/useSuppliers';
+import { useFoodRawMaterials } from '@/hooks/useSuppliers';
 
 const UNITS = ['kg', 'g', 'L', 'mL', 'unité'];
 
@@ -29,7 +29,7 @@ interface IngredientFormDialogProps {
 }
 
 export function IngredientFormDialog({ open, onOpenChange, recipeId }: IngredientFormDialogProps) {
-  const { data: rawMaterials } = useAllRawMaterials();
+  const { data: rawMaterials } = useFoodRawMaterials();
   const createIngredient = useCreateRecipeIngredient();
   
   const [formData, setFormData] = useState({

@@ -187,6 +187,30 @@ export function useRawMaterials(supplierId?: string) {
   });
 }
 
+// Food-only raw materials (for recipes, INCO, allergens)
+export function useFoodRawMaterials() {
+  return useQuery({
+    queryKey: ['raw_materials', 'food_only'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('raw_materials')
+        .select(`
+          *,
+          suppliers (
+            id,
+            name
+          )
+        `)
+        .eq('is_active', true)
+        .eq('type_produit', 'alimentaire_MP')
+        .order('name');
+      
+      if (error) throw error;
+      return data as unknown as RawMaterialWithSupplier[];
+    },
+  });
+}
+
 export function useAllRawMaterials() {
   return useQuery({
     queryKey: ['raw_materials', 'all'],

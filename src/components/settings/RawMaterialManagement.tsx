@@ -65,6 +65,7 @@ const ORDER_UNITS = [
   { value: 'piece', label: 'Pièce' },
   { value: 'ramette', label: 'Ramette' },
   { value: 'sac', label: 'Sac' },
+  { value: 'seau', label: 'Seau' },
 ];
 
 const MATERIAL_TYPES = [

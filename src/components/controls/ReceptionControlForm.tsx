@@ -183,6 +183,19 @@ export function ReceptionControlForm({ controlPoint, isOpen, onClose, onSubmit }
 
     const status = calculateStatus();
 
+    // Build linked order lines if an order is selected
+    const matchedOrder = linkedOrderId ? openOrders?.find((o) => o.id === linkedOrderId) : null;
+    const linkedOrderLines = matchedOrder
+      ? matchedOrder.supplier_order_lines
+          .filter((ol) => selectedRawMaterialIds.includes(ol.raw_material_id))
+          .map((ol) => ({
+            raw_material_id: ol.raw_material_id,
+            quantity_ordered: ol.quantity_ordered,
+            unit: ol.unit,
+            order_line_id: ol.id,
+          }))
+      : undefined;
+
     onSubmit({
       status,
       rawMaterialIds: selectedRawMaterialIds,
@@ -200,6 +213,8 @@ export function ReceptionControlForm({ controlPoint, isOpen, onClose, onSubmit }
       allergenesNotes: allergenesNotes || undefined,
       notes: notes || undefined,
       photos,
+      linkedOrderId: linkedOrderId || null,
+      linkedOrderLines,
     });
 
     // Reset form

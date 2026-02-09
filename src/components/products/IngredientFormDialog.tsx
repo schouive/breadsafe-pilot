@@ -18,7 +18,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useCreateRecipeIngredient } from '@/hooks/useRecipes';
-import { useAllRawMaterials } from '@/hooks/useSuppliers';
+import { useFoodRawMaterials } from '@/hooks/useSuppliers';
 
 const UNITS = ['kg', 'g', 'L', 'mL', 'unité'];
 

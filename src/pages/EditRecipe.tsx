@@ -34,7 +34,7 @@ export default function EditRecipe() {
   const { id } = useParams<{ id: string }>();
   const { data: recipe, isLoading: loadingRecipe } = useRecipe(id);
   const { data: existingIngredients, isLoading: loadingIngredients } = useRecipeIngredients(id);
-  const { data: rawMaterials, isLoading: loadingMaterials } = useAllRawMaterials();
+  const { data: rawMaterials, isLoading: loadingMaterials } = useFoodRawMaterials();
   const { data: intermediateRecipes } = useIntermediateRecipes();
   const updateRecipe = useUpdateRecipe();
   const createIngredient = useCreateRecipeIngredient();

@@ -624,6 +624,7 @@ export type Database = {
           inco_name: string | null
           is_active: boolean
           name: string
+          order_unit: string | null
           price: number | null
           price_unit: string | null
           protein: number | null
@@ -658,6 +659,7 @@ export type Database = {
           inco_name?: string | null
           is_active?: boolean
           name: string
+          order_unit?: string | null
           price?: number | null
           price_unit?: string | null
           protein?: number | null
@@ -692,6 +694,7 @@ export type Database = {
           inco_name?: string | null
           is_active?: boolean
           name?: string
+          order_unit?: string | null
           price?: number | null
           price_unit?: string | null
           protein?: number | null

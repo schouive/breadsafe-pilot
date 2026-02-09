@@ -52,6 +52,7 @@ export function useAllRawMaterials() {
         .from('raw_materials')
         .select('id, name, type')
         .eq('is_active', true)
+        .eq('type_produit', 'alimentaire_MP')
         .order('name');
       
       if (error) throw error;

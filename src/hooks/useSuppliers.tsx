@@ -17,6 +17,7 @@ export interface RawMaterial {
   id: string;
   name: string;
   type: 'farine' | 'ingredient';
+  type_produit: 'alimentaire_MP' | 'non_alimentaire';
   supplier_id: string | null;
   category: string | null;
   unit: string | null;
@@ -39,11 +40,13 @@ export interface RawMaterial {
   salt: number | null;
   price: number | null;
   price_unit: string | null;
-  // New fields for purchase unit management
   purchase_unit: string | null;
   purchase_price: number | null;
   density: number | null;
   order_unit: string | null;
+  supplier_reference: string | null;
+  internal_comment: string | null;
+  fds_url: string | null;
   is_active: boolean;
 }
 

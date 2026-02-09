@@ -36,7 +36,7 @@ import { toast } from 'sonner';
 import { format, startOfDay, addDays } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { TemperatureInput } from '@/components/ui/TemperatureInput';
-import { useAllRawMaterials } from '@/hooks/useSuppliers';
+import { useFoodRawMaterials } from '@/hooks/useSuppliers';
 
 interface ControlFormProps {
   controlPoint: ControlPoint | null;

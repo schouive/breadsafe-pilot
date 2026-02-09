@@ -29,7 +29,7 @@ interface IngredientFormDialogProps {
 }
 
 export function IngredientFormDialog({ open, onOpenChange, recipeId }: IngredientFormDialogProps) {
-  const { data: rawMaterials } = useAllRawMaterials();
+  const { data: rawMaterials } = useFoodRawMaterials();
   const createIngredient = useCreateRecipeIngredient();
   
   const [formData, setFormData] = useState({

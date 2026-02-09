@@ -30,7 +30,7 @@ interface IngredientEntry {
 
 export default function NewRecipe() {
   const navigate = useNavigate();
-  const { data: rawMaterials, isLoading: loadingMaterials } = useAllRawMaterials();
+  const { data: rawMaterials, isLoading: loadingMaterials } = useFoodRawMaterials();
   const { data: intermediateRecipes } = useIntermediateRecipes();
   const createRecipe = useCreateRecipe();
   const createIngredient = useCreateRecipeIngredient();

@@ -98,11 +98,11 @@ export default function NewOrder() {
   const validLines = materialLines.filter((l) => l.quantity > 0);
 
   const handleSubmit = async () => {
-    if (!selectedSupplierId || validLines.length === 0) return;
+    if (!selectedSupplierId || validLines.length === 0 || !expectedDate) return;
 
     await createOrder.mutateAsync({
       supplier_id: selectedSupplierId,
-      expected_delivery_date: expectedDate || null,
+      expected_delivery_date: expectedDate,
       comment: comment || null,
       lines: validLines,
     });
@@ -206,11 +206,12 @@ export default function NewOrder() {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label className="text-sm">Date de réception prévue</Label>
+                <Label className="text-sm">Date de réception prévue <span className="text-destructive">*</span></Label>
                 <Input
                   type="date"
                   value={expectedDate}
                   onChange={(e) => setExpectedDate(e.target.value)}
+                  required
                 />
               </div>
             </div>
@@ -235,7 +236,7 @@ export default function NewOrder() {
           </Button>
           <Button
             onClick={handleSubmit}
-            disabled={createOrder.isPending}
+            disabled={createOrder.isPending || !expectedDate}
             className="min-w-[160px]"
           >
             {createOrder.isPending ? 'Création...' : `Créer la commande (${validLines.length} MP)`}

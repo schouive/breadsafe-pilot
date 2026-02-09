@@ -19,6 +19,7 @@ import { useCreateSupplierOrder } from '@/hooks/useSupplierOrders';
 
 const ORDER_UNITS = [
   { value: 'bidon', label: 'Bidon' },
+  { value: 'carton', label: 'Carton' },
   { value: 'kg', label: 'kg' },
   { value: 'litre', label: 'Litre' },
   { value: 'palette', label: 'Palette' },

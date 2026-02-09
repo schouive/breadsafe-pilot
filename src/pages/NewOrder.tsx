@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, ShoppingCart, Plus, Minus } from 'lucide-react';
+import { ArrowLeft, ShoppingCart } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -54,45 +54,48 @@ export default function NewOrder() {
     setLines([]);
   };
 
-  // Available materials (not already added)
-  const availableMaterials = useMemo(() => {
+  // Build lines from all raw materials when supplier changes
+  const materialLines = useMemo(() => {
     if (!rawMaterials) return [];
-    const addedIds = new Set(lines.map((l) => l.raw_material_id));
-    return rawMaterials.filter((m) => !addedIds.has(m.id));
+    return rawMaterials.map((m) => {
+      const existing = lines.find((l) => l.raw_material_id === m.id);
+      return {
+        raw_material_id: m.id,
+        name: m.name,
+        quantity: existing?.quantity ?? 0,
+        unit: existing?.unit ?? ((m as any).order_unit || m.purchase_unit || m.unit || 'kg'),
+      };
+    });
   }, [rawMaterials, lines]);
 
-  const addMaterial = (materialId: string) => {
-    const material = rawMaterials?.find((m) => m.id === materialId);
-    if (!material) return;
+  // Sync lines state when rawMaterials load
+  const prevSupplierId = useMemo(() => selectedSupplierId, [selectedSupplierId]);
 
-    setLines((prev) => [
-      ...prev,
-      {
-        raw_material_id: material.id,
-        name: material.name,
-        quantity: 0,
-        unit: (material as any).order_unit || material.purchase_unit || material.unit || 'kg',
-      },
-    ]);
+  const updateQuantity = (materialId: string, quantity: number) => {
+    setLines((prev) => {
+      const idx = prev.findIndex((l) => l.raw_material_id === materialId);
+      if (idx >= 0) {
+        return prev.map((l) => (l.raw_material_id === materialId ? { ...l, quantity } : l));
+      }
+      const mat = rawMaterials?.find((m) => m.id === materialId);
+      if (!mat) return prev;
+      return [...prev, { raw_material_id: mat.id, name: mat.name, quantity, unit: (mat as any).order_unit || mat.purchase_unit || mat.unit || 'kg' }];
+    });
   };
 
-  const updateQuantity = (index: number, quantity: number) => {
-    setLines((prev) =>
-      prev.map((line, i) => (i === index ? { ...line, quantity } : line))
-    );
+  const updateUnit = (materialId: string, unit: string) => {
+    setLines((prev) => {
+      const idx = prev.findIndex((l) => l.raw_material_id === materialId);
+      if (idx >= 0) {
+        return prev.map((l) => (l.raw_material_id === materialId ? { ...l, unit } : l));
+      }
+      const mat = rawMaterials?.find((m) => m.id === materialId);
+      if (!mat) return prev;
+      return [...prev, { raw_material_id: mat.id, name: mat.name, quantity: 0, unit }];
+    });
   };
 
-  const updateUnit = (index: number, unit: string) => {
-    setLines((prev) =>
-      prev.map((line, i) => (i === index ? { ...line, unit } : line))
-    );
-  };
-
-  const removeLine = (index: number) => {
-    setLines((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const validLines = lines.filter((l) => l.quantity > 0);
+  const validLines = materialLines.filter((l) => l.quantity > 0);
 
   const handleSubmit = async () => {
     if (!selectedSupplierId || validLines.length === 0) return;
@@ -144,43 +147,23 @@ export default function NewOrder() {
       {selectedSupplierId && (
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-base">2. Matières premières</CardTitle>
-              {availableMaterials.length > 0 && (
-                <Select onValueChange={addMaterial}>
-                  <SelectTrigger className="w-64">
-                    <SelectValue placeholder="Ajouter une matière..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availableMaterials.map((m) => (
-                      <SelectItem key={m.id} value={m.id}>
-                        {m.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            </div>
+            <CardTitle className="text-base">2. Matières premières ({materialLines.length})</CardTitle>
+            <p className="text-sm text-muted-foreground">Renseignez les quantités pour les matières à commander</p>
           </CardHeader>
           <CardContent>
-            {lines.length === 0 ? (
+            {materialLines.length === 0 ? (
               <div className="text-center py-8">
                 <ShoppingCart className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-                <p className="text-muted-foreground">
-                  Sélectionnez les matières premières à commander
-                </p>
+                <p className="text-muted-foreground">Aucune matière première associée à ce fournisseur</p>
               </div>
             ) : (
-              <div className="space-y-3">
-                {lines.map((line, index) => (
+              <div className="space-y-2">
+                {materialLines.map((line) => (
                   <div
                     key={line.raw_material_id}
-                    className="flex items-center gap-3 p-3 rounded-lg border bg-card"
+                    className={`p-3 rounded-lg border transition-colors ${line.quantity > 0 ? 'border-primary/40 bg-primary/5' : 'bg-card'}`}
                   >
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm truncate">{line.name}</p>
-                      <p className="text-xs text-muted-foreground">{line.unit}</p>
-                    </div>
+                    <p className="font-medium text-sm mb-2 truncate">{line.name}</p>
                     <div className="flex items-center gap-2">
                       <Input
                         type="number"
@@ -188,13 +171,13 @@ export default function NewOrder() {
                         step="0.1"
                         value={line.quantity || ''}
                         onChange={(e) =>
-                          updateQuantity(index, parseFloat(e.target.value) || 0)
+                          updateQuantity(line.raw_material_id, parseFloat(e.target.value) || 0)
                         }
-                        className="w-24 text-center"
+                        className="flex-1 min-w-0 text-center"
                         placeholder="Qté"
                       />
-                      <Select value={line.unit} onValueChange={(v) => updateUnit(index, v)}>
-                        <SelectTrigger className="w-28">
+                      <Select value={line.unit} onValueChange={(v) => updateUnit(line.raw_material_id, v)}>
+                        <SelectTrigger className="w-28 shrink-0">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -205,14 +188,6 @@ export default function NewOrder() {
                           ))}
                         </SelectContent>
                       </Select>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-destructive hover:text-destructive"
-                        onClick={() => removeLine(index)}
-                      >
-                        <Minus className="h-4 w-4" />
-                      </Button>
                     </div>
                   </div>
                 ))}
@@ -223,7 +198,7 @@ export default function NewOrder() {
       )}
 
       {/* Step 3: Options */}
-      {lines.length > 0 && (
+      {selectedSupplierId && materialLines.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle className="text-base">3. Informations complémentaires</CardTitle>

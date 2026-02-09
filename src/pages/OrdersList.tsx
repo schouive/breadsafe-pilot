@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { format } from 'date-fns';
+import { format, isPast, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { ClipboardList, Filter, Eye, Mail, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -44,6 +44,12 @@ const STATUS_CLASSES: Record<string, string> = {
   partially_received: 'bg-[hsl(var(--status-acceptable-light))] text-[hsl(38,92%,25%)] border-[hsl(var(--status-acceptable)/0.3)]',
   received: 'bg-[hsl(var(--status-conforme-light))] text-[hsl(142,71%,25%)] border-[hsl(var(--status-conforme)/0.3)]',
 };
+
+function isOrderLate(order: { status: string; expected_delivery_date: string | null }) {
+  if (order.status === 'received') return false;
+  if (!order.expected_delivery_date) return false;
+  return isPast(parseISO(order.expected_delivery_date));
+}
 
 export default function OrdersList() {
   const [sendingEmail, setSendingEmail] = useState(false);
@@ -198,9 +204,16 @@ export default function OrdersList() {
                     </TableCell>
                     <TableCell>{order.suppliers?.name || '—'}</TableCell>
                     <TableCell>
-                      <Badge variant="outline" className={STATUS_CLASSES[order.status]}>
-                        {STATUS_LABELS[order.status]}
-                      </Badge>
+                      <div className="flex items-center gap-1.5">
+                        <Badge variant="outline" className={STATUS_CLASSES[order.status]}>
+                          {STATUS_LABELS[order.status]}
+                        </Badge>
+                        {isOrderLate(order) && (
+                          <Badge variant="outline" className="bg-[hsl(var(--status-acceptable-light))] text-[hsl(25,95%,40%)] border-[hsl(var(--status-acceptable)/0.3)]">
+                            Retard
+                          </Badge>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell>
                       {format(new Date(order.order_date), 'dd/MM/yyyy', { locale: fr })}
@@ -244,9 +257,16 @@ export default function OrdersList() {
                 </div>
                 <div>
                   <p className="text-muted-foreground">Statut</p>
-                  <Badge variant="outline" className={STATUS_CLASSES[detailOrder.status]}>
-                    {STATUS_LABELS[detailOrder.status]}
-                  </Badge>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <Badge variant="outline" className={STATUS_CLASSES[detailOrder.status]}>
+                      {STATUS_LABELS[detailOrder.status]}
+                    </Badge>
+                    {isOrderLate(detailOrder) && (
+                      <Badge variant="outline" className="bg-[hsl(var(--status-acceptable-light))] text-[hsl(25,95%,40%)] border-[hsl(var(--status-acceptable)/0.3)]">
+                        Retard
+                      </Badge>
+                    )}
+                  </div>
                 </div>
                 <div>
                   <p className="text-muted-foreground">Date commande</p>

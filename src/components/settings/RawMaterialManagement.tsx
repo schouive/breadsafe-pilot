@@ -56,6 +56,16 @@ const PURCHASE_UNITS = [
   { value: 'piece', label: 'Pièce' },
 ];
 
+const ORDER_UNITS = [
+  { value: 'bidon', label: 'Bidon' },
+  { value: 'kg', label: 'Kilogramme (kg)' },
+  { value: 'litre', label: 'Litre (L)' },
+  { value: 'palette', label: 'Palette' },
+  { value: 'piece', label: 'Pièce' },
+  { value: 'ramette', label: 'Ramette' },
+  { value: 'sac', label: 'Sac' },
+];
+
 const MATERIAL_TYPES = [
   { value: 'farine', label: 'Farine' },
   { value: 'ingredient', label: 'Autre ingrédient' },
@@ -84,6 +94,7 @@ interface FormData {
   purchase_unit: string;
   purchase_price: string;
   density: string;
+  order_unit: string;
   requires_cold_storage: boolean;
   requires_dlc_check: boolean;
   storage_temp_min: string;
@@ -112,6 +123,7 @@ const initialFormData: FormData = {
   purchase_unit: 'kg',
   purchase_price: '',
   density: '',
+  order_unit: '',
   requires_cold_storage: false,
   requires_dlc_check: false,
   storage_temp_min: '',
@@ -180,6 +192,7 @@ export function RawMaterialManagement() {
       purchase_unit: material.purchase_unit || 'kg',
       purchase_price: material.purchase_price?.toString() || '',
       density: material.density?.toString() || '',
+      order_unit: material.order_unit || '',
       requires_cold_storage: material.requires_cold_storage,
       requires_dlc_check: material.requires_dlc_check,
       storage_temp_min: material.storage_temp_min?.toString() || '',
@@ -219,6 +232,7 @@ export function RawMaterialManagement() {
       purchase_unit: formData.purchase_unit || null,
       purchase_price: purchasePrice,
       density: density,
+      order_unit: formData.order_unit || null,
       requires_cold_storage: formData.requires_cold_storage,
       requires_dlc_check: formData.requires_dlc_check,
       storage_temp_min: formData.storage_temp_min ? parseFloat(formData.storage_temp_min) : null,
@@ -262,6 +276,7 @@ export function RawMaterialManagement() {
       purchase_unit: formData.purchase_unit || null,
       purchase_price: purchasePrice,
       density: density,
+      order_unit: formData.order_unit || null,
       requires_cold_storage: formData.requires_cold_storage,
       requires_dlc_check: formData.requires_dlc_check,
       storage_temp_min: formData.storage_temp_min ? parseFloat(formData.storage_temp_min) : null,
@@ -412,6 +427,32 @@ export function RawMaterialManagement() {
               </p>
             </div>
           )}
+
+          {/* Order Unit */}
+          <div className="space-y-2">
+            <Label htmlFor="order_unit">Unité de commande</Label>
+            <Select 
+              value={formData.order_unit || '_none_'} 
+              onValueChange={(value) => setFormData({ ...formData, order_unit: value === '_none_' ? '' : value })}
+            >
+              <SelectTrigger id="order_unit">
+                <SelectValue placeholder="Sélectionnez l'unité de commande" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="_none_">
+                  <span className="text-muted-foreground italic">Non définie</span>
+                </SelectItem>
+                {ORDER_UNITS.map(unit => (
+                  <SelectItem key={unit.value} value={unit.value}>
+                    {unit.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Unité utilisée par défaut lors de la commande fournisseur
+            </p>
+          </div>
 
           {/* Calculated price display */}
           {formData.purchase_price && (

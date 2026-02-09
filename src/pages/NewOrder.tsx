@@ -17,6 +17,16 @@ import { useSuppliers } from '@/hooks/useSuppliers';
 import { useRawMaterials } from '@/hooks/useSuppliers';
 import { useCreateSupplierOrder } from '@/hooks/useSupplierOrders';
 
+const ORDER_UNITS = [
+  { value: 'bidon', label: 'Bidon' },
+  { value: 'kg', label: 'kg' },
+  { value: 'litre', label: 'Litre' },
+  { value: 'palette', label: 'Palette' },
+  { value: 'piece', label: 'Pièce' },
+  { value: 'ramette', label: 'Ramette' },
+  { value: 'sac', label: 'Sac' },
+];
+
 interface OrderLine {
   raw_material_id: string;
   name: string;
@@ -59,7 +69,7 @@ export default function NewOrder() {
         raw_material_id: material.id,
         name: material.name,
         quantity: 0,
-        unit: material.purchase_unit || material.unit || 'kg',
+        unit: (material as any).order_unit || material.purchase_unit || material.unit || 'kg',
       },
     ]);
   };
@@ -67,6 +77,12 @@ export default function NewOrder() {
   const updateQuantity = (index: number, quantity: number) => {
     setLines((prev) =>
       prev.map((line, i) => (i === index ? { ...line, quantity } : line))
+    );
+  };
+
+  const updateUnit = (index: number, unit: string) => {
+    setLines((prev) =>
+      prev.map((line, i) => (i === index ? { ...line, unit } : line))
     );
   };
 
@@ -175,9 +191,18 @@ export default function NewOrder() {
                         className="w-24 text-center"
                         placeholder="Qté"
                       />
-                      <span className="text-sm text-muted-foreground w-8">
-                        {line.unit}
-                      </span>
+                      <Select value={line.unit} onValueChange={(v) => updateUnit(index, v)}>
+                        <SelectTrigger className="w-28">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {ORDER_UNITS.map((u) => (
+                            <SelectItem key={u.value} value={u.value}>
+                              {u.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <Button
                         variant="ghost"
                         size="icon"

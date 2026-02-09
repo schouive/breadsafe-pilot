@@ -43,6 +43,7 @@ export interface RawMaterial {
   purchase_unit: string | null;
   purchase_price: number | null;
   density: number | null;
+  order_unit: string | null;
   is_active: boolean;
 }
 

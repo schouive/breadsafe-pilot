@@ -1,0 +1,1 @@
+ALTER TABLE public.raw_materials ADD COLUMN order_unit text DEFAULT NULL;

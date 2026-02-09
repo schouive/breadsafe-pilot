@@ -619,9 +619,11 @@ export type Database = {
           energy_kcal: number | null
           energy_kj: number | null
           fat: number | null
+          fds_url: string | null
           fiber: number | null
           id: string
           inco_name: string | null
+          internal_comment: string | null
           is_active: boolean
           name: string
           order_unit: string | null
@@ -638,7 +640,9 @@ export type Database = {
           storage_temp_min: number | null
           sugars: number | null
           supplier_id: string | null
+          supplier_reference: string | null
           type: string | null
+          type_produit: string
           unit: string | null
           updated_at: string
         }
@@ -654,9 +658,11 @@ export type Database = {
           energy_kcal?: number | null
           energy_kj?: number | null
           fat?: number | null
+          fds_url?: string | null
           fiber?: number | null
           id?: string
           inco_name?: string | null
+          internal_comment?: string | null
           is_active?: boolean
           name: string
           order_unit?: string | null
@@ -673,7 +679,9 @@ export type Database = {
           storage_temp_min?: number | null
           sugars?: number | null
           supplier_id?: string | null
+          supplier_reference?: string | null
           type?: string | null
+          type_produit?: string
           unit?: string | null
           updated_at?: string
         }
@@ -689,9 +697,11 @@ export type Database = {
           energy_kcal?: number | null
           energy_kj?: number | null
           fat?: number | null
+          fds_url?: string | null
           fiber?: number | null
           id?: string
           inco_name?: string | null
+          internal_comment?: string | null
           is_active?: boolean
           name?: string
           order_unit?: string | null
@@ -708,7 +718,9 @@ export type Database = {
           storage_temp_min?: number | null
           sugars?: number | null
           supplier_id?: string | null
+          supplier_reference?: string | null
           type?: string | null
+          type_produit?: string
           unit?: string | null
           updated_at?: string
         }

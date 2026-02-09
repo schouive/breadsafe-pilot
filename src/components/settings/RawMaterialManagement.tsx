@@ -57,15 +57,13 @@ const PURCHASE_UNITS = [
 ];
 
 const ORDER_UNITS = [
-  { value: 'bidon', label: 'Bidon' },
-  { value: 'carton', label: 'Carton' },
-  { value: 'kg', label: 'Kilogramme (kg)' },
-  { value: 'litre', label: 'Litre (L)' },
-  { value: 'palette', label: 'Palette' },
-  { value: 'piece', label: 'Pièce' },
-  { value: 'ramette', label: 'Ramette' },
-  { value: 'sac', label: 'Sac' },
-  { value: 'seau', label: 'Seau' },
+  { value: 'bidon', label: 'Bidon(s)' },
+  { value: 'carton', label: 'Carton(s)' },
+  { value: 'palette', label: 'Palette(s)' },
+  { value: 'piece', label: 'Pièce(s)' },
+  { value: 'ramette', label: 'Ramette(s)' },
+  { value: 'sac', label: 'Sac(s)' },
+  { value: 'seau', label: 'Sceau(x)' },
 ];
 
 const MATERIAL_TYPES = [

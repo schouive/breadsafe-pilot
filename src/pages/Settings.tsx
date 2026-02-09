@@ -219,6 +219,9 @@ export default function Settings() {
       {/* Raw Materials Management */}
       <RawMaterialManagement />
 
+      {/* Non-Food Products Management */}
+      <NonFoodProductManagement />
+
       {/* Company info */}
       <Card>
         <CardHeader>

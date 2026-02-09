@@ -153,7 +153,8 @@ function calculatePricePerKg(purchasePrice: number | null, purchaseUnit: string,
 }
 
 export function RawMaterialManagement() {
-  const { data: materials, isLoading } = useAllRawMaterials();
+  const { data: allMaterials, isLoading } = useAllRawMaterials();
+  const materials = allMaterials?.filter(m => (m as any).type_produit !== 'non_alimentaire');
   const { data: suppliers } = useSuppliers();
   const createMaterial = useCreateRawMaterial();
   const updateMaterial = useUpdateRawMaterial();

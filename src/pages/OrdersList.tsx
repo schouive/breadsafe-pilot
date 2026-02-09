@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { ClipboardList, Filter, Eye } from 'lucide-react';
+import { ClipboardList, Filter, Eye, Mail, Loader2 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -44,6 +46,7 @@ const STATUS_CLASSES: Record<string, string> = {
 };
 
 export default function OrdersList() {
+  const [sendingEmail, setSendingEmail] = useState(false);
   const { data: suppliers } = useSuppliers();
   const [filterSupplier, setFilterSupplier] = useState<string>('');
   const [filterStatus, setFilterStatus] = useState<string>('');
@@ -66,6 +69,31 @@ export default function OrdersList() {
     setFilterStatus('');
     setFilterDateFrom('');
     setFilterDateTo('');
+  };
+
+  const handleSendEmail = async () => {
+    if (!detailOrder) return;
+    const recipientEmail = detailOrder.suppliers?.order_email || detailOrder.suppliers?.email;
+    if (!recipientEmail) {
+      toast.error("Aucun email configuré pour ce fournisseur");
+      return;
+    }
+    setSendingEmail(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('send-order-email', {
+        body: {
+          orderId: detailOrder.id,
+          recipientEmail,
+          senderName: 'BreadSafe',
+        },
+      });
+      if (error) throw error;
+      toast.success(`Email envoyé à ${recipientEmail}`);
+    } catch (err: any) {
+      toast.error(err.message || "Erreur lors de l'envoi");
+    } finally {
+      setSendingEmail(false);
+    }
   };
 
   return (
@@ -261,6 +289,21 @@ export default function OrdersList() {
                   ))}
                 </div>
               </div>
+              {/* Send Email Button */}
+              {detailOrder.status === 'sent' && (
+                <Button
+                  onClick={handleSendEmail}
+                  disabled={sendingEmail}
+                  className="w-full"
+                >
+                  {sendingEmail ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Mail className="h-4 w-4 mr-2" />
+                  )}
+                  {sendingEmail ? 'Envoi en cours...' : 'Envoyer par email'}
+                </Button>
+              )}
             </div>
           )}
         </SheetContent>

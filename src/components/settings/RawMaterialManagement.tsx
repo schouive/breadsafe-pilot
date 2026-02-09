@@ -58,6 +58,7 @@ const PURCHASE_UNITS = [
 
 const ORDER_UNITS = [
   { value: 'bidon', label: 'Bidon' },
+  { value: 'carton', label: 'Carton' },
   { value: 'kg', label: 'Kilogramme (kg)' },
   { value: 'litre', label: 'Litre (L)' },
   { value: 'palette', label: 'Palette' },

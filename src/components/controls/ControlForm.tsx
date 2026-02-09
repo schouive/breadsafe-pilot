@@ -90,7 +90,7 @@ export function ControlForm({ controlPoint, isOpen, onClose, onSubmit }: Control
   const [dlcDate, setDlcDate] = useState<Date | undefined>(undefined);
   const [dlcPopoverOpen, setDlcPopoverOpen] = useState(false);
 
-  const { data: allMaterials } = useAllRawMaterials();
+  const { data: allMaterials } = useFoodRawMaterials();
   
   // Filter materials that require DLC check for CP8
   const dlcMaterials = allMaterials?.filter(m => m.requires_dlc_check && m.is_active) || [];

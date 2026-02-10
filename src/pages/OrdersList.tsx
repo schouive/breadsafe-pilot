@@ -150,6 +150,7 @@ export default function OrdersList() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Tous</SelectItem>
+                  <SelectItem value="draft">En cours de création</SelectItem>
                   <SelectItem value="sent">Envoyée</SelectItem>
                   <SelectItem value="partially_received">Partiellement reçue</SelectItem>
                   <SelectItem value="received">Reçue</SelectItem>

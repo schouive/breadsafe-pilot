@@ -42,7 +42,7 @@ serve(async (req: Request) => {
       .from("supplier_orders")
       .select(`
         *,
-        suppliers ( id, name, order_email, email ),
+        suppliers ( id, name, order_email, email, email2 ),
         supplier_order_lines (
           *,
           raw_materials ( id, name, unit, purchase_unit )
@@ -92,9 +92,16 @@ serve(async (req: Request) => {
       </div>
     `;
 
+    // Collect all recipient emails: explicit recipient + supplier emails
+    const recipients = new Set<string>();
+    recipients.add(recipientEmail);
+    if (order.suppliers?.email) recipients.add(order.suppliers.email);
+    if (order.suppliers?.email2) recipients.add(order.suppliers.email2);
+    if (order.suppliers?.order_email) recipients.add(order.suppliers.order_email);
+
     const emailResponse = await resend.emails.send({
       from: "Commandes <onboarding@resend.dev>",
-      to: [recipientEmail],
+      to: Array.from(recipients),
       subject: `Commande ${order.order_number} — ${order.suppliers?.name || ""}`,
       html,
     });

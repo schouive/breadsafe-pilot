@@ -41,9 +41,11 @@ export function SupplierManagement() {
     name: '',
     contact_name: '',
     email: '',
+    email2: '',
     phone: '',
     address: '',
     order_email: '',
+    client_code: '',
   });
 
   const resetForm = () => {
@@ -51,9 +53,11 @@ export function SupplierManagement() {
       name: '',
       contact_name: '',
       email: '',
+      email2: '',
       phone: '',
       address: '',
       order_email: '',
+      client_code: '',
     });
   };
 
@@ -64,9 +68,11 @@ export function SupplierManagement() {
       name: formData.name.trim(),
       contact_name: formData.contact_name.trim() || null,
       email: formData.email.trim() || null,
+      email2: formData.email2.trim() || null,
       phone: formData.phone.trim() || null,
       address: formData.address.trim() || null,
       order_email: formData.order_email.trim() || null,
+      client_code: formData.client_code.trim() || null,
     });
     
     setIsAddOpen(false);
@@ -81,9 +87,11 @@ export function SupplierManagement() {
       name: editingSupplier.name,
       contact_name: editingSupplier.contact_name,
       email: editingSupplier.email,
+      email2: editingSupplier.email2,
       phone: editingSupplier.phone,
       address: editingSupplier.address,
       order_email: editingSupplier.order_email,
+      client_code: editingSupplier.client_code,
     });
     
     setEditingSupplier(null);
@@ -239,12 +247,33 @@ export function SupplierManagement() {
                 />
               </div>
               <div className="space-y-2">
+                <Label htmlFor="email2">Email 2</Label>
+                <Input
+                  id="email2"
+                  type="email"
+                  placeholder="commercial@fournisseur.fr"
+                  value={formData.email2}
+                  onChange={(e) => setFormData({ ...formData, email2: e.target.value })}
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
                 <Label htmlFor="phone">Téléphone</Label>
                 <Input
                   id="phone"
                   placeholder="01 23 45 67 89"
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="client-code">Code client</Label>
+                <Input
+                  id="client-code"
+                  placeholder="Ex: CLI-001"
+                  value={formData.client_code}
+                  onChange={(e) => setFormData({ ...formData, client_code: e.target.value })}
                 />
               </div>
             </div>
@@ -321,11 +350,30 @@ export function SupplierManagement() {
                   />
                 </div>
                 <div className="space-y-2">
+                  <Label htmlFor="edit-email2">Email 2</Label>
+                  <Input
+                    id="edit-email2"
+                    type="email"
+                    value={editingSupplier.email2 || ''}
+                    onChange={(e) => setEditingSupplier({ ...editingSupplier, email2: e.target.value || null })}
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
                   <Label htmlFor="edit-phone">Téléphone</Label>
                   <Input
                     id="edit-phone"
                     value={editingSupplier.phone || ''}
                     onChange={(e) => setEditingSupplier({ ...editingSupplier, phone: e.target.value || null })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-client-code">Code client</Label>
+                  <Input
+                    id="edit-client-code"
+                    value={editingSupplier.client_code || ''}
+                    onChange={(e) => setEditingSupplier({ ...editingSupplier, client_code: e.target.value || null })}
                   />
                 </div>
               </div>

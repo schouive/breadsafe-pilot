@@ -7,9 +7,11 @@ export interface Supplier {
   name: string;
   contact_name: string | null;
   email: string | null;
+  email2: string | null;
   phone: string | null;
   address: string | null;
   order_email: string | null;
+  client_code: string | null;
   is_active: boolean;
 }
 

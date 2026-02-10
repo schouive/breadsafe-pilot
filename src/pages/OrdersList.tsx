@@ -323,7 +323,7 @@ export default function OrdersList() {
                 </div>
               </div>
               {/* Send Email Button */}
-              {detailOrder.status === 'sent' && (
+              {(detailOrder.status === 'draft' || detailOrder.status === 'sent') && (
                 <Button
                   onClick={handleSendEmail}
                   disabled={sendingEmail}
@@ -334,7 +334,7 @@ export default function OrdersList() {
                   ) : (
                     <Mail className="h-4 w-4 mr-2" />
                   )}
-                  {sendingEmail ? 'Envoi en cours...' : 'Envoyer par email'}
+                  {sendingEmail ? 'Envoi en cours...' : detailOrder.status === 'draft' ? 'Envoyer la commande' : 'Renvoyer par email'}
                 </Button>
               )}
             </div>

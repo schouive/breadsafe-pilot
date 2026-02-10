@@ -355,7 +355,7 @@ export function SupplierManagement() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="edit-client-code">Code client</Label>
+                  <Label htmlFor="edit-client-code">Référence client</Label>
                   <Input
                     id="edit-client-code"
                     value={editingSupplier.client_code || ''}

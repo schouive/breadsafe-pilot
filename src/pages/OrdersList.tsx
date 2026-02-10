@@ -34,12 +34,14 @@ import { useSupplierOrders, useSupplierOrder, SupplierOrderWithSupplier } from '
 import { useSuppliers } from '@/hooks/useSuppliers';
 
 const STATUS_LABELS: Record<string, string> = {
+  draft: 'En cours de création',
   sent: 'Envoyée',
   partially_received: 'Partiellement reçue',
   received: 'Reçue',
 };
 
 const STATUS_CLASSES: Record<string, string> = {
+  draft: 'bg-muted text-muted-foreground border-border',
   sent: 'bg-primary/10 text-primary border-primary/30',
   partially_received: 'bg-[hsl(var(--status-acceptable-light))] text-[hsl(38,92%,25%)] border-[hsl(var(--status-acceptable)/0.3)]',
   received: 'bg-[hsl(var(--status-conforme-light))] text-[hsl(142,71%,25%)] border-[hsl(var(--status-conforme)/0.3)]',

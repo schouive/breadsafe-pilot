@@ -285,7 +285,6 @@ export function SupplierManagement() {
               />
             </div>
           </div>
-          </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => { setIsAddOpen(false); resetForm(); }}>
               Annuler

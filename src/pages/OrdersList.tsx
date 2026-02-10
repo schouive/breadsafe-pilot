@@ -325,7 +325,7 @@ export default function OrdersList() {
                 </div>
               </div>
               {/* Send Email Button */}
-              {(detailOrder.status === 'draft' || detailOrder.status === 'sent') && (
+              {((detailOrder.status as string) === 'draft' || detailOrder.status === 'sent') && (
                 <Button
                   onClick={handleSendEmail}
                   disabled={sendingEmail}

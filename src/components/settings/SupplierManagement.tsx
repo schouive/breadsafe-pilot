@@ -44,7 +44,6 @@ export function SupplierManagement() {
     email2: '',
     phone: '',
     address: '',
-    order_email: '',
     client_code: '',
   });
 
@@ -56,7 +55,6 @@ export function SupplierManagement() {
       email2: '',
       phone: '',
       address: '',
-      order_email: '',
       client_code: '',
     });
   };
@@ -71,8 +69,8 @@ export function SupplierManagement() {
       email2: formData.email2.trim() || null,
       phone: formData.phone.trim() || null,
       address: formData.address.trim() || null,
-      order_email: formData.order_email.trim() || null,
       client_code: formData.client_code.trim() || null,
+      order_email: null,
     });
     
     setIsAddOpen(false);
@@ -90,7 +88,6 @@ export function SupplierManagement() {
       email2: editingSupplier.email2,
       phone: editingSupplier.phone,
       address: editingSupplier.address,
-      order_email: editingSupplier.order_email,
       client_code: editingSupplier.client_code,
     });
     
@@ -286,17 +283,6 @@ export function SupplierManagement() {
                 onChange={(e) => setFormData({ ...formData, address: e.target.value })}
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="order-email">Email de commande</Label>
-              <Input
-                id="order-email"
-                type="email"
-                placeholder="commandes@fournisseur.fr"
-                value={formData.order_email}
-                onChange={(e) => setFormData({ ...formData, order_email: e.target.value })}
-              />
-              <p className="text-xs text-muted-foreground">Adresse email dédiée pour l'envoi des commandes</p>
-            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => { setIsAddOpen(false); resetForm(); }}>
@@ -384,16 +370,6 @@ export function SupplierManagement() {
                   value={editingSupplier.address || ''}
                   onChange={(e) => setEditingSupplier({ ...editingSupplier, address: e.target.value || null })}
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-order-email">Email de commande</Label>
-                <Input
-                  id="edit-order-email"
-                  type="email"
-                  value={editingSupplier.order_email || ''}
-                  onChange={(e) => setEditingSupplier({ ...editingSupplier, order_email: e.target.value || null })}
-                />
-                <p className="text-xs text-muted-foreground">Adresse email dédiée pour l'envoi des commandes</p>
               </div>
             </div>
           )}

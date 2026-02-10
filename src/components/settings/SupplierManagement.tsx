@@ -284,17 +284,7 @@ export function SupplierManagement() {
                 onChange={(e) => setFormData({ ...formData, address: e.target.value })}
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="order-email">Email de commande</Label>
-              <Input
-                id="order-email"
-                type="email"
-                placeholder="commandes@fournisseur.fr"
-                value={formData.order_email}
-                onChange={(e) => setFormData({ ...formData, order_email: e.target.value })}
-              />
-              <p className="text-xs text-muted-foreground">Adresse email dédiée pour l'envoi des commandes</p>
-            </div>
+          </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => { setIsAddOpen(false); resetForm(); }}>

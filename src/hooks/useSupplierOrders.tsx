@@ -43,8 +43,16 @@ export interface SupplierOrderFull extends SupplierOrder {
     name: string;
     order_email: string | null;
     email: string | null;
+    client_code: string | null;
   } | null;
   supplier_order_lines: OrderLineWithMaterial[];
+}
+
+interface UpdateOrderInput {
+  id: string;
+  expected_delivery_date?: string | null;
+  comment?: string | null;
+  lines: { raw_material_id: string; quantity: number; unit: string }[];
 }
 
 interface OrderFilters {

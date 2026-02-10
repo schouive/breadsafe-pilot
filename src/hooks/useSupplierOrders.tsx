@@ -116,7 +116,7 @@ export function useOpenOrdersBySupplier(supplierId: string | undefined) {
           )
         `)
         .eq('supplier_id', supplierId!)
-        .in('status', ['sent', 'partially_received'] as any)
+        .in('status', ['draft', 'sent', 'partially_received'] as any)
         .order('order_date', { ascending: false });
 
       if (error) throw error;

@@ -373,7 +373,6 @@ export function SupplierManagement() {
                 />
               </div>
             </div>
-            </div>
           )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditingSupplier(null)}>

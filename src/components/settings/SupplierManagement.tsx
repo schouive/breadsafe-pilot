@@ -68,9 +68,11 @@ export function SupplierManagement() {
       name: formData.name.trim(),
       contact_name: formData.contact_name.trim() || null,
       email: formData.email.trim() || null,
+      email2: formData.email2.trim() || null,
       phone: formData.phone.trim() || null,
       address: formData.address.trim() || null,
       order_email: formData.order_email.trim() || null,
+      client_code: formData.client_code.trim() || null,
     });
     
     setIsAddOpen(false);

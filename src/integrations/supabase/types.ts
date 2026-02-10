@@ -1288,7 +1288,7 @@ export type Database = {
       control_status: "conforme" | "acceptable" | "nonconforme" | "pending"
       nc_severity: "minor" | "major" | "critical"
       nc_status: "open" | "in_progress" | "resolved" | "validated"
-      order_status: "sent" | "partially_received" | "received"
+      order_status: "draft" | "sent" | "partially_received" | "received"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1435,7 +1435,7 @@ export const Constants = {
       control_status: ["conforme", "acceptable", "nonconforme", "pending"],
       nc_severity: ["minor", "major", "critical"],
       nc_status: ["open", "in_progress", "resolved", "validated"],
-      order_status: ["sent", "partially_received", "received"],
+      order_status: ["draft", "sent", "partially_received", "received"],
     },
   },
 } as const

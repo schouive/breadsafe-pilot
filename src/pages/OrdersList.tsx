@@ -336,7 +336,7 @@ export default function OrdersList() {
                   ) : (
                     <Mail className="h-4 w-4 mr-2" />
                   )}
-                  {sendingEmail ? 'Envoi en cours...' : detailOrder.status === 'draft' ? 'Envoyer la commande' : 'Renvoyer par email'}
+                  {sendingEmail ? 'Envoi en cours...' : (detailOrder.status as string) === 'draft' ? 'Envoyer la commande' : 'Renvoyer par email'}
                 </Button>
               )}
             </div>

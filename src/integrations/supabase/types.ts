@@ -1142,9 +1142,11 @@ export type Database = {
       suppliers: {
         Row: {
           address: string | null
+          client_code: string | null
           contact_name: string | null
           created_at: string
           email: string | null
+          email2: string | null
           id: string
           is_active: boolean
           name: string
@@ -1154,9 +1156,11 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          client_code?: string | null
           contact_name?: string | null
           created_at?: string
           email?: string | null
+          email2?: string | null
           id?: string
           is_active?: boolean
           name: string
@@ -1166,9 +1170,11 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          client_code?: string | null
           contact_name?: string | null
           created_at?: string
           email?: string | null
+          email2?: string | null
           id?: string
           is_active?: boolean
           name?: string

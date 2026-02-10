@@ -89,7 +89,6 @@ export function SupplierManagement() {
       email2: editingSupplier.email2,
       phone: editingSupplier.phone,
       address: editingSupplier.address,
-      order_email: editingSupplier.order_email,
       client_code: editingSupplier.client_code,
     });
     

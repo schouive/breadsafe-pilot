@@ -71,11 +71,29 @@ serve(async (req: Request) => {
       ? new Date(order.expected_delivery_date).toLocaleDateString("fr-FR")
       : "Non spécifiée";
 
+    const clientCode = order.suppliers?.client_code || "—";
+
     const html = `
       <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
         <h2 style="color:#333;">Commande ${order.order_number}</h2>
         <p>Bonjour,</p>
         <p>Veuillez trouver ci-dessous le détail de notre commande :</p>
+        <table style="width:100%;border-collapse:collapse;margin:16px 0;font-size:14px;">
+          <tbody>
+            <tr>
+              <td style="padding:6px 12px;border:1px solid #ddd;font-weight:bold;background:#f5f5f5;">Référence client</td>
+              <td style="padding:6px 12px;border:1px solid #ddd;">${clientCode}</td>
+            </tr>
+            <tr>
+              <td style="padding:6px 12px;border:1px solid #ddd;font-weight:bold;background:#f5f5f5;">Numéro de commande</td>
+              <td style="padding:6px 12px;border:1px solid #ddd;">${order.order_number}</td>
+            </tr>
+            <tr>
+              <td style="padding:6px 12px;border:1px solid #ddd;font-weight:bold;background:#f5f5f5;">Date de livraison</td>
+              <td style="padding:6px 12px;border:1px solid #ddd;">${expectedDate}</td>
+            </tr>
+          </tbody>
+        </table>
         <table style="width:100%;border-collapse:collapse;margin:16px 0;">
           <thead>
             <tr style="background:#f5f5f5;">
@@ -86,22 +104,24 @@ serve(async (req: Request) => {
           </thead>
           <tbody>${linesHtml}</tbody>
         </table>
-        <p><strong>Date de livraison souhaitée :</strong> ${expectedDate}</p>
         ${order.comment ? `<p><strong>Commentaire :</strong> ${order.comment}</p>` : ""}
         <p>Cordialement,<br/>${senderName || "L'équipe"}</p>
       </div>
     `;
 
-    // Collect all recipient emails: explicit recipient + supplier emails
-    const recipients = new Set<string>();
-    recipients.add(recipientEmail);
-    if (order.suppliers?.email) recipients.add(order.suppliers.email);
-    if (order.suppliers?.email2) recipients.add(order.suppliers.email2);
-    if (order.suppliers?.order_email) recipients.add(order.suppliers.order_email);
+    // Primary recipients: explicit recipient + supplier main email
+    const toRecipients = new Set<string>();
+    toRecipients.add(recipientEmail);
+    if (order.suppliers?.email) toRecipients.add(order.suppliers.email);
+
+    // CC: email2
+    const ccRecipients: string[] = [];
+    if (order.suppliers?.email2) ccRecipients.push(order.suppliers.email2);
 
     const emailResponse = await resend.emails.send({
       from: "Commandes <onboarding@resend.dev>",
-      to: Array.from(recipients),
+      to: Array.from(toRecipients),
+      ...(ccRecipients.length > 0 ? { cc: ccRecipients } : {}),
       subject: `Commande ${order.order_number} — ${order.suppliers?.name || ""}`,
       html,
     });

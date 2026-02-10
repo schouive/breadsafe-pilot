@@ -55,6 +55,16 @@ function isOrderLate(order: { status: string; expected_delivery_date: string | n
   return isPast(parseISO(order.expected_delivery_date));
 }
 
+const ORDER_UNITS = [
+  { value: 'bidon', label: 'Bidon(s)' },
+  { value: 'carton', label: 'Carton(s)' },
+  { value: 'palette', label: 'Palette(s)' },
+  { value: 'piece', label: 'Pièce(s)' },
+  { value: 'ramette', label: 'Ramette(s)' },
+  { value: 'sac', label: 'Sac(s)' },
+  { value: 'seau', label: 'Sceau(x)' },
+];
+
 export default function OrdersList() {
   const queryClient = useQueryClient();
   const [sendingEmail, setSendingEmail] = useState(false);
@@ -64,6 +74,12 @@ export default function OrdersList() {
   const [filterDateFrom, setFilterDateFrom] = useState('');
   const [filterDateTo, setFilterDateTo] = useState('');
   const [detailOrderId, setDetailOrderId] = useState<string | undefined>(undefined);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editDate, setEditDate] = useState('');
+  const [editComment, setEditComment] = useState('');
+  const [editLines, setEditLines] = useState<{ raw_material_id: string; name: string; quantity: number; unit: string }[]>([]);
+
+  const updateOrder = useUpdateSupplierOrder();
 
   const filters = {
     supplierId: filterSupplier || undefined,
@@ -74,6 +90,55 @@ export default function OrdersList() {
 
   const { data: orders, isLoading } = useSupplierOrders(filters);
   const { data: detailOrder } = useSupplierOrder(detailOrderId);
+  const { data: rawMaterials } = useRawMaterials(detailOrder?.supplier_id);
+
+  const startEditing = () => {
+    if (!detailOrder) return;
+    setEditDate(detailOrder.expected_delivery_date || '');
+    setEditComment(detailOrder.comment || '');
+    // Build edit lines from existing order lines + all supplier raw materials
+    const existingLines = detailOrder.supplier_order_lines || [];
+    if (rawMaterials) {
+      const lines = rawMaterials.map((m) => {
+        const existing = existingLines.find((l) => l.raw_material_id === m.id);
+        return {
+          raw_material_id: m.id,
+          name: m.name,
+          quantity: existing?.quantity_ordered ?? 0,
+          unit: existing?.unit ?? ((m as any).order_unit || m.purchase_unit || m.unit || 'kg'),
+        };
+      });
+      setEditLines(lines);
+    } else {
+      setEditLines(existingLines.map((l) => ({
+        raw_material_id: l.raw_material_id,
+        name: l.raw_materials?.name || '—',
+        quantity: l.quantity_ordered,
+        unit: l.unit,
+      })));
+    }
+    setIsEditing(true);
+  };
+
+  const cancelEditing = () => {
+    setIsEditing(false);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!detailOrder) return;
+    const validLines = editLines.filter((l) => l.quantity > 0);
+    if (validLines.length === 0) {
+      toast.error('Au moins une ligne avec quantité > 0 est requise');
+      return;
+    }
+    await updateOrder.mutateAsync({
+      id: detailOrder.id,
+      expected_delivery_date: editDate || null,
+      comment: editComment || null,
+      lines: validLines,
+    });
+    setIsEditing(false);
+  };
 
   const clearFilters = () => {
     setFilterSupplier('');

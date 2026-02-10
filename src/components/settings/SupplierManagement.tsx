@@ -247,12 +247,33 @@ export function SupplierManagement() {
                 />
               </div>
               <div className="space-y-2">
+                <Label htmlFor="email2">Email 2</Label>
+                <Input
+                  id="email2"
+                  type="email"
+                  placeholder="commercial@fournisseur.fr"
+                  value={formData.email2}
+                  onChange={(e) => setFormData({ ...formData, email2: e.target.value })}
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
                 <Label htmlFor="phone">Téléphone</Label>
                 <Input
                   id="phone"
                   placeholder="01 23 45 67 89"
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="client-code">Code client</Label>
+                <Input
+                  id="client-code"
+                  placeholder="Ex: CLI-001"
+                  value={formData.client_code}
+                  onChange={(e) => setFormData({ ...formData, client_code: e.target.value })}
                 />
               </div>
             </div>

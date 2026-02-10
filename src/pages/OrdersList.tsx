@@ -92,10 +92,20 @@ export default function OrdersList() {
         body: {
           orderId: detailOrder.id,
           recipientEmail,
-          senderName: 'BreadSafe',
+          senderName: 'Bread Shop',
         },
       });
       if (error) throw error;
+
+      // Update order status to 'sent'
+      await supabase
+        .from('supplier_orders')
+        .update({ status: 'sent' as any })
+        .eq('id', detailOrder.id);
+
+      queryClient.invalidateQueries({ queryKey: ['supplier_orders'] });
+      queryClient.invalidateQueries({ queryKey: ['supplier_order', detailOrder.id] });
+
       toast.success(`Email envoyé à ${recipientEmail}`);
     } catch (err: any) {
       toast.error(err.message || "Erreur lors de l'envoi");

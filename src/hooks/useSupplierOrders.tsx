@@ -195,3 +195,56 @@ export function useCreateSupplierOrder() {
     },
   });
 }
+
+export function useUpdateSupplierOrder() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: UpdateOrderInput) => {
+      // Update order header
+      const { error: orderError } = await supabase
+        .from('supplier_orders')
+        .update({
+          expected_delivery_date: input.expected_delivery_date || null,
+          comment: input.comment || null,
+        })
+        .eq('id', input.id);
+
+      if (orderError) throw orderError;
+
+      // Delete existing lines and re-insert
+      const { error: deleteError } = await supabase
+        .from('supplier_order_lines')
+        .delete()
+        .eq('order_id', input.id);
+
+      if (deleteError) throw deleteError;
+
+      const newLines = input.lines
+        .filter((l) => l.quantity > 0)
+        .map((line) => ({
+          order_id: input.id,
+          raw_material_id: line.raw_material_id,
+          quantity_ordered: line.quantity,
+          unit: line.unit,
+        }));
+
+      if (newLines.length === 0) throw new Error('Aucune ligne de commande');
+
+      const { error: linesError } = await supabase
+        .from('supplier_order_lines')
+        .insert(newLines);
+
+      if (linesError) throw linesError;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['supplier_orders'] });
+      queryClient.invalidateQueries({ queryKey: ['supplier_order'] });
+      toast.success('Commande modifiée avec succès');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Erreur lors de la modification");
+      console.error(error);
+    },
+  });
+}

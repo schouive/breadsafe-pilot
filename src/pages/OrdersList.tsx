@@ -55,6 +55,7 @@ function isOrderLate(order: { status: string; expected_delivery_date: string | n
 }
 
 export default function OrdersList() {
+  const queryClient = useQueryClient();
   const [sendingEmail, setSendingEmail] = useState(false);
   const { data: suppliers } = useSuppliers();
   const [filterSupplier, setFilterSupplier] = useState<string>('');

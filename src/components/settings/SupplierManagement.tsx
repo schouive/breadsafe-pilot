@@ -350,11 +350,30 @@ export function SupplierManagement() {
                   />
                 </div>
                 <div className="space-y-2">
+                  <Label htmlFor="edit-email2">Email 2</Label>
+                  <Input
+                    id="edit-email2"
+                    type="email"
+                    value={editingSupplier.email2 || ''}
+                    onChange={(e) => setEditingSupplier({ ...editingSupplier, email2: e.target.value || null })}
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
                   <Label htmlFor="edit-phone">Téléphone</Label>
                   <Input
                     id="edit-phone"
                     value={editingSupplier.phone || ''}
                     onChange={(e) => setEditingSupplier({ ...editingSupplier, phone: e.target.value || null })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-client-code">Code client</Label>
+                  <Input
+                    id="edit-client-code"
+                    value={editingSupplier.client_code || ''}
+                    onChange={(e) => setEditingSupplier({ ...editingSupplier, client_code: e.target.value || null })}
                   />
                 </div>
               </div>

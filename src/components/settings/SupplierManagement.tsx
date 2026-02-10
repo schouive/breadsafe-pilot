@@ -41,9 +41,11 @@ export function SupplierManagement() {
     name: '',
     contact_name: '',
     email: '',
+    email2: '',
     phone: '',
     address: '',
     order_email: '',
+    client_code: '',
   });
 
   const resetForm = () => {

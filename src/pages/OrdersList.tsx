@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { format, isPast, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { ClipboardList, Filter, Eye, Mail, Loader2 } from 'lucide-react';
@@ -34,12 +35,14 @@ import { useSupplierOrders, useSupplierOrder, SupplierOrderWithSupplier } from '
 import { useSuppliers } from '@/hooks/useSuppliers';
 
 const STATUS_LABELS: Record<string, string> = {
+  draft: 'En cours de création',
   sent: 'Envoyée',
   partially_received: 'Partiellement reçue',
   received: 'Reçue',
 };
 
 const STATUS_CLASSES: Record<string, string> = {
+  draft: 'bg-muted text-muted-foreground border-border',
   sent: 'bg-primary/10 text-primary border-primary/30',
   partially_received: 'bg-[hsl(var(--status-acceptable-light))] text-[hsl(38,92%,25%)] border-[hsl(var(--status-acceptable)/0.3)]',
   received: 'bg-[hsl(var(--status-conforme-light))] text-[hsl(142,71%,25%)] border-[hsl(var(--status-conforme)/0.3)]',
@@ -52,6 +55,7 @@ function isOrderLate(order: { status: string; expected_delivery_date: string | n
 }
 
 export default function OrdersList() {
+  const queryClient = useQueryClient();
   const [sendingEmail, setSendingEmail] = useState(false);
   const { data: suppliers } = useSuppliers();
   const [filterSupplier, setFilterSupplier] = useState<string>('');
@@ -90,10 +94,20 @@ export default function OrdersList() {
         body: {
           orderId: detailOrder.id,
           recipientEmail,
-          senderName: 'BreadSafe',
+          senderName: 'Bread Shop',
         },
       });
       if (error) throw error;
+
+      // Update order status to 'sent'
+      await supabase
+        .from('supplier_orders')
+        .update({ status: 'sent' as any })
+        .eq('id', detailOrder.id);
+
+      queryClient.invalidateQueries({ queryKey: ['supplier_orders'] });
+      queryClient.invalidateQueries({ queryKey: ['supplier_order', detailOrder.id] });
+
       toast.success(`Email envoyé à ${recipientEmail}`);
     } catch (err: any) {
       toast.error(err.message || "Erreur lors de l'envoi");
@@ -148,6 +162,7 @@ export default function OrdersList() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Tous</SelectItem>
+                  <SelectItem value="draft">En cours de création</SelectItem>
                   <SelectItem value="sent">Envoyée</SelectItem>
                   <SelectItem value="partially_received">Partiellement reçue</SelectItem>
                   <SelectItem value="received">Reçue</SelectItem>
@@ -310,7 +325,7 @@ export default function OrdersList() {
                 </div>
               </div>
               {/* Send Email Button */}
-              {detailOrder.status === 'sent' && (
+              {((detailOrder.status as string) === 'draft' || detailOrder.status === 'sent') && (
                 <Button
                   onClick={handleSendEmail}
                   disabled={sendingEmail}
@@ -321,7 +336,7 @@ export default function OrdersList() {
                   ) : (
                     <Mail className="h-4 w-4 mr-2" />
                   )}
-                  {sendingEmail ? 'Envoi en cours...' : 'Envoyer par email'}
+                  {sendingEmail ? 'Envoi en cours...' : (detailOrder.status as string) === 'draft' ? 'Envoyer la commande' : 'Renvoyer par email'}
                 </Button>
               )}
             </div>

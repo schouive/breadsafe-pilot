@@ -373,16 +373,7 @@ export function SupplierManagement() {
                   onChange={(e) => setEditingSupplier({ ...editingSupplier, address: e.target.value || null })}
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-order-email">Email de commande</Label>
-                <Input
-                  id="edit-order-email"
-                  type="email"
-                  value={editingSupplier.order_email || ''}
-                  onChange={(e) => setEditingSupplier({ ...editingSupplier, order_email: e.target.value || null })}
-                />
-                <p className="text-xs text-muted-foreground">Adresse email dédiée pour l'envoi des commandes</p>
-              </div>
+            </div>
             </div>
           )}
           <DialogFooter>

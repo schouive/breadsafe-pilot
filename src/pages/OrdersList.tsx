@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { format, isPast, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { ClipboardList, Filter, Eye, Mail, Loader2 } from 'lucide-react';
+import { ClipboardList, Filter, Eye, Mail, Loader2, Pencil, Save, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
@@ -31,8 +32,8 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
-import { useSupplierOrders, useSupplierOrder, SupplierOrderWithSupplier } from '@/hooks/useSupplierOrders';
-import { useSuppliers } from '@/hooks/useSuppliers';
+import { useSupplierOrders, useSupplierOrder, useUpdateSupplierOrder, SupplierOrderWithSupplier } from '@/hooks/useSupplierOrders';
+import { useSuppliers, useRawMaterials } from '@/hooks/useSuppliers';
 
 const STATUS_LABELS: Record<string, string> = {
   draft: 'En cours de création',

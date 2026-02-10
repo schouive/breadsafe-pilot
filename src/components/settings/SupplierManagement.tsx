@@ -55,7 +55,6 @@ export function SupplierManagement() {
       email2: '',
       phone: '',
       address: '',
-      order_email: '',
       client_code: '',
     });
   };

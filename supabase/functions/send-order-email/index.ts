@@ -119,7 +119,7 @@ serve(async (req: Request) => {
     if (order.suppliers?.email2) ccRecipients.push(order.suppliers.email2);
 
     const emailResponse = await resend.emails.send({
-      from: "Commandes <onboarding@resend.dev>",
+      from: "Bread Shop – Commandes <commandes@breadshop.fr>",
       to: Array.from(toRecipients),
       ...(ccRecipients.length > 0 ? { cc: ccRecipients } : {}),
       subject: `Commande ${order.order_number} — ${order.suppliers?.name || ""}`,

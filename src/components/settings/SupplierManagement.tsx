@@ -72,7 +72,6 @@ export function SupplierManagement() {
       client_code: formData.client_code.trim() || null,
       order_email: null,
     });
-    });
     
     setIsAddOpen(false);
     resetForm();

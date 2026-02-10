@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { format, isPast, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { ClipboardList, Filter, Eye, Mail, Loader2 } from 'lucide-react';
+import { ClipboardList, Filter, Eye, Mail, Loader2, Pencil, Save, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
@@ -31,8 +32,8 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
-import { useSupplierOrders, useSupplierOrder, SupplierOrderWithSupplier } from '@/hooks/useSupplierOrders';
-import { useSuppliers } from '@/hooks/useSuppliers';
+import { useSupplierOrders, useSupplierOrder, useUpdateSupplierOrder, SupplierOrderWithSupplier } from '@/hooks/useSupplierOrders';
+import { useSuppliers, useRawMaterials } from '@/hooks/useSuppliers';
 
 const STATUS_LABELS: Record<string, string> = {
   draft: 'En cours de création',
@@ -54,6 +55,16 @@ function isOrderLate(order: { status: string; expected_delivery_date: string | n
   return isPast(parseISO(order.expected_delivery_date));
 }
 
+const ORDER_UNITS = [
+  { value: 'bidon', label: 'Bidon(s)' },
+  { value: 'carton', label: 'Carton(s)' },
+  { value: 'palette', label: 'Palette(s)' },
+  { value: 'piece', label: 'Pièce(s)' },
+  { value: 'ramette', label: 'Ramette(s)' },
+  { value: 'sac', label: 'Sac(s)' },
+  { value: 'seau', label: 'Sceau(x)' },
+];
+
 export default function OrdersList() {
   const queryClient = useQueryClient();
   const [sendingEmail, setSendingEmail] = useState(false);
@@ -63,6 +74,12 @@ export default function OrdersList() {
   const [filterDateFrom, setFilterDateFrom] = useState('');
   const [filterDateTo, setFilterDateTo] = useState('');
   const [detailOrderId, setDetailOrderId] = useState<string | undefined>(undefined);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editDate, setEditDate] = useState('');
+  const [editComment, setEditComment] = useState('');
+  const [editLines, setEditLines] = useState<{ raw_material_id: string; name: string; quantity: number; unit: string }[]>([]);
+
+  const updateOrder = useUpdateSupplierOrder();
 
   const filters = {
     supplierId: filterSupplier || undefined,
@@ -73,6 +90,55 @@ export default function OrdersList() {
 
   const { data: orders, isLoading } = useSupplierOrders(filters);
   const { data: detailOrder } = useSupplierOrder(detailOrderId);
+  const { data: rawMaterials } = useRawMaterials(detailOrder?.supplier_id);
+
+  const startEditing = () => {
+    if (!detailOrder) return;
+    setEditDate(detailOrder.expected_delivery_date || '');
+    setEditComment(detailOrder.comment || '');
+    // Build edit lines from existing order lines + all supplier raw materials
+    const existingLines = detailOrder.supplier_order_lines || [];
+    if (rawMaterials) {
+      const lines = rawMaterials.map((m) => {
+        const existing = existingLines.find((l) => l.raw_material_id === m.id);
+        return {
+          raw_material_id: m.id,
+          name: m.name,
+          quantity: existing?.quantity_ordered ?? 0,
+          unit: existing?.unit ?? ((m as any).order_unit || m.purchase_unit || m.unit || 'kg'),
+        };
+      });
+      setEditLines(lines);
+    } else {
+      setEditLines(existingLines.map((l) => ({
+        raw_material_id: l.raw_material_id,
+        name: l.raw_materials?.name || '—',
+        quantity: l.quantity_ordered,
+        unit: l.unit,
+      })));
+    }
+    setIsEditing(true);
+  };
+
+  const cancelEditing = () => {
+    setIsEditing(false);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!detailOrder) return;
+    const validLines = editLines.filter((l) => l.quantity > 0);
+    if (validLines.length === 0) {
+      toast.error('Au moins une ligne avec quantité > 0 est requise');
+      return;
+    }
+    await updateOrder.mutateAsync({
+      id: detailOrder.id,
+      expected_delivery_date: editDate || null,
+      comment: editComment || null,
+      lines: validLines,
+    });
+    setIsEditing(false);
+  };
 
   const clearFilters = () => {
     setFilterSupplier('');
@@ -256,14 +322,22 @@ export default function OrdersList() {
       </Card>
 
       {/* Order Detail Sheet */}
-      <Sheet open={!!detailOrderId} onOpenChange={(open) => !open && setDetailOrderId(undefined)}>
+      <Sheet open={!!detailOrderId} onOpenChange={(open) => { if (!open) { setDetailOrderId(undefined); setIsEditing(false); } }}>
         <SheetContent className="sm:max-w-lg overflow-y-auto">
           <SheetHeader>
-            <SheetTitle className="font-mono">
-              {detailOrder?.order_number || 'Chargement...'}
-            </SheetTitle>
+            <div className="flex items-center justify-between">
+              <SheetTitle className="font-mono">
+                {detailOrder?.order_number || 'Chargement...'}
+              </SheetTitle>
+              {detailOrder && (detailOrder.status as string) === 'draft' && !isEditing && (
+                <Button variant="outline" size="sm" onClick={startEditing}>
+                  <Pencil className="h-4 w-4 mr-1" />
+                  Modifier
+                </Button>
+              )}
+            </div>
           </SheetHeader>
-          {detailOrder && (
+          {detailOrder && !isEditing && (
             <div className="mt-6 space-y-6">
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
@@ -339,6 +413,103 @@ export default function OrdersList() {
                   {sendingEmail ? 'Envoi en cours...' : (detailOrder.status as string) === 'draft' ? 'Envoyer la commande' : 'Renvoyer par email'}
                 </Button>
               )}
+            </div>
+          )}
+
+          {/* Edit Mode */}
+          {detailOrder && isEditing && (
+            <div className="mt-6 space-y-6">
+              <div className="space-y-4">
+                <div className="space-y-1.5">
+                  <Label className="text-sm">Date de réception prévue</Label>
+                  <Input
+                    type="date"
+                    value={editDate}
+                    onChange={(e) => setEditDate(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-sm">Commentaire</Label>
+                  <Textarea
+                    value={editComment}
+                    onChange={(e) => setEditComment(e.target.value)}
+                    placeholder="Commentaire libre..."
+                    rows={2}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <h3 className="font-medium mb-3">Lignes de commande</h3>
+                <div className="space-y-2">
+                  {editLines.map((line) => (
+                    <div
+                      key={line.raw_material_id}
+                      className={`p-3 rounded-lg border transition-colors ${line.quantity > 0 ? 'border-primary/40 bg-primary/5' : 'bg-card'}`}
+                    >
+                      <p className="font-medium text-sm mb-2 truncate">{line.name}</p>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="number"
+                          min="0"
+                          step="0.1"
+                          value={line.quantity || ''}
+                          onChange={(e) => {
+                            const qty = parseFloat(e.target.value) || 0;
+                            setEditLines((prev) =>
+                              prev.map((l) =>
+                                l.raw_material_id === line.raw_material_id ? { ...l, quantity: qty } : l
+                              )
+                            );
+                          }}
+                          className="flex-1 min-w-0 text-center"
+                          placeholder="Qté"
+                        />
+                        <Select
+                          value={line.unit}
+                          onValueChange={(v) => {
+                            setEditLines((prev) =>
+                              prev.map((l) =>
+                                l.raw_material_id === line.raw_material_id ? { ...l, unit: v } : l
+                              )
+                            );
+                          }}
+                        >
+                          <SelectTrigger className="w-28 shrink-0">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {ORDER_UNITS.map((u) => (
+                              <SelectItem key={u.value} value={u.value}>
+                                {u.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <Button variant="outline" onClick={cancelEditing} className="flex-1">
+                  <X className="h-4 w-4 mr-1" />
+                  Annuler
+                </Button>
+                <Button
+                  onClick={handleSaveEdit}
+                  disabled={updateOrder.isPending}
+                  className="flex-1"
+                >
+                  {updateOrder.isPending ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Save className="h-4 w-4 mr-2" />
+                  )}
+                  {updateOrder.isPending ? 'Sauvegarde...' : 'Enregistrer'}
+                </Button>
+              </div>
             </div>
           )}
         </SheetContent>

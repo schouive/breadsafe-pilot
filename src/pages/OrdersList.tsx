@@ -322,14 +322,22 @@ export default function OrdersList() {
       </Card>
 
       {/* Order Detail Sheet */}
-      <Sheet open={!!detailOrderId} onOpenChange={(open) => !open && setDetailOrderId(undefined)}>
+      <Sheet open={!!detailOrderId} onOpenChange={(open) => { if (!open) { setDetailOrderId(undefined); setIsEditing(false); } }}>
         <SheetContent className="sm:max-w-lg overflow-y-auto">
           <SheetHeader>
-            <SheetTitle className="font-mono">
-              {detailOrder?.order_number || 'Chargement...'}
-            </SheetTitle>
+            <div className="flex items-center justify-between">
+              <SheetTitle className="font-mono">
+                {detailOrder?.order_number || 'Chargement...'}
+              </SheetTitle>
+              {detailOrder && (detailOrder.status as string) === 'draft' && !isEditing && (
+                <Button variant="outline" size="sm" onClick={startEditing}>
+                  <Pencil className="h-4 w-4 mr-1" />
+                  Modifier
+                </Button>
+              )}
+            </div>
           </SheetHeader>
-          {detailOrder && (
+          {detailOrder && !isEditing && (
             <div className="mt-6 space-y-6">
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
@@ -405,6 +413,103 @@ export default function OrdersList() {
                   {sendingEmail ? 'Envoi en cours...' : (detailOrder.status as string) === 'draft' ? 'Envoyer la commande' : 'Renvoyer par email'}
                 </Button>
               )}
+            </div>
+          )}
+
+          {/* Edit Mode */}
+          {detailOrder && isEditing && (
+            <div className="mt-6 space-y-6">
+              <div className="space-y-4">
+                <div className="space-y-1.5">
+                  <Label className="text-sm">Date de réception prévue</Label>
+                  <Input
+                    type="date"
+                    value={editDate}
+                    onChange={(e) => setEditDate(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-sm">Commentaire</Label>
+                  <Textarea
+                    value={editComment}
+                    onChange={(e) => setEditComment(e.target.value)}
+                    placeholder="Commentaire libre..."
+                    rows={2}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <h3 className="font-medium mb-3">Lignes de commande</h3>
+                <div className="space-y-2">
+                  {editLines.map((line) => (
+                    <div
+                      key={line.raw_material_id}
+                      className={`p-3 rounded-lg border transition-colors ${line.quantity > 0 ? 'border-primary/40 bg-primary/5' : 'bg-card'}`}
+                    >
+                      <p className="font-medium text-sm mb-2 truncate">{line.name}</p>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="number"
+                          min="0"
+                          step="0.1"
+                          value={line.quantity || ''}
+                          onChange={(e) => {
+                            const qty = parseFloat(e.target.value) || 0;
+                            setEditLines((prev) =>
+                              prev.map((l) =>
+                                l.raw_material_id === line.raw_material_id ? { ...l, quantity: qty } : l
+                              )
+                            );
+                          }}
+                          className="flex-1 min-w-0 text-center"
+                          placeholder="Qté"
+                        />
+                        <Select
+                          value={line.unit}
+                          onValueChange={(v) => {
+                            setEditLines((prev) =>
+                              prev.map((l) =>
+                                l.raw_material_id === line.raw_material_id ? { ...l, unit: v } : l
+                              )
+                            );
+                          }}
+                        >
+                          <SelectTrigger className="w-28 shrink-0">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {ORDER_UNITS.map((u) => (
+                              <SelectItem key={u.value} value={u.value}>
+                                {u.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <Button variant="outline" onClick={cancelEditing} className="flex-1">
+                  <X className="h-4 w-4 mr-1" />
+                  Annuler
+                </Button>
+                <Button
+                  onClick={handleSaveEdit}
+                  disabled={updateOrder.isPending}
+                  className="flex-1"
+                >
+                  {updateOrder.isPending ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Save className="h-4 w-4 mr-2" />
+                  )}
+                  {updateOrder.isPending ? 'Sauvegarde...' : 'Enregistrer'}
+                </Button>
+              </div>
             </div>
           )}
         </SheetContent>

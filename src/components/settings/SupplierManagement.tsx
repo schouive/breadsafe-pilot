@@ -69,8 +69,9 @@ export function SupplierManagement() {
       email2: formData.email2.trim() || null,
       phone: formData.phone.trim() || null,
       address: formData.address.trim() || null,
-      order_email: formData.order_email.trim() || null,
       client_code: formData.client_code.trim() || null,
+      order_email: null,
+    });
     });
     
     setIsAddOpen(false);

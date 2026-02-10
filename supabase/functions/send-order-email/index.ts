@@ -42,7 +42,7 @@ serve(async (req: Request) => {
       .from("supplier_orders")
       .select(`
         *,
-        suppliers ( id, name, order_email, email, email2 ),
+        suppliers ( id, name, order_email, email, email2, client_code ),
         supplier_order_lines (
           *,
           raw_materials ( id, name, unit, purchase_unit )

@@ -94,7 +94,7 @@ export function useSupplierOrder(id: string | undefined) {
         .from('supplier_orders')
         .select(`
           *,
-          suppliers ( id, name, order_email, email ),
+          suppliers ( id, name, order_email, email, client_code ),
           supplier_order_lines (
             *,
             raw_materials ( id, name, unit, purchase_unit )

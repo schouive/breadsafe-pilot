@@ -16,6 +16,9 @@ import {
 import { useSuppliers } from '@/hooks/useSuppliers';
 import { useRawMaterials } from '@/hooks/useSuppliers';
 import { useCreateSupplierOrder } from '@/hooks/useSupplierOrders';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { Loader2 } from 'lucide-react';
 
 const ORDER_UNITS = [
   { value: 'bidon', label: 'Bidon(s)' },
@@ -95,17 +98,48 @@ export default function NewOrder() {
 
   const validLines = materialLines.filter((l) => l.quantity > 0);
 
+  const [sending, setSending] = useState(false);
+
   const handleSubmit = async () => {
     if (!selectedSupplierId || validLines.length === 0 || !expectedDate) return;
 
-    await createOrder.mutateAsync({
-      supplier_id: selectedSupplierId,
-      expected_delivery_date: expectedDate,
-      comment: comment || null,
-      lines: validLines,
-    });
+    setSending(true);
+    try {
+      const order = await createOrder.mutateAsync({
+        supplier_id: selectedSupplierId,
+        expected_delivery_date: expectedDate,
+        comment: comment || null,
+        lines: validLines,
+      });
 
-    navigate('/orders/list');
+      // Send email
+      const supplier = suppliers?.find((s) => s.id === selectedSupplierId);
+      const recipientEmail = supplier?.order_email || supplier?.email;
+      if (recipientEmail && order) {
+        const { error } = await supabase.functions.invoke('send-order-email', {
+          body: {
+            orderId: (order as any).id,
+            recipientEmail,
+            senderName: 'Bread Shop',
+          },
+        });
+        if (!error) {
+          await supabase
+            .from('supplier_orders')
+            .update({ status: 'sent' as any })
+            .eq('id', (order as any).id);
+          toast.success(`Commande envoyée à ${recipientEmail}`);
+        } else {
+          toast.error("Commande créée mais l'envoi de l'email a échoué");
+        }
+      }
+
+      navigate('/orders/list');
+    } catch {
+      // error handled by mutation
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -234,10 +268,17 @@ export default function NewOrder() {
           </Button>
           <Button
             onClick={handleSubmit}
-            disabled={createOrder.isPending || !expectedDate}
+            disabled={sending || createOrder.isPending || !expectedDate}
             className="min-w-[160px]"
           >
-            {createOrder.isPending ? 'Création...' : `Créer la commande (${validLines.length} MP)`}
+            {sending ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Envoi en cours...
+              </>
+            ) : (
+              `Envoyer (${validLines.length} MP)`
+            )}
           </Button>
         </div>
       )}

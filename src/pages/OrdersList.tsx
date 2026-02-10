@@ -398,21 +398,6 @@ export default function OrdersList() {
                   ))}
                 </div>
               </div>
-              {/* Send Email Button */}
-              {((detailOrder.status as string) === 'draft' || detailOrder.status === 'sent') && (
-                <Button
-                  onClick={handleSendEmail}
-                  disabled={sendingEmail}
-                  className="w-full"
-                >
-                  {sendingEmail ? (
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  ) : (
-                    <Mail className="h-4 w-4 mr-2" />
-                  )}
-                  {sendingEmail ? 'Envoi en cours...' : (detailOrder.status as string) === 'draft' ? 'Envoyer la commande' : 'Renvoyer par email'}
-                </Button>
-              )}
             </div>
           )}
 

@@ -6,7 +6,7 @@ export interface SupplierOrder {
   id: string;
   order_number: string;
   supplier_id: string;
-  status: 'sent' | 'partially_received' | 'received';
+  status: 'draft' | 'sent' | 'partially_received' | 'received';
   order_date: string;
   expected_delivery_date: string | null;
   comment: string | null;

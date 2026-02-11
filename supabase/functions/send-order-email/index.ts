@@ -105,7 +105,7 @@ serve(async (req: Request) => {
           <tbody>${linesHtml}</tbody>
         </table>
         ${order.comment ? `<p><strong>Commentaire :</strong> ${order.comment}</p>` : ""}
-        <p>Cordialement,<br/>${senderName || "L'équipe"}</p>
+        <p>Cordialement,<br/>Bread Shop</p>
       </div>
     `;
 

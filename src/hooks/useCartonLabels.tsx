@@ -27,13 +27,14 @@ export interface CartonLabel {
   id: string;
   product_sheet_id: string;
   label_title: string;
-  status: 'draft' | 'validated';
+  status: 'draft' | 'validated' | 'archived';
   validated_at: string | null;
   validated_by: string | null;
   validation_comment: string | null;
   version: number;
   snapshot_product_sheet_version: number | null;
   snapshot_ingredients_html: string | null;
+  snapshot_ingredients_html_original: string | null;
   snapshot_allergens_secondary: string[] | null;
   snapshot_nutrition: Record<string, number> | null;
   snapshot_net_weight: number | null;
@@ -47,6 +48,7 @@ export interface CartonLabel {
   product_sheets?: {
     id: string;
     product_name: string;
+    product_reference: string | null;
     version: number;
     is_published: boolean;
     snapshot_ingredients: unknown;
@@ -200,10 +202,11 @@ export function useCreateCartonLabel() {
           created_by: user.id,
           snapshot_product_sheet_version: sheet.version,
           snapshot_ingredients_html: ingredientsHtml || null,
+          snapshot_ingredients_html_original: ingredientsHtml || null,
           snapshot_allergens_secondary: snapshotAllergens?.secondary || [],
           snapshot_nutrition: nutritionFor100g,
-        snapshot_net_weight: sheet.carton_weight,
-        snapshot_net_weight_unit: 'kg', // Carton weight is typically in kg
+          snapshot_net_weight: sheet.carton_weight,
+          snapshot_net_weight_unit: 'kg',
           snapshot_storage_instructions: sheet.storage_instructions,
           snapshot_thawing_instructions: sheet.thawing_instructions,
         })
@@ -259,6 +262,81 @@ export function useUpdateCartonLabel() {
         description: 'Impossible de modifier l\'étiquette: ' + error.message,
         variant: 'destructive',
       });
+    },
+  });
+}
+
+// Update INCO HTML content (manual edit - only for drafts)
+export function useUpdateIncoHtml() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async ({ id, html }: { id: string; html: string }) => {
+      // Verify label is in draft status
+      const { data: label, error: labelError } = await supabase
+        .from('carton_labels')
+        .select('status, snapshot_ingredients_html, snapshot_ingredients_html_original')
+        .eq('id', id)
+        .single();
+
+      if (labelError) throw labelError;
+      if (label.status !== 'draft') throw new Error('Seuls les brouillons peuvent être modifiés');
+
+      // Save original if not already saved
+      const updates: Record<string, unknown> = {
+        snapshot_ingredients_html: html,
+      };
+      if (!label.snapshot_ingredients_html_original) {
+        updates.snapshot_ingredients_html_original = label.snapshot_ingredients_html;
+      }
+
+      const { data, error } = await supabase
+        .from('carton_labels')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['carton-labels'] });
+      toast({
+        title: 'Liste INCO modifiée',
+        description: 'Les modifications ont été enregistrées.',
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: 'Erreur',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+}
+
+// Archive a validated label (called when recipe changes)
+export function useArchiveCartonLabel() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { data, error } = await supabase
+        .from('carton_labels')
+        .update({ status: 'archived' })
+        .eq('id', id)
+        .eq('status', 'validated')
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['carton-labels'] });
     },
   });
 }
@@ -411,13 +489,14 @@ export function useRefreshCartonLabelSnapshot() {
       const { data, error } = await supabase
         .from('carton_labels')
         .update({
-          status: 'draft', // Reset to draft when refreshing
+          status: 'draft',
           snapshot_product_sheet_version: sheet.version,
           snapshot_ingredients_html: ingredientsHtml || null,
+          snapshot_ingredients_html_original: ingredientsHtml || null,
           snapshot_allergens_secondary: snapshotAllergens?.secondary || [],
           snapshot_nutrition: nutritionFor100g,
-        snapshot_net_weight: sheet.carton_weight,
-        snapshot_net_weight_unit: 'kg', // Carton weight is typically in kg
+          snapshot_net_weight: sheet.carton_weight,
+          snapshot_net_weight_unit: 'kg',
           snapshot_storage_instructions: sheet.storage_instructions,
           snapshot_thawing_instructions: sheet.thawing_instructions,
           snapshot_created_at: new Date().toISOString(),

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Package, Edit2, Trash2, Eye, Check, X, AlertTriangle, Download } from 'lucide-react';
+import { Plus, Package, Edit2, Trash2, Eye, Check, X, AlertTriangle, Download, Archive, Edit3, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -43,6 +43,7 @@ export function CartonLabelManagement() {
   };
 
   const validatedCount = labels?.filter(l => l.status === 'validated').length || 0;
+  const draftCount = labels?.filter(l => l.status === 'draft').length || 0;
 
   const handleExportCSV = () => {
     if (!labels || labels.length === 0) {
@@ -50,15 +51,47 @@ export function CartonLabelManagement() {
       return;
     }
     
+    // Only validated labels can be exported
+    if (validatedCount === 0) {
+      toast.error('L\'INCO doit être validé avant l\'export.', {
+        description: 'Validez au moins une étiquette pour pouvoir exporter.',
+      });
+      return;
+    }
+
     const result = downloadZebraCSV(labels);
     if (result.success) {
       toast.success('Export CSV généré', {
-        description: `${result.count} étiquette(s) exportée(s) vers etiquettes_carton.csv`
+        description: `${result.count} étiquette(s) validée(s) exportée(s)`,
       });
     } else {
       toast.error(result.message);
     }
   };
+
+  const getStatusBadge = (label: CartonLabel) => {
+    if (label.status === 'archived') return (
+      <Badge variant="outline" className="shrink-0 bg-muted text-muted-foreground border-muted-foreground/30">
+        <Archive className="h-3 w-3 mr-1" /> Archivée
+      </Badge>
+    );
+    if (label.status === 'validated') return (
+      <Badge variant="outline" className="shrink-0 bg-success/10 text-success border-success/30">
+        <Check className="h-3 w-3 mr-1" /> Validée
+      </Badge>
+    );
+    return (
+      <Badge variant="outline" className="shrink-0 bg-warning/10 text-warning border-warning/30">
+        <Edit3 className="h-3 w-3 mr-1" /> Brouillon
+      </Badge>
+    );
+  };
+
+  // Sort: drafts first, then validated, then archived
+  const sortedLabels = labels?.slice().sort((a, b) => {
+    const order = { draft: 0, validated: 1, archived: 2 };
+    return (order[a.status] || 3) - (order[b.status] || 3);
+  });
 
   return (
     <>
@@ -70,7 +103,7 @@ export function CartonLabelManagement() {
               <div className="min-w-0">
                 <CardTitle className="truncate">Étiquettes Carton</CardTitle>
                 <CardDescription className="line-clamp-2">
-                  Générez les étiquettes réglementaires pour vos cartons de produits finis
+                  Générez et validez les étiquettes INCO réglementaires pour vos cartons
                 </CardDescription>
               </div>
             </div>
@@ -87,11 +120,21 @@ export function CartonLabelManagement() {
               </Button>
             </div>
           </div>
+
+          {/* Warning banner if drafts pending */}
+          {draftCount > 0 && (
+            <div className="p-3 rounded-lg bg-warning/10 border border-warning/30 flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4 text-warning shrink-0" />
+              <p className="text-sm text-warning">
+                {draftCount} étiquette(s) en attente de validation INCO
+              </p>
+            </div>
+          )}
         </CardHeader>
         <CardContent>
           {isLoading ? (
             <p className="text-muted-foreground">Chargement...</p>
-          ) : labels?.length === 0 ? (
+          ) : sortedLabels?.length === 0 ? (
             <div className="text-center py-12">
               <Package className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
               <p className="text-muted-foreground mb-4">Aucune étiquette carton créée</p>
@@ -102,10 +145,12 @@ export function CartonLabelManagement() {
             </div>
           ) : (
             <div className="space-y-3">
-              {labels?.map((label) => (
+              {sortedLabels?.map((label) => (
                 <div
                   key={label.id}
-                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
+                  className={`flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors ${
+                    label.status === 'archived' ? 'opacity-60' : ''
+                  }`}
                 >
                   <div className="flex items-start sm:items-center gap-3 min-w-0 flex-1">
                     <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
@@ -114,10 +159,8 @@ export function CartonLabelManagement() {
                     <div className="space-y-1 min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
                         <p className="font-medium truncate">{label.label_title}</p>
-                        <Badge variant="outline" className="text-xs shrink-0">
-                          v{label.version}
-                        </Badge>
-                        {isOutdated(label) && (
+                        <Badge variant="outline" className="text-xs shrink-0">v{label.version}</Badge>
+                        {isOutdated(label) && label.status !== 'archived' && (
                           <Badge variant="outline" className="text-xs shrink-0 bg-warning/10 text-warning border-warning/30">
                             <AlertTriangle className="h-3 w-3 mr-1" />
                             Obsolète
@@ -136,42 +179,22 @@ export function CartonLabelManagement() {
                     </div>
                   </div>
                   <div className="flex items-center justify-between sm:justify-end gap-2 shrink-0">
-                    <Badge
-                      variant="outline"
-                      className={`shrink-0 ${label.status === 'validated' ? 'bg-success/10 text-success border-success/30' : 'bg-muted'}`}
-                    >
-                      {label.status === 'validated' ? (
-                        <><Check className="h-3 w-3 mr-1" /> Validée</>
-                      ) : (
-                        <><X className="h-3 w-3 mr-1" /> Brouillon</>
-                      )}
-                    </Badge>
+                    {getStatusBadge(label)}
                     <div className="flex items-center gap-1">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-8"
-                        onClick={() => setViewingLabel(label)}
-                      >
+                      <Button variant="outline" size="sm" className="h-8" onClick={() => setViewingLabel(label)}>
                         <Eye className="h-4 w-4 mr-1" />
                         Voir
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => setEditingLabel(label)}
-                      >
-                        <Edit2 className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => setDeletingLabel(label)}
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
+                      {label.status !== 'archived' && (
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setEditingLabel(label)}>
+                          <Edit2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                      {label.status !== 'archived' && (
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setDeletingLabel(label)}>
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -181,30 +204,10 @@ export function CartonLabelManagement() {
         </CardContent>
       </Card>
 
-      {/* Add Dialog */}
-      <CartonLabelFormDialog
-        open={isAddOpen}
-        onOpenChange={setIsAddOpen}
-        label={null}
-        mode="create"
-      />
+      <CartonLabelFormDialog open={isAddOpen} onOpenChange={setIsAddOpen} label={null} mode="create" />
+      <CartonLabelFormDialog open={!!editingLabel} onOpenChange={(open) => !open && setEditingLabel(null)} label={editingLabel} mode="edit" />
+      <CartonLabelDetailSheet open={!!viewingLabel} onOpenChange={(open) => !open && setViewingLabel(null)} label={viewingLabel} />
 
-      {/* Edit Dialog */}
-      <CartonLabelFormDialog
-        open={!!editingLabel}
-        onOpenChange={(open) => !open && setEditingLabel(null)}
-        label={editingLabel}
-        mode="edit"
-      />
-
-      {/* View Sheet */}
-      <CartonLabelDetailSheet
-        open={!!viewingLabel}
-        onOpenChange={(open) => !open && setViewingLabel(null)}
-        label={viewingLabel}
-      />
-
-      {/* Delete Confirmation */}
       <AlertDialog open={!!deletingLabel} onOpenChange={(open) => !open && setDeletingLabel(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -215,10 +218,7 @@ export function CartonLabelManagement() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
               Supprimer
             </AlertDialogAction>
           </AlertDialogFooter>

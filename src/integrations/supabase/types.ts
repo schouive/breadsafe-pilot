@@ -63,6 +63,7 @@ export type Database = {
           snapshot_allergens_secondary: Json | null
           snapshot_created_at: string | null
           snapshot_ingredients_html: string | null
+          snapshot_ingredients_html_original: string | null
           snapshot_net_weight: number | null
           snapshot_net_weight_unit: string | null
           snapshot_nutrition: Json | null
@@ -85,6 +86,7 @@ export type Database = {
           snapshot_allergens_secondary?: Json | null
           snapshot_created_at?: string | null
           snapshot_ingredients_html?: string | null
+          snapshot_ingredients_html_original?: string | null
           snapshot_net_weight?: number | null
           snapshot_net_weight_unit?: string | null
           snapshot_nutrition?: Json | null
@@ -107,6 +109,7 @@ export type Database = {
           snapshot_allergens_secondary?: Json | null
           snapshot_created_at?: string | null
           snapshot_ingredients_html?: string | null
+          snapshot_ingredients_html_original?: string | null
           snapshot_net_weight?: number | null
           snapshot_net_weight_unit?: string | null
           snapshot_nutrition?: Json | null
@@ -245,6 +248,47 @@ export type Database = {
             columns: ["raw_material_id"]
             isOneToOne: false
             referencedRelation: "raw_materials"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inco_change_logs: {
+        Row: {
+          action: string
+          allergens_removed: string[] | null
+          carton_label_id: string
+          created_at: string
+          html_after: string | null
+          html_before: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          action: string
+          allergens_removed?: string[] | null
+          carton_label_id: string
+          created_at?: string
+          html_after?: string | null
+          html_before?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          action?: string
+          allergens_removed?: string[] | null
+          carton_label_id?: string
+          created_at?: string
+          html_after?: string | null
+          html_before?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inco_change_logs_carton_label_id_fkey"
+            columns: ["carton_label_id"]
+            isOneToOne: false
+            referencedRelation: "carton_labels"
             referencedColumns: ["id"]
           },
         ]

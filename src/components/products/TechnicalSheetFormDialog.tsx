@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { X, Plus, RefreshCw } from 'lucide-react';
 import { AlertTriangle, FileText, Lock, Image as ImageIcon, Upload } from 'lucide-react';
 import {
   Dialog,
@@ -102,6 +103,16 @@ export function TechnicalSheetFormDialog({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  
+  // Editable INCO & allergens state
+  const [editableIncoHtml, setEditableIncoHtml] = useState('');
+  const [editableAllergens, setEditableAllergens] = useState<string[]>([]);
+  const [editableAllergensSecondary, setEditableAllergensSecondary] = useState<string[]>([]);
+  const [newAllergen, setNewAllergen] = useState('');
+  const [newAllergenSecondary, setNewAllergenSecondary] = useState('');
+  const [incoManuallyEdited, setIncoManuallyEdited] = useState(false);
+  const [allergensManuallyEdited, setAllergensManuallyEdited] = useState(false);
+  const incoEditorRef = useRef<HTMLDivElement>(null);
   
   const [formData, setFormData] = useState({
     product_name: '',
@@ -248,41 +259,79 @@ export function TechnicalSheetFormDialog({
     return recipes?.find(r => r.id === selectedRecipeId);
   }, [recipes, selectedRecipeId]);
 
+  // Auto-sync generated INCO & allergens into editable state (only when not manually edited)
+  useEffect(() => {
+    if (!incoManuallyEdited && ingredientsListCondensedHtml) {
+      setEditableIncoHtml(ingredientsListCondensedHtml);
+      // Also update editor DOM if mounted
+      requestAnimationFrame(() => {
+        if (incoEditorRef.current) {
+          incoEditorRef.current.innerHTML = ingredientsListCondensedHtml;
+        }
+      });
+    }
+  }, [ingredientsListCondensedHtml, incoManuallyEdited]);
+
+  useEffect(() => {
+    if (!allergensManuallyEdited) {
+      setEditableAllergens(allergens);
+      setEditableAllergensSecondary(allergensSecondary);
+    }
+  }, [allergens, allergensSecondary, allergensManuallyEdited]);
+
   // Reset form when dialog opens
   useEffect(() => {
     if (open) {
+      setIncoManuallyEdited(false);
+      setAllergensManuallyEdited(false);
+      setNewAllergen('');
+      setNewAllergenSecondary('');
+      
       if (sheet && mode === 'edit') {
         // Load existing sheet data for editing
         setSelectedRecipeId(sheet.recipe_id);
+        const sheetAny = sheet as any;
+        // Load existing INCO & allergens
+        setEditableIncoHtml(sheetAny.inco_html || sheetAny.ingredients_declaration || '');
+        setIncoManuallyEdited(true); // In edit mode, keep existing content
+        const existingAllergens = sheetAny.snapshot_allergens;
+        if (existingAllergens) {
+          setEditableAllergens(existingAllergens.main || []);
+          setEditableAllergensSecondary(existingAllergens.secondary || []);
+          setAllergensManuallyEdited(true);
+        }
         setFormData({
           product_name: sheet.product_name || '',
-          description: (sheet as any).description || '',
-          product_reference: (sheet as any).product_reference || '',
+          description: sheetAny.description || '',
+          product_reference: sheetAny.product_reference || '',
           brand: sheet.brand || '',
           barcode: sheet.barcode || '',
           net_weight: sheet.net_weight?.toString() || '',
           net_weight_unit: sheet.net_weight_unit || 'g',
-          pieces_per_carton: (sheet as any).pieces_per_carton?.toString() || '',
-          cartons_per_layer: (sheet as any).cartons_per_layer?.toString() || '',
-          layers_per_pallet: (sheet as any).layers_per_pallet?.toString() || '',
-          carton_dimensions: (sheet as any).carton_dimensions || '',
-          carton_weight: (sheet as any).carton_weight?.toString() || '',
+          pieces_per_carton: sheetAny.pieces_per_carton?.toString() || '',
+          cartons_per_layer: sheetAny.cartons_per_layer?.toString() || '',
+          layers_per_pallet: sheetAny.layers_per_pallet?.toString() || '',
+          carton_dimensions: sheetAny.carton_dimensions || '',
+          carton_weight: sheetAny.carton_weight?.toString() || '',
           storage_instructions: sheet.storage_instructions || '',
           storage_type: determineStorageType(sheet.storage_instructions),
-          dlc_ddm_type: (sheet as any).dlc_ddm_type || 'DLC',
-          dlc_ddm_days: (sheet as any).dlc_ddm_days?.toString() || '',
-          thawing_instructions: (sheet as any).thawing_instructions || '',
+          dlc_ddm_type: sheetAny.dlc_ddm_type || 'DLC',
+          dlc_ddm_days: sheetAny.dlc_ddm_days?.toString() || '',
+          thawing_instructions: sheetAny.thawing_instructions || '',
           usage_instructions: sheet.usage_instructions || '',
-          quality_comment: (sheet as any).quality_comment || '',
+          quality_comment: sheetAny.quality_comment || '',
           origin_country: sheet.origin_country || '',
           is_published: sheet.is_published,
         });
-        if ((sheet as any).product_image_url) {
-          setImagePreview((sheet as any).product_image_url);
+        if (sheetAny.product_image_url) {
+          setImagePreview(sheetAny.product_image_url);
         }
       } else {
         // Reset for new FT
         setSelectedRecipeId('');
+        setEditableIncoHtml('');
+        setEditableAllergens([]);
+        setEditableAllergensSecondary([]);
         setFormData({
           product_name: '',
           description: '',
@@ -397,8 +446,8 @@ export function TechnicalSheetFormDialog({
       };
 
       const snapshotAllergens = {
-        main: allergens,
-        secondary: allergensSecondary,
+        main: editableAllergens,
+        secondary: editableAllergensSecondary,
       };
 
       // Calculate next version for this recipe
@@ -436,10 +485,10 @@ export function TechnicalSheetFormDialog({
         is_published: formData.is_published,
         published_at: formData.is_published ? new Date().toISOString() : null,
         created_by: user?.id || null,
-        // Generated fields - use condensed list for labels (INCO compliant) with HTML formatting for bold allergens
-        ingredients_declaration: ingredientsListCondensedHtml,
-        allergen_statement: allergens.length > 0 
-          ? `Contient: ${allergens.map(a => a.toUpperCase()).join(', ')}${allergensSecondary.length > 0 ? `. Peut contenir des traces de: ${allergensSecondary.join(', ')}` : ''}`
+        // Generated fields - use editable INCO HTML
+        ingredients_declaration: editableIncoHtml,
+        allergen_statement: editableAllergens.length > 0 
+          ? `Contient: ${editableAllergens.map(a => a.toUpperCase()).join(', ')}${editableAllergensSecondary.length > 0 ? `. Peut contenir des traces de: ${editableAllergensSecondary.join(', ')}` : ''}`
           : null,
       };
 
@@ -452,15 +501,17 @@ export function TechnicalSheetFormDialog({
         data.snapshot_allergens = snapshotAllergens;
         data.snapshot_nutrition = snapshotNutrition;
         data.snapshot_created_at = new Date().toISOString();
-        // INCO workflow: generate initial INCO HTML as draft
-        (data as any).inco_html = ingredientsListCondensedHtml || null;
+        // INCO workflow: use editable HTML as draft
+        (data as any).inco_html = editableIncoHtml || null;
         (data as any).inco_html_original = ingredientsListCondensedHtml || null;
         (data as any).inco_status = 'draft';
         (data as any).inco_version = 0;
         
         await createSheet.mutateAsync(data);
       } else if (sheet) {
-        // Only update editable fields, not snapshot data
+        // Update editable fields + INCO data
+        data.inco_html = editableIncoHtml || null;
+        data.snapshot_allergens = snapshotAllergens;
         await updateSheet.mutateAsync({ id: sheet.id, ...data });
       }
       
@@ -538,71 +589,182 @@ export function TechnicalSheetFormDialog({
             </div>
           </div>
 
-          {/* Recipe Data Preview (Read-only) */}
+          {/* INCO & Allergens - Editable */}
           {selectedRecipeId && (
             <>
               <Separator />
               <div className="space-y-4">
-                <div className="flex items-center gap-2">
-                  <Lock className="h-4 w-4 text-muted-foreground" />
-                  <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wider">
-                    Données recette (lecture seule)
-                  </h4>
-                </div>
+                <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wider">
+                  Données recette & INCO
+                </h4>
                 
-                {/* Ingredients - Show both versions */}
-                <div className="space-y-3">
-                <div className="p-4 bg-muted/30 rounded-lg border">
-                    <h5 className="font-medium text-sm mb-2">Liste ingrédients condensée (étiquette INCO)</h5>
-                    <p 
-                      className="text-sm text-muted-foreground whitespace-pre-wrap"
-                      dangerouslySetInnerHTML={{ 
-                        __html: ingredientsListCondensedHtml || 'Aucun ingrédient défini dans la recette' 
+                {/* Editable INCO ingredient list */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label>Liste des ingrédients INCO</Label>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setIncoManuallyEdited(false);
+                        setEditableIncoHtml(ingredientsListCondensedHtml);
+                        requestAnimationFrame(() => {
+                          if (incoEditorRef.current) {
+                            incoEditorRef.current.innerHTML = ingredientsListCondensedHtml;
+                          }
+                        });
                       }}
-                    />
+                      className="text-xs h-7"
+                    >
+                      <RefreshCw className="h-3 w-3 mr-1" /> Régénérer
+                    </Button>
                   </div>
-                  <details className="group">
-                    <summary className="cursor-pointer text-sm text-muted-foreground hover:text-foreground">
-                      Voir la liste technique complète
-                    </summary>
-                    <div className="p-4 mt-2 bg-muted/20 rounded-lg border">
-                      <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                        {ingredientsListTechnical || 'Aucun ingrédient défini dans la recette'}
-                      </p>
-                    </div>
-                  </details>
+                  <div
+                    ref={incoEditorRef}
+                    contentEditable
+                    suppressContentEditableWarning
+                    className="text-sm p-3 bg-background rounded-lg border focus:outline-none focus:ring-2 focus:ring-primary/50 min-h-[80px]"
+                    onInput={(e) => {
+                      setEditableIncoHtml(e.currentTarget.innerHTML);
+                      setIncoManuallyEdited(true);
+                    }}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Liste auto-générée depuis la recette. Modifiable directement. Les allergènes en <strong>gras</strong> sont conservés.
+                  </p>
                 </div>
 
-                {/* Allergens */}
-                {(allergens.length > 0 || allergensSecondary.length > 0) && (
-                  <div className="p-4 bg-warning/5 rounded-lg border border-warning/20">
-                    <div className="flex items-center gap-2 mb-2">
+                {/* Editable allergens */}
+                <div className="p-4 bg-warning/5 rounded-lg border border-warning/20 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
                       <AlertTriangle className="h-4 w-4 text-warning" />
-                      <h5 className="font-medium text-sm">Allergènes</h5>
+                      <h5 className="font-medium text-sm">Allergènes (Contient)</h5>
                     </div>
-                    {allergens.length > 0 && (
-                      <div className="flex flex-wrap gap-2 mb-2">
-                        {allergens.map((allergen) => (
-                          <Badge key={allergen} variant="destructive">
-                            {allergen.toUpperCase()}
-                          </Badge>
-                        ))}
-                      </div>
-                    )}
-                    {allergensSecondary.length > 0 && (
-                      <div className="flex flex-wrap gap-2">
-                        <span className="text-sm text-muted-foreground">Traces:</span>
-                        {allergensSecondary.map((allergen) => (
-                          <Badge key={allergen} variant="outline" className="bg-warning/10">
-                            {allergen}
-                          </Badge>
-                        ))}
-                      </div>
-                    )}
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setAllergensManuallyEdited(false);
+                        setEditableAllergens(allergens);
+                        setEditableAllergensSecondary(allergensSecondary);
+                      }}
+                      className="text-xs h-7"
+                    >
+                      <RefreshCw className="h-3 w-3 mr-1" /> Régénérer
+                    </Button>
                   </div>
-                )}
+                  
+                  <div className="flex flex-wrap gap-2">
+                    {editableAllergens.map((allergen) => (
+                      <Badge key={allergen} variant="destructive" className="gap-1">
+                        {allergen.toUpperCase()}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditableAllergens(prev => prev.filter(a => a !== allergen));
+                            setAllergensManuallyEdited(true);
+                          }}
+                          className="ml-1 hover:bg-destructive-foreground/20 rounded-full p-0.5"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Ajouter un allergène..."
+                      value={newAllergen}
+                      onChange={(e) => setNewAllergen(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && newAllergen.trim()) {
+                          e.preventDefault();
+                          if (!editableAllergens.some(a => a.toLowerCase() === newAllergen.trim().toLowerCase())) {
+                            setEditableAllergens(prev => [...prev, newAllergen.trim()]);
+                            setAllergensManuallyEdited(true);
+                          }
+                          setNewAllergen('');
+                        }
+                      }}
+                      className="h-8 text-sm"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-8"
+                      onClick={() => {
+                        if (newAllergen.trim() && !editableAllergens.some(a => a.toLowerCase() === newAllergen.trim().toLowerCase())) {
+                          setEditableAllergens(prev => [...prev, newAllergen.trim()]);
+                          setAllergensManuallyEdited(true);
+                        }
+                        setNewAllergen('');
+                      }}
+                    >
+                      <Plus className="h-3 w-3" />
+                    </Button>
+                  </div>
 
-                {/* Nutrition */}
+                  {/* Secondary allergens (traces) */}
+                  <div className="pt-2 border-t border-warning/20">
+                    <p className="text-xs text-muted-foreground mb-2">Traces éventuelles</p>
+                    <div className="flex flex-wrap gap-2 mb-2">
+                      {editableAllergensSecondary.map((allergen) => (
+                        <Badge key={allergen} variant="outline" className="bg-warning/10 gap-1">
+                          {allergen}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditableAllergensSecondary(prev => prev.filter(a => a !== allergen));
+                              setAllergensManuallyEdited(true);
+                            }}
+                            className="ml-1 hover:bg-warning/20 rounded-full p-0.5"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </Badge>
+                      ))}
+                    </div>
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Ajouter une trace..."
+                        value={newAllergenSecondary}
+                        onChange={(e) => setNewAllergenSecondary(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && newAllergenSecondary.trim()) {
+                            e.preventDefault();
+                            if (!editableAllergensSecondary.some(a => a.toLowerCase() === newAllergenSecondary.trim().toLowerCase())) {
+                              setEditableAllergensSecondary(prev => [...prev, newAllergenSecondary.trim()]);
+                              setAllergensManuallyEdited(true);
+                            }
+                            setNewAllergenSecondary('');
+                          }
+                        }}
+                        className="h-8 text-sm"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="h-8"
+                        onClick={() => {
+                          if (newAllergenSecondary.trim() && !editableAllergensSecondary.some(a => a.toLowerCase() === newAllergenSecondary.trim().toLowerCase())) {
+                            setEditableAllergensSecondary(prev => [...prev, newAllergenSecondary.trim()]);
+                            setAllergensManuallyEdited(true);
+                          }
+                          setNewAllergenSecondary('');
+                        }}
+                      >
+                        <Plus className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Nutrition (read-only) */}
                 {recipeNutrition && (
                   <div className="p-4 bg-muted/30 rounded-lg border">
                     <h5 className="font-medium text-sm mb-3">Valeurs nutritionnelles (pour 100g)</h5>
@@ -630,6 +792,17 @@ export function TechnicalSheetFormDialog({
                     </div>
                   </div>
                 )}
+
+                <details className="group">
+                  <summary className="cursor-pointer text-sm text-muted-foreground hover:text-foreground">
+                    Voir la liste technique complète
+                  </summary>
+                  <div className="p-4 mt-2 bg-muted/20 rounded-lg border">
+                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                      {ingredientsListTechnical || 'Aucun ingrédient défini dans la recette'}
+                    </p>
+                  </div>
+                </details>
               </div>
             </>
           )}

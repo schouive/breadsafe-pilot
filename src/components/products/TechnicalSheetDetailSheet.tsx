@@ -1,8 +1,8 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   FileText, Scale, Calendar, MapPin, AlertTriangle, Barcode,
   Package, Thermometer, Download, Printer, Clock, Layers,
-  Box, Tag, CheckCircle, FileCheck, Edit3, Save, RotateCcw,
+  Box, Tag, CheckCircle, FileCheck,
   History, ShieldAlert, Lock, Archive, Loader2,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -16,15 +16,10 @@ import {
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
-import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
 import { ProductSheet } from '@/hooks/useRecipes';
 import { generateTechnicalSheetPDF, printTechnicalSheet } from '@/lib/technicalSheetPdf';
 import { generateIngredientLists } from '@/lib/ingredientListGenerator';
 import {
-  useUpdateProductSheetIncoHtml,
   useValidateProductSheetInco,
   useLogProductSheetIncoChange,
 } from '@/hooks/useProductSheetInco';
@@ -32,27 +27,6 @@ import { useProductSheetIncoLogs } from '@/hooks/useProductSheetIncoLogs';
 import { useOperatorNames } from '@/hooks/useOperatorNames';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-
-const KNOWN_ALLERGENS = [
-  'GLUTEN', 'BLÉ', 'BLE', 'SEIGLE', 'ORGE', 'AVOINE', 'ÉPEAUTRE', 'EPEAUTRE',
-  'FROMENT', 'CRUSTACÉS', 'CRUSTACES', 'ŒUF', 'OEUF', 'ŒUFS', 'OEUFS',
-  'POISSON', 'POISSONS', 'ARACHIDE', 'ARACHIDES', 'SOJA',
-  'LAIT', 'LACTOSE', 'LACTOSÉRUM', 'LACTOSERUM', 'BEURRE', 'CRÈME', 'CREME',
-  'FRUITS À COQUE', 'NOIX', 'NOISETTE', 'NOISETTES', 'AMANDE', 'AMANDES',
-  'CÉLERI', 'CELERI', 'MOUTARDE', 'SÉSAME', 'SESAME',
-  'SULFITES', 'LUPIN', 'LUPINS', 'MOLLUSQUES',
-];
-
-function extractAllergensFromHtml(html: string): string[] {
-  const matches = html.match(/<strong>([^<]+)<\/strong>/g) || [];
-  return matches.map(m => m.replace(/<\/?strong>/g, '').toUpperCase());
-}
-
-function detectRemovedAllergens(originalHtml: string, editedHtml: string): string[] {
-  const originalAllergens = extractAllergensFromHtml(originalHtml);
-  const editedUpper = editedHtml.toUpperCase();
-  return originalAllergens.filter(a => !editedUpper.includes(a));
-}
 
 interface SnapshotNutrition {
   energyKcal: number | null;
@@ -74,15 +48,10 @@ interface TechnicalSheetDetailSheetProps {
 
 export function TechnicalSheetDetailSheet({ open, onOpenChange, sheet }: TechnicalSheetDetailSheetProps) {
   const [isExporting, setIsExporting] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-  const [editedHtml, setEditedHtml] = useState('');
   const [isValidateDialogOpen, setIsValidateDialogOpen] = useState(false);
   const [validationComment, setValidationComment] = useState('');
   const [showHistory, setShowHistory] = useState(false);
-  const [allergenWarning, setAllergenWarning] = useState<string[] | null>(null);
-  const editorRef = useRef<HTMLDivElement>(null);
 
-  const updateIncoHtml = useUpdateProductSheetIncoHtml();
   const validateInco = useValidateProductSheetInco();
   const logChange = useLogProductSheetIncoChange();
 
@@ -92,11 +61,9 @@ export function TechnicalSheetDetailSheet({ open, onOpenChange, sheet }: Technic
 
   useEffect(() => {
     if (sheet) {
-      setIsEditing(false);
-      const sheetAny = sheet as any;
-      setEditedHtml(sheetAny.inco_html || sheetAny.ingredients_declaration || '');
+      // Reset state when sheet changes
     }
-  }, [sheet?.id, (sheet as any)?.inco_html, (sheet as any)?.ingredients_declaration]);
+  }, [sheet?.id]);
 
   if (!sheet) return null;
 
@@ -122,56 +89,6 @@ export function TechnicalSheetDetailSheet({ open, onOpenChange, sheet }: Technic
   };
 
   const handlePrint = async () => { await printTechnicalSheet(sheet); };
-
-  const handleStartEdit = () => {
-    const html = incoHtml;
-    setEditedHtml(html);
-    setIsEditing(true);
-    // Set content after mount via ref
-    requestAnimationFrame(() => {
-      if (editorRef.current) {
-        editorRef.current.innerHTML = html;
-      }
-    });
-  };
-
-  const handleCancelEdit = () => {
-    setIsEditing(false);
-    setEditedHtml(incoHtml);
-    setAllergenWarning(null);
-  };
-
-  const handleSaveEdit = async () => {
-    const removed = detectRemovedAllergens(incoHtml, editedHtml);
-    if (removed.length > 0 && !allergenWarning) {
-      setAllergenWarning(removed);
-      return;
-    }
-    await updateIncoHtml.mutateAsync({ id: sheet.id, html: editedHtml });
-    await logChange.mutateAsync({
-      product_sheet_id: sheet.id,
-      action: 'manual_edit',
-      html_before: incoHtml,
-      html_after: editedHtml,
-      allergens_removed: removed,
-    });
-    setIsEditing(false);
-    setAllergenWarning(null);
-  };
-
-  const handleConfirmAllergenRemoval = async () => {
-    const removed = detectRemovedAllergens(incoHtml, editedHtml);
-    await updateIncoHtml.mutateAsync({ id: sheet.id, html: editedHtml });
-    await logChange.mutateAsync({
-      product_sheet_id: sheet.id,
-      action: 'manual_edit',
-      html_before: incoHtml,
-      html_after: editedHtml,
-      allergens_removed: removed,
-    });
-    setIsEditing(false);
-    setAllergenWarning(null);
-  };
 
   const handleValidate = async () => {
     await validateInco.mutateAsync({ id: sheet.id, comment: validationComment || undefined });
@@ -201,7 +118,7 @@ export function TechnicalSheetDetailSheet({ open, onOpenChange, sheet }: Technic
     );
     return (
       <Badge variant="outline" className="bg-warning/10 text-warning border-warning/30">
-        <Edit3 className="h-3 w-3 mr-1" /> Brouillon
+        Brouillon
       </Badge>
     );
   };
@@ -319,7 +236,7 @@ export function TechnicalSheetDetailSheet({ open, onOpenChange, sheet }: Technic
               </>
             ) : null}
 
-            {/* ========== INCO SECTION ========== */}
+            {/* ========== INCO SECTION (read-only) ========== */}
             <Separator />
             <section>
               <div className="flex items-center justify-between mb-3">
@@ -328,11 +245,6 @@ export function TechnicalSheetDetailSheet({ open, onOpenChange, sheet }: Technic
                   {incoStatusBadge()}
                   {incoVersion > 0 && <Badge variant="outline" className="text-xs">v{incoVersion}</Badge>}
                 </div>
-                {isDraft && !isEditing && (
-                  <Button size="sm" variant="outline" onClick={handleStartEdit}>
-                    <Edit3 className="h-4 w-4 mr-1" /> Modifier
-                  </Button>
-                )}
               </div>
 
               {/* Validated = read-only message */}
@@ -340,39 +252,15 @@ export function TechnicalSheetDetailSheet({ open, onOpenChange, sheet }: Technic
                 <div className="mb-3 p-3 rounded-lg bg-muted border flex items-center gap-3">
                   <Lock className="h-5 w-5 text-muted-foreground shrink-0" />
                   <p className="text-sm text-muted-foreground">
-                    Les versions INCO validées ne peuvent pas être modifiées.
+                    Version INCO verrouillée. Utilisez le bouton modifier (crayon) pour éditer.
                   </p>
                 </div>
               )}
 
-              {isEditing ? (
-                <div className="space-y-3">
-                  <div
-                    ref={editorRef}
-                    contentEditable
-                    suppressContentEditableWarning
-                    className="text-sm p-3 bg-background rounded-lg border-2 border-primary/50 focus:outline-none focus:border-primary min-h-[100px]"
-                    onInput={(e) => setEditedHtml(e.currentTarget.innerHTML)}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    ⚠️ Les allergènes doivent rester en <strong>gras</strong>. Utilisez les balises &lt;strong&gt; pour le gras.
-                  </p>
-                  <div className="flex gap-2">
-                    <Button size="sm" onClick={handleSaveEdit} disabled={updateIncoHtml.isPending}>
-                      {updateIncoHtml.isPending ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Save className="h-4 w-4 mr-1" />}
-                      Enregistrer
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={handleCancelEdit}>
-                      <RotateCcw className="h-4 w-4 mr-1" /> Annuler
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <div
-                  className="text-sm p-3 bg-muted/50 rounded-lg"
-                  dangerouslySetInnerHTML={{ __html: incoHtml || '<em>Non disponible</em>' }}
-                />
-              )}
+              <div
+                className="text-sm p-3 bg-muted/50 rounded-lg"
+                dangerouslySetInnerHTML={{ __html: incoHtml || '<em>Non disponible</em>' }}
+              />
 
               {incoHtmlOriginal && incoHtmlOriginal !== incoHtml && (
                 <p className="text-xs text-muted-foreground mt-1 italic">
@@ -609,28 +497,6 @@ export function TechnicalSheetDetailSheet({ open, onOpenChange, sheet }: Technic
         </DialogContent>
       </Dialog>
 
-      {/* Allergen Removal Warning */}
-      <AlertDialog open={!!allergenWarning} onOpenChange={(o) => !o && setAllergenWarning(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2 text-destructive">
-              <ShieldAlert className="h-5 w-5" /> Allergènes supprimés
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              Les allergènes suivants ont été retirés de la liste INCO :<br />
-              <strong className="text-destructive">{allergenWarning?.join(', ')}</strong>
-              <br /><br />
-              Êtes-vous sûr de vouloir enregistrer cette modification ? Le retrait d'allergènes peut avoir des implications réglementaires graves.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setAllergenWarning(null)}>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmAllergenRemoval} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Confirmer la suppression
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </>
   );
 }

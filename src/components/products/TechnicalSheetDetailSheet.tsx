@@ -93,9 +93,10 @@ export function TechnicalSheetDetailSheet({ open, onOpenChange, sheet }: Technic
   useEffect(() => {
     if (sheet) {
       setIsEditing(false);
-      setEditedHtml((sheet as any).inco_html || '');
+      const sheetAny = sheet as any;
+      setEditedHtml(sheetAny.inco_html || sheetAny.ingredients_declaration || '');
     }
-  }, [sheet?.id, (sheet as any)?.inco_html]);
+  }, [sheet?.id, (sheet as any)?.inco_html, (sheet as any)?.ingredients_declaration]);
 
   if (!sheet) return null;
 
@@ -107,7 +108,8 @@ export function TechnicalSheetDetailSheet({ open, onOpenChange, sheet }: Technic
   }> | null;
 
   const incoStatus = sheetData.inco_status || 'draft';
-  const incoHtml = sheetData.inco_html || '';
+  // Fallback: use ingredients_declaration if inco_html was never set (legacy FTs)
+  const incoHtml = sheetData.inco_html || sheetData.ingredients_declaration || '';
   const incoHtmlOriginal = sheetData.inco_html_original;
   const incoValidatedAt = sheetData.inco_validated_at;
   const incoVersion = sheetData.inco_version || 0;

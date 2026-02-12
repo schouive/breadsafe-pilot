@@ -170,9 +170,9 @@ export function useCreateCartonLabel() {
       const snapshotAllergens = sheet.snapshot_allergens as unknown as { main?: string[]; secondary?: string[] } | null;
       const snapshotNutrition = sheet.snapshot_nutrition as unknown as SnapshotNutrition | null;
 
-      // Generate INCO ingredient list from FT ingredients
-      let ingredientsHtml = '';
-      if (snapshotIngredients && snapshotIngredients.length > 0) {
+      // Use INCO HTML from FT (validated at FT level) or fallback to generation
+      let ingredientsHtml = (sheet as any).inco_html || '';
+      if (!ingredientsHtml && snapshotIngredients && snapshotIngredients.length > 0) {
         const allAllergens = [...new Set(
           snapshotIngredients.flatMap((ing) => ing.allergens || [])
         )].sort();
@@ -462,9 +462,9 @@ export function useRefreshCartonLabelSnapshot() {
       const snapshotAllergens = sheet.snapshot_allergens as unknown as { main?: string[]; secondary?: string[] } | null;
       const snapshotNutrition = sheet.snapshot_nutrition as unknown as SnapshotNutrition | null;
 
-      // Generate INCO ingredient list from FT ingredients
-      let ingredientsHtml = '';
-      if (snapshotIngredients && snapshotIngredients.length > 0) {
+      // Use INCO HTML from FT (validated at FT level) or fallback to generation
+      let ingredientsHtml = (sheet as any).inco_html || '';
+      if (!ingredientsHtml && snapshotIngredients && snapshotIngredients.length > 0) {
         const allAllergens = [...new Set(
           snapshotIngredients.flatMap((ing) => ing.allergens || [])
         )].sort();

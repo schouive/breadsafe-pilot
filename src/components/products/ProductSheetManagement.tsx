@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, FileText, Edit2, Trash2, Eye, Check, X, FileCheck } from 'lucide-react';
+import { Plus, FileText, Edit2, Trash2, Eye, Check, X, FileCheck, Edit3, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -107,6 +107,16 @@ export function ProductSheetManagement() {
                         <><X className="h-3 w-3 mr-1" /> Brouillon</>
                       )}
                     </Badge>
+                    {/* INCO status badge */}
+                    {(sheet as any).inco_status === 'validated' ? (
+                      <Badge variant="outline" className="shrink-0 bg-success/10 text-success border-success/30">
+                        <CheckCircle className="h-3 w-3 mr-1" /> INCO
+                      </Badge>
+                    ) : (sheet as any).inco_html ? (
+                      <Badge variant="outline" className="shrink-0 bg-warning/10 text-warning border-warning/30">
+                        <Edit3 className="h-3 w-3 mr-1" /> INCO
+                      </Badge>
+                    ) : null}
                     <div className="flex items-center gap-1">
                       <Button
                         variant="outline"

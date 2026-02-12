@@ -256,31 +256,34 @@ export type Database = {
         Row: {
           action: string
           allergens_removed: string[] | null
-          carton_label_id: string
+          carton_label_id: string | null
           created_at: string
           html_after: string | null
           html_before: string | null
           id: string
+          product_sheet_id: string | null
           user_id: string
         }
         Insert: {
           action: string
           allergens_removed?: string[] | null
-          carton_label_id: string
+          carton_label_id?: string | null
           created_at?: string
           html_after?: string | null
           html_before?: string | null
           id?: string
+          product_sheet_id?: string | null
           user_id: string
         }
         Update: {
           action?: string
           allergens_removed?: string[] | null
-          carton_label_id?: string
+          carton_label_id?: string | null
           created_at?: string
           html_after?: string | null
           html_before?: string | null
           id?: string
+          product_sheet_id?: string | null
           user_id?: string
         }
         Relationships: [
@@ -289,6 +292,13 @@ export type Database = {
             columns: ["carton_label_id"]
             isOneToOne: false
             referencedRelation: "carton_labels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inco_change_logs_product_sheet_id_fkey"
+            columns: ["product_sheet_id"]
+            isOneToOne: false
+            referencedRelation: "product_sheets"
             referencedColumns: ["id"]
           },
         ]
@@ -487,6 +497,13 @@ export type Database = {
           dlc_ddm_days: number | null
           dlc_ddm_type: string | null
           id: string
+          inco_html: string | null
+          inco_html_original: string | null
+          inco_status: string
+          inco_validated_at: string | null
+          inco_validated_by: string | null
+          inco_validation_comment: string | null
+          inco_version: number
           ingredients_declaration: string | null
           is_published: boolean
           layers_per_pallet: number | null
@@ -527,6 +544,13 @@ export type Database = {
           dlc_ddm_days?: number | null
           dlc_ddm_type?: string | null
           id?: string
+          inco_html?: string | null
+          inco_html_original?: string | null
+          inco_status?: string
+          inco_validated_at?: string | null
+          inco_validated_by?: string | null
+          inco_validation_comment?: string | null
+          inco_version?: number
           ingredients_declaration?: string | null
           is_published?: boolean
           layers_per_pallet?: number | null
@@ -567,6 +591,13 @@ export type Database = {
           dlc_ddm_days?: number | null
           dlc_ddm_type?: string | null
           id?: string
+          inco_html?: string | null
+          inco_html_original?: string | null
+          inco_status?: string
+          inco_validated_at?: string | null
+          inco_validated_by?: string | null
+          inco_validation_comment?: string | null
+          inco_version?: number
           ingredients_declaration?: string | null
           is_published?: boolean
           layers_per_pallet?: number | null

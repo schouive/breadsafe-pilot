@@ -124,8 +124,15 @@ export function TechnicalSheetDetailSheet({ open, onOpenChange, sheet }: Technic
   const handlePrint = async () => { await printTechnicalSheet(sheet); };
 
   const handleStartEdit = () => {
-    setEditedHtml(incoHtml);
+    const html = incoHtml;
+    setEditedHtml(html);
     setIsEditing(true);
+    // Set content after mount via ref
+    requestAnimationFrame(() => {
+      if (editorRef.current) {
+        editorRef.current.innerHTML = html;
+      }
+    });
   };
 
   const handleCancelEdit = () => {
@@ -343,8 +350,8 @@ export function TechnicalSheetDetailSheet({ open, onOpenChange, sheet }: Technic
                   <div
                     ref={editorRef}
                     contentEditable
+                    suppressContentEditableWarning
                     className="text-sm p-3 bg-background rounded-lg border-2 border-primary/50 focus:outline-none focus:border-primary min-h-[100px]"
-                    dangerouslySetInnerHTML={{ __html: editedHtml }}
                     onInput={(e) => setEditedHtml(e.currentTarget.innerHTML)}
                   />
                   <p className="text-xs text-muted-foreground">

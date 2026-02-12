@@ -452,6 +452,11 @@ export function TechnicalSheetFormDialog({
         data.snapshot_allergens = snapshotAllergens;
         data.snapshot_nutrition = snapshotNutrition;
         data.snapshot_created_at = new Date().toISOString();
+        // INCO workflow: generate initial INCO HTML as draft
+        (data as any).inco_html = ingredientsListCondensedHtml || null;
+        (data as any).inco_html_original = ingredientsListCondensedHtml || null;
+        (data as any).inco_status = 'draft';
+        (data as any).inco_version = 0;
         
         await createSheet.mutateAsync(data);
       } else if (sheet) {

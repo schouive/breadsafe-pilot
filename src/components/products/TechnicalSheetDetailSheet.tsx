@@ -71,7 +71,11 @@ export function TechnicalSheetDetailSheet({ open, onOpenChange, sheet }: Technic
   const snapshotNutrition: SnapshotNutrition | null = sheetData.snapshot_nutrition;
   const rawSnapshotAllergens = sheetData.snapshot_allergens as { main?: string[]; secondary?: string[] } | null;
   // Deduplicate allergens (handles Œufs/Oeufs variants)
-  const normalizeAllergen = (a: string) => a.toLowerCase().replace('œ', 'oe').replace('à', 'a').trim();
+  const normalizeAllergen = (a: string) => {
+    let n = a.toLowerCase().replace('œ', 'oe').replace('à', 'a').trim();
+    if (n.endsWith('s') && n.length > 2) n = n.slice(0, -1);
+    return n;
+  };
   const dedupAllergens = (list: string[]) => {
     const seen = new Set<string>();
     return list.filter(a => {

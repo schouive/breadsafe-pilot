@@ -43,6 +43,9 @@ const ALL_ALLERGENS = [
   'Soja', 'Lait', 'Fruits à coque', 'Sésame',
 ];
 
+// Normalize allergen names for comparison (handles Œufs/Oeufs variants)
+const normalizeAllergen = (a: string) => a.toLowerCase().replace('œ', 'oe').replace('à', 'a').trim();
+
 const STORAGE_OPTIONS = [
   { value: 'ambient', label: 'À conserver à température ambiante, de préférence inférieure à 30°C' },
   { value: 'frozen', label: 'À conserver à -18°C' },
@@ -660,7 +663,7 @@ export function TechnicalSheetFormDialog({
                   
                   <div className="flex flex-wrap gap-2">
                     {ALL_ALLERGENS.map((allergen) => {
-                      const isSelected = editableAllergens.some(a => a.toLowerCase() === allergen.toLowerCase());
+                      const isSelected = editableAllergens.some(a => normalizeAllergen(a) === normalizeAllergen(allergen));
                       return (
                         <Badge
                           key={allergen}
@@ -671,7 +674,7 @@ export function TechnicalSheetFormDialog({
                           onClick={() => {
                             setAllergensManuallyEdited(true);
                             if (isSelected) {
-                              setEditableAllergens(prev => prev.filter(a => a.toLowerCase() !== allergen.toLowerCase()));
+                              setEditableAllergens(prev => prev.filter(a => normalizeAllergen(a) !== normalizeAllergen(allergen)));
                             } else {
                               setEditableAllergens(prev => [...prev, allergen]);
                             }
@@ -691,9 +694,9 @@ export function TechnicalSheetFormDialog({
                     <p className="text-xs text-muted-foreground mb-2">Traces éventuelles</p>
                     <div className="flex flex-wrap gap-2">
                       {ALL_ALLERGENS.map((allergen) => {
-                        const isMainSelected = editableAllergens.some(a => a.toLowerCase() === allergen.toLowerCase());
+                        const isMainSelected = editableAllergens.some(a => normalizeAllergen(a) === normalizeAllergen(allergen));
                         if (isMainSelected) return null; // Don't show in traces if already in main
-                        const isSelected = editableAllergensSecondary.some(a => a.toLowerCase() === allergen.toLowerCase());
+                        const isSelected = editableAllergensSecondary.some(a => normalizeAllergen(a) === normalizeAllergen(allergen));
                         return (
                           <Badge
                             key={allergen}
@@ -704,7 +707,7 @@ export function TechnicalSheetFormDialog({
                             onClick={() => {
                               setAllergensManuallyEdited(true);
                               if (isSelected) {
-                                setEditableAllergensSecondary(prev => prev.filter(a => a.toLowerCase() !== allergen.toLowerCase()));
+                                setEditableAllergensSecondary(prev => prev.filter(a => normalizeAllergen(a) !== normalizeAllergen(allergen)));
                               } else {
                                 setEditableAllergensSecondary(prev => [...prev, allergen]);
                               }

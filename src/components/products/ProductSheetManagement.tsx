@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { Plus, FileText, Edit2, Trash2, Eye, Check, X, FileCheck, Edit3, CheckCircle } from 'lucide-react';
+import { Plus, FileText, Edit2, Trash2, Eye, Check, X, FileCheck, Edit3, CheckCircle, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { useProductSheets, useDeleteProductSheet } from '@/hooks/useRecipes';
+import { useProductSheets, useDeleteProductSheet, useDuplicateProductSheet } from '@/hooks/useRecipes';
 import { TechnicalSheetFormDialog } from './TechnicalSheetFormDialog';
 import { TechnicalSheetDetailSheet } from './TechnicalSheetDetailSheet';
 import {
@@ -20,7 +20,7 @@ import {
 export function ProductSheetManagement() {
   const { data: sheets, isLoading } = useProductSheets();
   const deleteSheet = useDeleteProductSheet();
-  
+  const duplicateSheet = useDuplicateProductSheet();
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editingSheet, setEditingSheet] = useState<any>(null);
   const [viewingSheet, setViewingSheet] = useState<any>(null);
@@ -126,6 +126,16 @@ export function ProductSheetManagement() {
                       >
                         <Eye className="h-4 w-4 mr-1" />
                         Voir
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => duplicateSheet.mutate(sheet.id)}
+                        disabled={duplicateSheet.isPending}
+                        title="Dupliquer"
+                      >
+                        <Copy className="h-4 w-4" />
                       </Button>
                       <Button
                         variant="ghost"

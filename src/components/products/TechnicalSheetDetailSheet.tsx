@@ -69,7 +69,22 @@ export function TechnicalSheetDetailSheet({ open, onOpenChange, sheet }: Technic
 
   const sheetData = sheet as any;
   const snapshotNutrition: SnapshotNutrition | null = sheetData.snapshot_nutrition;
-  const snapshotAllergens = sheetData.snapshot_allergens as { main?: string[]; secondary?: string[] } | null;
+  const rawSnapshotAllergens = sheetData.snapshot_allergens as { main?: string[]; secondary?: string[] } | null;
+  // Deduplicate allergens (handles Œufs/Oeufs variants)
+  const normalizeAllergen = (a: string) => a.toLowerCase().replace('œ', 'oe').replace('à', 'a').trim();
+  const dedupAllergens = (list: string[]) => {
+    const seen = new Set<string>();
+    return list.filter(a => {
+      const norm = normalizeAllergen(a);
+      if (seen.has(norm)) return false;
+      seen.add(norm);
+      return true;
+    });
+  };
+  const snapshotAllergens = rawSnapshotAllergens ? {
+    main: rawSnapshotAllergens.main ? dedupAllergens(rawSnapshotAllergens.main) : undefined,
+    secondary: rawSnapshotAllergens.secondary ? dedupAllergens(rawSnapshotAllergens.secondary) : undefined,
+  } : null;
   const snapshotIngredients = sheetData.snapshot_ingredients as Array<{
     name: string; composition: string | null; bakerPercentage: number; allergens: string[];
   }> | null;

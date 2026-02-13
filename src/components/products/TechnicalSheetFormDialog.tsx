@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { X, Plus, RefreshCw } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 import { AlertTriangle, FileText, Lock, Image as ImageIcon, Upload } from 'lucide-react';
 import {
   Dialog,
@@ -37,6 +37,12 @@ import { generateIngredientLists, markdownToUppercase } from '@/lib/ingredientLi
 import { supabase } from '@/integrations/supabase/client';
 import { optimizeImage } from '@/lib/imageOptimization';
 const WEIGHT_UNITS = ['g', 'kg', 'L', 'mL', 'cl'];
+
+const ALL_ALLERGENS = [
+  'Gluten', 'Crustacés', 'Œufs', 'Poissons', 'Arachides',
+  'Soja', 'Lait', 'Fruits à coque', 'Céleri', 'Moutarde',
+  'Sésame', 'Sulfites', 'Lupin', 'Mollusques',
+];
 
 const STORAGE_OPTIONS = [
   { value: 'ambient', label: 'À conserver à température ambiante, de préférence inférieure à 30°C' },
@@ -108,8 +114,6 @@ export function TechnicalSheetFormDialog({
   const [editableIncoHtml, setEditableIncoHtml] = useState('');
   const [editableAllergens, setEditableAllergens] = useState<string[]>([]);
   const [editableAllergensSecondary, setEditableAllergensSecondary] = useState<string[]>([]);
-  const [newAllergen, setNewAllergen] = useState('');
-  const [newAllergenSecondary, setNewAllergenSecondary] = useState('');
   const [incoManuallyEdited, setIncoManuallyEdited] = useState(false);
   const [allergensManuallyEdited, setAllergensManuallyEdited] = useState(false);
   const incoEditorRef = useRef<HTMLDivElement>(null);
@@ -284,8 +288,6 @@ export function TechnicalSheetFormDialog({
     if (open) {
       setIncoManuallyEdited(false);
       setAllergensManuallyEdited(false);
-      setNewAllergen('');
-      setNewAllergenSecondary('');
       
       if (sheet && mode === 'edit') {
         // Load existing sheet data for editing
@@ -635,7 +637,7 @@ export function TechnicalSheetFormDialog({
                   </p>
                 </div>
 
-                {/* Editable allergens */}
+                {/* Editable allergens - toggle grid */}
                 <div className="p-4 bg-warning/5 rounded-lg border border-warning/20 space-y-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -658,108 +660,61 @@ export function TechnicalSheetFormDialog({
                   </div>
                   
                   <div className="flex flex-wrap gap-2">
-                    {editableAllergens.map((allergen) => (
-                      <Badge key={allergen} variant="destructive" className="gap-1">
-                        {allergen.toUpperCase()}
-                        <button
-                          type="button"
+                    {ALL_ALLERGENS.map((allergen) => {
+                      const isSelected = editableAllergens.some(a => a.toLowerCase() === allergen.toLowerCase());
+                      return (
+                        <Badge
+                          key={allergen}
+                          variant={isSelected ? 'destructive' : 'outline'}
+                          className={`cursor-pointer select-none transition-colors ${
+                            isSelected ? '' : 'opacity-50 hover:opacity-80'
+                          }`}
                           onClick={() => {
-                            setEditableAllergens(prev => prev.filter(a => a !== allergen));
                             setAllergensManuallyEdited(true);
+                            if (isSelected) {
+                              setEditableAllergens(prev => prev.filter(a => a.toLowerCase() !== allergen.toLowerCase()));
+                            } else {
+                              setEditableAllergens(prev => [...prev, allergen]);
+                            }
                           }}
-                          className="ml-1 hover:bg-destructive-foreground/20 rounded-full p-0.5"
                         >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </Badge>
-                    ))}
+                          {allergen.toUpperCase()}
+                        </Badge>
+                      );
+                    })}
                   </div>
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder="Ajouter un allergène..."
-                      value={newAllergen}
-                      onChange={(e) => setNewAllergen(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && newAllergen.trim()) {
-                          e.preventDefault();
-                          if (!editableAllergens.some(a => a.toLowerCase() === newAllergen.trim().toLowerCase())) {
-                            setEditableAllergens(prev => [...prev, newAllergen.trim()]);
-                            setAllergensManuallyEdited(true);
-                          }
-                          setNewAllergen('');
-                        }
-                      }}
-                      className="h-8 text-sm"
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="h-8"
-                      onClick={() => {
-                        if (newAllergen.trim() && !editableAllergens.some(a => a.toLowerCase() === newAllergen.trim().toLowerCase())) {
-                          setEditableAllergens(prev => [...prev, newAllergen.trim()]);
-                          setAllergensManuallyEdited(true);
-                        }
-                        setNewAllergen('');
-                      }}
-                    >
-                      <Plus className="h-3 w-3" />
-                    </Button>
-                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Cliquez pour sélectionner ou désélectionner un allergène
+                  </p>
 
                   {/* Secondary allergens (traces) */}
                   <div className="pt-2 border-t border-warning/20">
                     <p className="text-xs text-muted-foreground mb-2">Traces éventuelles</p>
-                    <div className="flex flex-wrap gap-2 mb-2">
-                      {editableAllergensSecondary.map((allergen) => (
-                        <Badge key={allergen} variant="outline" className="bg-warning/10 gap-1">
-                          {allergen}
-                          <button
-                            type="button"
+                    <div className="flex flex-wrap gap-2">
+                      {ALL_ALLERGENS.map((allergen) => {
+                        const isMainSelected = editableAllergens.some(a => a.toLowerCase() === allergen.toLowerCase());
+                        if (isMainSelected) return null; // Don't show in traces if already in main
+                        const isSelected = editableAllergensSecondary.some(a => a.toLowerCase() === allergen.toLowerCase());
+                        return (
+                          <Badge
+                            key={allergen}
+                            variant="outline"
+                            className={`cursor-pointer select-none transition-colors ${
+                              isSelected ? 'bg-warning/20 border-warning/40' : 'opacity-50 hover:opacity-80'
+                            }`}
                             onClick={() => {
-                              setEditableAllergensSecondary(prev => prev.filter(a => a !== allergen));
                               setAllergensManuallyEdited(true);
+                              if (isSelected) {
+                                setEditableAllergensSecondary(prev => prev.filter(a => a.toLowerCase() !== allergen.toLowerCase()));
+                              } else {
+                                setEditableAllergensSecondary(prev => [...prev, allergen]);
+                              }
                             }}
-                            className="ml-1 hover:bg-warning/20 rounded-full p-0.5"
                           >
-                            <X className="h-3 w-3" />
-                          </button>
-                        </Badge>
-                      ))}
-                    </div>
-                    <div className="flex gap-2">
-                      <Input
-                        placeholder="Ajouter une trace..."
-                        value={newAllergenSecondary}
-                        onChange={(e) => setNewAllergenSecondary(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' && newAllergenSecondary.trim()) {
-                            e.preventDefault();
-                            if (!editableAllergensSecondary.some(a => a.toLowerCase() === newAllergenSecondary.trim().toLowerCase())) {
-                              setEditableAllergensSecondary(prev => [...prev, newAllergenSecondary.trim()]);
-                              setAllergensManuallyEdited(true);
-                            }
-                            setNewAllergenSecondary('');
-                          }
-                        }}
-                        className="h-8 text-sm"
-                      />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="h-8"
-                        onClick={() => {
-                          if (newAllergenSecondary.trim() && !editableAllergensSecondary.some(a => a.toLowerCase() === newAllergenSecondary.trim().toLowerCase())) {
-                            setEditableAllergensSecondary(prev => [...prev, newAllergenSecondary.trim()]);
-                            setAllergensManuallyEdited(true);
-                          }
-                          setNewAllergenSecondary('');
-                        }}
-                      >
-                        <Plus className="h-3 w-3" />
-                      </Button>
+                            {allergen}
+                          </Badge>
+                        );
+                      })}
                     </div>
                   </div>
                 </div>

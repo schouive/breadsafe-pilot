@@ -557,6 +557,56 @@ export function useUpdateProductSheet() {
   });
 }
 
+export function useDuplicateProductSheet() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async (sourceId: string) => {
+      const { data: source, error: fetchError } = await supabase
+        .from('product_sheets')
+        .select('*')
+        .eq('id', sourceId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { id, created_at, updated_at, published_at, is_published, version, inco_validated_at, inco_validated_by, inco_validation_comment, inco_status, inco_version, ...rest } = source;
+
+      const { data, error } = await supabase
+        .from('product_sheets')
+        .insert({
+          ...rest,
+          product_name: `${source.product_name} (copie)`,
+          is_published: false,
+          version: 1,
+          inco_status: 'draft',
+          inco_version: 0,
+        } as any)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['product-sheets'] });
+      toast({
+        title: 'Fiche technique dupliquée',
+        description: 'La copie a été créée en tant que brouillon.',
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de dupliquer: ' + error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+}
+
 export function useDeleteProductSheet() {
   const queryClient = useQueryClient();
   const { toast } = useToast();

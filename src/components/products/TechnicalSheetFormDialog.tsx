@@ -39,7 +39,7 @@ import { optimizeImage } from '@/lib/imageOptimization';
 const WEIGHT_UNITS = ['g', 'kg', 'L', 'mL', 'cl'];
 
 const ALL_ALLERGENS = [
-  'Gluten', 'Crustacés', 'Œufs', 'Arachides',
+  'Gluten', 'Œufs', 'Arachides',
   'Soja', 'Lait', 'Fruits à coque', 'Sésame',
 ];
 

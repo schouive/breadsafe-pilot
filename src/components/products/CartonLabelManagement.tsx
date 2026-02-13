@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Package, Edit2, Trash2, Eye, Check, X, AlertTriangle, Download, Archive, Edit3, Lock } from 'lucide-react';
+import { Plus, Package, Edit2, Trash2, Eye, Check, X, AlertTriangle, Download, Archive, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -43,7 +43,6 @@ export function CartonLabelManagement() {
   };
 
   const validatedCount = labels?.filter(l => l.status === 'validated').length || 0;
-  const draftCount = labels?.filter(l => l.status === 'draft').length || 0;
 
   const handleExportCSV = () => {
     if (!labels || labels.length === 0) {
@@ -53,9 +52,7 @@ export function CartonLabelManagement() {
     
     // Only validated labels can be exported
     if (validatedCount === 0) {
-      toast.error('L\'INCO doit être validé avant l\'export.', {
-        description: 'Validez au moins une étiquette pour pouvoir exporter.',
-      });
+      toast.error('Aucune étiquette validée à exporter.');
       return;
     }
 
@@ -75,14 +72,9 @@ export function CartonLabelManagement() {
         <Archive className="h-3 w-3 mr-1" /> Archivée
       </Badge>
     );
-    if (label.status === 'validated') return (
+    return (
       <Badge variant="outline" className="shrink-0 bg-success/10 text-success border-success/30">
         <Check className="h-3 w-3 mr-1" /> Validée
-      </Badge>
-    );
-    return (
-      <Badge variant="outline" className="shrink-0 bg-warning/10 text-warning border-warning/30">
-        <Edit3 className="h-3 w-3 mr-1" /> Brouillon
       </Badge>
     );
   };
@@ -103,7 +95,7 @@ export function CartonLabelManagement() {
               <div className="min-w-0">
                 <CardTitle className="truncate">Étiquettes Carton</CardTitle>
                 <CardDescription className="line-clamp-2">
-                  Générez et validez les étiquettes INCO réglementaires pour vos cartons
+                  Générez les étiquettes INCO réglementaires pour vos cartons (FT et INCO doivent être validées)
                 </CardDescription>
               </div>
             </div>
@@ -120,16 +112,6 @@ export function CartonLabelManagement() {
               </Button>
             </div>
           </div>
-
-          {/* Warning banner if drafts pending */}
-          {draftCount > 0 && (
-            <div className="p-3 rounded-lg bg-warning/10 border border-warning/30 flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4 text-warning shrink-0" />
-              <p className="text-sm text-warning">
-                {draftCount} étiquette(s) en attente de validation INCO
-              </p>
-            </div>
-          )}
         </CardHeader>
         <CardContent>
           {isLoading ? (

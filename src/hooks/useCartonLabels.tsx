@@ -127,14 +127,16 @@ export function useCartonLabel(id: string | undefined) {
 }
 
 // Get validated product sheets for selection
+// Get product sheets where both FT and INCO are validated
 export function useValidatedProductSheets() {
   return useQuery({
-    queryKey: ['product-sheets', 'validated'],
+    queryKey: ['product-sheets', 'validated-with-inco'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('product_sheets')
         .select('*')
         .eq('is_published', true)
+        .eq('inco_status', 'validated')
         .order('product_name');
       
       if (error) throw error;
@@ -164,6 +166,7 @@ export function useCreateCartonLabel() {
       
       if (sheetError) throw sheetError;
       if (!sheet.is_published) throw new Error('La fiche technique doit être validée');
+      if ((sheet as any).inco_status !== 'validated') throw new Error('L\'INCO de la fiche technique doit être validée');
 
       // Parse snapshot data from FT
       const snapshotIngredients = sheet.snapshot_ingredients as unknown as SnapshotIngredient[] | null;
@@ -194,12 +197,17 @@ export function useCreateCartonLabel() {
         per_100g_salt: snapshotNutrition.salt,
       } : null;
 
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+
       const { data, error } = await supabase
         .from('carton_labels')
         .insert({
           product_sheet_id: label.product_sheet_id,
           label_title: label.label_title,
           created_by: user.id,
+          status: 'validated',
+          validated_at: new Date().toISOString(),
+          validated_by: user.id,
           snapshot_product_sheet_version: sheet.version,
           snapshot_ingredients_html: ingredientsHtml || null,
           snapshot_ingredients_html_original: ingredientsHtml || null,

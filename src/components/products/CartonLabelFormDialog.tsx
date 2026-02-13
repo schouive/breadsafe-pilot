@@ -86,7 +86,7 @@ export function CartonLabelFormDialog({
           </DialogTitle>
           <DialogDescription>
             {mode === 'create'
-              ? 'Sélectionnez une fiche technique validée et définissez le titre de l\'étiquette'
+              ? 'Sélectionnez une fiche technique avec INCO validée et définissez le titre de l\'étiquette'
               : 'Modifiez le titre de l\'étiquette carton'}
           </DialogDescription>
         </DialogHeader>
@@ -95,7 +95,7 @@ export function CartonLabelFormDialog({
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
-              Aucune fiche technique validée disponible. Veuillez d'abord valider une fiche technique.
+              Aucune fiche technique avec INCO validée disponible. Veuillez d'abord valider la FT et son INCO.
             </AlertDescription>
           </Alert>
         ) : (
@@ -111,7 +111,7 @@ export function CartonLabelFormDialog({
                   disabled={loadingSheets}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Sélectionner une FT validée" />
+                    <SelectValue placeholder="Sélectionner une FT avec INCO validée" />
                   </SelectTrigger>
                   <SelectContent>
                     {productSheets?.map((sheet) => (

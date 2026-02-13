@@ -280,8 +280,18 @@ export function TechnicalSheetFormDialog({
 
   useEffect(() => {
     if (!allergensManuallyEdited) {
-      setEditableAllergens(allergens);
-      setEditableAllergensSecondary(allergensSecondary);
+      // Deduplicate allergens using normalization (handles Œufs/Oeufs variants)
+      const dedup = (list: string[]) => {
+        const seen = new Set<string>();
+        return list.filter(a => {
+          const norm = normalizeAllergen(a);
+          if (seen.has(norm)) return false;
+          seen.add(norm);
+          return true;
+        });
+      };
+      setEditableAllergens(dedup(allergens));
+      setEditableAllergensSecondary(dedup(allergensSecondary));
     }
   }, [allergens, allergensSecondary, allergensManuallyEdited]);
 
@@ -300,8 +310,17 @@ export function TechnicalSheetFormDialog({
         setIncoManuallyEdited(true); // In edit mode, keep existing content
         const existingAllergens = sheetAny.snapshot_allergens;
         if (existingAllergens) {
-          setEditableAllergens(existingAllergens.main || []);
-          setEditableAllergensSecondary(existingAllergens.secondary || []);
+          const dedup = (list: string[]) => {
+            const seen = new Set<string>();
+            return list.filter(a => {
+              const norm = normalizeAllergen(a);
+              if (seen.has(norm)) return false;
+              seen.add(norm);
+              return true;
+            });
+          };
+          setEditableAllergens(dedup(existingAllergens.main || []));
+          setEditableAllergensSecondary(dedup(existingAllergens.secondary || []));
           setAllergensManuallyEdited(true);
         }
         setFormData({

@@ -43,8 +43,13 @@ const ALL_ALLERGENS = [
   'Soja', 'Lait', 'Fruits à coque', 'Sésame',
 ];
 
-// Normalize allergen names for comparison (handles Œufs/Oeufs variants)
-const normalizeAllergen = (a: string) => a.toLowerCase().replace('œ', 'oe').replace('à', 'a').trim();
+// Normalize allergen names for comparison (handles Œufs/Oeufs/Œuf variants, singular/plural)
+const normalizeAllergen = (a: string) => {
+  let n = a.toLowerCase().replace('œ', 'oe').replace('à', 'a').trim();
+  // Normalize singular/plural: remove trailing 's' for comparison
+  if (n.endsWith('s') && n.length > 2) n = n.slice(0, -1);
+  return n;
+};
 
 const STORAGE_OPTIONS = [
   { value: 'ambient', label: 'À conserver à température ambiante, de préférence inférieure à 30°C' },

@@ -164,7 +164,7 @@ export default function NewOrder() {
             <SelectTrigger className="max-w-md">
               <SelectValue placeholder="Sélectionner un fournisseur..." />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent side="bottom" className="max-h-60 overflow-y-auto">
               {suppliers?.map((s) => (
                 <SelectItem key={s.id} value={s.id}>
                   {s.name}
@@ -212,7 +212,7 @@ export default function NewOrder() {
                         <SelectTrigger className="w-28 shrink-0">
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent side="bottom">
                           {ORDER_UNITS.map((u) => (
                             <SelectItem key={u.value} value={u.value}>
                               {u.label}

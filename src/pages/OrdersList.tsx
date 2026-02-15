@@ -210,7 +210,7 @@ export default function OrdersList() {
                 <SelectTrigger>
                   <SelectValue placeholder="Tous" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent side="bottom">
                   <SelectItem value="all">Tous</SelectItem>
                   {suppliers?.map((s) => (
                     <SelectItem key={s.id} value={s.id}>
@@ -226,7 +226,7 @@ export default function OrdersList() {
                 <SelectTrigger>
                   <SelectValue placeholder="Tous" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent side="bottom">
                   <SelectItem value="all">Tous</SelectItem>
                   <SelectItem value="draft">En cours de création</SelectItem>
                   <SelectItem value="sent">Envoyée</SelectItem>

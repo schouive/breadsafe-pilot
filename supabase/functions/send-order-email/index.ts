@@ -45,7 +45,7 @@ serve(async (req: Request) => {
         suppliers ( id, name, order_email, email, email2, client_code ),
         supplier_order_lines (
           *,
-          raw_materials ( id, name, unit, purchase_unit )
+          raw_materials ( id, name, unit, purchase_unit, supplier_reference )
         )
       `)
       .eq("id", orderId)
@@ -60,6 +60,7 @@ serve(async (req: Request) => {
       .map(
         (line: any) =>
           `<tr>
+            ${line.raw_materials?.supplier_reference ? `<td style="padding:8px;border:1px solid #ddd;">${line.raw_materials.supplier_reference}</td>` : `<td style="padding:8px;border:1px solid #ddd;">—</td>`}
             <td style="padding:8px;border:1px solid #ddd;">${line.raw_materials?.name || "—"}</td>
             <td style="padding:8px;border:1px solid #ddd;text-align:center;">${line.quantity_ordered}</td>
             <td style="padding:8px;border:1px solid #ddd;text-align:center;">${line.unit}</td>
@@ -97,6 +98,7 @@ serve(async (req: Request) => {
         <table style="width:100%;border-collapse:collapse;margin:16px 0;">
           <thead>
             <tr style="background:#f5f5f5;">
+              <th style="padding:8px;border:1px solid #ddd;text-align:left;">Code article</th>
               <th style="padding:8px;border:1px solid #ddd;text-align:left;">Matière première</th>
               <th style="padding:8px;border:1px solid #ddd;">Quantité</th>
               <th style="padding:8px;border:1px solid #ddd;">Unité</th>

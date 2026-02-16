@@ -196,6 +196,35 @@ export function useCreateSupplierOrder() {
   });
 }
 
+export function useDeleteSupplierOrder() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (orderId: string) => {
+      // Delete lines first (FK constraint)
+      const { error: linesError } = await supabase
+        .from('supplier_order_lines')
+        .delete()
+        .eq('order_id', orderId);
+      if (linesError) throw linesError;
+
+      const { error } = await supabase
+        .from('supplier_orders')
+        .delete()
+        .eq('id', orderId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['supplier_orders'] });
+      toast.success('Commande supprimée');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Erreur lors de la suppression');
+      console.error(error);
+    },
+  });
+}
+
 export function useUpdateSupplierOrder() {
   const queryClient = useQueryClient();
 

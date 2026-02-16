@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { format, isPast, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { ClipboardList, Filter, Eye, Mail, Loader2, Pencil, Save, X } from 'lucide-react';
+import { ClipboardList, Filter, Eye, Mail, Loader2, Pencil, Save, X, Trash2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -32,7 +32,18 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
-import { useSupplierOrders, useSupplierOrder, useUpdateSupplierOrder, SupplierOrderWithSupplier } from '@/hooks/useSupplierOrders';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { useSupplierOrders, useSupplierOrder, useUpdateSupplierOrder, useDeleteSupplierOrder, SupplierOrderWithSupplier } from '@/hooks/useSupplierOrders';
 import { useSuppliers, useRawMaterials } from '@/hooks/useSuppliers';
 
 const STATUS_LABELS: Record<string, string> = {
@@ -80,6 +91,7 @@ export default function OrdersList() {
   const [editLines, setEditLines] = useState<{ raw_material_id: string; name: string; quantity: number; unit: string }[]>([]);
 
   const updateOrder = useUpdateSupplierOrder();
+  const deleteOrder = useDeleteSupplierOrder();
 
   const filters = {
     supplierId: filterSupplier || undefined,
@@ -329,11 +341,42 @@ export default function OrdersList() {
               <SheetTitle className="font-mono">
                 {detailOrder?.order_number || 'Chargement...'}
               </SheetTitle>
-              {detailOrder && (detailOrder.status as string) === 'draft' && !isEditing && (
-                <Button variant="outline" size="sm" onClick={startEditing}>
-                  <Pencil className="h-4 w-4 mr-1" />
-                  Modifier
-                </Button>
+              {detailOrder && !isEditing && (
+                <div className="flex items-center gap-2">
+                  {(detailOrder.status as string) === 'draft' && (
+                    <Button variant="outline" size="sm" onClick={startEditing}>
+                      <Pencil className="h-4 w-4 mr-1" />
+                      Modifier
+                    </Button>
+                  )}
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Supprimer la commande</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Êtes-vous sûr de vouloir supprimer la commande {detailOrder.order_number} ? Cette action est irréversible.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Annuler</AlertDialogCancel>
+                        <AlertDialogAction
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          onClick={async () => {
+                            await deleteOrder.mutateAsync(detailOrder.id);
+                            setDetailOrderId(undefined);
+                          }}
+                        >
+                          Supprimer
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
               )}
             </div>
           </SheetHeader>

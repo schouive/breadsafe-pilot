@@ -30,6 +30,7 @@ export interface ControlRecordFromDB {
   raw_material_id: string | null;
   corps_etranger_detecte: boolean | null;
   created_at: string;
+  order_id: string | null;
 }
 
 export interface ReceptionFormData {
@@ -239,6 +240,7 @@ export function useCreateReceptionControl() {
         product: data.products[index] || data.products.join(', '),
         photos: data.photos,
         raw_material_id: rawMaterialId,
+        order_id: data.linkedOrderId || null,
       })) || [{
         control_point_code: 'CP_RECEPTION' as ControlPointCode,
         operator_id: userId,
@@ -256,6 +258,7 @@ export function useCreateReceptionControl() {
         supplier: data.supplier,
         product: data.products.join(', '),
         photos: data.photos,
+        order_id: data.linkedOrderId || null,
       }];
 
       if (!navigator.onLine) {

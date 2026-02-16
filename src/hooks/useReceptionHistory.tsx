@@ -1,11 +1,16 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { ControlRecordFromDB } from '@/hooks/useControlRecords';
+import { toast } from 'sonner';
 
 interface ReceptionHistoryFilters {
   supplierId?: string;
   dateFrom?: string;
   dateTo?: string;
+}
+
+export interface ReceptionRecordWithOrder extends ControlRecordFromDB {
+  order_number?: string | null;
 }
 
 export function useReceptionHistory(filters: ReceptionHistoryFilters) {
@@ -14,19 +19,18 @@ export function useReceptionHistory(filters: ReceptionHistoryFilters) {
     queryFn: async () => {
       let query = supabase
         .from('control_records')
-        .select('*')
+        .select('*, supplier_orders!control_records_order_id_fkey(order_number)')
         .eq('control_point_code', 'CP_RECEPTION')
         .order('timestamp', { ascending: false })
         .limit(200);
 
       // Filter by supplier: we need to resolve supplier name from supplier_id
       if (filters.supplierId) {
-        // Fetch supplier name first
         const { data: supplier } = await supabase
           .from('suppliers')
           .select('name')
           .eq('id', filters.supplierId)
-          .single();
+          .maybeSingle();
 
         if (supplier) {
           query = query.eq('supplier', supplier.name);
@@ -44,7 +48,31 @@ export function useReceptionHistory(filters: ReceptionHistoryFilters) {
       const { data, error } = await query;
       if (error) throw error;
 
-      return data as ControlRecordFromDB[];
+      return (data || []).map((r: any) => ({
+        ...r,
+        order_number: r.supplier_orders?.order_number || null,
+      })) as ReceptionRecordWithOrder[];
+    },
+  });
+}
+
+export function useLinkOrderToReception() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ recordId, orderId }: { recordId: string; orderId: string }) => {
+      const { error } = await supabase
+        .from('control_records')
+        .update({ order_id: orderId } as any)
+        .eq('id', recordId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['reception_history'] });
+      toast.success('Commande associée avec succès');
+    },
+    onError: () => {
+      toast.error("Erreur lors de l'association de la commande");
     },
   });
 }

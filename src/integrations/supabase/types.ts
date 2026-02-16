@@ -182,6 +182,7 @@ export type Database = {
           lot_number: string | null
           notes: string | null
           operator_id: string
+          order_id: string | null
           photos: string[] | null
           product: string | null
           raw_material_id: string | null
@@ -207,6 +208,7 @@ export type Database = {
           lot_number?: string | null
           notes?: string | null
           operator_id: string
+          order_id?: string | null
           photos?: string[] | null
           product?: string | null
           raw_material_id?: string | null
@@ -232,6 +234,7 @@ export type Database = {
           lot_number?: string | null
           notes?: string | null
           operator_id?: string
+          order_id?: string | null
           photos?: string[] | null
           product?: string | null
           raw_material_id?: string | null
@@ -243,6 +246,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "control_records_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_orders"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "control_records_raw_material_id_fkey"
             columns: ["raw_material_id"]

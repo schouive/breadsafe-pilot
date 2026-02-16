@@ -14,6 +14,8 @@ import {
   Filter,
   Search,
   X,
+  FileText,
+  Link2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -26,11 +28,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
 import { ControlDetailModal } from '@/components/controls/ControlDetailModal';
 import { ControlRecordFromDB } from '@/hooks/useControlRecords';
 import { useOperatorNames } from '@/hooks/useOperatorNames';
-import { useReceptionHistory } from '@/hooks/useReceptionHistory';
+import { useReceptionHistory, useLinkOrderToReception, ReceptionRecordWithOrder } from '@/hooks/useReceptionHistory';
 import { useSuppliers } from '@/hooks/useSuppliers';
+import { useSupplierOrders, SupplierOrderWithSupplier } from '@/hooks/useSupplierOrders';
 import { cn } from '@/lib/utils';
 
 const statusConfig = {
@@ -61,6 +71,8 @@ export default function ReceptionHistory() {
   const [dateFrom, setDateFrom] = useState<string>('');
   const [dateTo, setDateTo] = useState<string>('');
   const [selectedRecord, setSelectedRecord] = useState<ControlRecordFromDB | null>(null);
+  const [linkDialogRecord, setLinkDialogRecord] = useState<ReceptionRecordWithOrder | null>(null);
+  const [selectedOrderId, setSelectedOrderId] = useState<string>('');
 
   const { data: suppliers } = useSuppliers();
   const { data: records, isLoading } = useReceptionHistory({
@@ -68,6 +80,8 @@ export default function ReceptionHistory() {
     dateFrom: dateFrom || undefined,
     dateTo: dateTo || undefined,
   });
+  const { data: allOrders } = useSupplierOrders();
+  const linkOrderMutation = useLinkOrderToReception();
 
   const operatorIds = useMemo(
     () => (records || []).map((r) => r.operator_id),
@@ -75,14 +89,15 @@ export default function ReceptionHistory() {
   );
   const { data: operatorNames } = useOperatorNames(operatorIds);
 
-  // Map supplier IDs to names for display
-  const supplierNameMap = useMemo(() => {
-    const map: Record<string, string> = {};
-    suppliers?.forEach((s) => {
-      map[s.id] = s.name;
-    });
-    return map;
-  }, [suppliers]);
+  // Filter orders for link dialog: match supplier and status sent/partially_received
+  const availableOrders = useMemo(() => {
+    if (!linkDialogRecord || !allOrders) return [];
+    return (allOrders as SupplierOrderWithSupplier[]).filter(
+      (o) =>
+        o.suppliers?.name === linkDialogRecord.supplier &&
+        ['sent', 'partially_received'].includes(o.status)
+    );
+  }, [linkDialogRecord, allOrders]);
 
   const hasFilters = selectedSupplierId !== 'all' || dateFrom || dateTo;
 
@@ -92,7 +107,6 @@ export default function ReceptionHistory() {
     setDateTo('');
   };
 
-  // Stats
   const stats = useMemo(() => {
     if (!records) return { total: 0, conforme: 0, nonconforme: 0, acceptable: 0 };
     return {
@@ -102,6 +116,19 @@ export default function ReceptionHistory() {
       acceptable: records.filter((r) => r.status === 'acceptable').length,
     };
   }, [records]);
+
+  const handleLinkOrder = () => {
+    if (!linkDialogRecord || !selectedOrderId) return;
+    linkOrderMutation.mutate(
+      { recordId: linkDialogRecord.id, orderId: selectedOrderId },
+      {
+        onSuccess: () => {
+          setLinkDialogRecord(null);
+          setSelectedOrderId('');
+        },
+      }
+    );
+  };
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -199,13 +226,12 @@ export default function ReceptionHistory() {
             return (
               <Card
                 key={record.id}
-                onClick={() => setSelectedRecord(record)}
                 className={cn(
                   'p-4 border cursor-pointer hover:shadow-md transition-shadow',
                   status.class
                 )}
               >
-                <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start justify-between gap-4" onClick={() => setSelectedRecord(record)}>
                   <div className="flex items-start gap-3 min-w-0">
                     <StatusIcon className="h-5 w-5 mt-0.5 shrink-0" />
                     <div className="space-y-1.5 min-w-0">
@@ -233,6 +259,30 @@ export default function ReceptionHistory() {
                           <span className="truncate">{record.product}</span>
                         </div>
                       )}
+
+                      {/* Order number */}
+                      <div className="flex items-center gap-1.5 text-sm">
+                        {record.order_number ? (
+                          <span className="flex items-center gap-1 text-primary font-medium">
+                            <FileText className="h-3.5 w-3.5" />
+                            {record.order_number}
+                          </span>
+                        ) : (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 px-2 text-xs gap-1 text-muted-foreground hover:text-primary"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setLinkDialogRecord(record);
+                              setSelectedOrderId('');
+                            }}
+                          >
+                            <Link2 className="h-3 w-3" />
+                            Associer une commande
+                          </Button>
+                        )}
+                      </div>
 
                       {record.photos && record.photos.length > 0 && (
                         <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
@@ -291,6 +341,52 @@ export default function ReceptionHistory() {
         onClose={() => setSelectedRecord(null)}
         onEdit={() => {}}
       />
+
+      {/* Link order dialog */}
+      <Dialog open={!!linkDialogRecord} onOpenChange={(open) => !open && setLinkDialogRecord(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Associer une commande fournisseur</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <p className="text-sm text-muted-foreground">
+              Sélectionnez la commande à associer à ce contrôle de réception
+              {linkDialogRecord?.supplier && (
+                <> pour <strong>{linkDialogRecord.supplier}</strong></>
+              )}
+            </p>
+            {availableOrders.length > 0 ? (
+              <Select value={selectedOrderId} onValueChange={setSelectedOrderId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Choisir une commande" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableOrders.map((o) => (
+                    <SelectItem key={o.id} value={o.id}>
+                      {o.order_number} — {format(new Date(o.order_date), 'dd/MM/yyyy')}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <p className="text-sm text-muted-foreground italic">
+                Aucune commande ouverte trouvée pour ce fournisseur
+              </p>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setLinkDialogRecord(null)}>
+              Annuler
+            </Button>
+            <Button
+              onClick={handleLinkOrder}
+              disabled={!selectedOrderId || linkOrderMutation.isPending}
+            >
+              Associer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

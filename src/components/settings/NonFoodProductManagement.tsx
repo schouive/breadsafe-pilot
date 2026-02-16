@@ -52,13 +52,6 @@ const NON_FOOD_CATEGORIES = [
 ];
 
 const NON_FOOD_UNITS = [
-  { value: 'piece', label: 'Pièce' },
-  { value: 'L', label: 'Litre' },
-  { value: 'kg', label: 'Kilogramme' },
-  { value: 'carton', label: 'Carton' },
-];
-
-const ORDER_UNITS = [
   { value: 'bidon', label: 'Bidon(s)' },
   { value: 'carton', label: 'Carton(s)' },
   { value: 'palette', label: 'Palette(s)' },
@@ -78,7 +71,6 @@ interface NonFoodFormData {
   is_active: boolean;
   description: string;
   internal_comment: string;
-  order_unit: string;
 }
 
 const initialFormData: NonFoodFormData = {
@@ -91,7 +83,6 @@ const initialFormData: NonFoodFormData = {
   is_active: true,
   description: '',
   internal_comment: '',
-  order_unit: '',
 };
 
 export function NonFoodProductManagement() {
@@ -128,7 +119,6 @@ export function NonFoodProductManagement() {
       is_active: material.is_active,
       description: material.description || '',
       internal_comment: material.internal_comment || '',
-      order_unit: material.order_unit || '',
     });
     setFdsUrl(material.fds_url || null);
   };
@@ -178,7 +168,7 @@ export function NonFoodProductManagement() {
       description: formData.description.trim() || null,
       internal_comment: formData.internal_comment.trim() || null,
       fds_url: fdsUrl,
-      order_unit: formData.order_unit || null,
+      order_unit: formData.unit || null,
       // Non-food products don't need these
       requires_cold_storage: false,
       requires_dlc_check: false,
@@ -205,7 +195,7 @@ export function NonFoodProductManagement() {
       description: formData.description.trim() || null,
       internal_comment: formData.internal_comment.trim() || null,
       fds_url: fdsUrl,
-      order_unit: formData.order_unit || null,
+      order_unit: formData.unit || null,
       is_active: formData.is_active,
     } as any);
     
@@ -315,26 +305,6 @@ export function NonFoodProductManagement() {
             onChange={(e) => setFormData({ ...formData, supplier_reference: e.target.value })}
           />
         </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="nf-order-unit">Unité de commande</Label>
-        <Select 
-          value={formData.order_unit || '_none_'} 
-          onValueChange={(value) => setFormData({ ...formData, order_unit: value === '_none_' ? '' : value })}
-        >
-          <SelectTrigger id="nf-order-unit">
-            <SelectValue placeholder="Sélectionnez l'unité de commande" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="_none_">
-              <span className="text-muted-foreground italic">Non définie</span>
-            </SelectItem>
-            {ORDER_UNITS.map(unit => (
-              <SelectItem key={unit.value} value={unit.value}>{unit.label}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
       </div>
 
       <div className="space-y-2">

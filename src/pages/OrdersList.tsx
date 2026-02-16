@@ -1,11 +1,10 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { format, isPast, parseISO } from 'date-fns';
+import { format, addDays, startOfWeek, isSameDay, isToday, isPast, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { ClipboardList, Filter, Eye, Mail, Loader2, Pencil, Save, X, Trash2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ClipboardList, Eye, Mail, Loader2, Pencil, Save, X, Trash2, FileText, Send, Clock, CheckCircle2, AlertTriangle, Package } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,14 +17,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
 import {
   Sheet,
   SheetContent,
@@ -43,21 +34,22 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { cn } from '@/lib/utils';
 import { useSupplierOrders, useSupplierOrder, useUpdateSupplierOrder, useDeleteSupplierOrder, SupplierOrderWithSupplier } from '@/hooks/useSupplierOrders';
 import { useSuppliers, useRawMaterials } from '@/hooks/useSuppliers';
 
 const STATUS_LABELS: Record<string, string> = {
-  draft: 'En cours de création',
+  draft: 'Brouillon',
   sent: 'Envoyée',
-  partially_received: 'Partiellement reçue',
+  partially_received: 'Partielle',
   received: 'Reçue',
 };
 
-const STATUS_CLASSES: Record<string, string> = {
-  draft: 'bg-muted text-muted-foreground border-border',
-  sent: 'bg-primary/10 text-primary border-primary/30',
-  partially_received: 'bg-[hsl(var(--status-acceptable-light))] text-[hsl(38,92%,25%)] border-[hsl(var(--status-acceptable)/0.3)]',
-  received: 'bg-[hsl(var(--status-conforme-light))] text-[hsl(142,71%,25%)] border-[hsl(var(--status-conforme)/0.3)]',
+const STATUS_CONFIG: Record<string, { icon: typeof Clock; color: string; bg: string }> = {
+  draft: { icon: FileText, color: 'text-muted-foreground', bg: 'bg-muted' },
+  sent: { icon: Send, color: 'text-primary', bg: 'bg-primary/10' },
+  partially_received: { icon: Package, color: 'text-[hsl(38,92%,40%)]', bg: 'bg-[hsl(var(--status-acceptable-light))]' },
+  received: { icon: CheckCircle2, color: 'text-[hsl(142,71%,35%)]', bg: 'bg-[hsl(var(--status-conforme-light))]' },
 };
 
 function isOrderLate(order: { status: string; expected_delivery_date: string | null }) {
@@ -80,35 +72,43 @@ export default function OrdersList() {
   const queryClient = useQueryClient();
   const [sendingEmail, setSendingEmail] = useState(false);
   const { data: suppliers } = useSuppliers();
-  const [filterSupplier, setFilterSupplier] = useState<string>('');
-  const [filterStatus, setFilterStatus] = useState<string>('');
-  const [filterDateFrom, setFilterDateFrom] = useState('');
-  const [filterDateTo, setFilterDateTo] = useState('');
   const [detailOrderId, setDetailOrderId] = useState<string | undefined>(undefined);
   const [isEditing, setIsEditing] = useState(false);
   const [editDate, setEditDate] = useState('');
   const [editComment, setEditComment] = useState('');
   const [editLines, setEditLines] = useState<{ raw_material_id: string; name: string; quantity: number; unit: string }[]>([]);
 
+  const [currentWeekStart, setCurrentWeekStart] = useState(() =>
+    startOfWeek(new Date(), { weekStartsOn: 1 })
+  );
+
   const updateOrder = useUpdateSupplierOrder();
   const deleteOrder = useDeleteSupplierOrder();
 
-  const filters = {
-    supplierId: filterSupplier || undefined,
-    status: filterStatus || undefined,
-    dateFrom: filterDateFrom || undefined,
-    dateTo: filterDateTo || undefined,
-  };
-
-  const { data: orders, isLoading } = useSupplierOrders(filters);
+  // Fetch all orders (no date filter — we filter client-side for the calendar)
+  const { data: orders, isLoading } = useSupplierOrders({});
   const { data: detailOrder } = useSupplierOrder(detailOrderId);
   const { data: rawMaterials } = useRawMaterials(detailOrder?.supplier_id);
+
+  const weekDays = Array.from({ length: 7 }, (_, i) => addDays(currentWeekStart, i));
+
+  const getOrdersForDay = (date: Date) => {
+    if (!orders) return [];
+    return orders.filter((o) => {
+      const orderDate = o.expected_delivery_date || o.order_date;
+      return isSameDay(parseISO(orderDate), date);
+    });
+  };
+
+  // Stats
+  const lateCount = orders?.filter(isOrderLate).length ?? 0;
+  const todayOrders = getOrdersForDay(new Date());
+  const pendingToday = todayOrders.filter((o) => o.status !== 'received').length;
 
   const startEditing = () => {
     if (!detailOrder) return;
     setEditDate(detailOrder.expected_delivery_date || '');
     setEditComment(detailOrder.comment || '');
-    // Build edit lines from existing order lines + all supplier raw materials
     const existingLines = detailOrder.supplier_order_lines || [];
     if (rawMaterials) {
       const lines = rawMaterials.map((m) => {
@@ -132,9 +132,7 @@ export default function OrdersList() {
     setIsEditing(true);
   };
 
-  const cancelEditing = () => {
-    setIsEditing(false);
-  };
+  const cancelEditing = () => setIsEditing(false);
 
   const handleSaveEdit = async () => {
     if (!detailOrder) return;
@@ -150,13 +148,6 @@ export default function OrdersList() {
       lines: validLines,
     });
     setIsEditing(false);
-  };
-
-  const clearFilters = () => {
-    setFilterSupplier('');
-    setFilterStatus('');
-    setFilterDateFrom('');
-    setFilterDateTo('');
   };
 
   const handleSendEmail = async () => {
@@ -176,16 +167,12 @@ export default function OrdersList() {
         },
       });
       if (error) throw error;
-
-      // Update order status to 'sent'
       await supabase
         .from('supplier_orders')
         .update({ status: 'sent' as any })
         .eq('id', detailOrder.id);
-
       queryClient.invalidateQueries({ queryKey: ['supplier_orders'] });
       queryClient.invalidateQueries({ queryKey: ['supplier_order', detailOrder.id] });
-
       toast.success(`Email envoyé à ${recipientEmail}`);
     } catch (err: any) {
       toast.error(err.message || "Erreur lors de l'envoi");
@@ -195,143 +182,136 @@ export default function OrdersList() {
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Commandes fournisseurs</h1>
-        <p className="text-muted-foreground mt-1">Suivi et historique des commandes</p>
+    <div className="space-y-6 animate-fade-in">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Commandes fournisseurs</h1>
+          <p className="text-muted-foreground mt-1">Calendrier et suivi des commandes</p>
+        </div>
+        <div className="flex items-center gap-3">
+          {lateCount > 0 && (
+            <Badge variant="destructive" className="text-sm px-3 py-1">
+              {lateCount} en retard
+            </Badge>
+          )}
+          <Badge variant="outline" className="text-sm px-3 py-1">
+            {pendingToday} commande{pendingToday > 1 ? 's' : ''} aujourd'hui
+          </Badge>
+        </div>
       </div>
 
-      {/* Filters */}
-      <Card>
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Filter className="h-4 w-4" />
-              Filtres
-            </CardTitle>
-            <Button variant="ghost" size="sm" onClick={clearFilters}>
-              Réinitialiser
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="space-y-1.5">
-              <Label className="text-xs">Fournisseur</Label>
-              <Select value={filterSupplier} onValueChange={setFilterSupplier}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Tous" />
-                </SelectTrigger>
-                <SelectContent side="bottom">
-                  <SelectItem value="all">Tous</SelectItem>
-                  {suppliers?.map((s) => (
-                    <SelectItem key={s.id} value={s.id}>
-                      {s.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Statut</Label>
-              <Select value={filterStatus} onValueChange={setFilterStatus}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Tous" />
-                </SelectTrigger>
-                <SelectContent side="bottom">
-                  <SelectItem value="all">Tous</SelectItem>
-                  <SelectItem value="draft">En cours de création</SelectItem>
-                  <SelectItem value="sent">Envoyée</SelectItem>
-                  <SelectItem value="partially_received">Partiellement reçue</SelectItem>
-                  <SelectItem value="received">Reçue</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Date début</Label>
-              <Input
-                type="date"
-                value={filterDateFrom}
-                onChange={(e) => setFilterDateFrom(e.target.value)}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Date fin</Label>
-              <Input
-                type="date"
-                value={filterDateTo}
-                onChange={(e) => setFilterDateTo(e.target.value)}
-              />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Week navigation */}
+      <div className="flex items-center justify-between bg-card rounded-xl border border-border p-4">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setCurrentWeekStart(addDays(currentWeekStart, -7))}
+        >
+          <ChevronLeft className="h-5 w-5" />
+        </Button>
+        <h2 className="text-lg font-semibold">
+          {format(currentWeekStart, 'd MMMM', { locale: fr })} – {format(addDays(currentWeekStart, 6), 'd MMMM yyyy', { locale: fr })}
+        </h2>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setCurrentWeekStart(addDays(currentWeekStart, 7))}
+        >
+          <ChevronRight className="h-5 w-5" />
+        </Button>
+      </div>
 
-      {/* Orders Table */}
-      <Card>
-        <CardContent className="p-0">
-          {isLoading ? (
-            <div className="p-8 text-center text-muted-foreground">Chargement...</div>
-          ) : !orders?.length ? (
-            <div className="p-8 text-center">
-              <ClipboardList className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">Aucune commande trouvée</p>
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>N° Commande</TableHead>
-                  <TableHead>Fournisseur</TableHead>
-                  <TableHead>Statut</TableHead>
-                  <TableHead>Date commande</TableHead>
-                  <TableHead>Réception prévue</TableHead>
-                  <TableHead className="w-12"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {orders.map((order) => (
-                  <TableRow key={order.id}>
-                    <TableCell className="font-mono font-medium">
-                      {order.order_number}
-                    </TableCell>
-                    <TableCell>{order.suppliers?.name || '—'}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1.5">
-                        <Badge variant="outline" className={STATUS_CLASSES[order.status]}>
-                          {STATUS_LABELS[order.status]}
-                        </Badge>
-                        {isOrderLate(order) && (
-                          <Badge variant="outline" className="bg-[hsl(var(--status-acceptable-light))] text-[hsl(25,95%,40%)] border-[hsl(var(--status-acceptable)/0.3)]">
-                            Retard
-                          </Badge>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {format(new Date(order.order_date), 'dd/MM/yyyy', { locale: fr })}
-                    </TableCell>
-                    <TableCell>
-                      {order.expected_delivery_date
-                        ? format(new Date(order.expected_delivery_date), 'dd/MM/yyyy', { locale: fr })
-                        : '—'}
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setDetailOrderId(order.id)}
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+      {/* Week grid */}
+      {isLoading ? (
+        <div className="p-8 text-center text-muted-foreground">Chargement...</div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
+          {weekDays.map((day) => {
+            const dayOrders = getOrdersForDay(day);
+            const isCurrentDay = isToday(day);
+
+            return (
+              <div
+                key={day.toISOString()}
+                className={cn(
+                  'bg-card rounded-xl border p-4 min-h-[200px]',
+                  isCurrentDay ? 'border-primary ring-1 ring-primary/20' : 'border-border'
+                )}
+              >
+                {/* Day header */}
+                <div className="text-center mb-4">
+                  <p className="text-sm text-muted-foreground capitalize">
+                    {format(day, 'EEEE', { locale: fr })}
+                  </p>
+                  <p className={cn(
+                    'text-xl font-bold mt-1',
+                    isCurrentDay ? 'text-primary' : 'text-foreground'
+                  )}>
+                    {format(day, 'd', { locale: fr })}
+                  </p>
+                </div>
+
+                {/* Orders for the day */}
+                <div className="space-y-2">
+                  {dayOrders.length === 0 ? (
+                    <p className="text-xs text-muted-foreground text-center">
+                      Aucune commande
+                    </p>
+                  ) : (
+                    dayOrders.map((order) => {
+                      const statusCfg = STATUS_CONFIG[order.status] || STATUS_CONFIG.draft;
+                      const StatusIcon = statusCfg.icon;
+                      const late = isOrderLate(order);
+
+                      return (
+                        <button
+                          key={order.id}
+                          onClick={() => setDetailOrderId(order.id)}
+                          className={cn(
+                            'w-full rounded-lg p-2 text-xs text-left transition-colors hover:ring-1 hover:ring-primary/30',
+                            late ? 'bg-destructive/10' : statusCfg.bg
+                          )}
+                        >
+                          <div className="flex items-start gap-2">
+                            {late ? (
+                              <AlertTriangle className="h-3.5 w-3.5 mt-0.5 flex-shrink-0 text-destructive" />
+                            ) : (
+                              <StatusIcon className={cn('h-3.5 w-3.5 mt-0.5 flex-shrink-0', statusCfg.color)} />
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium truncate">
+                                {order.suppliers?.name || '—'}
+                              </p>
+                              <p className="text-muted-foreground mt-0.5 font-mono">
+                                {order.order_number}
+                              </p>
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Legend */}
+      <div className="flex flex-wrap items-center justify-center gap-6 text-sm">
+        {Object.entries(STATUS_CONFIG).map(([key, cfg]) => (
+          <div key={key} className="flex items-center gap-2">
+            <div className={cn('h-3 w-3 rounded-full', cfg.bg, 'ring-1 ring-current/30', cfg.color)} />
+            <span className="text-muted-foreground">{STATUS_LABELS[key]}</span>
+          </div>
+        ))}
+        <div className="flex items-center gap-2">
+          <div className="h-3 w-3 rounded-full bg-destructive/10 ring-1 ring-destructive/30" />
+          <span className="text-muted-foreground">En retard</span>
+        </div>
+      </div>
 
       {/* Order Detail Sheet */}
       <Sheet open={!!detailOrderId} onOpenChange={(open) => { if (!open) { setDetailOrderId(undefined); setIsEditing(false); } }}>
@@ -390,13 +370,14 @@ export default function OrdersList() {
                 <div>
                   <p className="text-muted-foreground">Statut</p>
                   <div className="flex items-center gap-1.5 mt-0.5">
-                    <Badge variant="outline" className={STATUS_CLASSES[detailOrder.status]}>
+                    <Badge variant="outline" className={cn(
+                      STATUS_CONFIG[detailOrder.status]?.bg,
+                      STATUS_CONFIG[detailOrder.status]?.color
+                    )}>
                       {STATUS_LABELS[detailOrder.status]}
                     </Badge>
                     {isOrderLate(detailOrder) && (
-                      <Badge variant="outline" className="bg-[hsl(var(--status-acceptable-light))] text-[hsl(25,95%,40%)] border-[hsl(var(--status-acceptable)/0.3)]">
-                        Retard
-                      </Badge>
+                      <Badge variant="destructive">Retard</Badge>
                     )}
                   </div>
                 </div>
@@ -473,7 +454,10 @@ export default function OrdersList() {
                   {editLines.map((line) => (
                     <div
                       key={line.raw_material_id}
-                      className={`p-3 rounded-lg border transition-colors ${line.quantity > 0 ? 'border-primary/40 bg-primary/5' : 'bg-card'}`}
+                      className={cn(
+                        'p-3 rounded-lg border transition-colors',
+                        line.quantity > 0 ? 'border-primary/40 bg-primary/5' : 'bg-card'
+                      )}
                     >
                       <p className="font-medium text-sm mb-2 truncate">{line.name}</p>
                       <div className="flex items-center gap-2">

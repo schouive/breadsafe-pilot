@@ -31,6 +31,8 @@ import {
 import { cn } from '@/lib/utils';
 import { ControlRecordFromDB, useDeleteControlRecord } from '@/hooks/useControlRecords';
 import { CONTROL_POINTS } from '@/types/haccp';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { OptimizedImage } from '@/components/ui/OptimizedImage';
 import { PhotoLightbox } from './PhotoLightbox';
@@ -72,6 +74,19 @@ export function ControlDetailModal({ record, isOpen, onClose, onEdit }: ControlD
 
   const deleteRecord = useDeleteControlRecord();
   
+  const { data: linkedOrder } = useQuery({
+    queryKey: ['order-for-control', record?.order_id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('supplier_orders')
+        .select('order_number')
+        .eq('id', record!.order_id!)
+        .single();
+      return data;
+    },
+    enabled: !!record?.order_id,
+  });
+
   if (!record) return null;
 
   const status = statusConfig[record.status as keyof typeof statusConfig] || statusConfig.pending;
@@ -214,6 +229,13 @@ export function ControlDetailModal({ record, isOpen, onClose, onEdit }: ControlD
               <Truck className="h-4 w-4" />,
               'Fournisseur',
               record.supplier
+            )}
+
+            {/* Order Number */}
+            {linkedOrder?.order_number && renderDetailItem(
+              <FileText className="h-4 w-4" />,
+              'Commande associée',
+              <Badge variant="outline" className="font-mono">{linkedOrder.order_number}</Badge>
             )}
 
             {/* Lot Number */}

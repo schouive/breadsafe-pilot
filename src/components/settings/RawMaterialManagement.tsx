@@ -97,6 +97,7 @@ interface FormData {
   purchase_price: string;
   density: string;
   order_unit: string;
+  supplier_reference: string;
   requires_cold_storage: boolean;
   requires_dlc_check: boolean;
   storage_temp_min: string;
@@ -126,6 +127,7 @@ const initialFormData: FormData = {
   purchase_price: '',
   density: '',
   order_unit: '',
+  supplier_reference: '',
   requires_cold_storage: false,
   requires_dlc_check: false,
   storage_temp_min: '',
@@ -196,6 +198,7 @@ export function RawMaterialManagement() {
       purchase_price: material.purchase_price?.toString() || '',
       density: material.density?.toString() || '',
       order_unit: material.order_unit || '',
+      supplier_reference: material.supplier_reference || '',
       requires_cold_storage: material.requires_cold_storage,
       requires_dlc_check: material.requires_dlc_check,
       storage_temp_min: material.storage_temp_min?.toString() || '',
@@ -237,7 +240,7 @@ export function RawMaterialManagement() {
       purchase_price: purchasePrice,
       density: density,
       order_unit: formData.order_unit || null,
-      supplier_reference: null,
+      supplier_reference: formData.supplier_reference.trim() || null,
       internal_comment: null,
       fds_url: null,
       requires_cold_storage: formData.requires_cold_storage,
@@ -284,6 +287,7 @@ export function RawMaterialManagement() {
       purchase_price: purchasePrice,
       density: density,
       order_unit: formData.order_unit || null,
+      supplier_reference: formData.supplier_reference.trim() || null,
       requires_cold_storage: formData.requires_cold_storage,
       requires_dlc_check: formData.requires_dlc_check,
       storage_temp_min: formData.storage_temp_min ? parseFloat(formData.storage_temp_min) : null,
@@ -377,6 +381,19 @@ export function RawMaterialManagement() {
               ))}
             </SelectContent>
           </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="supplier_reference">Code article</Label>
+          <Input
+            id="supplier_reference"
+            placeholder="Ex: FA-T55-001"
+            value={formData.supplier_reference}
+            onChange={(e) => setFormData({ ...formData, supplier_reference: e.target.value })}
+          />
+          <p className="text-xs text-muted-foreground">
+            Référence article utilisée dans les commandes fournisseur
+          </p>
         </div>
 
         {/* Purchase Unit and Price Section */}

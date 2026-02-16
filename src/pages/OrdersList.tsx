@@ -226,8 +226,8 @@ export default function OrdersList() {
       {isLoading ? (
         <div className="p-8 text-center text-muted-foreground">Chargement...</div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
-          {weekDays.map((day) => {
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {weekDays.filter((day) => getOrdersForDay(day).length > 0).map((day) => {
             const dayOrders = getOrdersForDay(day);
             const isCurrentDay = isToday(day);
 

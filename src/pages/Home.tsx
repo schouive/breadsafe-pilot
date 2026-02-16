@@ -1,12 +1,10 @@
 import { useNavigate } from 'react-router-dom';
 import { 
-  ChevronRight,
   Shield,
   Tag,
   Cog,
   ShoppingCart
 } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -21,41 +19,37 @@ import { LogOut } from 'lucide-react';
 import logo from '@/assets/logo-breadshop.png';
 import { useAuth } from '@/hooks/useAuth';
 import { getRoleLabel } from '@/types/roles';
+import { cn } from '@/lib/utils';
 
 interface ModuleCardProps {
   title: string;
   description: string;
   icon: React.ComponentType<{ className?: string }>;
-  color: string;
-  bgColor: string;
+  colorClass: string;
   href: string;
 }
 
-function ModuleCard({ title, description, icon: Icon, color, bgColor, href }: ModuleCardProps) {
+function ModuleCard({ title, description, icon: Icon, colorClass, href }: ModuleCardProps) {
   const navigate = useNavigate();
   
   return (
-    <Card 
-      className="group cursor-pointer transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border-2 hover:border-primary/20"
+    <button
       onClick={() => navigate(href)}
+      className={cn(
+        "aspect-square flex flex-col items-center justify-center gap-3 p-4",
+        "rounded-2xl border-2 transition-all duration-200",
+        "hover:scale-105 hover:shadow-lg active:scale-95",
+        "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
+        colorClass
+      )}
     >
-      <CardContent className="p-6 md:p-8">
-        <div className="flex items-start gap-4">
-          <div className={`p-4 rounded-2xl ${bgColor} transition-transform duration-300 group-hover:scale-110`}>
-            <Icon className={`h-8 w-8 md:h-10 md:w-10 ${color}`} />
-          </div>
-          <div className="flex-1 min-w-0">
-            <h2 className="text-xl md:text-2xl font-bold text-foreground mb-2 group-hover:text-primary transition-colors">
-              {title}
-            </h2>
-            <p className="text-muted-foreground text-sm md:text-base">
-              {description}
-            </p>
-          </div>
-          <ChevronRight className="h-6 w-6 text-muted-foreground/50 group-hover:text-primary group-hover:translate-x-1 transition-all" />
-        </div>
-      </CardContent>
-    </Card>
+      <div className="p-3 rounded-xl bg-background/50">
+        <Icon className="h-8 w-8" />
+      </div>
+      <span className="text-sm font-semibold text-center leading-tight">
+        {title}
+      </span>
+    </button>
   );
 }
 
@@ -85,32 +79,28 @@ export default function Home() {
       title: 'HACCP',
       description: 'Contrôles qualité, températures, non-conformités et traçabilité des points critiques',
       icon: Shield,
-      color: 'text-primary',
-      bgColor: 'bg-primary/10',
+      colorClass: 'bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 border-blue-500/20',
       href: '/haccp',
     },
     {
       title: 'Commandes',
       description: 'Création, suivi et gestion des commandes fournisseurs',
       icon: ShoppingCart,
-      color: 'text-primary',
-      bgColor: 'bg-primary/10',
+      colorClass: 'bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 border-emerald-500/20',
       href: '/orders',
     },
     {
       title: 'Recettes & Étiquetage',
-      description: 'Gestion des recettes, calcul nutritionnel et fiches techniques produits',
+      description: 'Gestion des recettes, calcul nutritionnel et fiches techniques',
       icon: Tag,
-      color: 'text-primary',
-      bgColor: 'bg-primary/10',
+      colorClass: 'bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 border-amber-500/20',
       href: '/products',
     },
     {
       title: 'Paramètres',
-      description: 'Configuration des fournisseurs, matières premières et chambres froides',
+      description: 'Fournisseurs, matières premières et chambres froides',
       icon: Cog,
-      color: 'text-muted-foreground',
-      bgColor: 'bg-muted',
+      colorClass: 'bg-slate-500/10 text-slate-600 hover:bg-slate-500/20 border-slate-500/20',
       href: '/settings',
     },
   ];
@@ -183,7 +173,7 @@ export default function Home() {
         </div>
 
         {/* Module Cards */}
-        <div className="grid gap-4 md:gap-6">
+        <div className="grid grid-cols-2 gap-4">
           {modules.map((module) => (
             <ModuleCard key={module.href} {...module} />
           ))}

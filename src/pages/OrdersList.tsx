@@ -225,6 +225,11 @@ export default function OrdersList() {
       {/* Week grid */}
       {isLoading ? (
         <div className="p-8 text-center text-muted-foreground">Chargement...</div>
+      ) : weekDays.every((day) => getOrdersForDay(day).length === 0) ? (
+        <div className="py-16 text-center">
+          <Package className="h-10 w-10 mx-auto text-muted-foreground/40 mb-3" />
+          <p className="text-muted-foreground font-medium">Aucune commande cette semaine</p>
+        </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {weekDays.filter((day) => getOrdersForDay(day).length > 0).map((day) => {

@@ -100,8 +100,7 @@ export default function OrdersList() {
 
   const getOrdersForDay = (date: Date) => {
     if (!filteredOrders) return [];
-    if (!orders) return [];
-    return orders.filter((o) => {
+    return filteredOrders.filter((o) => {
       const orderDate = o.expected_delivery_date || o.order_date;
       return isSameDay(parseISO(orderDate), date);
     });

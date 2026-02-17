@@ -90,9 +90,16 @@ export default function OrdersList() {
   const { data: detailOrder } = useSupplierOrder(detailOrderId);
   const { data: rawMaterials } = useRawMaterials(detailOrder?.supplier_id);
 
+  const [filterSupplierId, setFilterSupplierId] = useState<string>('all');
+
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(currentWeekStart, i));
 
+  const filteredOrders = filterSupplierId === 'all'
+    ? orders
+    : orders?.filter((o) => o.supplier_id === filterSupplierId);
+
   const getOrdersForDay = (date: Date) => {
+    if (!filteredOrders) return [];
     if (!orders) return [];
     return orders.filter((o) => {
       const orderDate = o.expected_delivery_date || o.order_date;
@@ -100,8 +107,13 @@ export default function OrdersList() {
     });
   };
 
+  // Unique suppliers from orders
+  const orderSuppliers = Array.from(
+    new Map(orders?.map((o) => [o.supplier_id, o.suppliers?.name]) ?? [])
+  ).sort((a, b) => (a[1] || '').localeCompare(b[1] || ''));
+
   // Stats
-  const lateCount = orders?.filter(isOrderLate).length ?? 0;
+  const lateCount = filteredOrders?.filter(isOrderLate).length ?? 0;
   const todayOrders = getOrdersForDay(new Date());
   const pendingToday = todayOrders.filter((o) => o.status !== 'received').length;
 
@@ -200,6 +212,24 @@ export default function OrdersList() {
           </Badge>
         </div>
       </div>
+
+      {/* Supplier filter */}
+      {orderSuppliers.length > 1 && (
+        <div className="flex items-center gap-3">
+          <Label className="text-sm text-muted-foreground whitespace-nowrap">Fournisseur</Label>
+          <Select value={filterSupplierId} onValueChange={setFilterSupplierId}>
+            <SelectTrigger className="w-[220px]">
+              <SelectValue placeholder="Tous les fournisseurs" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tous les fournisseurs</SelectItem>
+              {orderSuppliers.map(([id, name]) => (
+                <SelectItem key={id} value={id}>{name || '—'}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
 
       {/* Week navigation */}
       <div className="flex items-center justify-between bg-card rounded-xl border border-border p-4">

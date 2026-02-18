@@ -36,6 +36,8 @@ const RecipeData = lazy(() => import("./pages/RecipeData"));
 const OrdersList = lazy(() => import("./pages/OrdersList"));
 const NewOrder = lazy(() => import("./pages/NewOrder"));
 const ReceptionHistory = lazy(() => import("./pages/ReceptionHistory"));
+const MetalDetectorControl = lazy(() => import("./pages/MetalDetectorControl"));
+const MetalDetectorHistory = lazy(() => import("./pages/MetalDetectorHistory"));
 
 
 const queryClient = new QueryClient();
@@ -114,6 +116,26 @@ function AppRoutes() {
             <ProtectedRoute>
               <HACCPLayout>
                 <ControlHistory />
+              </HACCPLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/haccp/metal-detector"
+          element={
+            <ProtectedRoute>
+              <HACCPLayout>
+                <MetalDetectorControl />
+              </HACCPLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/haccp/metal-detector/history"
+          element={
+            <ProtectedRoute>
+              <HACCPLayout>
+                <MetalDetectorHistory />
               </HACCPLayout>
             </ProtectedRoute>
           }

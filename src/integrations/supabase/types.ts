@@ -392,6 +392,307 @@ export type Database = {
           },
         ]
       }
+      metal_detector_audit_logs: {
+        Row: {
+          action: string
+          control_id: string | null
+          created_at: string
+          deviation_id: string | null
+          id: string
+          new_values: Json | null
+          old_values: Json | null
+          user_id: string
+        }
+        Insert: {
+          action: string
+          control_id?: string | null
+          created_at?: string
+          deviation_id?: string | null
+          id?: string
+          new_values?: Json | null
+          old_values?: Json | null
+          user_id: string
+        }
+        Update: {
+          action?: string
+          control_id?: string | null
+          created_at?: string
+          deviation_id?: string | null
+          id?: string
+          new_values?: Json | null
+          old_values?: Json | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "metal_detector_audit_logs_control_id_fkey"
+            columns: ["control_id"]
+            isOneToOne: false
+            referencedRelation: "metal_detector_controls"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "metal_detector_audit_logs_deviation_id_fkey"
+            columns: ["deviation_id"]
+            isOneToOne: false
+            referencedRelation: "metal_detector_deviations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      metal_detector_controls: {
+        Row: {
+          calibration_date: string | null
+          control_moment: string
+          created_at: string
+          id: string
+          is_validated: boolean
+          lot_number: string
+          metal_detector_id: string
+          notes: string | null
+          operator_id: string
+          product_reference: string
+          production_blocked: boolean
+          production_date: string
+          production_line: string
+          status: string
+          supervisor_id: string | null
+          test_kit_reference: string | null
+          updated_at: string
+          validated_at: string | null
+        }
+        Insert: {
+          calibration_date?: string | null
+          control_moment: string
+          created_at?: string
+          id?: string
+          is_validated?: boolean
+          lot_number: string
+          metal_detector_id: string
+          notes?: string | null
+          operator_id: string
+          product_reference: string
+          production_blocked?: boolean
+          production_date?: string
+          production_line: string
+          status?: string
+          supervisor_id?: string | null
+          test_kit_reference?: string | null
+          updated_at?: string
+          validated_at?: string | null
+        }
+        Update: {
+          calibration_date?: string | null
+          control_moment?: string
+          created_at?: string
+          id?: string
+          is_validated?: boolean
+          lot_number?: string
+          metal_detector_id?: string
+          notes?: string | null
+          operator_id?: string
+          product_reference?: string
+          production_blocked?: boolean
+          production_date?: string
+          production_line?: string
+          status?: string
+          supervisor_id?: string | null
+          test_kit_reference?: string | null
+          updated_at?: string
+          validated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "metal_detector_controls_metal_detector_id_fkey"
+            columns: ["metal_detector_id"]
+            isOneToOne: false
+            referencedRelation: "metal_detectors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      metal_detector_deviations: {
+        Row: {
+          cause_description: string
+          control_id: string
+          corrective_action: string
+          created_at: string
+          id: string
+          product_decision: string
+          release_justification: string | null
+          retest_control_id: string | null
+          supervisor_id: string
+          supervisor_validated: boolean
+          supervisor_validated_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          cause_description: string
+          control_id: string
+          corrective_action: string
+          created_at?: string
+          id?: string
+          product_decision: string
+          release_justification?: string | null
+          retest_control_id?: string | null
+          supervisor_id: string
+          supervisor_validated?: boolean
+          supervisor_validated_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          cause_description?: string
+          control_id?: string
+          corrective_action?: string
+          created_at?: string
+          id?: string
+          product_decision?: string
+          release_justification?: string | null
+          retest_control_id?: string | null
+          supervisor_id?: string
+          supervisor_validated?: boolean
+          supervisor_validated_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "metal_detector_deviations_control_id_fkey"
+            columns: ["control_id"]
+            isOneToOne: false
+            referencedRelation: "metal_detector_controls"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "metal_detector_deviations_retest_control_id_fkey"
+            columns: ["retest_control_id"]
+            isOneToOne: false
+            referencedRelation: "metal_detector_controls"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      metal_detector_settings: {
+        Row: {
+          check_interval_hours: number
+          id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          check_interval_hours?: number
+          id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          check_interval_hours?: number
+          id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      metal_detector_test_configs: {
+        Row: {
+          created_at: string
+          diameter_mm: number
+          id: string
+          is_active: boolean
+          test_piece_type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          diameter_mm: number
+          id?: string
+          is_active?: boolean
+          test_piece_type: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          diameter_mm?: number
+          id?: string
+          is_active?: boolean
+          test_piece_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      metal_detector_tests: {
+        Row: {
+          control_id: string
+          created_at: string
+          diameter_mm: number
+          id: string
+          result: string
+          test_piece_type: string
+          tested_at: string
+        }
+        Insert: {
+          control_id: string
+          created_at?: string
+          diameter_mm: number
+          id?: string
+          result: string
+          test_piece_type: string
+          tested_at?: string
+        }
+        Update: {
+          control_id?: string
+          created_at?: string
+          diameter_mm?: number
+          id?: string
+          result?: string
+          test_piece_type?: string
+          tested_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "metal_detector_tests_control_id_fkey"
+            columns: ["control_id"]
+            isOneToOne: false
+            referencedRelation: "metal_detector_controls"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      metal_detectors: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          last_calibration_date: string | null
+          name: string
+          production_line: string
+          serial_number: string | null
+          test_kit_reference: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_calibration_date?: string | null
+          name: string
+          production_line: string
+          serial_number?: string | null
+          test_kit_reference?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_calibration_date?: string | null
+          name?: string
+          production_line?: string
+          serial_number?: string | null
+          test_kit_reference?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       nc_audit_logs: {
         Row: {
           action: string

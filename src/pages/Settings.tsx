@@ -40,6 +40,7 @@ import { RawMaterialManagement } from '@/components/settings/RawMaterialManageme
 import { NonFoodProductManagement } from '@/components/settings/NonFoodProductManagement';
 import { UserManagement } from '@/components/settings/UserManagement';
 import { AuditLogViewer } from '@/components/settings/AuditLogViewer';
+import { MetalDetectorSettings } from '@/components/settings/MetalDetectorSettings';
 import { TemperatureInput } from '@/components/ui/TemperatureInput';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -212,6 +213,9 @@ export default function Settings() {
           )}
         </CardContent>
       </Card>
+
+      {/* Metal Detector Settings */}
+      <MetalDetectorSettings />
 
       {/* Suppliers Management */}
       <SupplierManagement />

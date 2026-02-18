@@ -6,7 +6,11 @@ export default function Controls() {
   const navigate = useNavigate();
 
   const handleControlClick = (cp: ControlPoint) => {
-    navigate(`/haccp/controls/${cp.code}`);
+    if (cp.code === 'CP5_CORPS_ETRANGER') {
+      navigate('/haccp/metal-detector');
+    } else {
+      navigate(`/haccp/controls/${cp.code}`);
+    }
   };
 
   return (

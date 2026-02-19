@@ -93,6 +93,11 @@ export default function ControlHistory() {
     return records.filter(r => isSameDay(new Date(r.timestamp), dateFilter));
   }, [records, dateFilter]);
 
+  const filteredStorageRecords = useMemo(() => {
+    if (!storageRecords || !dateFilter) return storageRecords;
+    return storageRecords.filter(r => isSameDay(new Date(r.recorded_at), dateFilter));
+  }, [storageRecords, dateFilter]);
+
   if (!controlPoint) {
     return (
       <div className="text-center py-12">
@@ -195,34 +200,32 @@ export default function ControlHistory() {
       <div className="space-y-4">
         <div className="flex items-center justify-between gap-4">
           <h2 className="text-lg font-semibold text-foreground">Historique des contrôles</h2>
-          {isProductionControl && (
-            <div className="flex items-center gap-2">
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm" className={cn("gap-2", dateFilter && "border-primary text-primary")}>
-                    <Filter className="h-4 w-4" />
-                    {dateFilter ? format(dateFilter, 'dd MMM yyyy', { locale: fr }) : 'Filtrer par date'}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="end">
-                  <Calendar
-                    mode="single"
-                    selected={dateFilter}
-                    onSelect={setDateFilter}
-                    locale={fr}
-                    weekStartsOn={1}
-                    initialFocus
-                    className="p-3 pointer-events-auto"
-                  />
-                </PopoverContent>
-              </Popover>
-              {dateFilter && (
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setDateFilter(undefined)}>
-                  <X className="h-4 w-4" />
+          <div className="flex items-center gap-2">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className={cn("gap-2", dateFilter && "border-primary text-primary")}>
+                  <Filter className="h-4 w-4" />
+                  {dateFilter ? format(dateFilter, 'dd MMM yyyy', { locale: fr }) : 'Filtrer par date'}
                 </Button>
-              )}
-            </div>
-          )}
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="end">
+                <Calendar
+                  mode="single"
+                  selected={dateFilter}
+                  onSelect={setDateFilter}
+                  locale={fr}
+                  weekStartsOn={1}
+                  initialFocus
+                  className="p-3 pointer-events-auto"
+                />
+              </PopoverContent>
+            </Popover>
+            {dateFilter && (
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setDateFilter(undefined)}>
+                <X className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
         </div>
         
         {currentLoading ? (
@@ -231,9 +234,9 @@ export default function ControlHistory() {
           </div>
         ) : isStorageControl ? (
           // Storage temperature records display
-          storageRecords && storageRecords.length > 0 ? (
+          filteredStorageRecords && filteredStorageRecords.length > 0 ? (
             <div className="grid gap-3">
-              {storageRecords.map((record) => {
+              {filteredStorageRecords.map((record) => {
                 const statusKey = getStorageStatus(record.is_conforme, record.temperature, record.cold_rooms);
                 const status = statusConfig[statusKey];
                 const StatusIcon = status.icon;
@@ -301,11 +304,20 @@ export default function ControlHistory() {
             </div>
           ) : (
             <div className="text-center py-12 bg-muted/30 rounded-xl border border-dashed">
-              <p className="text-muted-foreground">Aucun contrôle enregistré</p>
-              <Button onClick={handleNewControl} variant="outline" className="mt-4 gap-2">
-                <Plus className="h-4 w-4" />
-                Effectuer le premier contrôle
-              </Button>
+              <p className="text-muted-foreground">
+                {dateFilter ? `Aucun contrôle pour le ${format(dateFilter, 'dd MMMM yyyy', { locale: fr })}` : 'Aucun contrôle enregistré'}
+              </p>
+              {dateFilter ? (
+                <Button onClick={() => setDateFilter(undefined)} variant="outline" className="mt-4 gap-2">
+                  <X className="h-4 w-4" />
+                  Retirer le filtre
+                </Button>
+              ) : (
+                <Button onClick={handleNewControl} variant="outline" className="mt-4 gap-2">
+                  <Plus className="h-4 w-4" />
+                  Effectuer le premier contrôle
+                </Button>
+              )}
             </div>
           )
         ) : isProductionControl ? (
@@ -390,9 +402,9 @@ export default function ControlHistory() {
           )
         ) : isCP8Control ? (
           // CP8 DLC control records display with product details
-          records && records.length > 0 ? (
+          filteredRecords && filteredRecords.length > 0 ? (
             <div className="grid gap-3">
-              {records.map((record) => {
+              {filteredRecords.map((record) => {
                 const status = statusConfig[record.status as keyof typeof statusConfig] || statusConfig.pending;
                 const StatusIcon = status.icon;
                 
@@ -463,18 +475,27 @@ export default function ControlHistory() {
             </div>
           ) : (
             <div className="text-center py-12 bg-muted/30 rounded-xl border border-dashed">
-              <p className="text-muted-foreground">Aucun contrôle enregistré</p>
-              <Button onClick={handleNewControl} variant="outline" className="mt-4 gap-2">
-                <Plus className="h-4 w-4" />
-                Effectuer le premier contrôle
-              </Button>
+              <p className="text-muted-foreground">
+                {dateFilter ? `Aucun contrôle pour le ${format(dateFilter, 'dd MMMM yyyy', { locale: fr })}` : 'Aucun contrôle enregistré'}
+              </p>
+              {dateFilter ? (
+                <Button onClick={() => setDateFilter(undefined)} variant="outline" className="mt-4 gap-2">
+                  <X className="h-4 w-4" />
+                  Retirer le filtre
+                </Button>
+              ) : (
+                <Button onClick={handleNewControl} variant="outline" className="mt-4 gap-2">
+                  <Plus className="h-4 w-4" />
+                  Effectuer le premier contrôle
+                </Button>
+              )}
             </div>
           )
         ) : (
           // Standard control records display
-          records && records.length > 0 ? (
+          filteredRecords && filteredRecords.length > 0 ? (
             <div className="grid gap-3">
-              {records.map((record) => {
+              {filteredRecords.map((record) => {
                 const status = statusConfig[record.status as keyof typeof statusConfig] || statusConfig.pending;
                 const StatusIcon = status.icon;
                 
@@ -551,11 +572,20 @@ export default function ControlHistory() {
             </div>
           ) : (
             <div className="text-center py-12 bg-muted/30 rounded-xl border border-dashed">
-              <p className="text-muted-foreground">Aucun contrôle enregistré</p>
-              <Button onClick={handleNewControl} variant="outline" className="mt-4 gap-2">
-                <Plus className="h-4 w-4" />
-                Effectuer le premier contrôle
-              </Button>
+              <p className="text-muted-foreground">
+                {dateFilter ? `Aucun contrôle pour le ${format(dateFilter, 'dd MMMM yyyy', { locale: fr })}` : 'Aucun contrôle enregistré'}
+              </p>
+              {dateFilter ? (
+                <Button onClick={() => setDateFilter(undefined)} variant="outline" className="mt-4 gap-2">
+                  <X className="h-4 w-4" />
+                  Retirer le filtre
+                </Button>
+              ) : (
+                <Button onClick={handleNewControl} variant="outline" className="mt-4 gap-2">
+                  <Plus className="h-4 w-4" />
+                  Effectuer le premier contrôle
+                </Button>
+              )}
             </div>
           )
         )}

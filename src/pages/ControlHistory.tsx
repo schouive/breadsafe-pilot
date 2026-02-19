@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Calendar, CheckCircle, XCircle, AlertTriangle, Thermometer, Snowflake, Camera, ChevronRight, Clock, Package, User } from 'lucide-react';
+import { ArrowLeft, Plus, Calendar as CalendarIcon, CheckCircle, XCircle, AlertTriangle, Thermometer, Snowflake, Camera, ChevronRight, Clock, Package, User, Filter, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -17,9 +17,11 @@ import { useAuth } from '@/hooks/useAuth';
 import { useControlRecordsByCode, useCreateControlRecord, useCreateReceptionControl, ReceptionFormData, ControlRecordFromDB } from '@/hooks/useControlRecords';
 import { useStorageTemperatureRecordsWithRooms, StorageTemperatureRecordWithRoom } from '@/hooks/useColdRooms';
 import { useOperatorNames } from '@/hooks/useOperatorNames';
-import { format } from 'date-fns';
+import { format, isSameDay } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 const statusConfig = {
   conforme: {
@@ -39,7 +41,7 @@ const statusConfig = {
   },
   pending: {
     label: 'En attente',
-    icon: Calendar,
+    icon: CalendarIcon,
     class: 'bg-muted text-muted-foreground border-muted',
   },
 };
@@ -57,7 +59,7 @@ export default function ControlHistory() {
   const [editingRecord, setEditingRecord] = useState<ControlRecordFromDB | null>(null);
   const [selectedStorageRecord, setSelectedStorageRecord] = useState<StorageTemperatureRecordWithRoom | null>(null);
   const [editingStorageRecord, setEditingStorageRecord] = useState<StorageTemperatureRecordWithRoom | null>(null);
-
+  const [dateFilter, setDateFilter] = useState<Date | undefined>(undefined);
   const controlPoint = CONTROL_POINTS.find(cp => cp.code === code);
   const isStorageControl = code === 'CP_STOCKAGE';
   const isProductionControl = code === 'CP_PRODUCTION';
@@ -85,6 +87,11 @@ export default function ControlHistory() {
   
   const createControlRecord = useCreateControlRecord();
   const createReceptionControl = useCreateReceptionControl();
+
+  const filteredRecords = useMemo(() => {
+    if (!records || !dateFilter) return records;
+    return records.filter(r => isSameDay(new Date(r.timestamp), dateFilter));
+  }, [records, dateFilter]);
 
   if (!controlPoint) {
     return (
@@ -141,6 +148,7 @@ export default function ControlHistory() {
     });
   };
 
+
   const currentLoading = isStorageControl ? storageLoading : isLoading;
 
   const getStorageStatus = (isConforme: boolean, temp: number, room: { temp_min: number; temp_max: number } | null): keyof typeof statusConfig => {
@@ -185,7 +193,35 @@ export default function ControlHistory() {
 
       {/* History */}
       <div className="space-y-4">
-        <h2 className="text-lg font-semibold text-foreground">Historique des contrôles</h2>
+        <div className="flex items-center justify-between gap-4">
+          <h2 className="text-lg font-semibold text-foreground">Historique des contrôles</h2>
+          {isProductionControl && (
+            <div className="flex items-center gap-2">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className={cn("gap-2", dateFilter && "border-primary text-primary")}>
+                    <Filter className="h-4 w-4" />
+                    {dateFilter ? format(dateFilter, 'dd MMM yyyy', { locale: fr }) : 'Filtrer par date'}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="end">
+                  <Calendar
+                    mode="single"
+                    selected={dateFilter}
+                    onSelect={setDateFilter}
+                    initialFocus
+                    className="p-3 pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
+              {dateFilter && (
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setDateFilter(undefined)}>
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+          )}
+        </div>
         
         {currentLoading ? (
           <div className="text-center py-12">
@@ -247,7 +283,7 @@ export default function ControlHistory() {
                       <div className="flex items-center gap-2">
                         <div className="text-right text-sm text-muted-foreground shrink-0">
                           <div className="flex items-center gap-1">
-                            <Calendar className="h-3.5 w-3.5" />
+                            <CalendarIcon className="h-3.5 w-3.5" />
                             {format(new Date(record.recorded_at), 'dd MMM yyyy', { locale: fr })}
                           </div>
                           <div className="mt-0.5">
@@ -272,9 +308,9 @@ export default function ControlHistory() {
           )
         ) : isProductionControl ? (
           // Production control records display with photos
-          records && records.length > 0 ? (
+          filteredRecords && filteredRecords.length > 0 ? (
             <div className="grid gap-4">
-              {records.map((record) => {
+              {filteredRecords.map((record) => {
                 const status = statusConfig[record.status as keyof typeof statusConfig] || statusConfig.conforme;
                 const StatusIcon = status.icon;
                 
@@ -308,7 +344,7 @@ export default function ControlHistory() {
                         <div className="flex items-center gap-2">
                           <div className="text-right text-sm text-muted-foreground shrink-0">
                             <div className="flex items-center gap-1">
-                              <Calendar className="h-3.5 w-3.5" />
+                              <CalendarIcon className="h-3.5 w-3.5" />
                               {format(new Date(record.timestamp), 'dd MMM yyyy', { locale: fr })}
                             </div>
                             <div className="mt-0.5">
@@ -334,11 +370,20 @@ export default function ControlHistory() {
             </div>
           ) : (
             <div className="text-center py-12 bg-muted/30 rounded-xl border border-dashed">
-              <p className="text-muted-foreground">Aucun contrôle enregistré</p>
-              <Button onClick={handleNewControl} variant="outline" className="mt-4 gap-2">
-                <Plus className="h-4 w-4" />
-                Effectuer le premier contrôle
-              </Button>
+              <p className="text-muted-foreground">
+                {dateFilter ? `Aucun contrôle pour le ${format(dateFilter, 'dd MMMM yyyy', { locale: fr })}` : 'Aucun contrôle enregistré'}
+              </p>
+              {dateFilter ? (
+                <Button onClick={() => setDateFilter(undefined)} variant="outline" className="mt-4 gap-2">
+                  <X className="h-4 w-4" />
+                  Retirer le filtre
+                </Button>
+              ) : (
+                <Button onClick={handleNewControl} variant="outline" className="mt-4 gap-2">
+                  <Plus className="h-4 w-4" />
+                  Effectuer le premier contrôle
+                </Button>
+              )}
             </div>
           )
         ) : isCP8Control ? (
@@ -400,7 +445,7 @@ export default function ControlHistory() {
                       <div className="flex items-center gap-2">
                         <div className="text-right text-sm text-muted-foreground shrink-0">
                           <div className="flex items-center gap-1">
-                            <Calendar className="h-3.5 w-3.5" />
+                            <CalendarIcon className="h-3.5 w-3.5" />
                             {format(new Date(record.timestamp), 'dd MMM yyyy', { locale: fr })}
                           </div>
                           <div className="mt-0.5">
@@ -478,7 +523,7 @@ export default function ControlHistory() {
                         <div className="flex items-center gap-2">
                           <div className="text-right text-sm text-muted-foreground shrink-0">
                             <div className="flex items-center gap-1">
-                              <Calendar className="h-3.5 w-3.5" />
+                              <CalendarIcon className="h-3.5 w-3.5" />
                               {format(new Date(record.timestamp), 'dd MMM yyyy', { locale: fr })}
                             </div>
                             <div className="mt-0.5">

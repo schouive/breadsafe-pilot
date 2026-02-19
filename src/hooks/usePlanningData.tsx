@@ -67,12 +67,27 @@ export function usePlanningData(weekStart: Date) {
     },
   });
 
-  const isLoading = controlRecordsQuery.isLoading || storageRecordsQuery.isLoading || metalDetectorQuery.isLoading;
+  // Fetch supplier receptions to know which days have deliveries
+  const receptionsQuery = useQuery({
+    queryKey: ['planning_receptions', startStr, endStr],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('supplier_receptions')
+        .select('id, received_at')
+        .gte('received_at', `${startStr}T00:00:00`)
+        .lt('received_at', `${endStr}T00:00:00`);
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const isLoading = controlRecordsQuery.isLoading || storageRecordsQuery.isLoading || metalDetectorQuery.isLoading || receptionsQuery.isLoading;
 
   const getControlsForDay = (day: Date): DayControlStatus[] => {
     const controlRecords = controlRecordsQuery.data || [];
     const storageRecords = storageRecordsQuery.data || [];
     const metalRecords = metalDetectorQuery.data || [];
+    const receptions = receptionsQuery.data || [];
     const today = startOfDay(new Date());
     const dayStart = startOfDay(day);
     const isPast = isBefore(dayStart, today);
@@ -95,9 +110,18 @@ export function usePlanningData(weekStart: Date) {
       const count = records.length;
 
       if (count === 0) {
-        // No records for this day
+        // For reception: only show if there's a delivery that day
+        if (ctrl.code === 'CP_RECEPTION') {
+          const hasDelivery = receptions.some(r => isSameDay(new Date(r.received_at), day));
+          if (!hasDelivery) {
+            return { ...ctrl, status: 'not_required' as const, count: 0 };
+          }
+          // There's a delivery but no control record → overdue or pending
+          if (isPast) return { ...ctrl, status: 'overdue' as const, count: 0 };
+          return { ...ctrl, status: 'pending' as const, count: 0 };
+        }
+
         if (isPast) {
-          // For non-daily controls on past days, mark as not_required if it's optional
           if (ctrl.frequency !== 'daily') {
             return { ...ctrl, status: 'not_required' as const, count: 0 };
           }

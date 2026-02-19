@@ -209,6 +209,8 @@ export default function ControlHistory() {
                     mode="single"
                     selected={dateFilter}
                     onSelect={setDateFilter}
+                    locale={fr}
+                    weekStartsOn={1}
                     initialFocus
                     className="p-3 pointer-events-auto"
                   />

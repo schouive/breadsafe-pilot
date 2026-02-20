@@ -40,7 +40,13 @@ const MetalDetectorControl = lazy(() => import("./pages/MetalDetectorControl"));
 const MetalDetectorHistory = lazy(() => import("./pages/MetalDetectorHistory"));
 
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+    },
+  },
+});
 
 // Loading fallback component
 function PageLoader() {

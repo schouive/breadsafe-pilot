@@ -440,32 +440,38 @@ export function TechnicalSheetDetailSheet({ open, onOpenChange, sheet }: Technic
               </>
             )}
 
-            {/* Storage & Usage */}
-            {(sheetData.storage_instructions || sheetData.thawing_instructions || sheetData.usage_instructions) && (
-              <>
-                <Separator />
-                <div className="space-y-4">
-                  {sheetData.storage_instructions && (
-                    <div>
-                      <div className="flex items-center gap-2 mb-2"><Thermometer className="h-4 w-4 text-muted-foreground" /><h4 className="font-medium">Conservation</h4></div>
-                      <p className="text-sm text-muted-foreground">{sheetData.storage_instructions}</p>
-                    </div>
-                  )}
-                  {sheetData.thawing_instructions && (
-                    <div>
-                      <div className="flex items-center gap-2 mb-2"><Clock className="h-4 w-4 text-muted-foreground" /><h4 className="font-medium">Décongélation</h4></div>
-                      <p className="text-sm text-muted-foreground">{sheetData.thawing_instructions}</p>
-                    </div>
-                  )}
-                  {sheetData.usage_instructions && (
-                    <div>
-                      <h4 className="font-medium mb-2">Mise en œuvre</h4>
-                      <p className="text-sm text-muted-foreground">{sheetData.usage_instructions}</p>
-                    </div>
-                  )}
+            {/* Storage & Usage - Always visible */}
+            <Separator />
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 mb-1">
+                <Thermometer className="h-4 w-4 text-muted-foreground" />
+                <h4 className="font-medium">Conservation & Mise en œuvre</h4>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-3 bg-muted/30 rounded-lg">
+                  <p className="text-xs text-muted-foreground mb-1">Conditions de conservation</p>
+                  <p className="text-sm font-medium">{sheetData.storage_instructions || (<span className="text-muted-foreground italic">Non renseigné</span>)}</p>
                 </div>
-              </>
-            )}
+                {sheetData.dlc_ddm_days && (
+                  <div className="p-3 bg-muted/30 rounded-lg">
+                    <p className="text-xs text-muted-foreground mb-1">{sheetData.dlc_ddm_type || 'DLC'}</p>
+                    <p className="text-sm font-medium">{sheetData.dlc_ddm_days} jours</p>
+                  </div>
+                )}
+              </div>
+              {sheetData.thawing_instructions && (
+                <div>
+                  <div className="flex items-center gap-2 mb-2"><Clock className="h-4 w-4 text-muted-foreground" /><h4 className="font-medium text-sm">Décongélation</h4></div>
+                  <p className="text-sm text-muted-foreground">{sheetData.thawing_instructions}</p>
+                </div>
+              )}
+              {sheetData.usage_instructions && (
+                <div>
+                  <h4 className="font-medium text-sm mb-2">Conseils de mise en œuvre</h4>
+                  <p className="text-sm text-muted-foreground">{sheetData.usage_instructions}</p>
+                </div>
+              )}
+            </div>
 
             {/* Quality comment */}
             {sheetData.quality_comment && (

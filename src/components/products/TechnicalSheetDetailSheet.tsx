@@ -450,7 +450,7 @@ export function TechnicalSheetDetailSheet({ open, onOpenChange, sheet }: Technic
               <div className="grid grid-cols-2 gap-3">
                 <div className="p-3 bg-muted/30 rounded-lg">
                   <p className="text-xs text-muted-foreground mb-1">Conditions de conservation</p>
-                  <p className="text-sm font-medium">{sheetData.storage_instructions || <span className="text-muted-foreground italic">Non renseigné</span>}</p>
+                  <p className="text-sm font-medium">{sheetData.storage_instructions || (<span className="text-muted-foreground italic">Non renseigné</span>)}</p>
                 </div>
                 {sheetData.dlc_ddm_days && (
                   <div className="p-3 bg-muted/30 rounded-lg">

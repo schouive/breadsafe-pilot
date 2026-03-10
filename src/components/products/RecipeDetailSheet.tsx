@@ -235,6 +235,19 @@ export function RecipeDetailSheet({ open, onOpenChange, recipe }: RecipeDetailSh
             {/* Nutrition */}
             <NutritionTable nutrition={nutrition} />
 
+            {/* Process de fabrication */}
+            {(recipe as any).process && (
+              <>
+                <Separator />
+                <div>
+                  <h4 className="font-medium mb-2">Process de fabrication</h4>
+                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                    {(recipe as any).process}
+                  </p>
+                </div>
+              </>
+            )}
+
             {/* Preparation notes */}
             {recipe.preparation_notes && (
               <>

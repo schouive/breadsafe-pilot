@@ -7,13 +7,16 @@ import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { TemperatureInput } from '@/components/ui/TemperatureInput';
 import { ControlRecordFromDB, useUpdateControlRecord } from '@/hooks/useControlRecords';
 import { ControlStatus } from '@/types/haccp';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { CalendarIcon, CheckCircle, AlertTriangle, XCircle, Loader2 } from 'lucide-react';
+import { CalendarIcon, CheckCircle, AlertTriangle, XCircle, Loader2, Link } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ControlEditFormProps {
   record: ControlRecordFromDB | null;
@@ -58,6 +61,7 @@ export function ControlEditForm({ record, isOpen, onClose }: ControlEditFormProp
   const [allergenesConformes, setAllergenesConformes] = useState<boolean | null>(null);
   const [allergenesNotes, setAllergenesNotes] = useState('');
   const [corpsEtrangerDetecte, setCorpsEtrangerDetecte] = useState<boolean | null>(null);
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
 
   const updateRecord = useUpdateControlRecord();
 
@@ -67,6 +71,21 @@ export function ControlEditForm({ record, isOpen, onClose }: ControlEditFormProp
   const isCP5Control = record?.control_point_code === 'CP5_CORPS_ETRANGER';
   const isProductionControl = record?.control_point_code === 'CP_PRODUCTION';
   const hasTemperature = isReceptionControl || record?.temperature !== null;
+
+  // Fetch available orders for linking (sent or partially_received)
+  const { data: availableOrders } = useQuery({
+    queryKey: ['supplier_orders_for_linking'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('supplier_orders')
+        .select('id, order_number, supplier_id, status, expected_delivery_date, suppliers(name)')
+        .in('status', ['sent', 'partially_received'])
+        .order('order_date', { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+    enabled: isReceptionControl && isOpen && !record?.order_id,
+  });
 
   // Populate form with record data
   useEffect(() => {
@@ -86,6 +105,7 @@ export function ControlEditForm({ record, isOpen, onClose }: ControlEditFormProp
       setAllergenesConformes(record.allergenes_conformes);
       setAllergenesNotes(record.allergenes_notes || '');
       setCorpsEtrangerDetecte(record.corps_etranger_detecte);
+      setSelectedOrderId(record.order_id || null);
     }
   }, [record]);
 
@@ -127,6 +147,7 @@ export function ControlEditForm({ record, isOpen, onClose }: ControlEditFormProp
         allergenes_conformes: allergenesConformes,
         allergenes_notes: allergenesNotes || null,
         corps_etranger_detecte: corpsEtrangerDetecte,
+        ...(isReceptionControl && selectedOrderId !== record.order_id ? { order_id: selectedOrderId } : {}),
       },
     });
     onClose();
@@ -171,6 +192,36 @@ export function ControlEditForm({ record, isOpen, onClose }: ControlEditFormProp
                   </div>
                 ))}
               </RadioGroup>
+            </div>
+          )}
+
+          {/* Link to order - only for reception controls without existing order */}
+          {isReceptionControl && !record.order_id && (
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <Link className="h-4 w-4" />
+                Associer à une commande
+              </Label>
+              <Select
+                value={selectedOrderId || 'none'}
+                onValueChange={(v) => setSelectedOrderId(v === 'none' ? null : v)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Aucune commande associée" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Aucune commande</SelectItem>
+                  {availableOrders?.map((order) => (
+                    <SelectItem key={order.id} value={order.id}>
+                      {order.order_number} — {(order.suppliers as any)?.name || 'Fournisseur inconnu'}
+                      {order.expected_delivery_date ? ` (livr. ${format(new Date(order.expected_delivery_date), 'dd/MM/yyyy')})` : ''}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Associez ce contrôle à une commande fournisseur envoyée ou partiellement reçue.
+              </p>
             </div>
           )}
 

@@ -445,6 +445,7 @@ export function useUpdateControlRecord() {
         allergenes_conformes: boolean | null;
         allergenes_notes: string | null;
         corps_etranger_detecte: boolean | null;
+        order_id: string | null;
       }>;
     }) => {
       if (!navigator.onLine) {

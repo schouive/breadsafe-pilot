@@ -38,6 +38,12 @@ const NewOrder = lazy(() => import("./pages/NewOrder"));
 const ReceptionHistory = lazy(() => import("./pages/ReceptionHistory"));
 const MetalDetectorControl = lazy(() => import("./pages/MetalDetectorControl"));
 const MetalDetectorHistory = lazy(() => import("./pages/MetalDetectorHistory"));
+const TimeClock = lazy(() => import("./pages/TimeClock"));
+const TimeTrackingDashboard = lazy(() => import("./pages/TimeTrackingDashboard"));
+const TimeTrackingHistory = lazy(() => import("./pages/TimeTrackingHistory"));
+const TimeTrackingCorrections = lazy(() => import("./pages/TimeTrackingCorrections"));
+const TimeTrackingBadges = lazy(() => import("./pages/TimeTrackingBadges"));
+const TimeTrackingLayout = lazy(() => import("@/components/layout/TimeTrackingLayout").then(m => ({ default: m.TimeTrackingLayout })));
 
 
 const queryClient = new QueryClient({
@@ -307,6 +313,60 @@ function AppRoutes() {
               <SettingsLayout>
                 <DataExport />
               </SettingsLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Time Tracking Module Routes */}
+        <Route
+          path="/time-clock"
+          element={
+            <ProtectedRoute>
+              <TimeClock />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/time-tracking"
+          element={<Navigate to="/time-tracking/dashboard" replace />}
+        />
+        <Route
+          path="/time-tracking/dashboard"
+          element={
+            <ProtectedRoute>
+              <TimeTrackingLayout>
+                <TimeTrackingDashboard />
+              </TimeTrackingLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/time-tracking/history"
+          element={
+            <ProtectedRoute>
+              <TimeTrackingLayout>
+                <TimeTrackingHistory />
+              </TimeTrackingLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/time-tracking/corrections"
+          element={
+            <ProtectedRoute>
+              <TimeTrackingLayout>
+                <TimeTrackingCorrections />
+              </TimeTrackingLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/time-tracking/badges"
+          element={
+            <ProtectedRoute>
+              <TimeTrackingLayout>
+                <TimeTrackingBadges />
+              </TimeTrackingLayout>
             </ProtectedRoute>
           }
         />

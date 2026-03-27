@@ -9,7 +9,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useTimeEntries, useEmployeesWithBadges, TimeEventType } from '@/hooks/useTimeTracking';
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, differenceInMinutes } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Users, Clock, Download, AlertTriangle, TrendingUp } from 'lucide-react';
+import { Users, Clock, Download, AlertTriangle, TrendingUp, Camera, X } from 'lucide-react';
+import { useState as useStateReact } from 'react';
 import { toast } from 'sonner';
 
 const EVENT_LABELS: Record<string, string> = {

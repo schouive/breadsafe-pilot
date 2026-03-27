@@ -6,7 +6,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { useTimeEntries } from '@/hooks/useTimeTracking';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Clock, Calendar } from 'lucide-react';
+import { Clock, Calendar, Camera, X } from 'lucide-react';
+import { useState } from 'react';
 
 const EVENT_LABELS: Record<string, string> = {
   clock_in: 'Entrée',

@@ -14,6 +14,7 @@ export interface TimeEntry {
   device_id: string | null;
   scan_speed_ms: number | null;
   is_manual_correction: boolean;
+  photo_url: string | null;
   created_at: string;
   // Joined
   employee_name?: string;

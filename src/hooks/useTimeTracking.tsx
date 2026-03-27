@@ -85,12 +85,14 @@ export function useRecordTimeEvent() {
       eventType,
       scanSpeedMs,
       deviceId,
+      photoUrl,
     }: {
       employeeId: string;
       badgeId: string;
       eventType: TimeEventType;
       scanSpeedMs?: number;
       deviceId?: string;
+      photoUrl?: string | null;
     }) => {
       const { data, error } = await supabase
         .from('time_entries')
@@ -100,6 +102,7 @@ export function useRecordTimeEvent() {
           event_type: eventType,
           scan_speed_ms: scanSpeedMs || null,
           device_id: deviceId || null,
+          photo_url: photoUrl || null,
         })
         .select()
         .single();

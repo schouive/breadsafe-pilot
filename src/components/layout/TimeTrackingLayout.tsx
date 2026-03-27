@@ -14,6 +14,7 @@ interface TimeTrackingLayoutProps {
 
 const fullNavigation = [
   { name: 'Tableau de bord', href: '/time-tracking/dashboard', icon: LayoutDashboard },
+  { name: 'Pointeuse', href: '/time-clock', icon: Scan },
   { name: 'Mon historique', href: '/time-tracking/history', icon: Clock },
   { name: 'Corrections', href: '/time-tracking/corrections', icon: FileEdit },
   { name: 'Badges', href: '/time-tracking/badges', icon: CreditCard },

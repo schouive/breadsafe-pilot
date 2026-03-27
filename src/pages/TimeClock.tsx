@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { useBadgeScan } from '@/hooks/useBadgeScan';
+import { SilentCamera } from '@/components/time-clock/SilentCamera';
 import {
   useEmployeeByBadge,
   useLastTimeEvent,
@@ -71,6 +72,8 @@ export default function TimeClock() {
   } | null>(null);
   const [confirmMessage, setConfirmMessage] = useState('');
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [captureTrigger, setCaptureTrigger] = useState(false);
+  const pendingActionRef = useRef<{ eventType: TimeEventType } | null>(null);
 
   const findEmployee = useEmployeeByBadge();
   const recordEvent = useRecordTimeEvent();
@@ -160,15 +163,26 @@ export default function TimeClock() {
 
   const handleAction = async (eventType: TimeEventType) => {
     if (!employee) return;
+    // Store the pending action and trigger a silent photo capture
+    pendingActionRef.current = { eventType };
+    setCaptureTrigger(true);
+  };
+
+  const handlePhotoCaptured = async (photoUrl: string | null) => {
+    setCaptureTrigger(false);
+    const pending = pendingActionRef.current;
+    pendingActionRef.current = null;
+    if (!employee || !pending) return;
 
     try {
       await recordEvent.mutateAsync({
         employeeId: employee.id,
         badgeId: employee.badge_id,
-        eventType,
+        eventType: pending.eventType,
         deviceId: getDeviceId(),
+        photoUrl,
       });
-      setConfirmMessage(`${EVENT_LABELS[eventType]} enregistrée`);
+      setConfirmMessage(`${EVENT_LABELS[pending.eventType]} enregistrée`);
       setState('confirmed');
     } catch {
       setState('error');
@@ -186,6 +200,8 @@ export default function TimeClock() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      {/* Silent camera for automatic photo capture */}
+      <SilentCamera trigger={captureTrigger} onCapture={handlePhotoCaptured} />
       {/* Header */}
       <header className="bg-card border-b border-border px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">

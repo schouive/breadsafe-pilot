@@ -120,10 +120,20 @@ export default function TimeClock() {
     [state, findEmployee]
   );
 
+  const [manualMode, setManualMode] = useState(false);
+  const [manualBadgeId, setManualBadgeId] = useState('');
+
   const { error: scanError, clearError } = useBadgeScan({
-    enabled: state === 'idle',
+    enabled: state === 'idle' && !manualMode,
     onScan: handleScan,
   });
+
+  const handleManualSubmit = () => {
+    if (!manualBadgeId.trim()) return;
+    handleScan({ badgeId: manualBadgeId.trim(), scanSpeedMs: 0 });
+    setManualBadgeId('');
+    setManualMode(false);
+  };
 
   useEffect(() => {
     if (scanError) {

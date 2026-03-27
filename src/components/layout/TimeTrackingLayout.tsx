@@ -3,6 +3,7 @@ import {
   Clock,
   FileEdit,
   CreditCard,
+  Scan,
 } from 'lucide-react';
 import { ModuleLayout } from './ModuleLayout';
 import { useAuth } from '@/hooks/useAuth';

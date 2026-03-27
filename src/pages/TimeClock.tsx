@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { Input } from '@/components/ui/input';
 import { useBadgeScan } from '@/hooks/useBadgeScan';
 import {
   useEmployeeByBadge,

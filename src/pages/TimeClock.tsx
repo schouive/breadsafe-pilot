@@ -200,6 +200,8 @@ export default function TimeClock() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      {/* Silent camera for automatic photo capture */}
+      <SilentCamera trigger={captureTrigger} onCapture={handlePhotoCaptured} />
       {/* Header */}
       <header className="bg-card border-b border-border px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">

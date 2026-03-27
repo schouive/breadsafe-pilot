@@ -2,7 +2,6 @@ import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -10,7 +9,6 @@ import { useTimeEntries, useEmployeesWithBadges, TimeEventType } from '@/hooks/u
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, differenceInMinutes } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Users, Clock, Download, AlertTriangle, TrendingUp, Camera, X } from 'lucide-react';
-import { useState as useStateReact } from 'react';
 import { toast } from 'sonner';
 
 const EVENT_LABELS: Record<string, string> = {

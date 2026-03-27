@@ -223,10 +223,41 @@ export default function TimeClock() {
                 Approchez votre badge RFID du lecteur
               </p>
             </div>
-            <div className="flex items-center justify-center gap-2 text-muted-foreground">
-              <Clock className="h-4 w-4" />
-              <span className="text-sm">En attente de scan...</span>
-            </div>
+            {!manualMode ? (
+              <>
+                <div className="flex items-center justify-center gap-2 text-muted-foreground">
+                  <Clock className="h-4 w-4" />
+                  <span className="text-sm">En attente de scan...</span>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setManualMode(true)}
+                  className="text-xs"
+                >
+                  Mode test : saisie manuelle
+                </Button>
+              </>
+            ) : (
+              <div className="space-y-3 w-full max-w-xs mx-auto">
+                <Input
+                  autoFocus
+                  placeholder="Entrez le badge ID..."
+                  value={manualBadgeId}
+                  onChange={(e) => setManualBadgeId(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleManualSubmit()}
+                  className="text-center text-lg h-12"
+                />
+                <div className="flex gap-2">
+                  <Button variant="outline" className="flex-1" onClick={() => setManualMode(false)}>
+                    Annuler
+                  </Button>
+                  <Button className="flex-1" onClick={handleManualSubmit}>
+                    Valider
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         )}
 

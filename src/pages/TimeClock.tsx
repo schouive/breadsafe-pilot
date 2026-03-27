@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { useBadgeScan } from '@/hooks/useBadgeScan';
+import { SilentCamera } from '@/components/time-clock/SilentCamera';
 import {
   useEmployeeByBadge,
   useLastTimeEvent,

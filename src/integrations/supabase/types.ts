@@ -962,32 +962,38 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          badge_id: string | null
           created_at: string
           email: string
           full_name: string
           id: string
           is_active: boolean
           last_sign_in_at: string | null
+          photo_url: string | null
           updated_at: string
         }
         Insert: {
           avatar_url?: string | null
+          badge_id?: string | null
           created_at?: string
           email: string
           full_name: string
           id: string
           is_active?: boolean
           last_sign_in_at?: string | null
+          photo_url?: string | null
           updated_at?: string
         }
         Update: {
           avatar_url?: string | null
+          badge_id?: string | null
           created_at?: string
           email?: string
           full_name?: string
           id?: string
           is_active?: boolean
           last_sign_in_at?: string | null
+          photo_url?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -1567,6 +1573,98 @@ export type Database = {
           order_email?: string | null
           phone?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      time_corrections: {
+        Row: {
+          corrected_event_type: string | null
+          corrected_recorded_at: string | null
+          created_at: string
+          id: string
+          original_event_type: string
+          original_recorded_at: string
+          reason: string
+          requested_by: string
+          review_comment: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          time_entry_id: string
+        }
+        Insert: {
+          corrected_event_type?: string | null
+          corrected_recorded_at?: string | null
+          created_at?: string
+          id?: string
+          original_event_type: string
+          original_recorded_at: string
+          reason: string
+          requested_by: string
+          review_comment?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          time_entry_id: string
+        }
+        Update: {
+          corrected_event_type?: string | null
+          corrected_recorded_at?: string | null
+          created_at?: string
+          id?: string
+          original_event_type?: string
+          original_recorded_at?: string
+          reason?: string
+          requested_by?: string
+          review_comment?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          time_entry_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "time_corrections_time_entry_id_fkey"
+            columns: ["time_entry_id"]
+            isOneToOne: false
+            referencedRelation: "time_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      time_entries: {
+        Row: {
+          badge_id: string
+          created_at: string
+          device_id: string | null
+          employee_id: string
+          event_type: string
+          id: string
+          is_manual_correction: boolean
+          recorded_at: string
+          scan_speed_ms: number | null
+        }
+        Insert: {
+          badge_id: string
+          created_at?: string
+          device_id?: string | null
+          employee_id: string
+          event_type: string
+          id?: string
+          is_manual_correction?: boolean
+          recorded_at?: string
+          scan_speed_ms?: number | null
+        }
+        Update: {
+          badge_id?: string
+          created_at?: string
+          device_id?: string | null
+          employee_id?: string
+          event_type?: string
+          id?: string
+          is_manual_correction?: boolean
+          recorded_at?: string
+          scan_speed_ms?: number | null
         }
         Relationships: []
       }

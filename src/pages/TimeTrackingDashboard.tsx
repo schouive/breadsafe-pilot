@@ -96,6 +96,7 @@ function computeEmployeeStats(entries: { event_type: string; recorded_at: string
 export default function TimeTrackingDashboard() {
   const [period, setPeriod] = useState<PeriodFilter>('today');
   const [selectedEmployee, setSelectedEmployee] = useState<string>('all');
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
 
   const { from, to } = getDateRange(period);
   const { data: entries = [], isLoading } = useTimeEntries({ dateFrom: from, dateTo: to });
@@ -285,11 +286,12 @@ export default function TimeTrackingDashboard() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Employé</TableHead>
-                    <TableHead>Action</TableHead>
-                    <TableHead>Date/Heure</TableHead>
-                    <TableHead>Badge</TableHead>
-                    <TableHead>Correction</TableHead>
-                  </TableRow>
+                     <TableHead>Photo</TableHead>
+                     <TableHead>Action</TableHead>
+                     <TableHead>Date/Heure</TableHead>
+                     <TableHead>Badge</TableHead>
+                     <TableHead>Correction</TableHead>
+                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredEntries.slice(0, 100).map((entry) => (
@@ -304,8 +306,17 @@ export default function TimeTrackingDashboard() {
                           </Avatar>
                           <span className="font-medium">{entry.employee_name}</span>
                         </div>
-                      </TableCell>
-                      <TableCell>
+                       </TableCell>
+                       <TableCell>
+                         {entry.photo_url ? (
+                           <button onClick={() => setLightboxUrl(entry.photo_url)} className="text-primary hover:text-primary/80">
+                             <Camera className="h-4 w-4" />
+                           </button>
+                         ) : (
+                           <span className="text-muted-foreground/40">—</span>
+                         )}
+                       </TableCell>
+                       <TableCell>
                         <Badge variant={EVENT_BADGE_VARIANT[entry.event_type] || 'outline'}>
                           {EVENT_LABELS[entry.event_type] || entry.event_type}
                         </Badge>
@@ -326,9 +337,19 @@ export default function TimeTrackingDashboard() {
                 </TableBody>
               </Table>
             </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
-  );
+           )}
+         </CardContent>
+       </Card>
+
+       {/* Photo Lightbox */}
+       {lightboxUrl && (
+         <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4" onClick={() => setLightboxUrl(null)}>
+           <button className="absolute top-4 right-4 text-white hover:text-white/80" onClick={() => setLightboxUrl(null)}>
+             <X className="h-8 w-8" />
+           </button>
+           <img src={lightboxUrl} alt="Photo de pointage" className="max-h-[80vh] max-w-[90vw] rounded-lg object-contain" onClick={(e) => e.stopPropagation()} />
+         </div>
+       )}
+     </div>
+   );
 }

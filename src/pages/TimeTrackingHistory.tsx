@@ -25,6 +25,7 @@ const EVENT_BADGE_VARIANT: Record<string, 'default' | 'secondary' | 'destructive
 
 export default function TimeTrackingHistory() {
   const { user } = useAuth();
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
   const now = new Date();
   const { data: entries = [], isLoading } = useTimeEntries({
     employeeId: user?.id,
@@ -74,9 +75,10 @@ export default function TimeTrackingHistory() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Heure</TableHead>
-                    <TableHead>Action</TableHead>
-                    <TableHead>Note</TableHead>
+                     <TableHead>Heure</TableHead>
+                     <TableHead>Action</TableHead>
+                     <TableHead>Photo</TableHead>
+                     <TableHead>Note</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -91,7 +93,16 @@ export default function TimeTrackingHistory() {
                           <Badge variant={EVENT_BADGE_VARIANT[entry.event_type] || 'outline'}>
                             {EVENT_LABELS[entry.event_type] || entry.event_type}
                           </Badge>
-                        </TableCell>
+                         </TableCell>
+                         <TableCell>
+                           {entry.photo_url ? (
+                             <button onClick={() => setLightboxUrl(entry.photo_url)} className="text-primary hover:text-primary/80">
+                               <Camera className="h-4 w-4" />
+                             </button>
+                           ) : (
+                             <span className="text-muted-foreground/40">—</span>
+                           )}
+                         </TableCell>
                         <TableCell>
                           {entry.is_manual_correction && (
                             <Badge variant="outline" className="text-amber-600 border-amber-300">
@@ -106,6 +117,16 @@ export default function TimeTrackingHistory() {
             </CardContent>
           </Card>
         ))
+      )}
+
+      {/* Photo Lightbox */}
+      {lightboxUrl && (
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4" onClick={() => setLightboxUrl(null)}>
+          <button className="absolute top-4 right-4 text-white hover:text-white/80" onClick={() => setLightboxUrl(null)}>
+            <X className="h-8 w-8" />
+          </button>
+          <img src={lightboxUrl} alt="Photo de pointage" className="max-h-[80vh] max-w-[90vw] rounded-lg object-contain" onClick={(e) => e.stopPropagation()} />
+        </div>
       )}
     </div>
   );

@@ -1641,6 +1641,7 @@ export type Database = {
           event_type: string
           id: string
           is_manual_correction: boolean
+          photo_url: string | null
           recorded_at: string
           scan_speed_ms: number | null
         }
@@ -1652,6 +1653,7 @@ export type Database = {
           event_type: string
           id?: string
           is_manual_correction?: boolean
+          photo_url?: string | null
           recorded_at?: string
           scan_speed_ms?: number | null
         }
@@ -1663,6 +1665,7 @@ export type Database = {
           event_type?: string
           id?: string
           is_manual_correction?: boolean
+          photo_url?: string | null
           recorded_at?: string
           scan_speed_ms?: number | null
         }

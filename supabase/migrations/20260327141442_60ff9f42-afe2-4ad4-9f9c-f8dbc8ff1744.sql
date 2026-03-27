@@ -1,0 +1,1 @@
+ALTER TABLE public.time_entries ADD COLUMN photo_url text;

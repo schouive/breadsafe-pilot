@@ -72,6 +72,8 @@ export default function TimeClock() {
   } | null>(null);
   const [confirmMessage, setConfirmMessage] = useState('');
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [captureTrigger, setCaptureTrigger] = useState(false);
+  const pendingActionRef = useRef<{ eventType: TimeEventType } | null>(null);
 
   const findEmployee = useEmployeeByBadge();
   const recordEvent = useRecordTimeEvent();
@@ -161,15 +163,26 @@ export default function TimeClock() {
 
   const handleAction = async (eventType: TimeEventType) => {
     if (!employee) return;
+    // Store the pending action and trigger a silent photo capture
+    pendingActionRef.current = { eventType };
+    setCaptureTrigger(true);
+  };
+
+  const handlePhotoCaptured = async (photoUrl: string | null) => {
+    setCaptureTrigger(false);
+    const pending = pendingActionRef.current;
+    pendingActionRef.current = null;
+    if (!employee || !pending) return;
 
     try {
       await recordEvent.mutateAsync({
         employeeId: employee.id,
         badgeId: employee.badge_id,
-        eventType,
+        eventType: pending.eventType,
         deviceId: getDeviceId(),
+        photoUrl,
       });
-      setConfirmMessage(`${EVENT_LABELS[eventType]} enregistrée`);
+      setConfirmMessage(`${EVENT_LABELS[pending.eventType]} enregistrée`);
       setState('confirmed');
     } catch {
       setState('error');

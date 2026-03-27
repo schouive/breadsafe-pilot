@@ -3,7 +3,8 @@ import {
   Shield,
   Tag,
   Cog,
-  ShoppingCart
+  ShoppingCart,
+  Clock
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -97,6 +98,13 @@ export default function Home() {
       href: '/products',
     },
     {
+      title: 'Pointage',
+      description: 'Suivi des heures, badgeuse RFID et gestion du temps',
+      icon: Clock,
+      colorClass: 'bg-indigo-500/10 text-indigo-600 hover:bg-indigo-500/20 border-indigo-500/20',
+      href: '/time-tracking',
+    },
+    {
       title: 'Paramètres',
       description: 'Fournisseurs, matières premières et chambres froides',
       icon: Cog,
@@ -111,6 +119,7 @@ export default function Home() {
     if (module.href === '/orders') return canAccessModule('orders');
     if (module.href === '/products') return canAccessModule('products');
     if (module.href === '/settings') return canAccessModule('settings');
+    if (module.href === '/time-tracking') return true; // All roles can access time tracking
     return true;
   });
 

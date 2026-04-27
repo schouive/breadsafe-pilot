@@ -296,9 +296,9 @@ export default function TimeClock() {
               </Avatar>
               <div>
                 <h2 className="text-2xl font-bold text-foreground">{employee.full_name}</h2>
-                <Badge variant="outline" className="mt-1">
+                <span className="inline-block mt-1 px-2 py-0.5 text-xs rounded border border-border text-muted-foreground">
                   Badge: {employee.badge_id}
-                </Badge>
+                </span>
               </div>
             </div>
 

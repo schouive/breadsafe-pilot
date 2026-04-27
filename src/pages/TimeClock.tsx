@@ -129,6 +129,7 @@ export default function TimeClock() {
 
   const { error: scanError, clearError } = useBadgeScan({
     enabled: state === 'idle' && !manualMode,
+    cooldownMs: 2000,
     onScan: handleScan,
   });
 

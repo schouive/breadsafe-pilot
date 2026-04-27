@@ -43,6 +43,7 @@ const TimeTrackingDashboard = lazy(() => import("./pages/TimeTrackingDashboard")
 const TimeTrackingHistory = lazy(() => import("./pages/TimeTrackingHistory"));
 const TimeTrackingCorrections = lazy(() => import("./pages/TimeTrackingCorrections"));
 const TimeTrackingBadges = lazy(() => import("./pages/TimeTrackingBadges"));
+const TimeTrackingExport = lazy(() => import("./pages/TimeTrackingExport"));
 const TimeTrackingLayout = lazy(() => import("@/components/layout/TimeTrackingLayout").then(m => ({ default: m.TimeTrackingLayout })));
 
 
@@ -366,6 +367,16 @@ function AppRoutes() {
             <ProtectedRoute>
               <TimeTrackingLayout>
                 <TimeTrackingBadges />
+              </TimeTrackingLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/time-tracking/export"
+          element={
+            <ProtectedRoute>
+              <TimeTrackingLayout>
+                <TimeTrackingExport />
               </TimeTrackingLayout>
             </ProtectedRoute>
           }

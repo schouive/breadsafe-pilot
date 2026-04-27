@@ -97,12 +97,18 @@ export default function TimeClock() {
     }
   }, [state]);
 
+  const stateRef = useRef(state);
+  useEffect(() => { stateRef.current = state; }, [state]);
+  const findEmployeeRef = useRef(findEmployee);
+  useEffect(() => { findEmployeeRef.current = findEmployee; }, [findEmployee]);
+
   const handleScan = useCallback(
     async (result: { badgeId: string; scanSpeedMs: number }) => {
-      if (state !== 'idle') return;
+      console.log('[TimeClock] handleScan triggered:', result.badgeId, 'state:', stateRef.current);
+      if (stateRef.current !== 'idle') return;
 
       try {
-        const emp = await findEmployee.mutateAsync(result.badgeId);
+        const emp = await findEmployeeRef.current.mutateAsync(result.badgeId);
         if (!emp) {
           setState('error');
           setConfirmMessage('Badge non reconnu');
@@ -121,7 +127,7 @@ export default function TimeClock() {
         setConfirmMessage('Erreur lors de la lecture du badge');
       }
     },
-    [state, findEmployee]
+    []
   );
 
   const [manualMode, setManualMode] = useState(false);

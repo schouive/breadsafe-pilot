@@ -4,6 +4,7 @@ import {
   FileEdit,
   CreditCard,
   Scan,
+  Download,
 } from 'lucide-react';
 import { ModuleLayout } from './ModuleLayout';
 import { useAuth } from '@/hooks/useAuth';
@@ -18,6 +19,7 @@ const fullNavigation = [
   { name: 'Mon historique', href: '/time-tracking/history', icon: Clock },
   { name: 'Corrections', href: '/time-tracking/corrections', icon: FileEdit },
   { name: 'Badges', href: '/time-tracking/badges', icon: CreditCard },
+  { name: 'Export', href: '/time-tracking/export', icon: Download },
 ];
 
 const employeeNavigation = [

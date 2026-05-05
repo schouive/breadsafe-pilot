@@ -94,9 +94,16 @@ export default function ControlHistory() {
   const createReceptionControl = useCreateReceptionControl();
 
   const filteredRecords = useMemo(() => {
-    if (!records || !dateFilter) return records;
-    return records.filter(r => isSameDay(new Date(r.timestamp), dateFilter));
-  }, [records, dateFilter]);
+    let result = records;
+    if (result && dateFilter) {
+      result = result.filter(r => isSameDay(new Date(r.timestamp), dateFilter));
+    }
+    if (result && isReceptionControl && supplierFilter !== 'all') {
+      const sup = suppliers?.find(s => s.id === supplierFilter);
+      if (sup) result = result.filter(r => r.supplier === sup.name);
+    }
+    return result;
+  }, [records, dateFilter, supplierFilter, isReceptionControl, suppliers]);
 
   const filteredStorageRecords = useMemo(() => {
     if (!storageRecords || !dateFilter) return storageRecords;

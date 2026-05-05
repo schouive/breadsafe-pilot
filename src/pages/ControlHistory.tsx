@@ -212,7 +212,20 @@ export default function ControlHistory() {
       <div className="space-y-4">
         <div className="flex items-center justify-between gap-4">
           <h2 className="text-lg font-semibold text-foreground">Historique des contrôles</h2>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            {isReceptionControl && (
+              <Select value={supplierFilter} onValueChange={setSupplierFilter}>
+                <SelectTrigger className={cn("h-9 w-[200px]", supplierFilter !== 'all' && "border-primary text-primary")}>
+                  <SelectValue placeholder="Tous les fournisseurs" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tous les fournisseurs</SelectItem>
+                  {suppliers?.filter(s => s.is_active).map(s => (
+                    <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
             <Popover>
               <PopoverTrigger asChild>
                 <Button variant="outline" size="sm" className={cn("gap-2", dateFilter && "border-primary text-primary")}>
@@ -232,8 +245,8 @@ export default function ControlHistory() {
                 />
               </PopoverContent>
             </Popover>
-            {dateFilter && (
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setDateFilter(undefined)}>
+            {(dateFilter || (isReceptionControl && supplierFilter !== 'all')) && (
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setDateFilter(undefined); setSupplierFilter('all'); }}>
                 <X className="h-4 w-4" />
               </Button>
             )}

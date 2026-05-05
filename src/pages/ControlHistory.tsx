@@ -22,6 +22,8 @@ import { fr } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useSuppliers } from '@/hooks/useSuppliers';
 
 const statusConfig = {
   conforme: {
@@ -60,10 +62,13 @@ export default function ControlHistory() {
   const [selectedStorageRecord, setSelectedStorageRecord] = useState<StorageTemperatureRecordWithRoom | null>(null);
   const [editingStorageRecord, setEditingStorageRecord] = useState<StorageTemperatureRecordWithRoom | null>(null);
   const [dateFilter, setDateFilter] = useState<Date | undefined>(undefined);
+  const [supplierFilter, setSupplierFilter] = useState<string>('all');
   const controlPoint = CONTROL_POINTS.find(cp => cp.code === code);
   const isStorageControl = code === 'CP_STOCKAGE';
   const isProductionControl = code === 'CP_PRODUCTION';
+  const isReceptionControl = code === 'CP_RECEPTION';
   const isCP8Control = code === 'CP8_DLC_PERIMEE';
+  const { data: suppliers } = useSuppliers();
   
   // Fetch control records for non-storage controls
   const { data: records, isLoading } = useControlRecordsByCode(code || '');
@@ -89,9 +94,16 @@ export default function ControlHistory() {
   const createReceptionControl = useCreateReceptionControl();
 
   const filteredRecords = useMemo(() => {
-    if (!records || !dateFilter) return records;
-    return records.filter(r => isSameDay(new Date(r.timestamp), dateFilter));
-  }, [records, dateFilter]);
+    let result = records;
+    if (result && dateFilter) {
+      result = result.filter(r => isSameDay(new Date(r.timestamp), dateFilter));
+    }
+    if (result && isReceptionControl && supplierFilter !== 'all') {
+      const sup = suppliers?.find(s => s.id === supplierFilter);
+      if (sup) result = result.filter(r => r.supplier === sup.name);
+    }
+    return result;
+  }, [records, dateFilter, supplierFilter, isReceptionControl, suppliers]);
 
   const filteredStorageRecords = useMemo(() => {
     if (!storageRecords || !dateFilter) return storageRecords;
@@ -200,7 +212,20 @@ export default function ControlHistory() {
       <div className="space-y-4">
         <div className="flex items-center justify-between gap-4">
           <h2 className="text-lg font-semibold text-foreground">Historique des contrôles</h2>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            {isReceptionControl && (
+              <Select value={supplierFilter} onValueChange={setSupplierFilter}>
+                <SelectTrigger className={cn("h-9 w-[200px]", supplierFilter !== 'all' && "border-primary text-primary")}>
+                  <SelectValue placeholder="Tous les fournisseurs" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tous les fournisseurs</SelectItem>
+                  {suppliers?.filter(s => s.is_active).map(s => (
+                    <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
             <Popover>
               <PopoverTrigger asChild>
                 <Button variant="outline" size="sm" className={cn("gap-2", dateFilter && "border-primary text-primary")}>
@@ -220,8 +245,8 @@ export default function ControlHistory() {
                 />
               </PopoverContent>
             </Popover>
-            {dateFilter && (
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setDateFilter(undefined)}>
+            {(dateFilter || (isReceptionControl && supplierFilter !== 'all')) && (
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setDateFilter(undefined); setSupplierFilter('all'); }}>
                 <X className="h-4 w-4" />
               </Button>
             )}

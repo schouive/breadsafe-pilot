@@ -560,6 +560,11 @@ export default function ControlHistory() {
                                 Fournisseur: {record.supplier}
                               </p>
                             )}
+                            {(record as any).order_number && (
+                              <p className="text-sm font-medium text-primary mt-1">
+                                Commande: {(record as any).order_number}
+                              </p>
+                            )}
                             {operatorNames?.[record.operator_id] && (
                               <div className="flex items-center gap-1.5 mt-1.5 text-sm text-muted-foreground">
                                 <User className="h-3.5 w-3.5" />

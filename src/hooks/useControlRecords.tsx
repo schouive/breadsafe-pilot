@@ -139,19 +139,24 @@ export function useControlRecordsByCode(code: string) {
       try {
         const { data, error } = await supabase
           .from('control_records')
-          .select('*')
+          .select('*, supplier_orders!control_records_order_id_fkey(order_number)')
           .eq('control_point_code', code as ControlPointCode)
           .order('timestamp', { ascending: false })
           .limit(50);
         
         if (error) throw error;
         
+        const mapped = (data || []).map((r: any) => ({
+          ...r,
+          order_number: r.supplier_orders?.order_number || null,
+        }));
+
         // Cache the data
-        await cacheData(`control_records_code_${code}`, data);
+        await cacheData(`control_records_code_${code}`, mapped);
         
-        return data as ControlRecordFromDB[];
+        return mapped as (ControlRecordFromDB & { order_number?: string | null })[];
       } catch (error) {
-        const cached = await getCachedData<ControlRecordFromDB[]>(`control_records_code_${code}`);
+        const cached = await getCachedData<(ControlRecordFromDB & { order_number?: string | null })[]>(`control_records_code_${code}`);
         if (cached) {
           return cached;
         }

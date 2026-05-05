@@ -62,10 +62,13 @@ export default function ControlHistory() {
   const [selectedStorageRecord, setSelectedStorageRecord] = useState<StorageTemperatureRecordWithRoom | null>(null);
   const [editingStorageRecord, setEditingStorageRecord] = useState<StorageTemperatureRecordWithRoom | null>(null);
   const [dateFilter, setDateFilter] = useState<Date | undefined>(undefined);
+  const [supplierFilter, setSupplierFilter] = useState<string>('all');
   const controlPoint = CONTROL_POINTS.find(cp => cp.code === code);
   const isStorageControl = code === 'CP_STOCKAGE';
   const isProductionControl = code === 'CP_PRODUCTION';
+  const isReceptionControl = code === 'CP_RECEPTION';
   const isCP8Control = code === 'CP8_DLC_PERIMEE';
+  const { data: suppliers } = useSuppliers();
   
   // Fetch control records for non-storage controls
   const { data: records, isLoading } = useControlRecordsByCode(code || '');

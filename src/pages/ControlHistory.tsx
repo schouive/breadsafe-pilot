@@ -561,7 +561,7 @@ export default function ControlHistory() {
                               </p>
                             )}
                             {(record as any).order_number && (
-                              <p className="text-sm font-medium text-primary mt-1">
+                              <p className="text-sm text-muted-foreground">
                                 Commande: {(record as any).order_number}
                               </p>
                             )}

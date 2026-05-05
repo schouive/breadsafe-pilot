@@ -628,7 +628,35 @@ export function ReceptionControlForm({ controlPoint, isOpen, onClose, onSubmit }
                 {expandedSection === 'cp4' ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
               </div>
             </CollapsibleTrigger>
-            <CollapsibleContent className="pt-4 space-y-4">
+          <CollapsibleContent className="pt-4 space-y-4">
+              {/* Composition de référence des MP (multi-ingrédients) */}
+              {(() => {
+                const mpWithComposition = selectedRawMaterials.filter(
+                  (rm) => rm.composition && rm.composition.trim().length > 0 && /[,;]/.test(rm.composition)
+                );
+                if (mpWithComposition.length === 0) return null;
+                return (
+                  <div className="space-y-2">
+                    <Label className="text-xs text-muted-foreground">
+                      Composition enregistrée (à comparer avec l'emballage)
+                    </Label>
+                    <div className="space-y-2">
+                      {mpWithComposition.map((rm) => (
+                        <div
+                          key={rm.id}
+                          className="p-3 rounded-lg border bg-accent/30 space-y-1"
+                        >
+                          <p className="text-sm font-medium text-foreground">{rm.name}</p>
+                          <p className="text-xs text-muted-foreground whitespace-pre-wrap leading-relaxed">
+                            {rm.composition}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
+
               <div className="flex items-center space-x-3 p-3 rounded-lg border">
                 <Checkbox 
                   id="allergenes-conforme"

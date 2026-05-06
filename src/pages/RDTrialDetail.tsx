@@ -217,7 +217,14 @@ export default function RDTrialDetail() {
                 {data!.ingredients.map((ing) => (
                   <div key={ing.id} className="grid grid-cols-12 gap-2 items-end p-2 rounded border bg-muted/20">
                     <div className="col-span-12 md:col-span-4">
-                      <Label className="text-xs">Nom</Label>
+                      <Label className="text-xs flex items-center gap-2">
+                        Nom
+                        {ing.raw_material_id ? (
+                          <Badge variant="outline" className="bg-emerald-500/10 text-emerald-700 border-emerald-500/30 text-[10px] py-0">MP référencée</Badge>
+                        ) : (
+                          <Badge variant="outline" className="bg-amber-500/10 text-amber-700 border-amber-500/30 text-[10px] py-0">Manuel</Badge>
+                        )}
+                      </Label>
                       <Input defaultValue={ing.ingredient_name} onBlur={(e) => upsertIng.mutate({ ...ing, ingredient_name: e.target.value })} />
                     </div>
                     <div className="col-span-4 md:col-span-2">

@@ -154,7 +154,7 @@ export function useTimeEntries(options?: {
       // Enrich with employee names
       const employeeIds = [...new Set((data || []).map((e) => e.employee_id))];
       const { data: profiles } = await supabase
-        .from('profiles')
+        .from('profiles_public')
         .select('id, full_name, photo_url, avatar_url')
         .in('id', employeeIds);
 

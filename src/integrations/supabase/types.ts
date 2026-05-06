@@ -1126,6 +1126,415 @@ export type Database = {
           },
         ]
       }
+      rd_trial_ingredients: {
+        Row: {
+          baker_percentage: number | null
+          created_at: string
+          id: string
+          ingredient_name: string
+          observations: string | null
+          order_index: number
+          quantity: number
+          raw_material_id: string | null
+          trial_id: string
+          unit: string
+        }
+        Insert: {
+          baker_percentage?: number | null
+          created_at?: string
+          id?: string
+          ingredient_name: string
+          observations?: string | null
+          order_index?: number
+          quantity?: number
+          raw_material_id?: string | null
+          trial_id: string
+          unit?: string
+        }
+        Update: {
+          baker_percentage?: number | null
+          created_at?: string
+          id?: string
+          ingredient_name?: string
+          observations?: string | null
+          order_index?: number
+          quantity?: number
+          raw_material_id?: string | null
+          trial_id?: string
+          unit?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rd_trial_ingredients_raw_material_id_fkey"
+            columns: ["raw_material_id"]
+            isOneToOne: false
+            referencedRelation: "raw_materials"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rd_trial_ingredients_trial_id_fkey"
+            columns: ["trial_id"]
+            isOneToOne: false
+            referencedRelation: "rd_trials"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rd_trial_journal: {
+        Row: {
+          author_id: string | null
+          author_name: string | null
+          comment: string
+          created_at: string
+          entry_time: string
+          id: string
+          trial_id: string
+        }
+        Insert: {
+          author_id?: string | null
+          author_name?: string | null
+          comment: string
+          created_at?: string
+          entry_time?: string
+          id?: string
+          trial_id: string
+        }
+        Update: {
+          author_id?: string | null
+          author_name?: string | null
+          comment?: string
+          created_at?: string
+          entry_time?: string
+          id?: string
+          trial_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rd_trial_journal_trial_id_fkey"
+            columns: ["trial_id"]
+            isOneToOne: false
+            referencedRelation: "rd_trials"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rd_trial_rabats: {
+        Row: {
+          created_at: string
+          id: string
+          observation: string | null
+          order_index: number
+          rabat_time: string | null
+          rabat_type: string | null
+          trial_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          observation?: string | null
+          order_index?: number
+          rabat_time?: string | null
+          rabat_type?: string | null
+          trial_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          observation?: string | null
+          order_index?: number
+          rabat_time?: string | null
+          rabat_type?: string | null
+          trial_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rd_trial_rabats_trial_id_fkey"
+            columns: ["trial_id"]
+            isOneToOne: false
+            referencedRelation: "rd_trials"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rd_trial_versions: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          snapshot: Json
+          trial_id: string
+          version_number: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          snapshot: Json
+          trial_id: string
+          version_number: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          snapshot?: Json
+          trial_id?: string
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rd_trial_versions_trial_id_fkey"
+            columns: ["trial_id"]
+            isOneToOne: false
+            referencedRelation: "rd_trials"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rd_trials: {
+        Row: {
+          appret_end: string | null
+          appret_humidity: number | null
+          appret_observations: string | null
+          appret_start: string | null
+          appret_temp: number | null
+          autolyse_notes: string | null
+          bassinage_notes: string | null
+          conclusion_corrective: string | null
+          conclusion_decision:
+            | Database["public"]["Enums"]["rd_trial_decision"]
+            | null
+          conclusion_gaps: string | null
+          conclusion_hypothesis: string | null
+          conclusion_result: string | null
+          cooking_duration_min: number | null
+          cooking_observations: string | null
+          cooking_temp: number | null
+          created_at: string
+          created_by: string | null
+          detente_duration_min: number | null
+          division_observations: string | null
+          division_time: string | null
+          eval_alveolage: number | null
+          eval_average: number | null
+          eval_coloration: number | null
+          eval_croustillance: number | null
+          eval_gout: number | null
+          eval_maniabilite: number | null
+          eval_notes: string | null
+          eval_tenue: number | null
+          eval_volume: number | null
+          formulation_notes: string | null
+          frasage_notes: string | null
+          id: string
+          is_archived: boolean
+          kneading_observations: string | null
+          kneading_total_min: number | null
+          mixer_type: string | null
+          objective: string | null
+          operator_id: string | null
+          operator_name: string | null
+          oven_type: string | null
+          patons_weight: number | null
+          pointage_ambient_temp: number | null
+          pointage_dough_temp: number | null
+          pointage_end: string | null
+          pointage_humidity: number | null
+          pointage_observations: string | null
+          pointage_start: string | null
+          product_concerned: string | null
+          recipe_id: string | null
+          recipe_name_text: string | null
+          recipe_version_text: string | null
+          speed1_duration_min: number | null
+          speed1_value: string | null
+          speed2_duration_min: number | null
+          speed2_value: string | null
+          status: Database["public"]["Enums"]["rd_trial_status"]
+          steam: boolean | null
+          temp_actual_end_kneading: number | null
+          temp_base: number | null
+          temp_flour: number | null
+          temp_lab: number | null
+          temp_target: number | null
+          temp_water: number | null
+          total_hydration: number | null
+          trial_date: string
+          trial_name: string
+          trial_number: string
+          trial_version: number
+          updated_at: string
+        }
+        Insert: {
+          appret_end?: string | null
+          appret_humidity?: number | null
+          appret_observations?: string | null
+          appret_start?: string | null
+          appret_temp?: number | null
+          autolyse_notes?: string | null
+          bassinage_notes?: string | null
+          conclusion_corrective?: string | null
+          conclusion_decision?:
+            | Database["public"]["Enums"]["rd_trial_decision"]
+            | null
+          conclusion_gaps?: string | null
+          conclusion_hypothesis?: string | null
+          conclusion_result?: string | null
+          cooking_duration_min?: number | null
+          cooking_observations?: string | null
+          cooking_temp?: number | null
+          created_at?: string
+          created_by?: string | null
+          detente_duration_min?: number | null
+          division_observations?: string | null
+          division_time?: string | null
+          eval_alveolage?: number | null
+          eval_average?: number | null
+          eval_coloration?: number | null
+          eval_croustillance?: number | null
+          eval_gout?: number | null
+          eval_maniabilite?: number | null
+          eval_notes?: string | null
+          eval_tenue?: number | null
+          eval_volume?: number | null
+          formulation_notes?: string | null
+          frasage_notes?: string | null
+          id?: string
+          is_archived?: boolean
+          kneading_observations?: string | null
+          kneading_total_min?: number | null
+          mixer_type?: string | null
+          objective?: string | null
+          operator_id?: string | null
+          operator_name?: string | null
+          oven_type?: string | null
+          patons_weight?: number | null
+          pointage_ambient_temp?: number | null
+          pointage_dough_temp?: number | null
+          pointage_end?: string | null
+          pointage_humidity?: number | null
+          pointage_observations?: string | null
+          pointage_start?: string | null
+          product_concerned?: string | null
+          recipe_id?: string | null
+          recipe_name_text?: string | null
+          recipe_version_text?: string | null
+          speed1_duration_min?: number | null
+          speed1_value?: string | null
+          speed2_duration_min?: number | null
+          speed2_value?: string | null
+          status?: Database["public"]["Enums"]["rd_trial_status"]
+          steam?: boolean | null
+          temp_actual_end_kneading?: number | null
+          temp_base?: number | null
+          temp_flour?: number | null
+          temp_lab?: number | null
+          temp_target?: number | null
+          temp_water?: number | null
+          total_hydration?: number | null
+          trial_date?: string
+          trial_name: string
+          trial_number?: string
+          trial_version?: number
+          updated_at?: string
+        }
+        Update: {
+          appret_end?: string | null
+          appret_humidity?: number | null
+          appret_observations?: string | null
+          appret_start?: string | null
+          appret_temp?: number | null
+          autolyse_notes?: string | null
+          bassinage_notes?: string | null
+          conclusion_corrective?: string | null
+          conclusion_decision?:
+            | Database["public"]["Enums"]["rd_trial_decision"]
+            | null
+          conclusion_gaps?: string | null
+          conclusion_hypothesis?: string | null
+          conclusion_result?: string | null
+          cooking_duration_min?: number | null
+          cooking_observations?: string | null
+          cooking_temp?: number | null
+          created_at?: string
+          created_by?: string | null
+          detente_duration_min?: number | null
+          division_observations?: string | null
+          division_time?: string | null
+          eval_alveolage?: number | null
+          eval_average?: number | null
+          eval_coloration?: number | null
+          eval_croustillance?: number | null
+          eval_gout?: number | null
+          eval_maniabilite?: number | null
+          eval_notes?: string | null
+          eval_tenue?: number | null
+          eval_volume?: number | null
+          formulation_notes?: string | null
+          frasage_notes?: string | null
+          id?: string
+          is_archived?: boolean
+          kneading_observations?: string | null
+          kneading_total_min?: number | null
+          mixer_type?: string | null
+          objective?: string | null
+          operator_id?: string | null
+          operator_name?: string | null
+          oven_type?: string | null
+          patons_weight?: number | null
+          pointage_ambient_temp?: number | null
+          pointage_dough_temp?: number | null
+          pointage_end?: string | null
+          pointage_humidity?: number | null
+          pointage_observations?: string | null
+          pointage_start?: string | null
+          product_concerned?: string | null
+          recipe_id?: string | null
+          recipe_name_text?: string | null
+          recipe_version_text?: string | null
+          speed1_duration_min?: number | null
+          speed1_value?: string | null
+          speed2_duration_min?: number | null
+          speed2_value?: string | null
+          status?: Database["public"]["Enums"]["rd_trial_status"]
+          steam?: boolean | null
+          temp_actual_end_kneading?: number | null
+          temp_base?: number | null
+          temp_flour?: number | null
+          temp_lab?: number | null
+          temp_target?: number | null
+          temp_water?: number | null
+          total_hydration?: number | null
+          trial_date?: string
+          trial_name?: string
+          trial_number?: string
+          trial_version?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rd_trials_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipe_baker_nutrition"
+            referencedColumns: ["recipe_id"]
+          },
+          {
+            foreignKeyName: "rd_trials_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipe_nutrition"
+            referencedColumns: ["recipe_id"]
+          },
+          {
+            foreignKeyName: "rd_trials_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       recipe_ingredients: {
         Row: {
           baker_percentage: number | null
@@ -1742,6 +2151,7 @@ export type Database = {
     }
     Functions: {
       generate_order_number: { Args: never; Returns: string }
+      generate_rd_trial_number: { Args: never; Returns: string }
       has_any_role: {
         Args: {
           _roles: Database["public"]["Enums"]["app_role"][]
@@ -1776,6 +2186,13 @@ export type Database = {
       nc_severity: "minor" | "major" | "critical"
       nc_status: "open" | "in_progress" | "resolved" | "validated"
       order_status: "draft" | "sent" | "partially_received" | "received"
+      rd_trial_decision: "redo" | "adjust" | "validated"
+      rd_trial_status:
+        | "preparation"
+        | "in_progress"
+        | "completed"
+        | "validated"
+        | "abandoned"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1923,6 +2340,14 @@ export const Constants = {
       nc_severity: ["minor", "major", "critical"],
       nc_status: ["open", "in_progress", "resolved", "validated"],
       order_status: ["draft", "sent", "partially_received", "received"],
+      rd_trial_decision: ["redo", "adjust", "validated"],
+      rd_trial_status: [
+        "preparation",
+        "in_progress",
+        "completed",
+        "validated",
+        "abandoned",
+      ],
     },
   },
 } as const

@@ -42,7 +42,7 @@ export function useEmployeeByBadge() {
   return useMutation({
     mutationFn: async (badgeId: string) => {
       const { data, error } = await supabase
-        .from('profiles')
+        .from('profiles_public')
         .select('id, full_name, badge_id, photo_url, avatar_url')
         .eq('badge_id', badgeId)
         .maybeSingle();
@@ -154,7 +154,7 @@ export function useTimeEntries(options?: {
       // Enrich with employee names
       const employeeIds = [...new Set((data || []).map((e) => e.employee_id))];
       const { data: profiles } = await supabase
-        .from('profiles')
+        .from('profiles_public')
         .select('id, full_name, photo_url, avatar_url')
         .in('id', employeeIds);
 
@@ -177,7 +177,7 @@ export function useEmployeesWithBadges() {
     queryKey: ['employees-badges'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('profiles')
+        .from('profiles_public')
         .select('id, full_name, badge_id, photo_url, avatar_url, is_active')
         .not('badge_id', 'is', null)
         .eq('is_active', true)

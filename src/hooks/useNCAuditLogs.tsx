@@ -34,8 +34,8 @@ export function useNCAuditLogs(nonConformityId: string | undefined) {
       
       // Fetch profiles for these users
       const { data: profiles } = await supabase
-        .from('profiles')
-        .select('id, full_name, email')
+        .from('profiles_public')
+        .select('id, full_name')
         .in('id', userIds);
 
       // Map profiles to logs
@@ -45,7 +45,7 @@ export function useNCAuditLogs(nonConformityId: string | undefined) {
         ...log,
         old_values: log.old_values as Record<string, unknown> | null,
         new_values: log.new_values as Record<string, unknown> | null,
-        user_name: profileMap.get(log.user_id)?.full_name || profileMap.get(log.user_id)?.email || 'Utilisateur inconnu',
+        user_name: profileMap.get(log.user_id)?.full_name || 'Utilisateur inconnu',
       })) as NCAuditLog[];
     },
     enabled: !!nonConformityId,

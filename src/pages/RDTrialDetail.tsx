@@ -19,7 +19,6 @@ import { useActiveRecipes } from '@/hooks/useRecipes';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
-import { toast } from 'sonner';
 
 const N = (v: any) => (v === '' || v == null ? null : Number(v));
 const minutesBetween = (a?: string | null, b?: string | null) => {

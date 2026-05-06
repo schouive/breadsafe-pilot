@@ -45,6 +45,8 @@ const TimeTrackingCorrections = lazy(() => import("./pages/TimeTrackingCorrectio
 const TimeTrackingBadges = lazy(() => import("./pages/TimeTrackingBadges"));
 const TimeTrackingExport = lazy(() => import("./pages/TimeTrackingExport"));
 const TimeTrackingLayout = lazy(() => import("@/components/layout/TimeTrackingLayout").then(m => ({ default: m.TimeTrackingLayout })));
+const RDTrialsList = lazy(() => import("./pages/RDTrialsList"));
+const RDTrialDetail = lazy(() => import("./pages/RDTrialDetail"));
 
 
 const queryClient = new QueryClient({
@@ -291,6 +293,26 @@ function AppRoutes() {
             <ProtectedRoute>
               <ProductsLayout>
                 <CartonLabelManagement />
+              </ProductsLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/products/rd-trials"
+          element={
+            <ProtectedRoute>
+              <ProductsLayout>
+                <RDTrialsList />
+              </ProductsLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/products/rd-trials/:id"
+          element={
+            <ProtectedRoute>
+              <ProductsLayout>
+                <RDTrialDetail />
               </ProductsLayout>
             </ProtectedRoute>
           }

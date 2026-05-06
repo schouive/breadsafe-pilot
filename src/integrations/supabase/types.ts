@@ -2100,6 +2100,33 @@ export type Database = {
       }
     }
     Views: {
+      profiles_public: {
+        Row: {
+          avatar_url: string | null
+          badge_id: string | null
+          full_name: string | null
+          id: string | null
+          is_active: boolean | null
+          photo_url: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          badge_id?: string | null
+          full_name?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          photo_url?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          badge_id?: string | null
+          full_name?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          photo_url?: string | null
+        }
+        Relationships: []
+      }
       recipe_baker_nutrition: {
         Row: {
           baking_ratio: number | null

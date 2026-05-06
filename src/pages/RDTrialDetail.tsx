@@ -211,9 +211,7 @@ export default function RDTrialDetail() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label>Ingrédients</Label>
-                <Button size="sm" variant="outline" onClick={() => upsertIng.mutate({ trial_id: id!, ingredient_name: '', quantity: 0, unit: 'kg', order_index: data!.ingredients.length })}>
-                  <Plus className="h-4 w-4 mr-1" /> Ajouter
-                </Button>
+                <AddRDIngredientDialog trialId={id!} orderIndex={data!.ingredients.length} />
               </div>
               <div className="space-y-2">
                 {data!.ingredients.map((ing) => (

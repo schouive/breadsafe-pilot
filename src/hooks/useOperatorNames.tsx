@@ -15,7 +15,7 @@ export function useOperatorNames(operatorIds: string[]) {
       const uniqueIds = [...new Set(operatorIds)];
       
       const { data, error } = await supabase
-        .from('profiles')
+        .from('profiles_public')
         .select('id, full_name')
         .in('id', uniqueIds);
       

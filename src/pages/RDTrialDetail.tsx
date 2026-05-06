@@ -16,6 +16,7 @@ import {
   RD_TRIAL_STATUSES, RD_TRIAL_DECISIONS, getStatusMeta,
 } from '@/hooks/useRDTrials';
 import { useActiveRecipes } from '@/hooks/useRecipes';
+import { AddRDIngredientDialog } from '@/components/rd/AddRDIngredientDialog';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { cn } from '@/lib/utils';

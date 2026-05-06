@@ -16,6 +16,7 @@ import {
   RD_TRIAL_STATUSES, RD_TRIAL_DECISIONS, getStatusMeta,
 } from '@/hooks/useRDTrials';
 import { useActiveRecipes } from '@/hooks/useRecipes';
+import { AddRDIngredientDialog } from '@/components/rd/AddRDIngredientDialog';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
@@ -210,15 +211,20 @@ export default function RDTrialDetail() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label>Ingrédients</Label>
-                <Button size="sm" variant="outline" onClick={() => upsertIng.mutate({ trial_id: id!, ingredient_name: '', quantity: 0, unit: 'kg', order_index: data!.ingredients.length })}>
-                  <Plus className="h-4 w-4 mr-1" /> Ajouter
-                </Button>
+                <AddRDIngredientDialog trialId={id!} orderIndex={data!.ingredients.length} />
               </div>
               <div className="space-y-2">
                 {data!.ingredients.map((ing) => (
                   <div key={ing.id} className="grid grid-cols-12 gap-2 items-end p-2 rounded border bg-muted/20">
                     <div className="col-span-12 md:col-span-4">
-                      <Label className="text-xs">Nom</Label>
+                      <Label className="text-xs flex items-center gap-2">
+                        Nom
+                        {ing.raw_material_id ? (
+                          <Badge variant="outline" className="bg-emerald-500/10 text-emerald-700 border-emerald-500/30 text-[10px] py-0">MP référencée</Badge>
+                        ) : (
+                          <Badge variant="outline" className="bg-amber-500/10 text-amber-700 border-amber-500/30 text-[10px] py-0">Manuel</Badge>
+                        )}
+                      </Label>
                       <Input defaultValue={ing.ingredient_name} onBlur={(e) => upsertIng.mutate({ ...ing, ingredient_name: e.target.value })} />
                     </div>
                     <div className="col-span-4 md:col-span-2">

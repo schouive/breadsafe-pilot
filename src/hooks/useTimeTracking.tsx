@@ -177,7 +177,7 @@ export function useEmployeesWithBadges() {
     queryKey: ['employees-badges'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('profiles')
+        .from('profiles_public')
         .select('id, full_name, badge_id, photo_url, avatar_url, is_active')
         .not('badge_id', 'is', null)
         .eq('is_active', true)

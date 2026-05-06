@@ -2,7 +2,8 @@ import {
   BookOpen,
   FileText,
   Package,
-  BarChart3
+  BarChart3,
+  FlaskConical
 } from 'lucide-react';
 import { ModuleLayout } from './ModuleLayout';
 
@@ -15,6 +16,7 @@ const productsNavigation = [
   { name: 'Recettes datas', href: '/products/data', icon: BarChart3 },
   { name: 'Fiche technique', href: '/products/technical-sheet', icon: FileText },
   { name: 'Étiquettes carton', href: '/products/carton-labels', icon: Package },
+  { name: 'Essais R&D', href: '/products/rd-trials', icon: FlaskConical },
 ];
 
 export function ProductsLayout({ children }: ProductsLayoutProps) {

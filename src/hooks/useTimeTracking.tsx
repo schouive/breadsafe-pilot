@@ -42,7 +42,7 @@ export function useEmployeeByBadge() {
   return useMutation({
     mutationFn: async (badgeId: string) => {
       const { data, error } = await supabase
-        .from('profiles')
+        .from('profiles_public')
         .select('id, full_name, badge_id, photo_url, avatar_url')
         .eq('badge_id', badgeId)
         .maybeSingle();

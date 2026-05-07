@@ -13,6 +13,7 @@ const HACCPLayout = lazy(() => import("@/components/layout/HACCPLayout").then(m 
 const ProductsLayout = lazy(() => import("@/components/layout/ProductsLayout").then(m => ({ default: m.ProductsLayout })));
 const SettingsLayout = lazy(() => import("@/components/layout/SettingsLayout").then(m => ({ default: m.SettingsLayout })));
 const OrdersLayout = lazy(() => import("@/components/layout/OrdersLayout").then(m => ({ default: m.OrdersLayout })));
+const PrintLayout = lazy(() => import("@/components/layout/PrintLayout").then(m => ({ default: m.PrintLayout })));
 
 // Lazy load pages
 const Home = lazy(() => import("./pages/Home"));

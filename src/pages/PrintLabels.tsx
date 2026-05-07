@@ -263,10 +263,7 @@ export default function PrintLabels() {
                             </Button>
                           </div>
                           <div className="flex flex-wrap items-center gap-1">
-                            <Badge variant="secondary">{p.family}</Badge>
-                            <Badge variant="outline">{p.temperature}</Badge>
-                            <Badge variant="outline">{p.slicing}</Badge>
-                            <Badge variant="outline">{p.packaging}</Badge>
+                            <Badge variant="outline">{PACKAGING_LABELS[p.packaging] ?? p.packaging}</Badge>
                             {!p.template_name && (
                               <Badge variant="destructive" className="text-xs">Sans template</Badge>
                             )}

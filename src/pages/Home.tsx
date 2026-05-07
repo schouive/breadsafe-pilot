@@ -4,7 +4,8 @@ import {
   Tag,
   Cog,
   ShoppingCart,
-  Clock
+  Clock,
+  Printer
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -105,6 +106,13 @@ export default function Home() {
       href: '/time-tracking',
     },
     {
+      title: 'Impression',
+      description: 'Impression étiquettes Zebra production',
+      icon: Printer,
+      colorClass: 'bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 border-rose-500/20',
+      href: '/products/print',
+    },
+    {
       title: 'Paramètres',
       description: 'Fournisseurs, matières premières et chambres froides',
       icon: Cog,
@@ -118,8 +126,9 @@ export default function Home() {
     if (module.href === '/haccp') return canAccessModule('haccp');
     if (module.href === '/orders') return canAccessModule('orders');
     if (module.href === '/products') return canAccessModule('products');
+    if (module.href === '/products/print') return canAccessModule('products');
     if (module.href === '/settings') return canAccessModule('settings');
-    if (module.href === '/time-tracking') return true; // All roles can access time tracking
+    if (module.href === '/time-tracking') return true;
     return true;
   });
 

@@ -12,7 +12,6 @@ import {
 import {
   useFamilies,
   useCatalogRecipes,
-  useNutritionProfiles,
   useProductMasterMutations,
   ProductMaster,
 } from '@/hooks/useProductCatalog';

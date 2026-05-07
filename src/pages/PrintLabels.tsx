@@ -71,10 +71,28 @@ export default function PrintLabels() {
     ? `${selected.sku_base}-${selected.temperature}-${selected.slicing}-${selected.packaging}`
     : '';
 
+  // Génère un n° de lot L + jour de l'année (3 chiffres) + 2 derniers chiffres de l'année
+  // Ex: 03 janvier 2026 -> L00326
+  const computeLotNumber = (isoDate: string): string => {
+    if (!isoDate) return '';
+    const d = new Date(isoDate + 'T00:00:00');
+    if (isNaN(d.getTime())) return '';
+    const start = new Date(d.getFullYear(), 0, 0);
+    const diff = d.getTime() - start.getTime();
+    const dayOfYear = Math.floor(diff / 86400000);
+    const yy = String(d.getFullYear()).slice(-2);
+    return `L${String(dayOfYear).padStart(3, '0')}${yy}`;
+  };
+
+  const handleProductionDateChange = (val: string) => {
+    setProductionDate(val);
+    setLot(computeLotNumber(val));
+  };
+
   const reset = () => {
     setStep(1);
     setSelected(null);
-    setLot(''); setDdm(''); setQuantity('1');
+    setLot(''); setProductionDate(''); setDdm(''); setQuantity('1');
     setTimeout(() => searchRef.current?.focus(), 50);
   };
 
@@ -86,6 +104,7 @@ export default function PrintLabels() {
     }
     setSelected(product);
     setLot(h.lot_number);
+    setProductionDate('');
     setDdm(h.ddm);
     setQuantity(String(h.quantity));
     setStep(3);

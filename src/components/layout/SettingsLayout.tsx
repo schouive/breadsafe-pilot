@@ -26,7 +26,7 @@ const settingsNavigation = [
   { name: 'Général', href: '/settings', icon: Settings },
   { name: '— Référentiel Produits —', href: '#catalog', icon: Boxes, isHeader: true },
   { name: 'Familles', href: '/settings/catalog/families', icon: FolderTree },
-  { name: 'Recettes', href: '/settings/catalog/recipes', icon: BookOpen },
+  
   { name: 'Produits maîtres', href: '/settings/catalog/master', icon: Boxes },
   { name: 'Catalogue d\'impression', href: '/settings/catalog/erp-articles', icon: Printer },
   { name: 'Templates Zebra', href: '/settings/catalog/templates', icon: FileBadge },

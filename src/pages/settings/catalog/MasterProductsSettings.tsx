@@ -33,7 +33,7 @@ export default function MasterProductsSettings() {
         <div>
           <h1 className="text-2xl font-bold text-primary">Produits maîtres</h1>
           <p className="text-muted-foreground mt-1">
-            Produits génériques liés à une recette et un profil nutritionnel
+            Produits génériques liés à une recette
           </p>
         </div>
         <Button onClick={() => { setEditing(null); setDialogOpen(true); }}>
@@ -62,7 +62,7 @@ export default function MasterProductsSettings() {
                   <TableHead>Libellé</TableHead>
                   <TableHead>Famille</TableHead>
                   <TableHead>Recette</TableHead>
-                  <TableHead>Nutrition</TableHead>
+                  
                   <TableHead>Statut</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -74,7 +74,7 @@ export default function MasterProductsSettings() {
                     <TableCell>{p.label}</TableCell>
                     <TableCell>{p.family ? <Badge variant="outline">{p.family.code}</Badge> : '—'}</TableCell>
                     <TableCell className="text-sm">{p.recipe?.name || '—'}</TableCell>
-                    <TableCell className="text-sm">{p.nutrition?.name || '—'}</TableCell>
+                    
                     <TableCell>
                       {p.active ? <Badge>Actif</Badge> : <Badge variant="secondary">Inactif</Badge>}
                     </TableCell>

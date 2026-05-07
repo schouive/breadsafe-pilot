@@ -57,7 +57,7 @@ export function useFamilies() {
   });
 }
 
-// ============ RECIPES ============
+// ============ RECIPES (kept for compat) ============
 export function useCatalogRecipes() {
   return useQuery({
     queryKey: ['recipes-catalog'],
@@ -69,6 +69,22 @@ export function useCatalogRecipes() {
         .eq('status', 'validated')
         .eq('recipe_type', 'finished')
         .order('name');
+      if (error) throw error;
+      return data;
+    },
+  });
+}
+
+// ============ PRODUCT SHEETS (fiches techniques) ============
+export function useCatalogProductSheets() {
+  return useQuery({
+    queryKey: ['product_sheets-catalog'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('product_sheets')
+        .select('id, product_name, product_reference, version, is_published, net_weight, net_weight_unit')
+        .eq('is_published', true)
+        .order('product_name');
       if (error) throw error;
       return data;
     },

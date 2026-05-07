@@ -58,6 +58,11 @@ const PrintCatalogSettings = lazy(() => import("./pages/settings/PrintCatalogSet
 const UsersSettings = lazy(() => import("./pages/settings/UsersSettings"));
 const AuditSettings = lazy(() => import("./pages/settings/AuditSettings"));
 const SecuritySettings = lazy(() => import("./pages/settings/SecuritySettings"));
+const FamiliesSettings = lazy(() => import("./pages/settings/catalog/FamiliesSettings"));
+const CatalogRecipesSettings = lazy(() => import("./pages/settings/catalog/CatalogRecipesSettings"));
+const MasterProductsSettings = lazy(() => import("./pages/settings/catalog/MasterProductsSettings"));
+const ErpArticlesSettings = lazy(() => import("./pages/settings/catalog/ErpArticlesSettings"));
+const TemplatesSettings = lazy(() => import("./pages/settings/catalog/TemplatesSettings"));
 
 
 const queryClient = new QueryClient({

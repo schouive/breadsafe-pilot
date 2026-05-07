@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      allergens: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          label: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          label: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          label?: string
+        }
+        Relationships: []
+      }
       audit_logs: {
         Row: {
           action: string
@@ -124,6 +145,13 @@ export type Database = {
           version?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "carton_labels_product_sheet_id_fkey"
+            columns: ["product_sheet_id"]
+            isOneToOne: false
+            referencedRelation: "product_label_view"
+            referencedColumns: ["product_sheet_id"]
+          },
           {
             foreignKeyName: "carton_labels_product_sheet_id_fkey"
             columns: ["product_sheet_id"]
@@ -308,6 +336,13 @@ export type Database = {
             foreignKeyName: "inco_change_logs_product_sheet_id_fkey"
             columns: ["product_sheet_id"]
             isOneToOne: false
+            referencedRelation: "product_label_view"
+            referencedColumns: ["product_sheet_id"]
+          },
+          {
+            foreignKeyName: "inco_change_logs_product_sheet_id_fkey"
+            columns: ["product_sheet_id"]
+            isOneToOne: false
             referencedRelation: "product_sheets"
             referencedColumns: ["id"]
           },
@@ -373,6 +408,13 @@ export type Database = {
             foreignKeyName: "label_data_recipe_id_fkey"
             columns: ["recipe_id"]
             isOneToOne: true
+            referencedRelation: "product_label_view"
+            referencedColumns: ["recipe_id"]
+          },
+          {
+            foreignKeyName: "label_data_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: true
             referencedRelation: "recipe_baker_nutrition"
             referencedColumns: ["recipe_id"]
           },
@@ -391,6 +433,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      label_templates: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          template_code: string
+          template_name: string
+          zpl_filename: string | null
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          template_code: string
+          template_name: string
+          zpl_filename?: string | null
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          template_code?: string
+          template_name?: string
+          zpl_filename?: string | null
+        }
+        Relationships: []
       }
       metal_detector_audit_logs: {
         Row: {
@@ -793,6 +862,33 @@ export type Database = {
           },
         ]
       }
+      packaging_types: {
+        Row: {
+          active: boolean
+          code: string
+          created_at: string
+          id: string
+          label: string
+          quantity: number
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          created_at?: string
+          id?: string
+          label: string
+          quantity?: number
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          created_at?: string
+          id?: string
+          label?: string
+          quantity?: number
+        }
+        Relationships: []
+      }
       print_favorites: {
         Row: {
           created_at: string
@@ -819,6 +915,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "print_products"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "print_favorites_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "product_label_view"
+            referencedColumns: ["product_id"]
           },
         ]
       }
@@ -883,11 +986,25 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "print_history_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "product_label_view"
+            referencedColumns: ["product_id"]
+          },
+          {
             foreignKeyName: "print_history_variant_id_fkey"
             columns: ["variant_id"]
             isOneToOne: false
             referencedRelation: "print_product_variants"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "print_history_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "product_label_view"
+            referencedColumns: ["variant_id"]
           },
         ]
       }
@@ -897,9 +1014,11 @@ export type Database = {
           id: string
           is_active: boolean
           packaging: string
+          packaging_id: string | null
           product_id: string
           slicing: string
           temperature: string
+          template_id: string | null
           template_name: string
         }
         Insert: {
@@ -907,9 +1026,11 @@ export type Database = {
           id?: string
           is_active?: boolean
           packaging: string
+          packaging_id?: string | null
           product_id: string
           slicing: string
           temperature: string
+          template_id?: string | null
           template_name: string
         }
         Update: {
@@ -917,17 +1038,40 @@ export type Database = {
           id?: string
           is_active?: boolean
           packaging?: string
+          packaging_id?: string | null
           product_id?: string
           slicing?: string
           temperature?: string
+          template_id?: string | null
           template_name?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "print_product_variants_packaging_id_fkey"
+            columns: ["packaging_id"]
+            isOneToOne: false
+            referencedRelation: "packaging_types"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "print_product_variants_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "print_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "print_product_variants_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "product_label_view"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "print_product_variants_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "label_templates"
             referencedColumns: ["id"]
           },
         ]
@@ -937,9 +1081,12 @@ export type Database = {
           active: boolean
           created_at: string
           family: string
+          family_id: string | null
           id: string
           label: string
           old_code: string | null
+          product_sheet_id: string | null
+          recipe_id: string | null
           sku_base: string
           updated_at: string
         }
@@ -947,9 +1094,12 @@ export type Database = {
           active?: boolean
           created_at?: string
           family: string
+          family_id?: string | null
           id?: string
           label: string
           old_code?: string | null
+          product_sheet_id?: string | null
+          recipe_id?: string | null
           sku_base: string
           updated_at?: string
         }
@@ -957,11 +1107,88 @@ export type Database = {
           active?: boolean
           created_at?: string
           family?: string
+          family_id?: string | null
           id?: string
           label?: string
           old_code?: string | null
+          product_sheet_id?: string | null
+          recipe_id?: string | null
           sku_base?: string
           updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "print_products_family_id_fkey"
+            columns: ["family_id"]
+            isOneToOne: false
+            referencedRelation: "product_families"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "print_products_product_sheet_id_fkey"
+            columns: ["product_sheet_id"]
+            isOneToOne: false
+            referencedRelation: "product_label_view"
+            referencedColumns: ["product_sheet_id"]
+          },
+          {
+            foreignKeyName: "print_products_product_sheet_id_fkey"
+            columns: ["product_sheet_id"]
+            isOneToOne: false
+            referencedRelation: "product_sheets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "print_products_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "product_label_view"
+            referencedColumns: ["recipe_id"]
+          },
+          {
+            foreignKeyName: "print_products_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipe_baker_nutrition"
+            referencedColumns: ["recipe_id"]
+          },
+          {
+            foreignKeyName: "print_products_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipe_nutrition"
+            referencedColumns: ["recipe_id"]
+          },
+          {
+            foreignKeyName: "print_products_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_families: {
+        Row: {
+          active: boolean
+          code: string
+          created_at: string
+          id: string
+          label: string
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          created_at?: string
+          id?: string
+          label: string
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          created_at?: string
+          id?: string
+          label?: string
         }
         Relationships: []
       }
@@ -1108,6 +1335,13 @@ export type Database = {
           version?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "product_sheets_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "product_label_view"
+            referencedColumns: ["recipe_id"]
+          },
           {
             foreignKeyName: "product_sheets_recipe_id_fkey"
             columns: ["recipe_id"]
@@ -1688,6 +1922,13 @@ export type Database = {
             foreignKeyName: "rd_trials_recipe_id_fkey"
             columns: ["recipe_id"]
             isOneToOne: false
+            referencedRelation: "product_label_view"
+            referencedColumns: ["recipe_id"]
+          },
+          {
+            foreignKeyName: "rd_trials_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
             referencedRelation: "recipe_baker_nutrition"
             referencedColumns: ["recipe_id"]
           },
@@ -1752,6 +1993,13 @@ export type Database = {
             foreignKeyName: "recipe_ingredients_ingredient_recipe_id_fkey"
             columns: ["ingredient_recipe_id"]
             isOneToOne: false
+            referencedRelation: "product_label_view"
+            referencedColumns: ["recipe_id"]
+          },
+          {
+            foreignKeyName: "recipe_ingredients_ingredient_recipe_id_fkey"
+            columns: ["ingredient_recipe_id"]
+            isOneToOne: false
             referencedRelation: "recipe_baker_nutrition"
             referencedColumns: ["recipe_id"]
           },
@@ -1775,6 +2023,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "raw_materials"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recipe_ingredients_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "product_label_view"
+            referencedColumns: ["recipe_id"]
           },
           {
             foreignKeyName: "recipe_ingredients_recipe_id_fkey"
@@ -2272,6 +2527,36 @@ export type Database = {
       }
     }
     Views: {
+      product_label_view: {
+        Row: {
+          active: boolean | null
+          allergen_statement: string | null
+          family_code: string | null
+          family_label: string | null
+          ingredients_declaration: string | null
+          net_weight: number | null
+          net_weight_unit: string | null
+          old_code: string | null
+          packaging_code: string | null
+          packaging_label: string | null
+          packaging_quantity: number | null
+          product_id: string | null
+          product_label: string | null
+          product_sheet_id: string | null
+          recipe_code: string | null
+          recipe_id: string | null
+          recipe_name: string | null
+          sheet_product_name: string | null
+          sku_base: string | null
+          slicing: string | null
+          temperature: string | null
+          template_code: string | null
+          template_name: string | null
+          variant_id: string | null
+          zpl_filename: string | null
+        }
+        Relationships: []
+      }
       profiles_public: {
         Row: {
           avatar_url: string | null

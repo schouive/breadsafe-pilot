@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/select';
 import {
   useFamilies,
-  useCatalogRecipes,
+  useCatalogProductSheets,
   useProductMasterMutations,
   ProductMaster,
 } from '@/hooks/useProductCatalog';
@@ -24,14 +24,14 @@ interface Props {
 
 export function MasterProductDialog({ open, onOpenChange, product }: Props) {
   const { data: families = [] } = useFamilies();
-  const { data: recipes = [] } = useCatalogRecipes();
+  const { data: sheets = [] } = useCatalogProductSheets();
   const { create, update } = useProductMasterMutations();
 
   const [form, setForm] = useState({
     sku_base: '',
     label: '',
     family_id: '',
-    recipe_id: '',
+    product_sheet_id: '',
     nutrition_profile_id: '',
     active: true,
   });
@@ -42,29 +42,30 @@ export function MasterProductDialog({ open, onOpenChange, product }: Props) {
         sku_base: product.sku_base,
         label: product.label,
         family_id: product.family_id || '',
-        recipe_id: product.recipe_id || '',
+        product_sheet_id: product.product_sheet_id || '',
         nutrition_profile_id: product.nutrition_profile_id || '',
         active: product.active,
       });
     } else {
-      setForm({ sku_base: '', label: '', family_id: '', recipe_id: '', nutrition_profile_id: '', active: true });
+      setForm({ sku_base: '', label: '', family_id: '', product_sheet_id: '', nutrition_profile_id: '', active: true });
     }
   }, [product, open]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const payload = {
+    const payload: any = {
       sku_base: form.sku_base.trim().toUpperCase(),
       label: form.label.trim(),
       family_id: form.family_id || null,
-      recipe_id: form.recipe_id || null,
+      product_sheet_id: form.product_sheet_id || null,
+      recipe_id: null,
       nutrition_profile_id: form.nutrition_profile_id || null,
       active: form.active,
     };
     if (product) {
       await update.mutateAsync({ id: product.id, ...payload });
     } else {
-      await create.mutateAsync(payload as any);
+      await create.mutateAsync(payload);
     }
     onOpenChange(false);
   };
@@ -108,17 +109,20 @@ export function MasterProductDialog({ open, onOpenChange, product }: Props) {
             />
           </div>
           <div>
-            <Label>Recette</Label>
-            <Select value={form.recipe_id} onValueChange={(v) => setForm({ ...form, recipe_id: v })}>
-              <SelectTrigger><SelectValue placeholder="Choisir..." /></SelectTrigger>
+            <Label>Fiche technique</Label>
+            <Select value={form.product_sheet_id} onValueChange={(v) => setForm({ ...form, product_sheet_id: v })}>
+              <SelectTrigger><SelectValue placeholder="Choisir une fiche technique publiée..." /></SelectTrigger>
               <SelectContent>
-                {recipes.map((r: any) => (
-                  <SelectItem key={r.id} value={r.id}>{r.code ? `${r.code} — ` : ''}{r.name}</SelectItem>
+                {sheets.map((s: any) => (
+                  <SelectItem key={s.id} value={s.id}>
+                    {s.product_reference ? `${s.product_reference} — ` : ''}{s.product_name}
+                    {s.net_weight ? ` (${s.net_weight}${s.net_weight_unit || 'g'})` : ''}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
             <p className="text-xs text-muted-foreground mt-1">
-              Les ingrédients, allergènes et valeurs nutritionnelles sont récupérés automatiquement depuis la recette.
+              Les ingrédients (INCO), allergènes, valeurs nutritionnelles, poids net et conservation sont récupérés depuis la fiche technique.
             </p>
           </div>
           <div className="flex items-center gap-3">

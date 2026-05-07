@@ -362,7 +362,7 @@ function AppRoutes() {
         <Route path="/settings/suppliers" element={<ProtectedRoute><SettingsLayout><SuppliersSettings /></SettingsLayout></ProtectedRoute>} />
         <Route path="/settings/raw-materials" element={<ProtectedRoute><SettingsLayout><RawMaterialsSettings /></SettingsLayout></ProtectedRoute>} />
         <Route path="/settings/non-food" element={<ProtectedRoute><SettingsLayout><NonFoodSettings /></SettingsLayout></ProtectedRoute>} />
-        <Route path="/settings/print-catalog" element={<ProtectedRoute><SettingsLayout><PrintCatalogSettings /></SettingsLayout></ProtectedRoute>} />
+        <Route path="/settings/print-catalog" element={<Navigate to="/settings/catalog/erp-articles" replace />} />
         <Route path="/settings/catalog/families" element={<ProtectedRoute><SettingsLayout><FamiliesSettings /></SettingsLayout></ProtectedRoute>} />
         <Route path="/settings/catalog/recipes" element={<ProtectedRoute><SettingsLayout><CatalogRecipesSettings /></SettingsLayout></ProtectedRoute>} />
         <Route path="/settings/catalog/master" element={<ProtectedRoute><SettingsLayout><MasterProductsSettings /></SettingsLayout></ProtectedRoute>} />

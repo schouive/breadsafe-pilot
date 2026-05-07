@@ -27,7 +27,7 @@ export default function Settings() {
     { title: 'Fournisseurs', description: 'Référentiel fournisseurs', icon: Building2, href: '/settings/suppliers' },
     { title: 'Matières premières', description: 'Ingrédients alimentaires', icon: Wheat, href: '/settings/raw-materials' },
     { title: 'Produits non-alimentaires', description: 'Consommables, emballages', icon: Package, href: '/settings/non-food' },
-    { title: 'Catalogue Impression', description: 'Produits & variantes Zebra', icon: Printer, href: '/settings/print-catalog' },
+    { title: 'Catalogue d\'impression', description: 'Produits & variantes Zebra', icon: Printer, href: '/settings/print-catalog' },
     { title: 'Utilisateurs', description: 'Comptes et rôles', icon: Users, href: '/settings/users', visible: canPerform('canManageUsers') },
     { title: 'Journal d\'audit', description: 'Trace des actions sensibles', icon: ScrollText, href: '/settings/audit', visible: canPerform('canViewAuditLogs') },
     { title: 'Données & sécurité', description: 'Conservation et export', icon: Shield, href: '/settings/security' },

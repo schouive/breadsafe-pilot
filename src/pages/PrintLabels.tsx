@@ -357,6 +357,68 @@ export default function PrintLabels() {
               <SummaryRow label="DDM" value={new Date(ddm).toLocaleDateString('fr-FR')} />
               <SummaryRow label="Quantité" value={`${quantity} étiquette(s)`} />
             </div>
+
+            <Separator />
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-bold uppercase tracking-wide text-primary">
+                  Données étiquette (depuis fiche technique)
+                </h3>
+                {selected.inco_status && (
+                  <Badge variant={selected.inco_status === 'validated' ? 'default' : 'destructive'}>
+                    INCO {selected.inco_status === 'validated' ? 'validé' : selected.inco_status}
+                  </Badge>
+                )}
+              </div>
+
+              <LabelDataBlock
+                title="Désignation produit"
+                content={selected.product_name || selected.erp_label}
+              />
+              <LabelDataBlock
+                title="Poids net"
+                content={selected.net_weight ? `${selected.net_weight} ${selected.net_weight_unit || 'g'}` : null}
+              />
+              <LabelDataBlock
+                title="Liste des ingrédients (INCO)"
+                html={selected.ingredients_html}
+              />
+              <LabelDataBlock
+                title="Allergènes"
+                content={selected.allergen_statement}
+              />
+              <LabelDataBlock
+                title="Conservation"
+                content={selected.storage_instructions}
+              />
+              {selected.thawing_instructions && (
+                <LabelDataBlock
+                  title="Décongélation"
+                  content={selected.thawing_instructions}
+                />
+              )}
+              <LabelDataBlock title="Valeurs nutritionnelles / 100 g">
+                {selected.nutrition ? (
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-1 text-sm">
+                    <NutriRow label="Énergie" value={
+                      selected.nutrition.energyKj || selected.nutrition.energyKcal
+                        ? `${selected.nutrition.energyKj ?? '—'} kJ / ${selected.nutrition.energyKcal ?? '—'} kcal`
+                        : null
+                    } />
+                    <NutriRow label="Matières grasses" value={fmtNutri(selected.nutrition.fat, 'g')} />
+                    <NutriRow label="dont AGS" value={fmtNutri(selected.nutrition.saturatedFat, 'g')} />
+                    <NutriRow label="Glucides" value={fmtNutri(selected.nutrition.carbohydrates, 'g')} />
+                    <NutriRow label="dont sucres" value={fmtNutri(selected.nutrition.sugars, 'g')} />
+                    <NutriRow label="Fibres" value={fmtNutri(selected.nutrition.fiber, 'g')} />
+                    <NutriRow label="Protéines" value={fmtNutri(selected.nutrition.protein, 'g')} />
+                    <NutriRow label="Sel" value={fmtNutri(selected.nutrition.salt, 'g')} />
+                  </div>
+                ) : (
+                  <p className="text-sm text-destructive">Aucune donnée nutritionnelle</p>
+                )}
+              </LabelDataBlock>
+            </div>
+
             <Separator />
             <div className="flex items-center justify-between bg-muted/50 p-3 rounded-md">
               <span className="text-sm text-muted-foreground">Template Zebra</span>
@@ -382,6 +444,50 @@ export default function PrintLabels() {
             </div>
           </CardContent>
         </Card>
+      )}
+    </div>
+  );
+}
+
+function fmtNutri(v: number | null | undefined, unit: string) {
+  if (v === null || v === undefined) return null;
+  return `${Number(v).toFixed(2).replace(/\.?0+$/, '')} ${unit}`;
+}
+
+function NutriRow({ label, value }: { label: string; value: string | null }) {
+  return (
+    <div className="flex justify-between border-b border-border/50 py-0.5">
+      <span className="text-muted-foreground">{label}</span>
+      <span className="font-medium">{value ?? '—'}</span>
+    </div>
+  );
+}
+
+function LabelDataBlock({
+  title, content, html, children,
+}: {
+  title: string;
+  content?: string | null;
+  html?: string | null;
+  children?: React.ReactNode;
+}) {
+  const isMissing = !content && !html && !children;
+  return (
+    <div className="rounded-md border bg-card p-3">
+      <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground mb-1.5">
+        {title}
+      </p>
+      {children ? (
+        children
+      ) : html ? (
+        <div
+          className="text-sm prose prose-sm max-w-none [&>strong]:font-bold"
+          dangerouslySetInnerHTML={{ __html: html }}
+        />
+      ) : content ? (
+        <p className="text-sm whitespace-pre-wrap">{content}</p>
+      ) : (
+        <p className="text-sm text-destructive italic">⚠ Donnée manquante</p>
       )}
     </div>
   );

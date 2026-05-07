@@ -15,6 +15,21 @@ export interface PrintProduct {
   template_name: string | null;
   barcode_value: string | null;
   active: boolean;
+  // Données fiche technique pour étiquette
+  product_name: string | null;
+  net_weight: number | null;
+  net_weight_unit: string | null;
+  ingredients_html: string | null;
+  allergen_statement: string | null;
+  storage_instructions: string | null;
+  thawing_instructions: string | null;
+  nutrition: {
+    energyKj?: number; energyKcal?: number;
+    fat?: number; saturatedFat?: number;
+    carbohydrates?: number; sugars?: number;
+    fiber?: number; protein?: number; salt?: number;
+  } | null;
+  inco_status: string | null;
 }
 
 export interface PrintHistoryEntry {
@@ -44,29 +59,51 @@ export function usePrintProducts() {
         .select(`
           id, erp_code, erp_label, temperature_state, slicing_state,
           packaging_code, barcode_value, active,
-          product:products_master!inner(sku_base, label, family:product_families(code, label)),
+          product:products_master!inner(
+            sku_base, label,
+            family:product_families(code, label),
+            sheet:product_sheets(
+              product_name, net_weight, net_weight_unit,
+              inco_html, allergen_statement,
+              storage_instructions, thawing_instructions,
+              snapshot_nutrition, inco_status
+            )
+          ),
           templates:article_templates(template:label_templates(template_code, template_name))
         `)
         .eq('active', true)
         .order('erp_code');
       if (error) throw error;
-      return (data ?? []).map((a: any) => ({
-        id: a.id,
-        erp_code: a.erp_code,
-        erp_label: a.erp_label,
-        sku_base: a.product?.sku_base ?? a.erp_code,
-        label: a.product?.label ?? a.erp_label,
-        family: a.product?.family?.code ?? '—',
-        temperature: a.temperature_state,
-        slicing: a.slicing_state,
-        packaging: a.packaging_code,
-        template_name: a.templates?.[0]?.template?.template_code ?? null,
-        barcode_value: a.barcode_value,
-        active: a.active,
-      })) as PrintProduct[];
+      return (data ?? []).map((a: any) => {
+        const sheet = a.product?.sheet ?? null;
+        return {
+          id: a.id,
+          erp_code: a.erp_code,
+          erp_label: a.erp_label,
+          sku_base: a.product?.sku_base ?? a.erp_code,
+          label: a.product?.label ?? a.erp_label,
+          family: a.product?.family?.code ?? '—',
+          temperature: a.temperature_state,
+          slicing: a.slicing_state,
+          packaging: a.packaging_code,
+          template_name: a.templates?.[0]?.template?.template_code ?? null,
+          barcode_value: a.barcode_value,
+          active: a.active,
+          product_name: sheet?.product_name ?? null,
+          net_weight: sheet?.net_weight ?? null,
+          net_weight_unit: sheet?.net_weight_unit ?? null,
+          ingredients_html: sheet?.inco_html ?? null,
+          allergen_statement: sheet?.allergen_statement ?? null,
+          storage_instructions: sheet?.storage_instructions ?? null,
+          thawing_instructions: sheet?.thawing_instructions ?? null,
+          nutrition: sheet?.snapshot_nutrition ?? null,
+          inco_status: sheet?.inco_status ?? null,
+        };
+      }) as PrintProduct[];
     },
   });
 }
+
 
 export function usePrintHistory(limit = 10) {
   const { user } = useAuth();

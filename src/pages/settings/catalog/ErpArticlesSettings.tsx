@@ -9,7 +9,11 @@ import {
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
-import { Plus, Edit, Power, Upload, Copy } from 'lucide-react';
+import { Plus, Edit, Power, Upload, Copy, Trash2 } from 'lucide-react';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { useErpArticles, useErpArticleMutations, useFamilies } from '@/hooks/useProductCatalog';
 import { ErpArticleDialog } from '@/components/settings/catalog/ErpArticleDialog';
 import { ErpCsvImportDialog } from '@/components/settings/catalog/ErpCsvImportDialog';
@@ -17,7 +21,7 @@ import { ErpCsvImportDialog } from '@/components/settings/catalog/ErpCsvImportDi
 export default function ErpArticlesSettings() {
   const { data: articles = [], isLoading } = useErpArticles();
   const { data: families = [] } = useFamilies();
-  const { setActive, duplicate } = useErpArticleMutations();
+  const { setActive, duplicate, remove } = useErpArticleMutations();
   const [search, setSearch] = useState('');
   const [familyFilter, setFamilyFilter] = useState('all');
   const [tempFilter, setTempFilter] = useState('all');
@@ -26,6 +30,7 @@ export default function ErpArticlesSettings() {
   const [editing, setEditing] = useState<any>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [csvOpen, setCsvOpen] = useState(false);
+  const [toDelete, setToDelete] = useState<any>(null);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
@@ -138,8 +143,11 @@ export default function ErpArticlesSettings() {
                       <Button size="sm" variant="ghost" onClick={() => duplicate.mutate(a.id)} title="Dupliquer">
                         <Copy className="h-4 w-4" />
                       </Button>
-                      <Button size="sm" variant="ghost" onClick={() => setActive.mutate({ id: a.id, active: !a.active })}>
+                      <Button size="sm" variant="ghost" onClick={() => setActive.mutate({ id: a.id, active: !a.active })} title={a.active ? 'Désactiver' : 'Activer'}>
                         <Power className="h-4 w-4" />
+                      </Button>
+                      <Button size="sm" variant="ghost" onClick={() => setToDelete(a)} title="Supprimer" className="text-destructive hover:text-destructive">
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -159,6 +167,26 @@ export default function ErpArticlesSettings() {
 
       <ErpArticleDialog open={dialogOpen} onOpenChange={setDialogOpen} article={editing} />
       <ErpCsvImportDialog open={csvOpen} onOpenChange={setCsvOpen} />
+
+      <AlertDialog open={!!toDelete} onOpenChange={(o) => !o && setToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer cet article ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {toDelete && <>L'article <strong>{toDelete.erp_code}</strong> — {toDelete.erp_label} sera définitivement supprimé. Cette action est irréversible.</>}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => { if (toDelete) { await remove.mutateAsync(toDelete.id); setToDelete(null); } }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

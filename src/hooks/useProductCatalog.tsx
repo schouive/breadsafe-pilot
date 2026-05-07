@@ -345,7 +345,20 @@ export function useErpArticleMutations() {
     onError: (e: any) => toast.error(e.message),
   });
 
-  return { create, update, setActive, duplicate };
+  const remove = useMutation({
+    mutationFn: async (id: string) => {
+      await supabase.from('article_templates').delete().eq('erp_article_id', id);
+      const { error } = await supabase.from('erp_articles').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success('Article ERP supprimé');
+      invalidate();
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  return { create, update, setActive, duplicate, remove };
 }
 
 // ============ LABEL TEMPLATES ============

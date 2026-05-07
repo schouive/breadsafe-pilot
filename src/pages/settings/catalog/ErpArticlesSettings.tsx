@@ -21,7 +21,7 @@ import { ErpCsvImportDialog } from '@/components/settings/catalog/ErpCsvImportDi
 export default function ErpArticlesSettings() {
   const { data: articles = [], isLoading } = useErpArticles();
   const { data: families = [] } = useFamilies();
-  const { setActive, duplicate } = useErpArticleMutations();
+  const { setActive, duplicate, remove } = useErpArticleMutations();
   const [search, setSearch] = useState('');
   const [familyFilter, setFamilyFilter] = useState('all');
   const [tempFilter, setTempFilter] = useState('all');
@@ -30,6 +30,7 @@ export default function ErpArticlesSettings() {
   const [editing, setEditing] = useState<any>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [csvOpen, setCsvOpen] = useState(false);
+  const [toDelete, setToDelete] = useState<any>(null);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();

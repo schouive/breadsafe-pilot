@@ -290,7 +290,45 @@ export function useErpArticleMutations() {
     onError: (e: any) => toast.error(e.message),
   });
 
-  return { create, update, setActive };
+  const duplicate = useMutation({
+    mutationFn: async (id: string) => {
+      const { data: src, error: e1 } = await supabase
+        .from('erp_articles')
+        .select('*, templates:article_templates(template_id)')
+        .eq('id', id)
+        .single();
+      if (e1) throw e1;
+      const { templates, id: _id, created_at, updated_at, ...rest } = src as any;
+      const copy = {
+        ...rest,
+        erp_code: `${rest.erp_code}-CPY`,
+        erp_label: `${rest.erp_label} (copie)`,
+        barcode_value: null,
+        active: false,
+      };
+      const { data, error } = await supabase
+        .from('erp_articles')
+        .insert(copy)
+        .select()
+        .single();
+      if (error) throw error;
+      const tplId = templates?.[0]?.template_id;
+      if (tplId) {
+        await supabase.from('article_templates').insert({
+          erp_article_id: data.id,
+          template_id: tplId,
+        });
+      }
+      return data;
+    },
+    onSuccess: () => {
+      toast.success('Article ERP dupliqué');
+      invalidate();
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  return { create, update, setActive, duplicate };
 }
 
 // ============ LABEL TEMPLATES ============

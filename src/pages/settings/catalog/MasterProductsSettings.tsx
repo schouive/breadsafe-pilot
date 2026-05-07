@@ -74,7 +74,7 @@ export default function MasterProductsSettings() {
                     <TableCell>{p.label}</TableCell>
                     <TableCell>{p.family ? <Badge variant="outline">{p.family.code}</Badge> : '—'}</TableCell>
                     <TableCell className="text-sm">{p.recipe?.name || '—'}</TableCell>
-                    <TableCell className="text-sm">{p.nutrition?.name || '—'}</TableCell>
+                    
                     <TableCell>
                       {p.active ? <Badge>Actif</Badge> : <Badge variant="secondary">Inactif</Badge>}
                     </TableCell>

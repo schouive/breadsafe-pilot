@@ -25,7 +25,6 @@ interface Props {
 export function MasterProductDialog({ open, onOpenChange, product }: Props) {
   const { data: families = [] } = useFamilies();
   const { data: recipes = [] } = useCatalogRecipes();
-  const { data: nutritionProfiles = [] } = useNutritionProfiles();
   const { create, update } = useProductMasterMutations();
 
   const [form, setForm] = useState({

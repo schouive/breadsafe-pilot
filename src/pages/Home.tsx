@@ -110,7 +110,7 @@ export default function Home() {
       description: 'Impression étiquettes Zebra production',
       icon: Printer,
       colorClass: 'bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 border-rose-500/20',
-      href: '/products/print',
+      href: '/print',
     },
     {
       title: 'Paramètres',

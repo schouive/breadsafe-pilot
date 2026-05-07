@@ -323,7 +323,9 @@ function AppRoutes() {
           path="/print"
           element={
             <ProtectedRoute>
-              <PrintLabels />
+              <PrintLayout>
+                <PrintLabels />
+              </PrintLayout>
             </ProtectedRoute>
           }
         />

@@ -9,7 +9,7 @@ import {
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
-import { Plus, Edit, Power, Upload } from 'lucide-react';
+import { Plus, Edit, Power, Upload, Copy } from 'lucide-react';
 import { useErpArticles, useErpArticleMutations, useFamilies } from '@/hooks/useProductCatalog';
 import { ErpArticleDialog } from '@/components/settings/catalog/ErpArticleDialog';
 import { ErpCsvImportDialog } from '@/components/settings/catalog/ErpCsvImportDialog';
@@ -17,7 +17,7 @@ import { ErpCsvImportDialog } from '@/components/settings/catalog/ErpCsvImportDi
 export default function ErpArticlesSettings() {
   const { data: articles = [], isLoading } = useErpArticles();
   const { data: families = [] } = useFamilies();
-  const { setActive } = useErpArticleMutations();
+  const { setActive, duplicate } = useErpArticleMutations();
   const [search, setSearch] = useState('');
   const [familyFilter, setFamilyFilter] = useState('all');
   const [tempFilter, setTempFilter] = useState('all');
@@ -138,6 +138,9 @@ export default function ErpArticlesSettings() {
                     <TableCell className="text-right">
                       <Button size="sm" variant="ghost" onClick={() => { setEditing(a); setDialogOpen(true); }}>
                         <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button size="sm" variant="ghost" onClick={() => duplicate.mutate(a.id)} title="Dupliquer">
+                        <Copy className="h-4 w-4" />
                       </Button>
                       <Button size="sm" variant="ghost" onClick={() => setActive.mutate({ id: a.id, active: !a.active })}>
                         <Power className="h-4 w-4" />

@@ -329,6 +329,16 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/products/print-settings"
+          element={
+            <ProtectedRoute>
+              <ProductsLayout>
+                <PrintSettings />
+              </ProductsLayout>
+            </ProtectedRoute>
+          }
+        />
 
         {/* Settings Module Routes */}
         <Route

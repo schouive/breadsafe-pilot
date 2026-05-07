@@ -114,8 +114,6 @@ export default function ErpArticlesSettings() {
                   <TableHead>Code ERP</TableHead>
                   <TableHead>Libellé</TableHead>
                   <TableHead>Produit maître</TableHead>
-                  <TableHead>Temp.</TableHead>
-                  <TableHead>Découpe</TableHead>
                   <TableHead>Cond.</TableHead>
                   <TableHead>Template</TableHead>
                   <TableHead>Statut</TableHead>

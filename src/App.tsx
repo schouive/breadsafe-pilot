@@ -319,15 +319,14 @@ function AppRoutes() {
           }
         />
         <Route
-          path="/products/print"
+          path="/print"
           element={
             <ProtectedRoute>
-              <ProductsLayout>
-                <PrintLabels />
-              </ProductsLayout>
+              <PrintLabels />
             </ProtectedRoute>
           }
         />
+        <Route path="/products/print" element={<Navigate to="/print" replace />} />
 
         {/* Settings Module Routes */}
         <Route

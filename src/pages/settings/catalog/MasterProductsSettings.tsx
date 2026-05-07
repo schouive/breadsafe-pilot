@@ -62,7 +62,7 @@ export default function MasterProductsSettings() {
                   <TableHead>Libellé</TableHead>
                   <TableHead>Famille</TableHead>
                   <TableHead>Recette</TableHead>
-                  <TableHead>Nutrition</TableHead>
+                  
                   <TableHead>Statut</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>

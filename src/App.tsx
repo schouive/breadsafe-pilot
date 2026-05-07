@@ -49,6 +49,15 @@ const TimeTrackingLayout = lazy(() => import("@/components/layout/TimeTrackingLa
 const RDTrialsList = lazy(() => import("./pages/RDTrialsList"));
 const RDTrialDetail = lazy(() => import("./pages/RDTrialDetail"));
 const PrintLabels = lazy(() => import("./pages/PrintLabels"));
+const ColdRoomsSettings = lazy(() => import("./pages/settings/ColdRoomsSettings"));
+const MetalDetectorSettingsPage = lazy(() => import("./pages/settings/MetalDetectorSettingsPage"));
+const SuppliersSettings = lazy(() => import("./pages/settings/SuppliersSettings"));
+const RawMaterialsSettings = lazy(() => import("./pages/settings/RawMaterialsSettings"));
+const NonFoodSettings = lazy(() => import("./pages/settings/NonFoodSettings"));
+const PrintCatalogSettings = lazy(() => import("./pages/settings/PrintCatalogSettings"));
+const UsersSettings = lazy(() => import("./pages/settings/UsersSettings"));
+const AuditSettings = lazy(() => import("./pages/settings/AuditSettings"));
+const SecuritySettings = lazy(() => import("./pages/settings/SecuritySettings"));
 
 
 const queryClient = new QueryClient({
@@ -342,16 +351,16 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/settings/export"
-          element={
-            <ProtectedRoute>
-              <SettingsLayout>
-                <DataExport />
-              </SettingsLayout>
-            </ProtectedRoute>
-          }
-        />
+        <Route path="/settings/export" element={<ProtectedRoute><SettingsLayout><DataExport /></SettingsLayout></ProtectedRoute>} />
+        <Route path="/settings/cold-rooms" element={<ProtectedRoute><SettingsLayout><ColdRoomsSettings /></SettingsLayout></ProtectedRoute>} />
+        <Route path="/settings/metal-detector" element={<ProtectedRoute><SettingsLayout><MetalDetectorSettingsPage /></SettingsLayout></ProtectedRoute>} />
+        <Route path="/settings/suppliers" element={<ProtectedRoute><SettingsLayout><SuppliersSettings /></SettingsLayout></ProtectedRoute>} />
+        <Route path="/settings/raw-materials" element={<ProtectedRoute><SettingsLayout><RawMaterialsSettings /></SettingsLayout></ProtectedRoute>} />
+        <Route path="/settings/non-food" element={<ProtectedRoute><SettingsLayout><NonFoodSettings /></SettingsLayout></ProtectedRoute>} />
+        <Route path="/settings/print-catalog" element={<ProtectedRoute><SettingsLayout><PrintCatalogSettings /></SettingsLayout></ProtectedRoute>} />
+        <Route path="/settings/users" element={<ProtectedRoute><SettingsLayout><UsersSettings /></SettingsLayout></ProtectedRoute>} />
+        <Route path="/settings/audit" element={<ProtectedRoute><SettingsLayout><AuditSettings /></SettingsLayout></ProtectedRoute>} />
+        <Route path="/settings/security" element={<ProtectedRoute><SettingsLayout><SecuritySettings /></SettingsLayout></ProtectedRoute>} />
 
         {/* Time Tracking Module Routes */}
         <Route

@@ -126,8 +126,6 @@ export default function ErpArticlesSettings() {
                     <TableCell className="font-mono text-xs">{a.erp_code}</TableCell>
                     <TableCell className="text-sm">{a.erp_label}</TableCell>
                     <TableCell className="text-sm">{a.product?.sku_base}</TableCell>
-                    <TableCell><Badge variant="outline">{a.temperature_state}</Badge></TableCell>
-                    <TableCell><Badge variant="outline">{a.slicing_state}</Badge></TableCell>
                     <TableCell><Badge variant="outline">{a.packaging_code}</Badge></TableCell>
                     <TableCell className="text-xs">{a.templates?.[0]?.template?.template_code || <span className="text-destructive">manquant</span>}</TableCell>
                     <TableCell>

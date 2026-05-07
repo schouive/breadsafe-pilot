@@ -113,27 +113,7 @@ export function ErpArticleDialog({ open, onOpenChange, article }: Props) {
               </SelectContent>
             </Select>
           </div>
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <Label>Température *</Label>
-              <Select value={form.temperature_state} onValueChange={(v: any) => setForm({ ...form, temperature_state: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="FR">FR (frais)</SelectItem>
-                  <SelectItem value="FZ">FZ (surgelé)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>Découpe *</Label>
-              <Select value={form.slicing_state} onValueChange={(v: any) => setForm({ ...form, slicing_state: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="WHO">WHO (entier)</SelectItem>
-                  <SelectItem value="SLI">SLI (tranché)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="grid grid-cols-1 gap-4">
             <div>
               <Label>Conditionnement *</Label>
               <Select value={form.packaging_code} onValueChange={(v: any) => setForm({ ...form, packaging_code: v })}>

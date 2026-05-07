@@ -66,6 +66,7 @@ export function useCatalogRecipes() {
         .from('recipes')
         .select('id, name, code, is_active, status')
         .eq('is_active', true)
+        .eq('status', 'validated')
         .order('name');
       if (error) throw error;
       return data;

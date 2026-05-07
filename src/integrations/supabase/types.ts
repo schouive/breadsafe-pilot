@@ -35,6 +35,56 @@ export type Database = {
         }
         Relationships: []
       }
+      article_templates: {
+        Row: {
+          created_at: string
+          erp_article_id: string
+          id: string
+          template_id: string
+        }
+        Insert: {
+          created_at?: string
+          erp_article_id: string
+          id?: string
+          template_id: string
+        }
+        Update: {
+          created_at?: string
+          erp_article_id?: string
+          id?: string
+          template_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "article_templates_erp_article_id_fkey"
+            columns: ["erp_article_id"]
+            isOneToOne: false
+            referencedRelation: "erp_articles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "article_templates_erp_article_id_fkey"
+            columns: ["erp_article_id"]
+            isOneToOne: false
+            referencedRelation: "product_label_view"
+            referencedColumns: ["erp_article_id"]
+          },
+          {
+            foreignKeyName: "article_templates_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "label_templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "article_templates_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "product_label_view"
+            referencedColumns: ["template_id"]
+          },
+        ]
+      }
       audit_logs: {
         Row: {
           action: string
@@ -286,6 +336,63 @@ export type Database = {
             columns: ["raw_material_id"]
             isOneToOne: false
             referencedRelation: "raw_materials"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      erp_articles: {
+        Row: {
+          active: boolean
+          barcode_value: string | null
+          created_at: string
+          erp_code: string
+          erp_label: string
+          id: string
+          packaging_code: string
+          product_id: string
+          slicing_state: string
+          temperature_state: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          barcode_value?: string | null
+          created_at?: string
+          erp_code: string
+          erp_label: string
+          id?: string
+          packaging_code: string
+          product_id: string
+          slicing_state: string
+          temperature_state: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          barcode_value?: string | null
+          created_at?: string
+          erp_code?: string
+          erp_label?: string
+          id?: string
+          packaging_code?: string
+          product_id?: string
+          slicing_state?: string
+          temperature_state?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "erp_articles_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "product_label_view"
+            referencedColumns: ["product_master_id"]
+          },
+          {
+            foreignKeyName: "erp_articles_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products_master"
             referencedColumns: ["id"]
           },
         ]
@@ -862,6 +969,54 @@ export type Database = {
           },
         ]
       }
+      nutrition_profiles: {
+        Row: {
+          carbohydrates: number | null
+          created_at: string
+          energy_kcal: number | null
+          energy_kj: number | null
+          fat: number | null
+          fiber: number | null
+          id: string
+          name: string | null
+          protein: number | null
+          salt: number | null
+          saturated_fat: number | null
+          sugars: number | null
+          updated_at: string
+        }
+        Insert: {
+          carbohydrates?: number | null
+          created_at?: string
+          energy_kcal?: number | null
+          energy_kj?: number | null
+          fat?: number | null
+          fiber?: number | null
+          id?: string
+          name?: string | null
+          protein?: number | null
+          salt?: number | null
+          saturated_fat?: number | null
+          sugars?: number | null
+          updated_at?: string
+        }
+        Update: {
+          carbohydrates?: number | null
+          created_at?: string
+          energy_kcal?: number | null
+          energy_kj?: number | null
+          fat?: number | null
+          fiber?: number | null
+          id?: string
+          name?: string | null
+          protein?: number | null
+          salt?: number | null
+          saturated_fat?: number | null
+          sugars?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       packaging_types: {
         Row: {
           active: boolean
@@ -915,13 +1070,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "print_products"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "print_favorites_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "product_label_view"
-            referencedColumns: ["product_id"]
           },
         ]
       }
@@ -986,25 +1134,11 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "print_history_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "product_label_view"
-            referencedColumns: ["product_id"]
-          },
-          {
             foreignKeyName: "print_history_variant_id_fkey"
             columns: ["variant_id"]
             isOneToOne: false
             referencedRelation: "print_product_variants"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "print_history_variant_id_fkey"
-            columns: ["variant_id"]
-            isOneToOne: false
-            referencedRelation: "product_label_view"
-            referencedColumns: ["variant_id"]
           },
         ]
       }
@@ -1061,18 +1195,18 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "print_product_variants_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "product_label_view"
-            referencedColumns: ["product_id"]
-          },
-          {
             foreignKeyName: "print_product_variants_template_id_fkey"
             columns: ["template_id"]
             isOneToOne: false
             referencedRelation: "label_templates"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "print_product_variants_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "product_label_view"
+            referencedColumns: ["template_id"]
           },
         ]
       }
@@ -1358,6 +1492,102 @@ export type Database = {
           },
           {
             foreignKeyName: "product_sheets_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      products_master: {
+        Row: {
+          active: boolean
+          created_at: string
+          family_id: string | null
+          id: string
+          label: string
+          nutrition_profile_id: string | null
+          product_sheet_id: string | null
+          recipe_id: string | null
+          sku_base: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          family_id?: string | null
+          id?: string
+          label: string
+          nutrition_profile_id?: string | null
+          product_sheet_id?: string | null
+          recipe_id?: string | null
+          sku_base: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          family_id?: string | null
+          id?: string
+          label?: string
+          nutrition_profile_id?: string | null
+          product_sheet_id?: string | null
+          recipe_id?: string | null
+          sku_base?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_master_family_id_fkey"
+            columns: ["family_id"]
+            isOneToOne: false
+            referencedRelation: "product_families"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "products_master_nutrition_profile_id_fkey"
+            columns: ["nutrition_profile_id"]
+            isOneToOne: false
+            referencedRelation: "nutrition_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "products_master_product_sheet_id_fkey"
+            columns: ["product_sheet_id"]
+            isOneToOne: false
+            referencedRelation: "product_label_view"
+            referencedColumns: ["product_sheet_id"]
+          },
+          {
+            foreignKeyName: "products_master_product_sheet_id_fkey"
+            columns: ["product_sheet_id"]
+            isOneToOne: false
+            referencedRelation: "product_sheets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "products_master_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "product_label_view"
+            referencedColumns: ["recipe_id"]
+          },
+          {
+            foreignKeyName: "products_master_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipe_baker_nutrition"
+            referencedColumns: ["recipe_id"]
+          },
+          {
+            foreignKeyName: "products_master_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipe_nutrition"
+            referencedColumns: ["recipe_id"]
+          },
+          {
+            foreignKeyName: "products_master_recipe_id_fkey"
             columns: ["recipe_id"]
             isOneToOne: false
             referencedRelation: "recipes"
@@ -2531,28 +2761,35 @@ export type Database = {
         Row: {
           active: boolean | null
           allergen_statement: string | null
+          barcode_value: string | null
+          carbohydrates: number | null
+          energy_kcal: number | null
+          energy_kj: number | null
+          erp_article_id: string | null
+          erp_code: string | null
+          erp_label: string | null
           family_code: string | null
           family_label: string | null
-          ingredients_declaration: string | null
-          net_weight: number | null
-          net_weight_unit: string | null
-          old_code: string | null
+          fat: number | null
+          fiber: number | null
+          inco_html: string | null
           packaging_code: string | null
-          packaging_label: string | null
-          packaging_quantity: number | null
-          product_id: string | null
           product_label: string | null
+          product_master_id: string | null
           product_sheet_id: string | null
-          recipe_code: string | null
+          protein: number | null
           recipe_id: string | null
           recipe_name: string | null
-          sheet_product_name: string | null
+          salt: number | null
+          saturated_fat: number | null
           sku_base: string | null
-          slicing: string | null
-          temperature: string | null
+          slicing_state: string | null
+          snapshot_allergens: Json | null
+          sugars: number | null
+          temperature_state: string | null
           template_code: string | null
+          template_id: string | null
           template_name: string | null
-          variant_id: string | null
           zpl_filename: string | null
         }
         Relationships: []

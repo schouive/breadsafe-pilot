@@ -58,6 +58,11 @@ const PrintCatalogSettings = lazy(() => import("./pages/settings/PrintCatalogSet
 const UsersSettings = lazy(() => import("./pages/settings/UsersSettings"));
 const AuditSettings = lazy(() => import("./pages/settings/AuditSettings"));
 const SecuritySettings = lazy(() => import("./pages/settings/SecuritySettings"));
+const FamiliesSettings = lazy(() => import("./pages/settings/catalog/FamiliesSettings"));
+const CatalogRecipesSettings = lazy(() => import("./pages/settings/catalog/CatalogRecipesSettings"));
+const MasterProductsSettings = lazy(() => import("./pages/settings/catalog/MasterProductsSettings"));
+const ErpArticlesSettings = lazy(() => import("./pages/settings/catalog/ErpArticlesSettings"));
+const TemplatesSettings = lazy(() => import("./pages/settings/catalog/TemplatesSettings"));
 
 
 const queryClient = new QueryClient({
@@ -358,6 +363,11 @@ function AppRoutes() {
         <Route path="/settings/raw-materials" element={<ProtectedRoute><SettingsLayout><RawMaterialsSettings /></SettingsLayout></ProtectedRoute>} />
         <Route path="/settings/non-food" element={<ProtectedRoute><SettingsLayout><NonFoodSettings /></SettingsLayout></ProtectedRoute>} />
         <Route path="/settings/print-catalog" element={<ProtectedRoute><SettingsLayout><PrintCatalogSettings /></SettingsLayout></ProtectedRoute>} />
+        <Route path="/settings/catalog/families" element={<ProtectedRoute><SettingsLayout><FamiliesSettings /></SettingsLayout></ProtectedRoute>} />
+        <Route path="/settings/catalog/recipes" element={<ProtectedRoute><SettingsLayout><CatalogRecipesSettings /></SettingsLayout></ProtectedRoute>} />
+        <Route path="/settings/catalog/master" element={<ProtectedRoute><SettingsLayout><MasterProductsSettings /></SettingsLayout></ProtectedRoute>} />
+        <Route path="/settings/catalog/erp-articles" element={<ProtectedRoute><SettingsLayout><ErpArticlesSettings /></SettingsLayout></ProtectedRoute>} />
+        <Route path="/settings/catalog/templates" element={<ProtectedRoute><SettingsLayout><TemplatesSettings /></SettingsLayout></ProtectedRoute>} />
         <Route path="/settings/users" element={<ProtectedRoute><SettingsLayout><UsersSettings /></SettingsLayout></ProtectedRoute>} />
         <Route path="/settings/audit" element={<ProtectedRoute><SettingsLayout><AuditSettings /></SettingsLayout></ProtectedRoute>} />
         <Route path="/settings/security" element={<ProtectedRoute><SettingsLayout><SecuritySettings /></SettingsLayout></ProtectedRoute>} />

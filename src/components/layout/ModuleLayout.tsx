@@ -36,6 +36,7 @@ interface NavItem {
   href: string;
   icon: LucideIcon;
   badgeKey?: string;
+  isHeader?: boolean;
 }
 
 export function ModuleLayout({ 
@@ -137,9 +138,19 @@ export function ModuleLayout({
           {/* Navigation */}
           <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
             {navigation.map((item) => {
+              if (item.isHeader) {
+                return (
+                  <div
+                    key={item.name}
+                    className="px-3 pt-4 pb-1 text-[10px] uppercase tracking-wider text-muted-foreground/70 font-semibold"
+                  >
+                    {item.name.replace(/—/g, '').trim()}
+                  </div>
+                );
+              }
               const isActive = isActiveRoute(item.href);
               const badgeCount = item.badgeKey ? badges[item.badgeKey] : 0;
-              
+
               return (
                 <Link
                   key={item.name}

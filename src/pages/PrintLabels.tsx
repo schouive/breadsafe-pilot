@@ -318,14 +318,28 @@ export default function PrintLabels() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
+              <Label htmlFor="prod-date">Date de fabrication *</Label>
+              <Input
+                id="prod-date"
+                ref={lotRef as any}
+                type="date"
+                value={productionDate}
+                onChange={e => handleProductionDateChange(e.target.value)}
+                className="h-14 text-lg"
+              />
+            </div>
+            <div className="space-y-2">
               <Label htmlFor="lot">Numéro de lot *</Label>
               <Input
-                id="lot" ref={lotRef}
+                id="lot"
                 value={lot}
                 onChange={e => setLot(e.target.value)}
-                placeholder="Scanner ou saisir le lot"
+                placeholder="Auto : L + jour de l'année + AA"
                 className="h-14 text-lg font-mono"
               />
+              <p className="text-xs text-muted-foreground">
+                Généré automatiquement depuis la date de fabrication. Modifiable si besoin.
+              </p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="ddm">DDM *</Label>

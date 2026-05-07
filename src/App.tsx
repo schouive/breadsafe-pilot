@@ -351,16 +351,16 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/settings/export"
-          element={
-            <ProtectedRoute>
-              <SettingsLayout>
-                <DataExport />
-              </SettingsLayout>
-            </ProtectedRoute>
-          }
-        />
+        <Route path="/settings/export" element={<ProtectedRoute><SettingsLayout><DataExport /></SettingsLayout></ProtectedRoute>} />
+        <Route path="/settings/cold-rooms" element={<ProtectedRoute><SettingsLayout><ColdRoomsSettings /></SettingsLayout></ProtectedRoute>} />
+        <Route path="/settings/metal-detector" element={<ProtectedRoute><SettingsLayout><MetalDetectorSettingsPage /></SettingsLayout></ProtectedRoute>} />
+        <Route path="/settings/suppliers" element={<ProtectedRoute><SettingsLayout><SuppliersSettings /></SettingsLayout></ProtectedRoute>} />
+        <Route path="/settings/raw-materials" element={<ProtectedRoute><SettingsLayout><RawMaterialsSettings /></SettingsLayout></ProtectedRoute>} />
+        <Route path="/settings/non-food" element={<ProtectedRoute><SettingsLayout><NonFoodSettings /></SettingsLayout></ProtectedRoute>} />
+        <Route path="/settings/print-catalog" element={<ProtectedRoute><SettingsLayout><PrintCatalogSettings /></SettingsLayout></ProtectedRoute>} />
+        <Route path="/settings/users" element={<ProtectedRoute><SettingsLayout><UsersSettings /></SettingsLayout></ProtectedRoute>} />
+        <Route path="/settings/audit" element={<ProtectedRoute><SettingsLayout><AuditSettings /></SettingsLayout></ProtectedRoute>} />
+        <Route path="/settings/security" element={<ProtectedRoute><SettingsLayout><SecuritySettings /></SettingsLayout></ProtectedRoute>} />
 
         {/* Time Tracking Module Routes */}
         <Route

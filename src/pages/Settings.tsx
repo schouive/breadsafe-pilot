@@ -227,6 +227,9 @@ export default function Settings() {
       {/* Non-Food Products Management */}
       <NonFoodProductManagement />
 
+      {/* Print Catalog Management */}
+      <PrintCatalogManagement />
+
       {/* Company info */}
       <Card>
         <CardHeader>

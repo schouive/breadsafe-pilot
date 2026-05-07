@@ -36,6 +36,7 @@ interface NavItem {
   href: string;
   icon: LucideIcon;
   badgeKey?: string;
+  isHeader?: boolean;
 }
 
 export function ModuleLayout({ 

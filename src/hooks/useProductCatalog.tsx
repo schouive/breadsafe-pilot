@@ -64,7 +64,8 @@ export function useCatalogRecipes() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('recipes')
-        .select('id, name, code, version, is_active')
+        .select('id, name, code, is_active, status')
+        .eq('is_active', true)
         .order('name');
       if (error) throw error;
       return data;

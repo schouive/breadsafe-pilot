@@ -167,6 +167,26 @@ export default function ErpArticlesSettings() {
 
       <ErpArticleDialog open={dialogOpen} onOpenChange={setDialogOpen} article={editing} />
       <ErpCsvImportDialog open={csvOpen} onOpenChange={setCsvOpen} />
+
+      <AlertDialog open={!!toDelete} onOpenChange={(o) => !o && setToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer cet article ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {toDelete && <>L'article <strong>{toDelete.erp_code}</strong> — {toDelete.erp_label} sera définitivement supprimé. Cette action est irréversible.</>}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => { if (toDelete) { await remove.mutateAsync(toDelete.id); setToDelete(null); } }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -9,7 +9,11 @@ import {
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
-import { Plus, Edit, Power, Upload, Copy } from 'lucide-react';
+import { Plus, Edit, Power, Upload, Copy, Trash2 } from 'lucide-react';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { useErpArticles, useErpArticleMutations, useFamilies } from '@/hooks/useProductCatalog';
 import { ErpArticleDialog } from '@/components/settings/catalog/ErpArticleDialog';
 import { ErpCsvImportDialog } from '@/components/settings/catalog/ErpCsvImportDialog';

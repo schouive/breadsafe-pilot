@@ -143,8 +143,11 @@ export default function ErpArticlesSettings() {
                       <Button size="sm" variant="ghost" onClick={() => duplicate.mutate(a.id)} title="Dupliquer">
                         <Copy className="h-4 w-4" />
                       </Button>
-                      <Button size="sm" variant="ghost" onClick={() => setActive.mutate({ id: a.id, active: !a.active })}>
+                      <Button size="sm" variant="ghost" onClick={() => setActive.mutate({ id: a.id, active: !a.active })} title={a.active ? 'Désactiver' : 'Activer'}>
                         <Power className="h-4 w-4" />
+                      </Button>
+                      <Button size="sm" variant="ghost" onClick={() => setToDelete(a)} title="Supprimer" className="text-destructive hover:text-destructive">
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     </TableCell>
                   </TableRow>

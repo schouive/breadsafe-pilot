@@ -3,7 +3,8 @@ import {
   FileText,
   Package,
   BarChart3,
-  FlaskConical
+  FlaskConical,
+  Printer
 } from 'lucide-react';
 import { ModuleLayout } from './ModuleLayout';
 
@@ -17,6 +18,7 @@ const productsNavigation = [
   { name: 'Fiche technique', href: '/products/technical-sheet', icon: FileText },
   { name: 'Étiquettes carton', href: '/products/carton-labels', icon: Package },
   { name: 'Essais R&D', href: '/products/rd-trials', icon: FlaskConical },
+  { name: 'Impression', href: '/products/print', icon: Printer },
 ];
 
 export function ProductsLayout({ children }: ProductsLayoutProps) {

@@ -47,6 +47,7 @@ const TimeTrackingExport = lazy(() => import("./pages/TimeTrackingExport"));
 const TimeTrackingLayout = lazy(() => import("@/components/layout/TimeTrackingLayout").then(m => ({ default: m.TimeTrackingLayout })));
 const RDTrialsList = lazy(() => import("./pages/RDTrialsList"));
 const RDTrialDetail = lazy(() => import("./pages/RDTrialDetail"));
+const PrintLabels = lazy(() => import("./pages/PrintLabels"));
 
 
 const queryClient = new QueryClient({
@@ -313,6 +314,16 @@ function AppRoutes() {
             <ProtectedRoute>
               <ProductsLayout>
                 <RDTrialDetail />
+              </ProductsLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/products/print"
+          element={
+            <ProtectedRoute>
+              <ProductsLayout>
+                <PrintLabels />
               </ProductsLayout>
             </ProtectedRoute>
           }

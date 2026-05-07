@@ -41,6 +41,7 @@ import { NonFoodProductManagement } from '@/components/settings/NonFoodProductMa
 import { UserManagement } from '@/components/settings/UserManagement';
 import { AuditLogViewer } from '@/components/settings/AuditLogViewer';
 import { MetalDetectorSettings } from '@/components/settings/MetalDetectorSettings';
+import { PrintCatalogManagement } from '@/components/settings/PrintCatalogManagement';
 import { TemperatureInput } from '@/components/ui/TemperatureInput';
 import { useAuth } from '@/hooks/useAuth';
 

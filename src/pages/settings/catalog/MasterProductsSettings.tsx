@@ -61,7 +61,7 @@ export default function MasterProductsSettings() {
                   <TableHead>SKU base</TableHead>
                   <TableHead>Libellé</TableHead>
                   <TableHead>Famille</TableHead>
-                  <TableHead>Recette</TableHead>
+                  <TableHead>Fiche technique</TableHead>
                   
                   <TableHead>Statut</TableHead>
                   <TableHead className="text-right">Actions</TableHead>

@@ -33,7 +33,7 @@ export default function MasterProductsSettings() {
         <div>
           <h1 className="text-2xl font-bold text-primary">Produits maîtres</h1>
           <p className="text-muted-foreground mt-1">
-            Produits génériques liés à une recette
+            Produits génériques liés à une fiche technique
           </p>
         </div>
         <Button onClick={() => { setEditing(null); setDialogOpen(true); }}>

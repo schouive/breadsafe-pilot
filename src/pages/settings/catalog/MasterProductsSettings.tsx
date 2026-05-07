@@ -73,7 +73,7 @@ export default function MasterProductsSettings() {
                     <TableCell className="font-mono">{p.sku_base}</TableCell>
                     <TableCell>{p.label}</TableCell>
                     <TableCell>{p.family ? <Badge variant="outline">{p.family.code}</Badge> : '—'}</TableCell>
-                    <TableCell className="text-sm">{p.recipe?.name || '—'}</TableCell>
+                    <TableCell className="text-sm">{p.product_sheet?.product_name || <span className="text-muted-foreground">—</span>}</TableCell>
                     
                     <TableCell>
                       {p.active ? <Badge>Actif</Badge> : <Badge variant="secondary">Inactif</Badge>}

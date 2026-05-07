@@ -793,6 +793,178 @@ export type Database = {
           },
         ]
       }
+      print_favorites: {
+        Row: {
+          created_at: string
+          id: string
+          operator_id: string
+          product_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          operator_id: string
+          product_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          operator_id?: string
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "print_favorites_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "print_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      print_history: {
+        Row: {
+          ddm: string
+          final_sku: string
+          id: string
+          lot_number: string
+          old_code: string | null
+          operator_id: string
+          packaging: string
+          printed_at: string
+          product_id: string
+          quantity: number
+          sku_base: string
+          slicing: string
+          temperature: string
+          template_name: string
+          variant_id: string | null
+        }
+        Insert: {
+          ddm: string
+          final_sku: string
+          id?: string
+          lot_number: string
+          old_code?: string | null
+          operator_id: string
+          packaging: string
+          printed_at?: string
+          product_id: string
+          quantity: number
+          sku_base: string
+          slicing: string
+          temperature: string
+          template_name: string
+          variant_id?: string | null
+        }
+        Update: {
+          ddm?: string
+          final_sku?: string
+          id?: string
+          lot_number?: string
+          old_code?: string | null
+          operator_id?: string
+          packaging?: string
+          printed_at?: string
+          product_id?: string
+          quantity?: number
+          sku_base?: string
+          slicing?: string
+          temperature?: string
+          template_name?: string
+          variant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "print_history_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "print_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "print_history_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "print_product_variants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      print_product_variants: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          packaging: string
+          product_id: string
+          slicing: string
+          temperature: string
+          template_name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          packaging: string
+          product_id: string
+          slicing: string
+          temperature: string
+          template_name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          packaging?: string
+          product_id?: string
+          slicing?: string
+          temperature?: string
+          template_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "print_product_variants_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "print_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      print_products: {
+        Row: {
+          active: boolean
+          created_at: string
+          family: string
+          id: string
+          label: string
+          old_code: string | null
+          sku_base: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          family: string
+          id?: string
+          label: string
+          old_code?: string | null
+          sku_base: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          family?: string
+          id?: string
+          label?: string
+          old_code?: string | null
+          sku_base?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       product_sheets: {
         Row: {
           allergen_statement: string | null

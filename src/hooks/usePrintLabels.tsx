@@ -3,22 +3,18 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
 export interface PrintProduct {
-  id: string;
-  old_code: string | null;
-  sku_base: string;
-  family: string;
-  label: string;
-  active: boolean;
-}
-
-export interface PrintVariant {
-  id: string;
-  product_id: string;
+  id: string;                // erp_articles.id
+  erp_code: string;
+  erp_label: string;
+  sku_base: string;          // products_master.sku_base
+  family: string;            // family code
+  label: string;             // products_master.label
   temperature: 'FR' | 'FZ';
   slicing: 'SLI' | 'WHO';
   packaging: 'U01' | 'C05' | 'C24' | 'PAL';
-  template_name: string;
-  is_active: boolean;
+  template_name: string | null;
+  barcode_value: string | null;
+  active: boolean;
 }
 
 export interface PrintHistoryEntry {
@@ -41,31 +37,33 @@ export interface PrintHistoryEntry {
 
 export function usePrintProducts() {
   return useQuery({
-    queryKey: ['print_products'],
+    queryKey: ['print_products_erp'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('print_products')
-        .select('*')
+        .from('erp_articles')
+        .select(`
+          id, erp_code, erp_label, temperature_state, slicing_state,
+          packaging_code, barcode_value, active,
+          product:products_master!inner(sku_base, label, family:product_families(code, label)),
+          templates:article_templates(template:label_templates(template_code, template_name))
+        `)
         .eq('active', true)
-        .order('label');
+        .order('erp_code');
       if (error) throw error;
-      return (data ?? []) as PrintProduct[];
-    },
-  });
-}
-
-export function usePrintVariants(productId?: string) {
-  return useQuery({
-    queryKey: ['print_variants', productId],
-    enabled: !!productId,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('print_product_variants')
-        .select('*')
-        .eq('product_id', productId!)
-        .eq('is_active', true);
-      if (error) throw error;
-      return (data ?? []) as PrintVariant[];
+      return (data ?? []).map((a: any) => ({
+        id: a.id,
+        erp_code: a.erp_code,
+        erp_label: a.erp_label,
+        sku_base: a.product?.sku_base ?? a.erp_code,
+        label: a.product?.label ?? a.erp_label,
+        family: a.product?.family?.code ?? '—',
+        temperature: a.temperature_state,
+        slicing: a.slicing_state,
+        packaging: a.packaging_code,
+        template_name: a.templates?.[0]?.template?.template_code ?? null,
+        barcode_value: a.barcode_value,
+        active: a.active,
+      })) as PrintProduct[];
     },
   });
 }
@@ -131,11 +129,11 @@ export function useRecordPrint() {
   const { user } = useAuth();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (payload: Omit<PrintHistoryEntry, 'id' | 'operator_id' | 'printed_at'>) => {
+    mutationFn: async (payload: Omit<PrintHistoryEntry, 'id' | 'operator_id' | 'printed_at' | 'variant_id'>) => {
       if (!user) throw new Error('Non authentifié');
       const { data, error } = await supabase
         .from('print_history')
-        .insert({ ...payload, operator_id: user.id })
+        .insert({ ...payload, variant_id: null, operator_id: user.id })
         .select()
         .single();
       if (error) throw error;

@@ -44,8 +44,8 @@ export default function ErpArticlesSettings() {
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-2xl font-bold text-primary">Articles ERP</h1>
-          <p className="text-muted-foreground mt-1">Références vendables importées depuis EBP</p>
+          <h1 className="text-2xl font-bold text-primary">Catalogue d'impression</h1>
+          <p className="text-muted-foreground mt-1">Articles ERP imprimables sur étiquettes Zebra</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => setCsvOpen(true)}>

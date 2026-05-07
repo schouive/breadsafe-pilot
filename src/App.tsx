@@ -54,7 +54,7 @@ const MetalDetectorSettingsPage = lazy(() => import("./pages/settings/MetalDetec
 const SuppliersSettings = lazy(() => import("./pages/settings/SuppliersSettings"));
 const RawMaterialsSettings = lazy(() => import("./pages/settings/RawMaterialsSettings"));
 const NonFoodSettings = lazy(() => import("./pages/settings/NonFoodSettings"));
-const PrintCatalogSettings = lazy(() => import("./pages/settings/PrintCatalogSettings"));
+
 const UsersSettings = lazy(() => import("./pages/settings/UsersSettings"));
 const AuditSettings = lazy(() => import("./pages/settings/AuditSettings"));
 const SecuritySettings = lazy(() => import("./pages/settings/SecuritySettings"));
@@ -362,7 +362,7 @@ function AppRoutes() {
         <Route path="/settings/suppliers" element={<ProtectedRoute><SettingsLayout><SuppliersSettings /></SettingsLayout></ProtectedRoute>} />
         <Route path="/settings/raw-materials" element={<ProtectedRoute><SettingsLayout><RawMaterialsSettings /></SettingsLayout></ProtectedRoute>} />
         <Route path="/settings/non-food" element={<ProtectedRoute><SettingsLayout><NonFoodSettings /></SettingsLayout></ProtectedRoute>} />
-        <Route path="/settings/print-catalog" element={<ProtectedRoute><SettingsLayout><PrintCatalogSettings /></SettingsLayout></ProtectedRoute>} />
+        <Route path="/settings/print-catalog" element={<Navigate to="/settings/catalog/erp-articles" replace />} />
         <Route path="/settings/catalog/families" element={<ProtectedRoute><SettingsLayout><FamiliesSettings /></SettingsLayout></ProtectedRoute>} />
         <Route path="/settings/catalog/recipes" element={<ProtectedRoute><SettingsLayout><CatalogRecipesSettings /></SettingsLayout></ProtectedRoute>} />
         <Route path="/settings/catalog/master" element={<ProtectedRoute><SettingsLayout><MasterProductsSettings /></SettingsLayout></ProtectedRoute>} />

@@ -12,7 +12,6 @@ import {
 import {
   useFamilies,
   useCatalogRecipes,
-  useNutritionProfiles,
   useProductMasterMutations,
   ProductMaster,
 } from '@/hooks/useProductCatalog';
@@ -26,7 +25,6 @@ interface Props {
 export function MasterProductDialog({ open, onOpenChange, product }: Props) {
   const { data: families = [] } = useFamilies();
   const { data: recipes = [] } = useCatalogRecipes();
-  const { data: nutritionProfiles = [] } = useNutritionProfiles();
   const { create, update } = useProductMasterMutations();
 
   const [form, setForm] = useState({
@@ -109,29 +107,19 @@ export function MasterProductDialog({ open, onOpenChange, product }: Props) {
               placeholder="Pain de mie nature 14 cm"
             />
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label>Recette</Label>
-              <Select value={form.recipe_id} onValueChange={(v) => setForm({ ...form, recipe_id: v })}>
-                <SelectTrigger><SelectValue placeholder="Choisir..." /></SelectTrigger>
-                <SelectContent>
-                  {recipes.map((r: any) => (
-                    <SelectItem key={r.id} value={r.id}>{r.code ? `${r.code} — ` : ''}{r.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>Profil nutritionnel</Label>
-              <Select value={form.nutrition_profile_id} onValueChange={(v) => setForm({ ...form, nutrition_profile_id: v })}>
-                <SelectTrigger><SelectValue placeholder="Aucun" /></SelectTrigger>
-                <SelectContent>
-                  {nutritionProfiles.map((n) => (
-                    <SelectItem key={n.id} value={n.id}>{n.name || n.id.slice(0, 8)}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          <div>
+            <Label>Recette</Label>
+            <Select value={form.recipe_id} onValueChange={(v) => setForm({ ...form, recipe_id: v })}>
+              <SelectTrigger><SelectValue placeholder="Choisir..." /></SelectTrigger>
+              <SelectContent>
+                {recipes.map((r: any) => (
+                  <SelectItem key={r.id} value={r.id}>{r.code ? `${r.code} — ` : ''}{r.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground mt-1">
+              Les ingrédients, allergènes et valeurs nutritionnelles sont récupérés automatiquement depuis la recette.
+            </p>
           </div>
           <div className="flex items-center gap-3">
             <Switch checked={form.active} onCheckedChange={(v) => setForm({ ...form, active: v })} />

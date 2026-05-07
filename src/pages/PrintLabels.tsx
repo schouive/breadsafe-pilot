@@ -32,6 +32,7 @@ export default function PrintLabels() {
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [selected, setSelected] = useState<PrintProduct | null>(null);
   const [lot, setLot] = useState('');
+  const [productionDate, setProductionDate] = useState('');
   const [ddm, setDdm] = useState('');
   const [quantity, setQuantity] = useState('1');
   const [printing, setPrinting] = useState(false);

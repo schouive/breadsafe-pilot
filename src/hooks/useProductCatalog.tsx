@@ -117,6 +117,7 @@ export function useProductsMaster() {
           *,
           family:product_families(id, code, label),
           recipe:recipes(id, name, code),
+          product_sheet:product_sheets(id, product_name, product_reference, version, net_weight, net_weight_unit),
           nutrition:nutrition_profiles(id, name)
         `)
         .order('sku_base');

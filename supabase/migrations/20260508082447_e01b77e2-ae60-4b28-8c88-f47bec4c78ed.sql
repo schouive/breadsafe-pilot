@@ -1,0 +1,1 @@
+ALTER TABLE public.label_templates ADD COLUMN IF NOT EXISTS zpl_content text;

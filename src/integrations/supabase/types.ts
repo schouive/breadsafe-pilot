@@ -548,6 +548,7 @@ export type Database = {
           id: string
           template_code: string
           template_name: string
+          zpl_content: string | null
           zpl_filename: string | null
         }
         Insert: {
@@ -556,6 +557,7 @@ export type Database = {
           id?: string
           template_code: string
           template_name: string
+          zpl_content?: string | null
           zpl_filename?: string | null
         }
         Update: {
@@ -564,6 +566,7 @@ export type Database = {
           id?: string
           template_code?: string
           template_name?: string
+          zpl_content?: string | null
           zpl_filename?: string | null
         }
         Relationships: []

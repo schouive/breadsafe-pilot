@@ -80,27 +80,25 @@ function formatNutrition(n: ZplLabelData['nutrition']): [string, string, string,
 }
 
 /**
- * Applique une rotation de 90° anti-horaire (CCW) à un ZPL généré.
- * - Échange PW (largeur d'impression) et LL (longueur d'étiquette)
- * - Transforme chaque coordonnée (x,y) en (y, W-x) où W = ancienne PW
- * - Adapte la taille/position des rectangles ^GB liés au ^FO précédent
- * - Décale chaque orientation de champ de 90° CCW : N→B, R→N, I→R, B→I
+ * Applique une rotation de 180° à un ZPL généré.
+ * Bien plus simple que 90° : pas de swap PW/LL, w/h des rectangles inchangés,
+ * juste un miroir des coordonnées et une inversion d'orientation des champs.
+ *
+ * Transformations :
+ *  - (x, y) → (W - x, H - y)
+ *  - ^GB : (x, y) → (W - x - w, H - y - h), w et h conservés
+ *  - Orientation : N→I, R→B, I→N, B→R
  */
-function rotateZplCcw90(zpl: string): string {
-  // Récupère la largeur et longueur courantes
+function rotateZpl180(zpl: string): string {
   const pwMatch = zpl.match(/\^PW(\d+)/);
   const llMatch = zpl.match(/\^LL(\d+)/);
   if (!pwMatch || !llMatch) return zpl;
-  const oldPW = parseInt(pwMatch[1], 10);
-  const oldLL = parseInt(llMatch[1], 10);
+  const W = parseInt(pwMatch[1], 10);
+  const H = parseInt(llMatch[1], 10);
 
   let out = zpl;
 
-  // 1) Swap PW / LL
-  out = out.replace(/\^PW\d+/, `^PW${oldLL}`);
-  out = out.replace(/\^LL\d+/, `^LL${oldPW}`);
-
-  // 2) Traite chaque paire ^FO x,y ^GB w,h,t (rectangles liés à ^FO)
+  // 1) Rectangles ^FO x,y ^GB w,h,t
   out = out.replace(
     /\^FO(\d+),(\d+)\^GB(\d+),(\d+),(\d+)/g,
     (_, fx, fy, gw, gh, gt) => {
@@ -108,27 +106,20 @@ function rotateZplCcw90(zpl: string): string {
       const y = parseInt(fy, 10);
       const w = parseInt(gw, 10);
       const h = parseInt(gh, 10);
-      const newX = y;
-      const newY = oldPW - x - w;
-      return `^FO${newX},${newY}^GB${h},${w},${gt}`;
+      return `^FO${W - x - w},${H - y - h}^GB${w},${h},${gt}`;
     }
   );
 
-  // 3) ^FT x,y et ^FO x,y restants
-  out = out.replace(/\^FT(\d+),(\d+)/g, (_, sx, sy) => {
-    const x = parseInt(sx, 10);
-    const y = parseInt(sy, 10);
-    return `^FT${y},${oldPW - x}`;
-  });
-  out = out.replace(/\^FO(\d+),(\d+)/g, (_, sx, sy) => {
-    const x = parseInt(sx, 10);
-    const y = parseInt(sy, 10);
-    return `^FO${y},${oldPW - x}`;
-  });
+  // 2) ^FT x,y et ^FO x,y restants
+  out = out.replace(/\^FT(\d+),(\d+)/g, (_, sx, sy) =>
+    `^FT${W - parseInt(sx, 10)},${H - parseInt(sy, 10)}`
+  );
+  out = out.replace(/\^FO(\d+),(\d+)/g, (_, sx, sy) =>
+    `^FO${W - parseInt(sx, 10)},${H - parseInt(sy, 10)}`
+  );
 
-  // 4) Décale les orientations de champ : N→B, R→N, I→R, B→I
-  // ^A0X,  ^BCX,  (où X = orientation)
-  const rotMap: Record<string, string> = { N: 'B', R: 'N', I: 'R', B: 'I' };
+  // 3) Orientation des champs : N↔I, R↔B
+  const rotMap: Record<string, string> = { N: 'I', R: 'B', I: 'N', B: 'R' };
   out = out.replace(/\^A0([NRIB]),/g, (_, o) => `^A0${rotMap[o]},`);
   out = out.replace(/\^BC([NRIB])(,|\^)/g, (_, o, sep) => `^BC${rotMap[o]}${sep}`);
 

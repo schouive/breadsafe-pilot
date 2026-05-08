@@ -1,3 +1,4 @@
+/// <reference types="w3c-web-usb" />
 /**
  * Envoi direct de ZPL vers une imprimante Zebra via WebUSB.
  *

@@ -534,16 +534,11 @@ function LabelMaskPreview({
   lot: string;
   ddm: string;
 }) {
-  let ddmJ = '---', ddmYY = '--';
-  if (ddm) {
+  const ddmFr = (() => {
+    if (!ddm) return '--/--/----';
     const d = new Date(ddm + 'T00:00:00');
-    if (!isNaN(d.getTime())) {
-      const start = new Date(d.getFullYear(), 0, 0);
-      const day = Math.floor((d.getTime() - start.getTime()) / 86400000);
-      ddmJ = String(day).padStart(3, '0');
-      ddmYY = String(d.getFullYear()).slice(-2);
-    }
-  }
+    return isNaN(d.getTime()) ? '--/--/----' : d.toLocaleDateString('fr-FR');
+  })();
   const lotDisplay = lot ? (lot.startsWith('L') ? lot : `L${lot}`) : 'L-----';
 
   const designation = product.product_name || product.erp_label;
@@ -552,102 +547,108 @@ function LabelMaskPreview({
     : '— kg';
   const ingredients = stripHtml(product.ingredients_html);
   const allergens = product.allergen_statement || '';
+  const traces = (product as any).traces_statement || '';
   const n = product.nutrition;
   const nutriLines = n ? [
-    `Énergie ${Math.round(n.energyKj ?? 0)} kJ / ${Math.round(n.energyKcal ?? 0)} kcal`,
-    `Lipides ${(n.fat ?? 0).toFixed(1)} g dont saturés ${(n.saturatedFat ?? 0).toFixed(1)} g`,
+    `Energie ${Math.round(n.energyKj ?? 0)} kJ / ${Math.round(n.energyKcal ?? 0)} kcal`,
+    `Lipides ${(n.fat ?? 0).toFixed(1)} g dont satures ${(n.saturatedFat ?? 0).toFixed(1)} g`,
     `Glucides ${(n.carbohydrates ?? 0).toFixed(1)} g dont sucres ${(n.sugars ?? 0).toFixed(1)} g`,
-    `Fibres ${(n.fiber ?? 0).toFixed(1)} g · Protéines ${(n.protein ?? 0).toFixed(1)} g · Sel ${(n.salt ?? 0).toFixed(2)} g`,
+    `Fibres ${(n.fiber ?? 0).toFixed(1)} g  -  Proteines ${(n.protein ?? 0).toFixed(1)} g  -  Sel ${(n.salt ?? 0).toFixed(2)} g`,
   ] : ['Données nutritionnelles manquantes'];
 
   return (
     <div className="w-full overflow-x-auto bg-muted/30 p-4 rounded-md">
       <div
-        className="mx-auto bg-white text-black border-2 border-black shadow-md flex"
-        style={{ width: '100%', maxWidth: 900, aspectRatio: '150 / 100', fontFamily: 'monospace' }}
+        className="mx-auto bg-white text-black shadow-md p-3"
+        style={{ width: '100%', maxWidth: 820, aspectRatio: '150 / 100', fontFamily: 'Arial, Helvetica, sans-serif' }}
       >
-        <div className="border-r-2 border-black flex items-center justify-center" style={{ width: '7%' }}>
-          <div
-            className="font-bold uppercase whitespace-nowrap text-[11px] sm:text-sm tracking-wide"
-            style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
-          >
+        {/* Header: logo + designation */}
+        <div className="flex items-center gap-3">
+          <img src="/logo-breadshop.png" alt="Bread Shop" className="h-10 sm:h-14 w-auto shrink-0" />
+          <div className="flex-1 text-center font-extrabold text-lg sm:text-3xl truncate">
             {designation}
           </div>
         </div>
+        <div className="border-t-[3px] border-black mt-1 mb-2" />
 
-        <div className="border-r-2 border-black flex flex-col" style={{ width: '14%' }}>
-          <div className="text-[9px] sm:text-xs uppercase text-center border-b border-black py-1">
-            Poids net
-          </div>
-          <div className="flex-1 flex items-center justify-center font-bold text-base sm:text-2xl text-center px-1">
-            {poidsNet}
-          </div>
-        </div>
-
-        <div className="border-r-2 border-black flex flex-col" style={{ width: '16%' }}>
-          <div className="text-[9px] sm:text-xs uppercase text-center border-b border-black py-1 leading-tight">
-            À consommer de préférence avant le
-          </div>
-          <div className="flex-1 flex flex-col items-center justify-center gap-1 py-1">
-            <div className="font-bold text-sm sm:text-xl">{ddmJ} / {ddmYY}</div>
-            <div className="text-[9px] sm:text-xs uppercase mt-1 sm:mt-2">Lot :</div>
-            <div className="font-bold text-sm sm:text-lg">{lotDisplay}</div>
-          </div>
-        </div>
-
-        <div className="border-r-2 border-black flex items-center justify-center text-center" style={{ width: '10%' }}>
-          <div className="text-[9px] sm:text-xs uppercase leading-tight px-1">
-            Carton et sachet<br />recyclables
-          </div>
-        </div>
-
-        <div className="border-r-2 border-black flex flex-col items-center justify-center px-1" style={{ width: '10%' }}>
-          {product.barcode_value ? (
-            <>
-              <div
-                className="flex-1 w-full"
-                style={{
-                  background: 'repeating-linear-gradient(90deg, #000 0 2px, #fff 2px 4px, #000 4px 5px, #fff 5px 8px, #000 8px 9px, #fff 9px 11px)',
-                  minHeight: 60,
-                }}
-              />
-              <div className="text-[9px] sm:text-xs font-mono mt-1 truncate w-full text-center">
-                {product.barcode_value}
+        {/* Body: 2 columns */}
+        <div className="flex gap-3" style={{ height: 'calc(100% - 70px)' }}>
+          {/* Left column */}
+          <div className="flex-1 min-w-0 text-[10px] sm:text-[13px] leading-tight space-y-1">
+            <div>
+              <div className="font-bold">Ingrédients. :</div>
+              <div className="break-words line-clamp-4">
+                {ingredients || <span className="text-destructive">Manquant</span>}
               </div>
-            </>
-          ) : (
-            <div className="text-[9px] text-destructive">Pas de code-barres</div>
-          )}
-        </div>
+            </div>
+            <div>
+              <span className="font-bold">Allergène(s) : </span>
+              <span>{allergens || '—'}</span>
+            </div>
+            <div>
+              <span className="font-bold">Trace(s) : </span>
+              <span>{traces || '—'}</span>
+            </div>
+            <div className="italic">
+              A conserver dans le sachet a temperature ambiante de preference inferieure a 30 C
+            </div>
+            <div>
+              <div className="font-bold">Valeurs nutritionnelles pour 100g :</div>
+              {nutriLines.map((l, i) => <div key={i} className="break-words">{l}</div>)}
+            </div>
+          </div>
 
-        <div className="flex-1 flex flex-col text-[9px] sm:text-xs leading-tight min-w-0">
-          <div className="border-b border-black p-1 sm:p-2 flex-1 min-w-0">
-            <div className="font-bold uppercase">Ingrédients :</div>
-            <div className="line-clamp-4 break-words">
-              {ingredients || <span className="text-destructive">Manquant</span>}
+          {/* Right column */}
+          <div className="flex flex-col gap-2" style={{ width: '38%' }}>
+            {/* Poids net box */}
+            <div className="border-2 border-black px-2 py-1 relative">
+              <div className="text-[8px] sm:text-[10px] absolute top-1 right-2">POIDS NET</div>
+              <div className="font-extrabold text-2xl sm:text-4xl text-center mt-2">
+                {poidsNet}
+              </div>
             </div>
-          </div>
-          <div className="border-b border-black p-1 sm:p-2">
-            <div className="font-bold uppercase">Allergène(s) :</div>
-            <div className="break-words">{allergens || <span className="text-destructive">—</span>}</div>
-          </div>
-          <div className="border-b border-black p-1 sm:p-2">
-            <div className="font-bold uppercase">Trace(s) :</div>
-            <div>—</div>
-          </div>
-          <div className="border-b border-black p-1 sm:p-2 flex-1">
-            <div className="font-bold uppercase">Valeurs nutritionnelles pour 100 g :</div>
-            {nutriLines.map((l, i) => <div key={i} className="break-words">{l}</div>)}
-          </div>
-          <div className="p-1 sm:p-2">
-            <div className="text-[8px] sm:text-[10px]">
-              À conserver dans le sachet à température ambiante de préférence inférieure à 30°C.
+
+            {/* DDM + Lot box */}
+            <div className="border-2 border-black px-2 py-1 text-[10px] sm:text-[13px] leading-tight">
+              <div>A consommer de préférence</div>
+              <div className="flex items-baseline gap-2">
+                <span>avant le :</span>
+                <span className="font-bold text-sm sm:text-xl">{ddmFr}</span>
+              </div>
+              <div className="flex items-baseline gap-2 mt-1">
+                <span>Lot :</span>
+                <span className="font-bold text-sm sm:text-xl tracking-wider">{lotDisplay}</span>
+              </div>
             </div>
+
+            {/* Recyclage + barcode row */}
+            <div className="flex items-end gap-2 flex-1">
+              <div className="flex-1 text-center text-[9px] sm:text-[11px] italic">
+                Carton et sachet<br />recyclables
+              </div>
+              <div className="text-2xl sm:text-3xl">♻</div>
+            </div>
+            {product.barcode_value ? (
+              <div>
+                <div
+                  className="w-full"
+                  style={{
+                    height: 30,
+                    background: 'repeating-linear-gradient(90deg, #000 0 2px, #fff 2px 4px, #000 4px 5px, #fff 5px 8px, #000 8px 9px, #fff 9px 11px)',
+                  }}
+                />
+                <div className="text-[10px] sm:text-xs font-mono text-center">
+                  {product.barcode_value}
+                </div>
+              </div>
+            ) : (
+              <div className="text-[9px] text-destructive text-center">Pas de code-barres</div>
+            )}
           </div>
         </div>
       </div>
       <p className="text-xs text-muted-foreground text-center mt-2">
-        Aperçu visuel du masque ZPL imprimé (orientation paysage 150 × 100 mm).
+        Aperçu visuel du masque imprimé (150 × 100 mm).
       </p>
     </div>
   );

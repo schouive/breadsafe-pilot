@@ -582,106 +582,109 @@ function LabelMaskPreview({
   return (
     <div className="w-full overflow-x-auto bg-muted/30 p-4 rounded-md">
       <div
-        className="mx-auto bg-white text-black shadow-md"
+        className="mx-auto bg-white text-black shadow-md overflow-hidden"
         style={{
           width: '100%',
           maxWidth: 820,
           aspectRatio: '101.6 / 63.5',
           fontFamily: 'Arial, Helvetica, sans-serif',
           containerType: 'inline-size',
-          padding: '2cqw',
+          padding: '1.5cqw',
+          boxSizing: 'border-box',
+          display: 'flex',
+          flexDirection: 'column',
         }}
       >
         {/* Header: logo M + wordmark + designation */}
-        <div className="flex items-center" style={{ gap: '1.5cqw', height: '14cqw' }}>
-          <div className="flex flex-col items-center shrink-0" style={{ width: '11cqw' }}>
-            <img src={labelLogoM} alt="" style={{ height: '8cqw' }} className="w-auto object-contain" />
-            <img src={labelWordmark} alt="Bread Shop" style={{ height: '3cqw', marginTop: '0.3cqw' }} className="w-auto object-contain" />
+        <div className="flex items-center shrink-0" style={{ gap: '1.5cqw', height: '11cqw' }}>
+          <div className="flex flex-col items-center shrink-0" style={{ width: '10cqw' }}>
+            <img src={labelLogoM} alt="" style={{ height: '7cqw' }} className="w-auto object-contain" />
+            <img src={labelWordmark} alt="Bread Shop" style={{ height: '2.5cqw', marginTop: '0.2cqw' }} className="w-auto object-contain" />
           </div>
           <div
-            className="flex-1 text-center font-extrabold leading-none truncate"
-            style={{ fontSize: '6.5cqw' }}
+            className="flex-1 text-center font-extrabold leading-none truncate min-w-0"
+            style={{ fontSize: '5.5cqw' }}
           >
             {designation}
           </div>
         </div>
-        <div style={{ borderTop: '0.4cqw solid #000', margin: '0.8cqw 0 1cqw' }} />
+        <div className="shrink-0" style={{ borderTop: '0.4cqw solid #000', margin: '0.6cqw 0' }} />
 
-        {/* Body: 2 columns */}
-        <div className="flex" style={{ gap: '1.5cqw', height: 'calc(100% - 17cqw)' }}>
+        {/* Body: 2 columns — fills remaining space, no overflow */}
+        <div className="flex min-h-0 flex-1" style={{ gap: '1.5cqw', overflow: 'hidden' }}>
           {/* Left column */}
           <div
-            className="flex-1 min-w-0 leading-tight"
-            style={{ fontSize: '2.6cqw', display: 'flex', flexDirection: 'column', gap: '0.6cqw' }}
+            className="flex-1 min-w-0 leading-tight overflow-hidden"
+            style={{ fontSize: '2.4cqw', display: 'flex', flexDirection: 'column', gap: '0.5cqw' }}
           >
-            <div>
+            <div className="min-h-0" style={{ overflow: 'hidden' }}>
               <div className="font-bold">Ingrédients :</div>
-              <div className="break-words">
+              <div className="break-words" style={{ display: '-webkit-box', WebkitLineClamp: 5, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
                 {ingredients || <span className="text-destructive">Manquant</span>}
               </div>
             </div>
-            <div>
+            <div className="break-words">
               <span className="font-bold">Allergène(s) : </span>
               <span>{allergens || '—'}</span>
             </div>
-            <div>
+            <div className="break-words">
               <span className="font-bold">Trace(s) : </span>
               <span>{traces || '—'}</span>
             </div>
-            <div className="italic">
-              A conserver dans le sachet à température ambiante de préférence inférieure à 30°C
+            <div className="italic break-words">
+              À conserver dans le sachet à température ambiante de préférence inférieure à 30°C
             </div>
-            <div>
+            <div className="min-h-0" style={{ overflow: 'hidden' }}>
               <div className="font-bold">Valeurs nutritionnelles pour 100g :</div>
               {nutriLines.map((l, i) => <div key={i} className="break-words">{l}</div>)}
             </div>
           </div>
 
           {/* Right column */}
-          <div className="flex flex-col shrink-0" style={{ width: '38%', gap: '1cqw' }}>
+          <div className="flex flex-col shrink-0 overflow-hidden" style={{ width: '38%', gap: '0.8cqw' }}>
             {/* Poids net box — 6mm minimum (≈5.9cqw of 101.6mm width) */}
-            <div className="border-2 border-black relative flex flex-col items-center justify-center" style={{ padding: '0.8cqw', minHeight: '14cqw' }}>
-              <div style={{ fontSize: '2cqw', position: 'absolute', top: '0.5cqw', right: '0.8cqw' }}>POIDS NET</div>
-              <div className="font-extrabold leading-none text-center" style={{ fontSize: '8cqw', marginTop: '1.5cqw' }}>
+            <div className="border-2 border-black relative flex flex-col items-center justify-center shrink-0" style={{ padding: '0.6cqw', minHeight: '12cqw' }}>
+              <div style={{ fontSize: '1.8cqw', position: 'absolute', top: '0.4cqw', right: '0.6cqw' }}>POIDS NET</div>
+              <div className="font-extrabold leading-none text-center" style={{ fontSize: '7cqw', marginTop: '1.2cqw' }}>
                 {poidsNet}
               </div>
             </div>
 
             {/* DDM + Lot box */}
-            <div className="border-2 border-black leading-tight" style={{ padding: '0.8cqw', fontSize: '2.6cqw' }}>
-              <div>À consommer de préférence</div>
-              <div className="flex items-baseline" style={{ gap: '1cqw' }}>
+            <div className="border-2 border-black leading-tight shrink-0" style={{ padding: '0.6cqw', fontSize: '2.2cqw' }}>
+              <div className="truncate">À consommer de préférence</div>
+              <div className="flex items-baseline" style={{ gap: '0.8cqw' }}>
                 <span>avant le :</span>
-                <span className="font-bold" style={{ fontSize: '4cqw' }}>{ddmFr}</span>
+                <span className="font-bold truncate" style={{ fontSize: '3.4cqw' }}>{ddmFr}</span>
               </div>
-              <div className="flex items-baseline" style={{ gap: '1cqw', marginTop: '0.4cqw' }}>
+              <div className="flex items-baseline" style={{ gap: '0.8cqw', marginTop: '0.3cqw' }}>
                 <span>Lot :</span>
-                <span className="font-bold tracking-wider" style={{ fontSize: '4cqw' }}>{lotDisplay}</span>
+                <span className="font-bold tracking-wider truncate" style={{ fontSize: '3.4cqw' }}>{lotDisplay}</span>
               </div>
             </div>
 
             {/* Recyclage + triman row */}
-            <div className="flex items-center justify-center" style={{ gap: '1cqw' }}>
-              <div className="text-center italic" style={{ fontSize: '2.2cqw' }}>
+            <div className="flex items-center justify-center shrink-0" style={{ gap: '0.8cqw' }}>
+              <div className="text-center italic" style={{ fontSize: '2cqw' }}>
                 Carton et sachet<br />recyclables
               </div>
-              <img src={labelTriman} alt="Triman" style={{ height: '7cqw' }} className="w-auto object-contain" />
+              <img src={labelTriman} alt="Triman" style={{ height: '6cqw' }} className="w-auto object-contain" />
             </div>
             {product.barcode_value ? (
-              <div>
+              <div className="shrink-0">
                 <div
                   className="w-full"
                   style={{
-                    height: '5cqw',
+                    height: '4cqw',
                     background: 'repeating-linear-gradient(90deg, #000 0 2px, #fff 2px 4px, #000 4px 5px, #fff 5px 8px, #000 8px 9px, #fff 9px 11px)',
                   }}
                 />
-                <div className="text-center font-mono" style={{ fontSize: '2.4cqw' }}>
+                <div className="text-center font-mono truncate" style={{ fontSize: '2.2cqw' }}>
                   {product.barcode_value}
                 </div>
               </div>
             ) : (
-              <div className="text-destructive text-center" style={{ fontSize: '2.2cqw' }}>Pas de code-barres</div>
+              <div className="text-destructive text-center" style={{ fontSize: '2cqw' }}>Pas de code-barres</div>
             )}
           </div>
         </div>

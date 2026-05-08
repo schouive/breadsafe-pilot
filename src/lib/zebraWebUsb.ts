@@ -40,6 +40,14 @@ function isWebUsbSupported(): boolean {
   return typeof navigator !== 'undefined' && !!navigator.usb;
 }
 
+async function requestZebraDevice(): Promise<USBDevice> {
+  if (!isWebUsbSupported()) {
+    throw new Error("WebUSB n'est pas supporté par ce navigateur (utilisez Chrome ou Edge en HTTPS).");
+  }
+
+  return navigator.usb!.requestDevice({ filters: [{ vendorId: ZEBRA_VENDOR_ID }] });
+}
+
 async function openZebraDevice(forcePicker = false): Promise<ZebraDevice> {
   if (!isWebUsbSupported()) {
     throw new Error("WebUSB n'est pas supporté par ce navigateur (utilisez Chrome ou Edge en HTTPS).");
@@ -53,7 +61,7 @@ async function openZebraDevice(forcePicker = false): Promise<ZebraDevice> {
   }
 
   if (!device) {
-    device = await navigator.usb!.requestDevice({ filters: [{ vendorId: ZEBRA_VENDOR_ID }] });
+    device = await requestZebraDevice();
   }
 
   if (!device.opened) await device.open();
@@ -255,6 +263,19 @@ export function isZebraSupported(): boolean {
 /** Force la sélection d'une nouvelle imprimante (utile pour un changement de matériel) */
 export async function pickZebraPrinter(): Promise<ZebraPrintMethod> {
   cachedDevice = null;
+
+  if (isWebUsbSupported()) {
+    try {
+      await requestZebraDevice();
+      return 'webusb';
+    } catch (error) {
+      const message = String((error as Error)?.message ?? error ?? '');
+      if (!message.toLowerCase().includes('no device selected')) {
+        // Si l'utilisateur a bien choisi une imprimante mais que Browser Print est aussi dispo,
+        // on laisse quand même le flux Browser Print gérer l'impression réelle ensuite.
+      }
+    }
+  }
 
   // Sur Windows, WebUSB est presque toujours bloqué par le pilote système.
   // On vérifie d'abord si Zebra Browser Print est disponible : si oui, on l'utilise

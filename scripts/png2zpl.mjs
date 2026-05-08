@@ -32,9 +32,9 @@ async function pngToZpl(path, targetWidth) {
 }
 
 const targets = [
-  { path: 'src/assets/logo-breadshop.png', width: 130, key: 'BREADSHOP' },
-  { path: 'src/assets/label-triman.png', width: 55, key: 'TRIMAN' },
-  { path: 'src/assets/label-logo-m.png', width: 55, key: 'RECYCLE' },
+  { path: 'src/assets/logo-breadshop.png', width: 200, key: 'BREADSHOP' },
+  { path: 'src/assets/label-triman.png', width: 90, key: 'TRIMAN' },
+  { path: 'src/assets/label-logo-m.png', width: 90, key: 'RECYCLE' },
 ];
 
 const out = {};

@@ -544,9 +544,29 @@ function LabelMaskPreview({
   })();
   const lotDisplay = lot ? (lot.startsWith('L') ? lot : `L${lot}`) : 'L-----';
 
-  const designation = product.product_name || product.erp_label;
-  const poidsNet = product.net_weight
-    ? `${product.net_weight} ${product.net_weight_unit || 'kg'}`
+  // Conditionnement → nombre d'unités par carton
+  const PACK_COUNT: Record<string, number> = { U01: 1, C05: 5, C24: 24, PAL: 1 };
+  const packCount = PACK_COUNT[product.packaging] ?? 1;
+  const unitWeight = product.net_weight ?? 0;
+  const unitWeightUnit = product.net_weight_unit || 'kg';
+
+  // Format poids unitaire en grammes si kg < 1, sinon garder l'unité
+  const formatUnitWeight = (w: number, u: string): string => {
+    if (u === 'kg' && w < 1) return `${Math.round(w * 1000)}g`;
+    return `${w}${u}`;
+  };
+
+  const baseName = product.product_name || product.erp_label;
+  const designation = packCount > 1
+    ? `${baseName} ${packCount}x${formatUnitWeight(unitWeight, unitWeightUnit)}`
+    : `${baseName} ${formatUnitWeight(unitWeight, unitWeightUnit)}`;
+
+  // Poids net total = conditionnement × poids unitaire
+  const totalWeight = unitWeight * packCount;
+  const poidsNet = unitWeight
+    ? (unitWeightUnit === 'kg'
+        ? `${totalWeight.toFixed(totalWeight >= 10 ? 2 : 3).replace(/\.?0+$/, '')} kg`
+        : `${totalWeight} ${unitWeightUnit}`)
     : '— kg';
   const ingredients = stripHtml(product.ingredients_html);
   const allergens = product.allergen_statement || '';

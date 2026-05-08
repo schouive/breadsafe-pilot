@@ -185,7 +185,21 @@ export function isZebraSupported(): boolean {
 }
 
 /** Force la sélection d'une nouvelle imprimante (utile pour un changement de matériel) */
-export async function pickZebraPrinter(): Promise<void> {
+export async function pickZebraPrinter(): Promise<ZebraPrintMethod> {
   cachedDevice = null;
+
+  // Sur Windows, WebUSB est presque toujours bloqué par le pilote système.
+  // On vérifie d'abord si Zebra Browser Print est disponible : si oui, on l'utilise
+  // sans tenter d'ouvrir le device USB (qui échouerait avec "Failed to execute 'open'").
+  if (shouldPreferBrowserPrint()) {
+    try {
+      const device = await getDefaultBrowserPrintDevice();
+      if (device?.name) return 'browserprint';
+    } catch {
+      // Browser Print indisponible → on tentera WebUSB ci-dessous, mais ça échouera probablement.
+    }
+  }
+
   await openZebraDevice(true);
+  return 'webusb';
 }

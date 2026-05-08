@@ -84,7 +84,7 @@ function formatNutrition(n: ZplLabelData['nutrition']): [string, string, string,
  * Le template doit utiliser des placeholders au format {{KEY}}.
  */
 export function fillZplTemplate(template: string, data: ZplLabelData): string {
-  const ingrLines = splitIntoLines(cleanHtml(data.ingredientsHtml), 42, 4);
+  const ingrLines = splitIntoLines(cleanHtml(data.ingredientsHtml), 42, 6);
   const nutri = formatNutrition(data.nutrition);
   const { j, yy } = computeJulianDay(data.ddm);
 
@@ -97,6 +97,10 @@ export function fillZplTemplate(template: string, data: ZplLabelData): string {
   // (le template dessine déjà un "L" séparé en gros caractères)
   const lotValue = data.lotNumber.replace(/^L/i, '');
 
+  const tracesValue = data.traces
+    ? `Traces eventuelles de : ${removeAccents(data.traces)}`
+    : '';
+
   const replacements: Record<string, string> = {
     DESIGNATION: removeAccents(data.designation || ''),
     BARCODE: (data.barcode || '').replace(/\D/g, ''),
@@ -105,8 +109,10 @@ export function fillZplTemplate(template: string, data: ZplLabelData): string {
     INGR_L2: ingrLines[1] || '',
     INGR_L3: ingrLines[2] || '',
     INGR_L4: ingrLines[3] || '',
-    ALLERGENES: removeAccents(data.allergens || ''),
-    TRACES: removeAccents(data.traces || ''),
+    INGR_L5: ingrLines[4] || '',
+    INGR_L6: ingrLines[5] || '',
+    ALLERGENES: '',
+    TRACES: tracesValue,
     NUTRI_L1: nutri[0],
     NUTRI_L2: nutri[1],
     NUTRI_L3: nutri[2],

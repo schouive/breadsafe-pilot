@@ -519,6 +519,24 @@ function stripHtml(html: string | null | undefined): string {
     .trim();
 }
 
+/** Garde uniquement <strong>/<b> pour mettre les allergènes en gras dans la liste INCO. */
+function sanitizeIngredientsHtml(html: string | null | undefined): string {
+  if (!html) return '';
+  return html
+    .replace(/<(?!\/?(strong|b)\b)[^>]+>/gi, ' ')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/** Extrait la partie "Traces de : ..." d'une mention allergène complète. */
+function extractTraces(statement: string | null | undefined): string {
+  if (!statement) return '';
+  const m = statement.match(/traces?\s*(?:de|d['']|éventuelles?\s*de)?\s*[:\-]\s*(.+)$/i);
+  return m ? m[1].trim().replace(/[.\s]+$/, '') : '';
+}
+
 function LabelMaskPreview({
   product, lot, ddm,
 }: {

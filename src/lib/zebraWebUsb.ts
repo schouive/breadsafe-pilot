@@ -273,24 +273,12 @@ export function isZebraSupported(): boolean {
 /** Force la sélection d'une nouvelle imprimante (utile pour un changement de matériel) */
 export async function pickZebraPrinter(): Promise<ZebraPrintMethod> {
   cachedDevice = null;
+  selectedUsbDevice = null;
+  preferredPrintMethod = null;
 
-  if (isWebUsbSupported()) {
-    try {
-      selectedUsbDevice = await requestZebraDevice();
-      preferredPrintMethod = 'webusb';
-      return 'webusb';
-    } catch (error) {
-      const message = String((error as Error)?.message ?? error ?? '');
-      if (!message.toLowerCase().includes('no device selected')) {
-        // Si l'utilisateur a bien choisi une imprimante mais que Browser Print est aussi dispo,
-        // on laisse quand même le flux Browser Print gérer l'impression réelle ensuite.
-      }
-    }
-  }
-
-  // Sur Windows, WebUSB est presque toujours bloqué par le pilote système.
-  // On vérifie d'abord si Zebra Browser Print est disponible : si oui, on l'utilise
-  // sans tenter d'ouvrir le device USB (qui échouerait avec "Failed to execute 'open'").
+  // Sur Windows, WebUSB est quasi toujours bloqué par le pilote système.
+  // On privilégie Zebra Browser Print : si une imprimante par défaut y est définie,
+  // on l'utilise directement sans ouvrir la fenêtre de choix WebUSB.
   if (shouldPreferBrowserPrint()) {
     try {
       const device = await getDefaultBrowserPrintDevice();
@@ -299,7 +287,20 @@ export async function pickZebraPrinter(): Promise<ZebraPrintMethod> {
         return 'browserprint';
       }
     } catch (error) {
+      // Browser Print indisponible ou aucune imprimante par défaut.
+      // On remonte un message clair plutôt que de tenter WebUSB qui sera bloqué.
       throw new Error(getBrowserPrintHelpMessage(error));
+    }
+  }
+
+  if (isWebUsbSupported()) {
+    try {
+      selectedUsbDevice = await requestZebraDevice();
+      preferredPrintMethod = 'webusb';
+      return 'webusb';
+    } catch (error) {
+      const message = String((error as Error)?.message ?? error ?? '').toLowerCase();
+      if (message.includes('no device selected')) throw error;
     }
   }
 

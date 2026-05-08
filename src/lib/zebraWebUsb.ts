@@ -97,6 +97,23 @@ function shouldPreferBrowserPrint(): boolean {
   return !isWebUsbSupported() || navigator.userAgent.toLowerCase().includes('windows');
 }
 
+function getBrowserPrintHelpMessage(detail?: unknown): string {
+  const message = String((detail as Error)?.message ?? detail ?? 'Service Zebra Browser Print indisponible.');
+
+  if (message.toLowerCase().includes('certificat localhost') || message.toLowerCase().includes('cors')) {
+    return (
+      'Zebra Browser Print est installé mais le navigateur bloque encore son accès local. ' +
+      'Ouvrez https://localhost:9101/ssl_support dans ce navigateur, acceptez le certificat Zebra, puis réessayez. ' +
+      `Détail : ${message}`
+    );
+  }
+
+  return (
+    'Zebra Browser Print n\'est pas prêt sur ce poste. Vérifiez que le logiciel est lancé et que cette imprimante est définie par défaut dedans. ' +
+    `Détail : ${message}`
+  );
+}
+
 function browserPrintBaseUrl(): string {
   return window.location.protocol === 'https:' ? 'https://localhost:9101/' : 'http://localhost:9100/';
 }
@@ -153,7 +170,7 @@ export async function printZpl(zpl: string, opts: { forcePicker?: boolean } = {}
       await printZplWithBrowserPrint(zpl);
       return { method: 'browserprint' };
     } catch (browserPrintError) {
-      if (!isWebUsbSupported()) throw browserPrintError;
+      throw new Error(getBrowserPrintHelpMessage(browserPrintError));
     }
   }
 
@@ -195,8 +212,8 @@ export async function pickZebraPrinter(): Promise<ZebraPrintMethod> {
     try {
       const device = await getDefaultBrowserPrintDevice();
       if (device?.name) return 'browserprint';
-    } catch {
-      // Browser Print indisponible → on tentera WebUSB ci-dessous, mais ça échouera probablement.
+    } catch (error) {
+      throw new Error(getBrowserPrintHelpMessage(error));
     }
   }
 

@@ -32,6 +32,8 @@ interface BrowserPrintDevice {
 }
 
 let cachedDevice: ZebraDevice | null = null;
+let selectedUsbDevice: USBDevice | null = null;
+let preferredPrintMethod: ZebraPrintMethod | null = null;
 
 const BROWSER_PRINT_SSL_ACCEPTED_MESSAGE = 'ssl certificate has been accepted. retry connection.';
 
@@ -56,12 +58,17 @@ async function openZebraDevice(forcePicker = false): Promise<ZebraDevice> {
   let device: USBDevice | null = null;
 
   if (!forcePicker) {
-    const devices = await navigator.usb!.getDevices();
-    device = devices.find(d => d.vendorId === ZEBRA_VENDOR_ID) ?? null;
+    if (selectedUsbDevice) {
+      device = selectedUsbDevice;
+    } else {
+      const devices = await navigator.usb!.getDevices();
+      device = devices.find(d => d.vendorId === ZEBRA_VENDOR_ID) ?? null;
+    }
   }
 
   if (!device) {
     device = await requestZebraDevice();
+    selectedUsbDevice = device;
   }
 
   if (!device.opened) await device.open();
@@ -94,6 +101,7 @@ async function openZebraDevice(forcePicker = false): Promise<ZebraDevice> {
   }
 
   cachedDevice = { device, endpointOut, interfaceNumber };
+  preferredPrintMethod = 'webusb';
   return cachedDevice;
 }
 
@@ -224,9 +232,10 @@ async function printZplWithBrowserPrint(zpl: string): Promise<void> {
  * Demande l'autorisation utilisateur lors du premier appel.
  */
 export async function printZpl(zpl: string, opts: { forcePicker?: boolean } = {}): Promise<ZebraPrintResult> {
-  if (!opts.forcePicker && shouldPreferBrowserPrint()) {
+  if (!opts.forcePicker && preferredPrintMethod !== 'webusb' && shouldPreferBrowserPrint()) {
     try {
       await printZplWithBrowserPrint(zpl);
+      preferredPrintMethod = 'browserprint';
       return { method: 'browserprint' };
     } catch (browserPrintError) {
       throw new Error(getBrowserPrintHelpMessage(browserPrintError));
@@ -244,6 +253,7 @@ export async function printZpl(zpl: string, opts: { forcePicker?: boolean } = {}
 
     try {
       await printZplWithBrowserPrint(zpl);
+      preferredPrintMethod = 'browserprint';
       return { method: 'browserprint' };
     } catch (browserPrintError) {
       throw new Error(
@@ -266,7 +276,8 @@ export async function pickZebraPrinter(): Promise<ZebraPrintMethod> {
 
   if (isWebUsbSupported()) {
     try {
-      await requestZebraDevice();
+      selectedUsbDevice = await requestZebraDevice();
+      preferredPrintMethod = 'webusb';
       return 'webusb';
     } catch (error) {
       const message = String((error as Error)?.message ?? error ?? '');
@@ -283,7 +294,10 @@ export async function pickZebraPrinter(): Promise<ZebraPrintMethod> {
   if (shouldPreferBrowserPrint()) {
     try {
       const device = await getDefaultBrowserPrintDevice();
-      if (device?.name) return 'browserprint';
+      if (device?.name) {
+        preferredPrintMethod = 'browserprint';
+        return 'browserprint';
+      }
     } catch (error) {
       throw new Error(getBrowserPrintHelpMessage(error));
     }

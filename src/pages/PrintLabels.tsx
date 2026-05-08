@@ -641,50 +641,50 @@ function LabelMaskPreview({
           </div>
 
           {/* Right column */}
-          <div className="flex flex-col shrink-0" style={{ width: '38%', gap: '1cqw' }}>
+          <div className="flex flex-col shrink-0 overflow-hidden" style={{ width: '38%', gap: '0.8cqw' }}>
             {/* Poids net box — 6mm minimum (≈5.9cqw of 101.6mm width) */}
-            <div className="border-2 border-black relative flex flex-col items-center justify-center" style={{ padding: '0.8cqw', minHeight: '14cqw' }}>
-              <div style={{ fontSize: '2cqw', position: 'absolute', top: '0.5cqw', right: '0.8cqw' }}>POIDS NET</div>
-              <div className="font-extrabold leading-none text-center" style={{ fontSize: '8cqw', marginTop: '1.5cqw' }}>
+            <div className="border-2 border-black relative flex flex-col items-center justify-center shrink-0" style={{ padding: '0.6cqw', minHeight: '12cqw' }}>
+              <div style={{ fontSize: '1.8cqw', position: 'absolute', top: '0.4cqw', right: '0.6cqw' }}>POIDS NET</div>
+              <div className="font-extrabold leading-none text-center" style={{ fontSize: '7cqw', marginTop: '1.2cqw' }}>
                 {poidsNet}
               </div>
             </div>
 
             {/* DDM + Lot box */}
-            <div className="border-2 border-black leading-tight" style={{ padding: '0.8cqw', fontSize: '2.6cqw' }}>
-              <div>À consommer de préférence</div>
-              <div className="flex items-baseline" style={{ gap: '1cqw' }}>
+            <div className="border-2 border-black leading-tight shrink-0" style={{ padding: '0.6cqw', fontSize: '2.2cqw' }}>
+              <div className="truncate">À consommer de préférence</div>
+              <div className="flex items-baseline" style={{ gap: '0.8cqw' }}>
                 <span>avant le :</span>
-                <span className="font-bold" style={{ fontSize: '4cqw' }}>{ddmFr}</span>
+                <span className="font-bold truncate" style={{ fontSize: '3.4cqw' }}>{ddmFr}</span>
               </div>
-              <div className="flex items-baseline" style={{ gap: '1cqw', marginTop: '0.4cqw' }}>
+              <div className="flex items-baseline" style={{ gap: '0.8cqw', marginTop: '0.3cqw' }}>
                 <span>Lot :</span>
-                <span className="font-bold tracking-wider" style={{ fontSize: '4cqw' }}>{lotDisplay}</span>
+                <span className="font-bold tracking-wider truncate" style={{ fontSize: '3.4cqw' }}>{lotDisplay}</span>
               </div>
             </div>
 
             {/* Recyclage + triman row */}
-            <div className="flex items-center justify-center" style={{ gap: '1cqw' }}>
-              <div className="text-center italic" style={{ fontSize: '2.2cqw' }}>
+            <div className="flex items-center justify-center shrink-0" style={{ gap: '0.8cqw' }}>
+              <div className="text-center italic" style={{ fontSize: '2cqw' }}>
                 Carton et sachet<br />recyclables
               </div>
-              <img src={labelTriman} alt="Triman" style={{ height: '7cqw' }} className="w-auto object-contain" />
+              <img src={labelTriman} alt="Triman" style={{ height: '6cqw' }} className="w-auto object-contain" />
             </div>
             {product.barcode_value ? (
-              <div>
+              <div className="shrink-0">
                 <div
                   className="w-full"
                   style={{
-                    height: '5cqw',
+                    height: '4cqw',
                     background: 'repeating-linear-gradient(90deg, #000 0 2px, #fff 2px 4px, #000 4px 5px, #fff 5px 8px, #000 8px 9px, #fff 9px 11px)',
                   }}
                 />
-                <div className="text-center font-mono" style={{ fontSize: '2.4cqw' }}>
+                <div className="text-center font-mono truncate" style={{ fontSize: '2.2cqw' }}>
                   {product.barcode_value}
                 </div>
               </div>
             ) : (
-              <div className="text-destructive text-center" style={{ fontSize: '2.2cqw' }}>Pas de code-barres</div>
+              <div className="text-destructive text-center" style={{ fontSize: '2cqw' }}>Pas de code-barres</div>
             )}
           </div>
         </div>

@@ -15,6 +15,9 @@ import {
   type PrintProduct,
 } from '@/hooks/usePrintLabels';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
+import { fillZplTemplate, DEFAULT_PRODUCT_LABEL_ZPL } from '@/lib/zplLabelGenerator';
+import { printZpl, isZebraSupported, pickZebraPrinter } from '@/lib/zebraWebUsb';
 
 const FAMILIES = ['BUN', 'BAG', 'HDG', 'PDM', 'PLQ', 'SPC'];
 

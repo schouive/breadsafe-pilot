@@ -497,6 +497,9 @@ export default function PrintLabels() {
               <span className="text-sm text-muted-foreground">Template Zebra</span>
               <Badge variant="default" className="font-mono">{selected.template_name}</Badge>
             </div>
+            <Button variant="outline" size="sm" onClick={handlePickPrinter} className="w-full">
+              <Printer className="h-4 w-4 mr-2" /> Choisir / changer l'imprimante Zebra
+            </Button>
 
             <div className="flex gap-3 pt-2">
               <Button variant="outline" size="lg" onClick={() => setStep(2)} className="flex-1">

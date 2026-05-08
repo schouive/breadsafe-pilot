@@ -8,6 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import {
   Printer, Search, ArrowLeft, Star, History, Check, Loader2,
+  Download,
 } from 'lucide-react';
 import {
   usePrintProducts, usePrintHistory,
@@ -39,6 +40,7 @@ export default function PrintLabels() {
   const [ddm, setDdm] = useState('');
   const [quantity, setQuantity] = useState('1');
   const [printing, setPrinting] = useState(false);
+  const [fallbackZpl, setFallbackZpl] = useState<string | null>(null);
 
   const searchRef = useRef<HTMLInputElement>(null);
   const lotRef = useRef<HTMLInputElement>(null);
@@ -96,6 +98,7 @@ export default function PrintLabels() {
     setStep(1);
     setSelected(null);
     setLot(''); setProductionDate(''); setDdm(''); setQuantity('1');
+    setFallbackZpl(null);
     setTimeout(() => searchRef.current?.focus(), 50);
   };
 
@@ -110,7 +113,33 @@ export default function PrintLabels() {
     setProductionDate('');
     setDdm(h.ddm);
     setQuantity(String(h.quantity));
+    setFallbackZpl(null);
     setStep(3);
+  };
+
+  const buildZpl = async () => {
+    if (!selected) throw new Error('Article manquant');
+    const { data: tpl } = await supabase
+      .from('label_templates')
+      .select('zpl_content')
+      .eq('template_code', 'PRODUCT_LABEL')
+      .eq('active', true)
+      .maybeSingle();
+    const zplTemplate = (tpl?.zpl_content as string | null) || DEFAULT_PRODUCT_LABEL_ZPL;
+
+    return fillZplTemplate(zplTemplate, {
+      designation: selected.product_name || selected.erp_label,
+      barcode: selected.barcode_value,
+      netWeight: selected.net_weight,
+      netWeightUnit: selected.net_weight_unit,
+      ingredientsHtml: selected.ingredients_html,
+      allergens: selected.allergen_statement || '',
+      traces: '',
+      nutrition: selected.nutrition,
+      lotNumber: lot,
+      ddm,
+      quantity: Number(quantity),
+    });
   };
 
   const handlePrint = async () => {
@@ -128,37 +157,10 @@ export default function PrintLabels() {
     }
     setPrinting(true);
     try {
-      // 1) Récupérer le contenu ZPL du template (BDD), fallback sur la constante locale
-      const { data: tpl } = await supabase
-        .from('label_templates')
-        .select('zpl_content')
-        .eq('template_code', 'PRODUCT_LABEL')
-        .eq('active', true)
-        .maybeSingle();
-      const zplTemplate = (tpl?.zpl_content as string | null) || DEFAULT_PRODUCT_LABEL_ZPL;
+      const zpl = await buildZpl();
+      setFallbackZpl(zpl);
 
-      // 2) Construire les données et générer le ZPL final
-      const allergensText = (() => {
-        if (!selected.allergen_statement) return '';
-        // l'allergen_statement peut contenir "Présents: ... | Traces: ..."
-        return selected.allergen_statement;
-      })();
-      const zpl = fillZplTemplate(zplTemplate, {
-        designation: selected.product_name || selected.erp_label,
-        barcode: selected.barcode_value,
-        netWeight: selected.net_weight,
-        netWeightUnit: selected.net_weight_unit,
-        ingredientsHtml: selected.ingredients_html,
-        allergens: allergensText,
-        traces: '',
-        nutrition: selected.nutrition,
-        lotNumber: lot,
-        ddm,
-        quantity: Number(quantity),
-      });
-
-      // 3) Envoi à l'imprimante Zebra
-      await printZpl(zpl);
+      const result = await printZpl(zpl);
 
       // 4) Historique
       await recordPrint.mutateAsync({
@@ -174,12 +176,34 @@ export default function PrintLabels() {
         ddm,
         quantity: Number(quantity),
       });
-      toast.success(`${quantity} étiquette(s) envoyée(s) à l'imprimante`);
+      toast.success(
+        `${quantity} étiquette(s) envoyée(s) à l'imprimante` +
+        (result.method === 'browserprint' ? ' via Zebra Browser Print' : '')
+      );
       reset();
     } catch (e: any) {
       toast.error(e?.message ?? 'Erreur impression');
     } finally {
       setPrinting(false);
+    }
+  };
+
+  const handleDownloadZpl = async () => {
+    try {
+      const zpl = fallbackZpl || await buildZpl();
+      setFallbackZpl(zpl);
+      const blob = new Blob([zpl], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${finalSku || selected?.sku_base || 'etiquette'}_${lot || 'lot'}.zpl`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      toast.success('Fichier ZPL généré');
+    } catch (e: any) {
+      toast.error(e?.message ?? 'Impossible de générer le ZPL');
     }
   };
 
@@ -499,6 +523,9 @@ export default function PrintLabels() {
             </div>
             <Button variant="outline" size="sm" onClick={handlePickPrinter} className="w-full">
               <Printer className="h-4 w-4 mr-2" /> Choisir / changer l'imprimante Zebra
+            </Button>
+            <Button variant="secondary" size="sm" onClick={handleDownloadZpl} className="w-full">
+              <Download className="h-4 w-4 mr-2" /> Télécharger le ZPL de secours
             </Button>
 
             <div className="flex gap-3 pt-2">

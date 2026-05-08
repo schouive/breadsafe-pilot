@@ -580,9 +580,9 @@ function LabelMaskPreview({
         ? `${totalWeight.toFixed(totalWeight >= 10 ? 2 : 3).replace(/\.?0+$/, '')} kg`
         : `${totalWeight} ${unitWeightUnit}`)
     : '— kg';
-  const ingredients = stripHtml(product.ingredients_html);
-  const allergens = product.allergen_statement || '';
-  const traces = (product as any).traces_statement || '';
+  const ingredientsHtml = sanitizeIngredientsHtml(product.ingredients_html);
+  const tracesFromStatement = extractTraces(product.allergen_statement);
+  const traces = (product as any).traces_statement || tracesFromStatement || '';
   const n = product.nutrition;
   const nutriLines = n ? [
     `Energie ${Math.round(n.energyKj ?? 0)} kJ / ${Math.round(n.energyKcal ?? 0)} kcal`,

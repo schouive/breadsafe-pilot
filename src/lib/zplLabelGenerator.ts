@@ -44,7 +44,8 @@ export interface ZplLabelData {
 function cleanHtml(html: string | null): string {
   if (!html) return '';
   return html
-    .replace(/<\/?strong>/g, '')
+    // Met les allergènes en MAJUSCULES (équivalent du gras, conforme INCO 1169/2011 pour impression thermique)
+    .replace(/<(?:strong|b)\b[^>]*>([\s\S]*?)<\/(?:strong|b)>/gi, (_, inner) => String(inner).toUpperCase())
     .replace(/<[^>]+>/g, ' ')
     .replace(/&nbsp;/g, ' ')
     .replace(/&amp;/g, '&')
@@ -83,7 +84,7 @@ function formatNutrition(n: ZplLabelData['nutrition']): [string, string, string,
  * Le template doit utiliser des placeholders au format {{KEY}}.
  */
 export function fillZplTemplate(template: string, data: ZplLabelData): string {
-  const ingrLines = splitIntoLines(cleanHtml(data.ingredientsHtml), 42, 4);
+  const ingrLines = splitIntoLines(cleanHtml(data.ingredientsHtml), 42, 6);
   const nutri = formatNutrition(data.nutrition);
   const { j, yy } = computeJulianDay(data.ddm);
 
@@ -96,6 +97,10 @@ export function fillZplTemplate(template: string, data: ZplLabelData): string {
   // (le template dessine déjà un "L" séparé en gros caractères)
   const lotValue = data.lotNumber.replace(/^L/i, '');
 
+  const tracesValue = data.traces
+    ? `Traces eventuelles de : ${removeAccents(data.traces)}`
+    : '';
+
   const replacements: Record<string, string> = {
     DESIGNATION: removeAccents(data.designation || ''),
     BARCODE: (data.barcode || '').replace(/\D/g, ''),
@@ -104,8 +109,10 @@ export function fillZplTemplate(template: string, data: ZplLabelData): string {
     INGR_L2: ingrLines[1] || '',
     INGR_L3: ingrLines[2] || '',
     INGR_L4: ingrLines[3] || '',
-    ALLERGENES: removeAccents(data.allergens || ''),
-    TRACES: removeAccents(data.traces || ''),
+    INGR_L5: ingrLines[4] || '',
+    INGR_L6: ingrLines[5] || '',
+    ALLERGENES: '',
+    TRACES: tracesValue,
     NUTRI_L1: nutri[0],
     NUTRI_L2: nutri[1],
     NUTRI_L3: nutri[2],
@@ -142,8 +149,9 @@ export const DEFAULT_PRODUCT_LABEL_ZPL = `CT~~CD,~CC^~CT~
 ^FT256,1193^A0B,38,38^FH\\^FD{{INGR_L2}}^FS
 ^FT296,1193^A0B,38,38^FH\\^FD{{INGR_L3}}^FS
 ^FT342,1193^A0B,38,38^FH\\^FD{{INGR_L4}}^FS
-^FT391,973^A0B,38,38^FH\\^FD{{ALLERGENES}}^FS
-^FT436,1041^A0B,38,38^FH\\^FD{{TRACES}}^FS
+^FT388,1193^A0B,38,38^FH\\^FD{{INGR_L5}}^FS
+^FT434,1193^A0B,38,38^FH\\^FD{{INGR_L6}}^FS
+^FT480,1193^A0B,38,38^FH\\^FD{{TRACES}}^FS
 ^FT626,1193^A0B,38,38^FH\\^FD{{NUTRI_L1}}^FS
 ^FT672,1193^A0B,38,38^FH\\^FD{{NUTRI_L2}}^FS
 ^FT714,1193^A0B,38,38^FH\\^FD{{NUTRI_L3}}^FS
@@ -153,8 +161,6 @@ export const DEFAULT_PRODUCT_LABEL_ZPL = `CT~~CD,~CC^~CT~
 ^FT501,210^A0B,50,50^FH\\^FD{{DDM_YY}}^FS
 ^FT501,312^A0B,50,50^FH\\^FDL{{LOT}}^FS
 ^FT166,1193^A0B,38,36^FH\\^FDIngredients :^FS
-^FT391,1193^A0B,38,38^FH\\^FDAllergene(s) :^FS
-^FT436,1193^A0B,38,38^FH\\^FDTrace(s) :^FS
 ^FT588,1193^A0B,38,38^FH\\^FDValeurs nutritionnelles pour 100g :^FS
 ^FT391,408^A0B,38,26^FH\\^FDA consommer de preference^FS
 ^FT438,408^A0B,38,26^FH\\^FDavant le :^FS

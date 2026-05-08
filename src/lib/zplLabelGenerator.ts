@@ -80,19 +80,40 @@ function formatNutrition(n: ZplLabelData['nutrition']): [string, string, string,
 }
 
 /**
- * Applique une rotation de 90° anti-horaire UNIQUEMENT sur l'orientation
- * du texte/code-barres, sans toucher aux coordonnées.
- * La mise en page (rectangles, positions, code-barres) reste identique
- * au template/aperçu — seul le sens d'écriture change.
+ * Rotation 90° horaire de la mise en page (coordonnées, rectangles,
+ * code-barres) PLUS rotation 180° supplémentaire sur le texte.
  *
- * Mapping orientations ZPL (N=0°, R=90°CW, I=180°, B=270°CW=90°CCW) :
- *  Ajout 90° CCW :  N→B, R→N, I→R, B→I
+ * Demande utilisateur : « les éléments graphiques (lignes, code-barres)
+ * tournés 90° sens horaire, et les textes à 180° de plus ».
+ *
+ * Transformations ZPL (template original 791 x 1205) :
+ *  - PW791  ↔ LL1205        (canvas pivote)
+ *  - ^FOx,y / ^FTx,y → (H−y, x)   où H = 1205
+ *  - ^GBw,h,t → ^GBh,w,t          (rectangles : on échange largeur/hauteur)
+ *  - Orientation texte ^A0  : N→B, R→N, I→R, B→I  (90°CW + 180° = 270°CW)
+ *  - Orientation code-barres ^BC : N→R, R→I, I→B, B→N (90°CW pur)
  */
-function rotateTextCcw90(zpl: string): string {
-  const rotMap: Record<string, string> = { N: 'B', R: 'N', I: 'R', B: 'I' };
+function rotateLayout90CwTextFlipped(zpl: string): string {
+  const H = 1205;
+  const textMap: Record<string, string> = { N: 'B', R: 'N', I: 'R', B: 'I' };
+  const graphicMap: Record<string, string> = { N: 'R', R: 'I', I: 'B', B: 'N' };
   let out = zpl;
-  out = out.replace(/\^A0([NRIB]),/g, (_, o) => `^A0${rotMap[o]},`);
-  out = out.replace(/\^BC([NRIB])(,|\^)/g, (_, o, sep) => `^BC${rotMap[o]}${sep}`);
+
+  // Swap canvas dimensions
+  out = out.replace(/\^PW791\b/g, '^PW1205').replace(/\^LL1205\b/g, '^LL791');
+
+  // Rotate field origins / text positions: (x, y) → (H − y, x)
+  out = out.replace(/\^FO(\d+),(\d+)/g, (_, x, y) => `^FO${H - parseInt(y, 10)},${x}`);
+  out = out.replace(/\^FT(\d+),(\d+)/g, (_, x, y) => `^FT${H - parseInt(y, 10)},${x}`);
+
+  // Rotate rectangles: swap width/height (thickness preserved)
+  out = out.replace(/\^GB(\d+),(\d+),(\d+)/g, (_, w, h, t) => `^GB${h},${w},${t}`);
+
+  // Text orientation (90° CW + 180°)
+  out = out.replace(/\^A0([NRIB]),/g, (_, o) => `^A0${textMap[o]},`);
+  // Barcode orientation (pure 90° CW, follows canvas)
+  out = out.replace(/\^BC([NRIB])(,|\^)/g, (_, o, sep) => `^BC${graphicMap[o]}${sep}`);
+
   return out;
 }
 
@@ -143,7 +164,7 @@ export function fillZplTemplate(template: string, data: ZplLabelData): string {
   };
 
   const filled = template.replace(/\{\{(\w+)\}\}/g, (_, k) => replacements[k] ?? '');
-  return rotateTextCcw90(filled);
+  return rotateLayout90CwTextFlipped(filled);
 }
 
 /**

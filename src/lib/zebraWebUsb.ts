@@ -33,6 +33,8 @@ interface BrowserPrintDevice {
 
 let cachedDevice: ZebraDevice | null = null;
 
+const BROWSER_PRINT_SSL_ACCEPTED_MESSAGE = 'ssl certificate has been accepted. retry connection.';
+
 
 function isWebUsbSupported(): boolean {
   return typeof navigator !== 'undefined' && !!navigator.usb;
@@ -100,6 +102,13 @@ function shouldPreferBrowserPrint(): boolean {
 function getBrowserPrintHelpMessage(detail?: unknown): string {
   const message = String((detail as Error)?.message ?? detail ?? 'Service Zebra Browser Print indisponible.');
 
+  if (message.toLowerCase().includes(BROWSER_PRINT_SSL_ACCEPTED_MESSAGE)) {
+    return (
+      'Le certificat Zebra Browser Print vient d\'être accepté. Fermez l\'onglet localhost si besoin puis réessayez dans 2 secondes. '
+      + `Détail : ${message}`
+    );
+  }
+
   if (message.toLowerCase().includes('certificat localhost') || message.toLowerCase().includes('cors')) {
     return (
       'Zebra Browser Print est installé mais le navigateur bloque encore son accès local. ' +
@@ -116,6 +125,20 @@ function getBrowserPrintHelpMessage(detail?: unknown): string {
 
 function browserPrintBaseUrl(): string {
   return window.location.protocol === 'https:' ? 'https://localhost:9101/' : 'http://localhost:9100/';
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function isBrowserPrintSslAcceptedRetryMessage(value: unknown): boolean {
+  const message = String((value as Error)?.message ?? value ?? '').toLowerCase();
+  return message.includes(BROWSER_PRINT_SSL_ACCEPTED_MESSAGE);
+}
+
+function isLikelyBrowserPrintJson(value: string): boolean {
+  const trimmed = value.trim();
+  return trimmed.startsWith('{') || trimmed.startsWith('[');
 }
 
 function browserPrintRequest(method: 'GET' | 'POST', path: string, body?: unknown): Promise<string> {
@@ -139,9 +162,37 @@ function browserPrintRequest(method: 'GET' | 'POST', path: string, body?: unknow
 }
 
 async function getDefaultBrowserPrintDevice(): Promise<BrowserPrintDevice> {
-  const response = await browserPrintRequest('GET', 'default?type=printer');
-  if (!response) throw new Error('Aucune imprimante par défaut configurée dans Zebra Browser Print.');
-  return JSON.parse(response) as BrowserPrintDevice;
+  let lastError: unknown;
+
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      const response = await browserPrintRequest('GET', 'default?type=printer');
+      if (!response) throw new Error('Aucune imprimante par défaut configurée dans Zebra Browser Print.');
+
+      if (isBrowserPrintSslAcceptedRetryMessage(response)) {
+        lastError = response;
+        await sleep(1200);
+        continue;
+      }
+
+      if (!isLikelyBrowserPrintJson(response)) {
+        throw new Error(response);
+      }
+
+      return JSON.parse(response) as BrowserPrintDevice;
+    } catch (error) {
+      lastError = error;
+
+      if (isBrowserPrintSslAcceptedRetryMessage(error) && attempt < 2) {
+        await sleep(1200);
+        continue;
+      }
+
+      throw error;
+    }
+  }
+
+  throw new Error(String((lastError as Error)?.message ?? lastError ?? 'Aucune imprimante Browser Print disponible.'));
 }
 
 async function printZplWithBrowserPrint(zpl: string): Promise<void> {

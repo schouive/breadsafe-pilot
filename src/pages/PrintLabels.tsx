@@ -582,14 +582,17 @@ function LabelMaskPreview({
   return (
     <div className="w-full overflow-x-auto bg-muted/30 p-4 rounded-md">
       <div
-        className="mx-auto bg-white text-black shadow-md"
+        className="mx-auto bg-white text-black shadow-md overflow-hidden"
         style={{
           width: '100%',
           maxWidth: 820,
           aspectRatio: '101.6 / 63.5',
           fontFamily: 'Arial, Helvetica, sans-serif',
           containerType: 'inline-size',
-          padding: '2cqw',
+          padding: '1.5cqw',
+          boxSizing: 'border-box',
+          display: 'flex',
+          flexDirection: 'column',
         }}
       >
         {/* Header: logo M + wordmark + designation */}

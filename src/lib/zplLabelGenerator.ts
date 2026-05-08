@@ -44,7 +44,8 @@ export interface ZplLabelData {
 function cleanHtml(html: string | null): string {
   if (!html) return '';
   return html
-    .replace(/<\/?strong>/g, '')
+    // Met les allergènes en MAJUSCULES (équivalent du gras, conforme INCO 1169/2011 pour impression thermique)
+    .replace(/<(?:strong|b)\b[^>]*>([\s\S]*?)<\/(?:strong|b)>/gi, (_, inner) => String(inner).toUpperCase())
     .replace(/<[^>]+>/g, ' ')
     .replace(/&nbsp;/g, ' ')
     .replace(/&amp;/g, '&')

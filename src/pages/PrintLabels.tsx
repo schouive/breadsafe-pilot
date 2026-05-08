@@ -582,28 +582,41 @@ function LabelMaskPreview({
   return (
     <div className="w-full overflow-x-auto bg-muted/30 p-4 rounded-md">
       <div
-        className="mx-auto bg-white text-black shadow-md p-3"
-        style={{ width: '100%', maxWidth: 820, aspectRatio: '101.6 / 63.5', fontFamily: 'Arial, Helvetica, sans-serif' }}
+        className="mx-auto bg-white text-black shadow-md"
+        style={{
+          width: '100%',
+          maxWidth: 820,
+          aspectRatio: '101.6 / 63.5',
+          fontFamily: 'Arial, Helvetica, sans-serif',
+          containerType: 'inline-size',
+          padding: '2cqw',
+        }}
       >
         {/* Header: logo M + wordmark + designation */}
-        <div className="flex items-center gap-2">
-          <div className="flex flex-col items-center shrink-0" style={{ width: 70 }}>
-            <img src={labelLogoM} alt="" className="h-8 sm:h-10 w-auto object-contain" />
-            <img src={labelWordmark} alt="Bread Shop" className="h-3 sm:h-4 w-auto object-contain mt-0.5" />
+        <div className="flex items-center" style={{ gap: '1.5cqw', height: '14cqw' }}>
+          <div className="flex flex-col items-center shrink-0" style={{ width: '11cqw' }}>
+            <img src={labelLogoM} alt="" style={{ height: '8cqw' }} className="w-auto object-contain" />
+            <img src={labelWordmark} alt="Bread Shop" style={{ height: '3cqw', marginTop: '0.3cqw' }} className="w-auto object-contain" />
           </div>
-          <div className="flex-1 text-center font-extrabold text-lg sm:text-3xl truncate">
+          <div
+            className="flex-1 text-center font-extrabold leading-none truncate"
+            style={{ fontSize: '6.5cqw' }}
+          >
             {designation}
           </div>
         </div>
-        <div className="border-t-[3px] border-black mt-1 mb-2" />
+        <div style={{ borderTop: '0.4cqw solid #000', margin: '0.8cqw 0 1cqw' }} />
 
         {/* Body: 2 columns */}
-        <div className="flex gap-3" style={{ height: 'calc(100% - 70px)' }}>
+        <div className="flex" style={{ gap: '1.5cqw', height: 'calc(100% - 17cqw)' }}>
           {/* Left column */}
-          <div className="flex-1 min-w-0 text-[10px] sm:text-[13px] leading-tight space-y-1">
+          <div
+            className="flex-1 min-w-0 leading-tight"
+            style={{ fontSize: '2.6cqw', display: 'flex', flexDirection: 'column', gap: '0.6cqw' }}
+          >
             <div>
-              <div className="font-bold">Ingrédients. :</div>
-              <div className="break-words line-clamp-4">
+              <div className="font-bold">Ingrédients :</div>
+              <div className="break-words">
                 {ingredients || <span className="text-destructive">Manquant</span>}
               </div>
             </div>
@@ -616,7 +629,7 @@ function LabelMaskPreview({
               <span>{traces || '—'}</span>
             </div>
             <div className="italic">
-              A conserver dans le sachet a temperature ambiante de preference inferieure a 30 C
+              A conserver dans le sachet à température ambiante de préférence inférieure à 30°C
             </div>
             <div>
               <div className="font-bold">Valeurs nutritionnelles pour 100g :</div>
@@ -625,56 +638,56 @@ function LabelMaskPreview({
           </div>
 
           {/* Right column */}
-          <div className="flex flex-col gap-2" style={{ width: '38%' }}>
-            {/* Poids net box */}
-            <div className="border-2 border-black px-2 py-1 relative">
-              <div className="text-[8px] sm:text-[10px] absolute top-1 right-2">POIDS NET</div>
-              <div className="font-extrabold text-2xl sm:text-4xl text-center mt-2">
+          <div className="flex flex-col shrink-0" style={{ width: '38%', gap: '1cqw' }}>
+            {/* Poids net box — 6mm minimum (≈5.9cqw of 101.6mm width) */}
+            <div className="border-2 border-black relative flex flex-col items-center justify-center" style={{ padding: '0.8cqw', minHeight: '14cqw' }}>
+              <div style={{ fontSize: '2cqw', position: 'absolute', top: '0.5cqw', right: '0.8cqw' }}>POIDS NET</div>
+              <div className="font-extrabold leading-none text-center" style={{ fontSize: '8cqw', marginTop: '1.5cqw' }}>
                 {poidsNet}
               </div>
             </div>
 
             {/* DDM + Lot box */}
-            <div className="border-2 border-black px-2 py-1 text-[10px] sm:text-[13px] leading-tight">
-              <div>A consommer de préférence</div>
-              <div className="flex items-baseline gap-2">
+            <div className="border-2 border-black leading-tight" style={{ padding: '0.8cqw', fontSize: '2.6cqw' }}>
+              <div>À consommer de préférence</div>
+              <div className="flex items-baseline" style={{ gap: '1cqw' }}>
                 <span>avant le :</span>
-                <span className="font-bold text-sm sm:text-xl">{ddmFr}</span>
+                <span className="font-bold" style={{ fontSize: '4cqw' }}>{ddmFr}</span>
               </div>
-              <div className="flex items-baseline gap-2 mt-1">
+              <div className="flex items-baseline" style={{ gap: '1cqw', marginTop: '0.4cqw' }}>
                 <span>Lot :</span>
-                <span className="font-bold text-sm sm:text-xl tracking-wider">{lotDisplay}</span>
+                <span className="font-bold tracking-wider" style={{ fontSize: '4cqw' }}>{lotDisplay}</span>
               </div>
             </div>
 
             {/* Recyclage + triman row */}
-            <div className="flex items-center justify-center gap-2 flex-1">
-              <div className="text-center text-[9px] sm:text-[11px] italic">
+            <div className="flex items-center justify-center" style={{ gap: '1cqw' }}>
+              <div className="text-center italic" style={{ fontSize: '2.2cqw' }}>
                 Carton et sachet<br />recyclables
               </div>
-              <img src={labelTriman} alt="Triman" className="h-8 sm:h-12 w-auto object-contain" />
+              <img src={labelTriman} alt="Triman" style={{ height: '7cqw' }} className="w-auto object-contain" />
             </div>
             {product.barcode_value ? (
               <div>
                 <div
                   className="w-full"
                   style={{
-                    height: 30,
+                    height: '5cqw',
                     background: 'repeating-linear-gradient(90deg, #000 0 2px, #fff 2px 4px, #000 4px 5px, #fff 5px 8px, #000 8px 9px, #fff 9px 11px)',
                   }}
                 />
-                <div className="text-[10px] sm:text-xs font-mono text-center">
+                <div className="text-center font-mono" style={{ fontSize: '2.4cqw' }}>
                   {product.barcode_value}
                 </div>
               </div>
             ) : (
-              <div className="text-[9px] text-destructive text-center">Pas de code-barres</div>
+              <div className="text-destructive text-center" style={{ fontSize: '2.2cqw' }}>Pas de code-barres</div>
             )}
           </div>
         </div>
       </div>
       <p className="text-xs text-muted-foreground text-center mt-2">
-        Aperçu visuel du masque imprimé (101.6 × 63.5 mm).
+        Aperçu visuel du masque imprimé (101,6 × 63,5 mm) — POIDS NET ≥ 6 mm (réglementaire).
       </p>
     </div>
   );

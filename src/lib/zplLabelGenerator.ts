@@ -80,6 +80,62 @@ function formatNutrition(n: ZplLabelData['nutrition']): [string, string, string,
 }
 
 /**
+ * Applique une rotation de 90° anti-horaire (CCW) à un ZPL généré.
+ * - Échange PW (largeur d'impression) et LL (longueur d'étiquette)
+ * - Transforme chaque coordonnée (x,y) en (y, W-x) où W = ancienne PW
+ * - Adapte la taille/position des rectangles ^GB liés au ^FO précédent
+ * - Décale chaque orientation de champ de 90° CCW : N→B, R→N, I→R, B→I
+ */
+function rotateZplCcw90(zpl: string): string {
+  // Récupère la largeur et longueur courantes
+  const pwMatch = zpl.match(/\^PW(\d+)/);
+  const llMatch = zpl.match(/\^LL(\d+)/);
+  if (!pwMatch || !llMatch) return zpl;
+  const oldPW = parseInt(pwMatch[1], 10);
+  const oldLL = parseInt(llMatch[1], 10);
+
+  let out = zpl;
+
+  // 1) Swap PW / LL
+  out = out.replace(/\^PW\d+/, `^PW${oldLL}`);
+  out = out.replace(/\^LL\d+/, `^LL${oldPW}`);
+
+  // 2) Traite chaque paire ^FO x,y ^GB w,h,t (rectangles liés à ^FO)
+  out = out.replace(
+    /\^FO(\d+),(\d+)\^GB(\d+),(\d+),(\d+)/g,
+    (_, fx, fy, gw, gh, gt) => {
+      const x = parseInt(fx, 10);
+      const y = parseInt(fy, 10);
+      const w = parseInt(gw, 10);
+      const h = parseInt(gh, 10);
+      const newX = y;
+      const newY = oldPW - x - w;
+      return `^FO${newX},${newY}^GB${h},${w},${gt}`;
+    }
+  );
+
+  // 3) ^FT x,y et ^FO x,y restants
+  out = out.replace(/\^FT(\d+),(\d+)/g, (_, sx, sy) => {
+    const x = parseInt(sx, 10);
+    const y = parseInt(sy, 10);
+    return `^FT${y},${oldPW - x}`;
+  });
+  out = out.replace(/\^FO(\d+),(\d+)/g, (_, sx, sy) => {
+    const x = parseInt(sx, 10);
+    const y = parseInt(sy, 10);
+    return `^FO${y},${oldPW - x}`;
+  });
+
+  // 4) Décale les orientations de champ : N→B, R→N, I→R, B→I
+  // ^A0X,  ^BCX,  (où X = orientation)
+  const rotMap: Record<string, string> = { N: 'B', R: 'N', I: 'R', B: 'I' };
+  out = out.replace(/\^A0([NRIB]),/g, (_, o) => `^A0${rotMap[o]},`);
+  out = out.replace(/\^BC([NRIB])(,|\^)/g, (_, o, sep) => `^BC${rotMap[o]}${sep}`);
+
+  return out;
+}
+
+/**
  * Remplit le template ZPL avec les données et retourne le ZPL prêt à imprimer.
  * Le template doit utiliser des placeholders au format {{KEY}}.
  */
@@ -125,7 +181,8 @@ export function fillZplTemplate(template: string, data: ZplLabelData): string {
     STORAGE_L2: storageLines[1] || '',
   };
 
-  return template.replace(/\{\{(\w+)\}\}/g, (_, k) => replacements[k] ?? '');
+  const filled = template.replace(/\{\{(\w+)\}\}/g, (_, k) => replacements[k] ?? '');
+  return rotateZplCcw90(filled);
 }
 
 /**

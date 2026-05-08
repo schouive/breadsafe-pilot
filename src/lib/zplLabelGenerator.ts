@@ -124,6 +124,7 @@ export function fillZplTemplate(template: string, data: ZplLabelData): string {
     LOT: lotValue,
     DDM_J: j,
     DDM_YY: yy,
+    DDM_FR: fr,
     QTY: String(Math.max(1, data.quantity)),
     STORAGE_L1: storageLines[0] || '',
     STORAGE_L2: storageLines[1] || '',

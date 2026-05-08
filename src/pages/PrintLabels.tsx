@@ -627,12 +627,12 @@ function LabelMaskPreview({
               </div>
             </div>
 
-            {/* Recyclage + barcode row */}
-            <div className="flex items-end gap-2 flex-1">
-              <div className="flex-1 text-center text-[9px] sm:text-[11px] italic">
+            {/* Recyclage + triman row */}
+            <div className="flex items-center justify-center gap-2 flex-1">
+              <div className="text-center text-[9px] sm:text-[11px] italic">
                 Carton et sachet<br />recyclables
               </div>
-              <div className="text-2xl sm:text-3xl">♻</div>
+              <img src={labelTriman} alt="Triman" className="h-8 sm:h-12 w-auto object-contain" />
             </div>
             {product.barcode_value ? (
               <div>

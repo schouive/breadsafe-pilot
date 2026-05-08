@@ -524,6 +524,9 @@ export default function PrintLabels() {
             <Button variant="outline" size="sm" onClick={handlePickPrinter} className="w-full">
               <Printer className="h-4 w-4 mr-2" /> Choisir / changer l'imprimante Zebra
             </Button>
+            <Button variant="secondary" size="sm" onClick={handleDownloadZpl} className="w-full">
+              <Download className="h-4 w-4 mr-2" /> Télécharger le ZPL de secours
+            </Button>
 
             <div className="flex gap-3 pt-2">
               <Button variant="outline" size="lg" onClick={() => setStep(2)} className="flex-1">

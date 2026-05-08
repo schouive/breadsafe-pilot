@@ -130,10 +130,15 @@ export default function PrintLabels() {
       .maybeSingle();
     const zplTemplate = (tpl?.zpl_content as string | null) || DEFAULT_PRODUCT_LABEL_ZPL;
 
+    // Quantité par conditionnement (U01=1, C05=5, C24=24, PAL=quantité palette inconnue → 1)
+    const PACKAGING_QTY: Record<string, number> = { U01: 1, C05: 5, C24: 24, PAL: 1 };
+    const packQty = PACKAGING_QTY[selected.packaging] ?? 1;
+    const totalNetWeight = selected.net_weight != null ? selected.net_weight * packQty : null;
+
     return fillZplTemplate(zplTemplate, {
       designation: selected.product_name || selected.erp_label,
       barcode: `${(selected.erp_code || '').replace(/\D/g, '')}${(lot || '').replace(/\D/g, '')}`,
-      netWeight: selected.net_weight,
+      netWeight: totalNetWeight,
       netWeightUnit: selected.net_weight_unit,
       ingredientsHtml: selected.ingredients_html,
       allergens: selected.allergen_statement || '',

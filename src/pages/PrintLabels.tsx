@@ -627,46 +627,36 @@ function LabelMaskPreview({
           {/* Left column */}
           <div
             className="flex-1 min-w-0 leading-tight overflow-hidden"
-            style={{ fontSize: '2cqw', display: 'flex', flexDirection: 'column', gap: '0.3cqw' }}
+            style={{ fontSize: '2.6cqw', display: 'flex', flexDirection: 'column', gap: '0.5cqw' }}
           >
-            <div className="min-h-0" style={{ overflow: 'hidden' }}>
-              <div className="font-bold">Ingrédients :</div>
+            <div className="min-h-0 flex-1" style={{ overflow: 'hidden' }}>
+              <span className="font-bold">Ingrédients : </span>
               {ingredientsHtml ? (
-                <div
+                <span
                   className="break-words"
-                  style={{ display: '-webkit-box', WebkitLineClamp: 7, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}
                   dangerouslySetInnerHTML={{ __html: ingredientsHtml }}
                 />
               ) : (
-                <div className="text-destructive">Manquant</div>
+                <span className="text-destructive">Manquant</span>
               )}
             </div>
             {traces && (
-              <div
-                className="break-words"
-                style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}
-              >
+              <div className="break-words shrink-0">
                 Traces éventuelles de : {traces}
               </div>
             )}
-            <div
-              className="italic break-words"
-              style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}
-            >
+            <div className="italic break-words shrink-0">
               {product.storage_instructions || 'À conserver dans le sachet à température ambiante de préférence inférieure à 30°C'}
             </div>
             {product.thawing_instructions && (
-              <div
-                className="italic break-words"
-                style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}
-              >
+              <div className="italic break-words shrink-0">
                 {product.thawing_instructions}
               </div>
             )}
-            <div className="min-h-0" style={{ overflow: 'hidden' }}>
+            <div className="shrink-0" style={{ overflow: 'hidden' }}>
               <div className="font-bold">Valeurs nutritionnelles pour 100g :</div>
               {nutriLines.map((l, i) => (
-                <div key={i} className="break-words truncate">{l}</div>
+                <div key={i} className="break-words">{l}</div>
               ))}
             </div>
           </div>

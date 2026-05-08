@@ -703,21 +703,20 @@ function LabelMaskPreview({
             </div>
             {(() => {
               const composed = `${(product.erp_code || '').replace(/\D/g, '')}${(lot || '').replace(/\D/g, '')}`;
-              return composed ? (
-                <div className="shrink-0">
+              if (!composed) return null;
+              return (
+                <div className="shrink-0" style={{ marginTop: 'auto' }}>
                   <div
                     className="w-full"
                     style={{
-                      height: '4cqw',
+                      height: '3cqw',
                       background: 'repeating-linear-gradient(90deg, #000 0 2px, #fff 2px 4px, #000 4px 5px, #fff 5px 8px, #000 8px 9px, #fff 9px 11px)',
                     }}
                   />
-                  <div className="text-center font-mono truncate" style={{ fontSize: '2.2cqw' }}>
+                  <div className="text-center font-mono truncate" style={{ fontSize: '1.8cqw', lineHeight: 1 }}>
                     {composed}
                   </div>
                 </div>
-              ) : (
-                <div className="text-destructive text-center" style={{ fontSize: '2cqw' }}>Pas de code-barres</div>
               );
             })()}
           </div>

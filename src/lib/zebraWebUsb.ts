@@ -148,6 +148,15 @@ async function printZplWithBrowserPrint(zpl: string): Promise<void> {
  * Demande l'autorisation utilisateur lors du premier appel.
  */
 export async function printZpl(zpl: string, opts: { forcePicker?: boolean } = {}): Promise<ZebraPrintResult> {
+  if (!opts.forcePicker && shouldPreferBrowserPrint()) {
+    try {
+      await printZplWithBrowserPrint(zpl);
+      return { method: 'browserprint' };
+    } catch (browserPrintError) {
+      if (!isWebUsbSupported()) throw browserPrintError;
+    }
+  }
+
   try {
     const dev = (cachedDevice && !opts.forcePicker) ? cachedDevice : await openZebraDevice(opts.forcePicker);
     const data = new TextEncoder().encode(zpl);

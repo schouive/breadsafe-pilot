@@ -80,44 +80,6 @@ function formatNutrition(n: ZplLabelData['nutrition']): [string, string, string,
 }
 
 /**
- * Rotation 90° horaire de la mise en page (coordonnées, rectangles,
- * code-barres) PLUS rotation 180° supplémentaire sur le texte.
- *
- * Demande utilisateur : « les éléments graphiques (lignes, code-barres)
- * tournés 90° sens horaire, et les textes à 180° de plus ».
- *
- * Transformations ZPL (template original 791 x 1205) :
- *  - PW791  ↔ LL1205        (canvas pivote)
- *  - ^FOx,y / ^FTx,y → (H−y, x)   où H = 1205
- *  - ^GBw,h,t → ^GBh,w,t          (rectangles : on échange largeur/hauteur)
- *  - Orientation texte ^A0  : N→B, R→N, I→R, B→I  (90°CW + 180° = 270°CW)
- *  - Orientation code-barres ^BC : N→R, R→I, I→B, B→N (90°CW pur)
- */
-function rotateLayout90CwTextFlipped(zpl: string): string {
-  const H = 1205;
-  const textMap: Record<string, string> = { N: 'B', R: 'N', I: 'R', B: 'I' };
-  const graphicMap: Record<string, string> = { N: 'R', R: 'I', I: 'B', B: 'N' };
-  let out = zpl;
-
-  // Swap canvas dimensions
-  out = out.replace(/\^PW791\b/g, '^PW1205').replace(/\^LL1205\b/g, '^LL791');
-
-  // Rotate field origins / text positions: (x, y) → (H − y, x)
-  out = out.replace(/\^FO(\d+),(\d+)/g, (_, x, y) => `^FO${H - parseInt(y, 10)},${x}`);
-  out = out.replace(/\^FT(\d+),(\d+)/g, (_, x, y) => `^FT${H - parseInt(y, 10)},${x}`);
-
-  // Rotate rectangles: swap width/height (thickness preserved)
-  out = out.replace(/\^GB(\d+),(\d+),(\d+)/g, (_, w, h, t) => `^GB${h},${w},${t}`);
-
-  // Text orientation (90° CW + 180°)
-  out = out.replace(/\^A0([NRIB]),/g, (_, o) => `^A0${textMap[o]},`);
-  // Barcode orientation (pure 90° CW, follows canvas)
-  out = out.replace(/\^BC([NRIB])(,|\^)/g, (_, o, sep) => `^BC${graphicMap[o]}${sep}`);
-
-  return out;
-}
-
-/**
  * Remplit le template ZPL avec les données et retourne le ZPL prêt à imprimer.
  * Le template doit utiliser des placeholders au format {{KEY}}.
  */
@@ -163,8 +125,7 @@ export function fillZplTemplate(template: string, data: ZplLabelData): string {
     STORAGE_L2: storageLines[1] || '',
   };
 
-  const filled = template.replace(/\{\{(\w+)\}\}/g, (_, k) => replacements[k] ?? '');
-  return rotateLayout90CwTextFlipped(filled);
+  return template.replace(/\{\{(\w+)\}\}/g, (_, k) => replacements[k] ?? '');
 }
 
 /**

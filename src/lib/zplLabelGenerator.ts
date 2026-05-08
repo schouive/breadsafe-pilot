@@ -80,49 +80,19 @@ function formatNutrition(n: ZplLabelData['nutrition']): [string, string, string,
 }
 
 /**
- * Applique une rotation de 180° à un ZPL généré.
- * Bien plus simple que 90° : pas de swap PW/LL, w/h des rectangles inchangés,
- * juste un miroir des coordonnées et une inversion d'orientation des champs.
+ * Applique une rotation de 90° anti-horaire UNIQUEMENT sur l'orientation
+ * du texte/code-barres, sans toucher aux coordonnées.
+ * La mise en page (rectangles, positions, code-barres) reste identique
+ * au template/aperçu — seul le sens d'écriture change.
  *
- * Transformations :
- *  - (x, y) → (W - x, H - y)
- *  - ^GB : (x, y) → (W - x - w, H - y - h), w et h conservés
- *  - Orientation : N→I, R→B, I→N, B→R
+ * Mapping orientations ZPL (N=0°, R=90°CW, I=180°, B=270°CW=90°CCW) :
+ *  Ajout 90° CCW :  N→B, R→N, I→R, B→I
  */
-function rotateZpl180(zpl: string): string {
-  const pwMatch = zpl.match(/\^PW(\d+)/);
-  const llMatch = zpl.match(/\^LL(\d+)/);
-  if (!pwMatch || !llMatch) return zpl;
-  const W = parseInt(pwMatch[1], 10);
-  const H = parseInt(llMatch[1], 10);
-
+function rotateTextCcw90(zpl: string): string {
+  const rotMap: Record<string, string> = { N: 'B', R: 'N', I: 'R', B: 'I' };
   let out = zpl;
-
-  // 1) Rectangles ^FO x,y ^GB w,h,t
-  out = out.replace(
-    /\^FO(\d+),(\d+)\^GB(\d+),(\d+),(\d+)/g,
-    (_, fx, fy, gw, gh, gt) => {
-      const x = parseInt(fx, 10);
-      const y = parseInt(fy, 10);
-      const w = parseInt(gw, 10);
-      const h = parseInt(gh, 10);
-      return `^FO${W - x - w},${H - y - h}^GB${w},${h},${gt}`;
-    }
-  );
-
-  // 2) ^FT x,y et ^FO x,y restants
-  out = out.replace(/\^FT(\d+),(\d+)/g, (_, sx, sy) =>
-    `^FT${W - parseInt(sx, 10)},${H - parseInt(sy, 10)}`
-  );
-  out = out.replace(/\^FO(\d+),(\d+)/g, (_, sx, sy) =>
-    `^FO${W - parseInt(sx, 10)},${H - parseInt(sy, 10)}`
-  );
-
-  // 3) Orientation des champs : N↔I, R↔B
-  const rotMap: Record<string, string> = { N: 'I', R: 'B', I: 'N', B: 'R' };
   out = out.replace(/\^A0([NRIB]),/g, (_, o) => `^A0${rotMap[o]},`);
   out = out.replace(/\^BC([NRIB])(,|\^)/g, (_, o, sep) => `^BC${rotMap[o]}${sep}`);
-
   return out;
 }
 

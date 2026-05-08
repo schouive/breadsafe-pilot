@@ -37,6 +37,8 @@ export interface ZplLabelData {
   lotNumber: string;               // ex "L00326" (le préfixe L est inclus)
   ddm: string;                     // ISO yyyy-mm-dd
   quantity: number;
+  storageInstructions?: string | null;
+  thawingInstructions?: string | null;
 }
 
 function cleanHtml(html: string | null): string {
@@ -85,6 +87,11 @@ export function fillZplTemplate(template: string, data: ZplLabelData): string {
   const nutri = formatNutrition(data.nutrition);
   const { j, yy } = computeJulianDay(data.ddm);
 
+  const storageText = [data.storageInstructions, data.thawingInstructions]
+    .filter(Boolean)
+    .join(' — ') || 'A conserver dans le sachet a temperature ambiante de preference inferieure a 30 C';
+  const storageLines = splitIntoLines(removeAccents(storageText), 42, 2);
+
   // Le lot peut être saisi avec ou sans préfixe "L" — on retire le L pour ne pas le doubler
   // (le template dessine déjà un "L" séparé en gros caractères)
   const lotValue = data.lotNumber.replace(/^L/i, '');
@@ -107,6 +114,8 @@ export function fillZplTemplate(template: string, data: ZplLabelData): string {
     DDM_J: j,
     DDM_YY: yy,
     QTY: String(Math.max(1, data.quantity)),
+    STORAGE_L1: storageLines[0] || '',
+    STORAGE_L2: storageLines[1] || '',
   };
 
   return template.replace(/\{\{(\w+)\}\}/g, (_, k) => replacements[k] ?? '');
@@ -153,6 +162,6 @@ export const DEFAULT_PRODUCT_LABEL_ZPL = `CT~~CD,~CC^~CT~
 ^FO338,28^GB195,409,12^FS
 ^FT562,347^A0B,29,28^FB192,1,0,C^FH\\^FDCarton et sachet^FS
 ^FT598,347^A0B,29,28^FB192,1,0,C^FH\\^FDrecyclables^FS
-^FT488,1193^A0B,38,36^FH\\^FDA conserver dans le sachet a temperature^FS
-^FT534,1193^A0B,38,36^FH\\^FDambiante de preference inferieure a 30 C^FS
+^FT488,1193^A0B,38,36^FH\\^FD{{STORAGE_L1}}^FS
+^FT534,1193^A0B,38,36^FH\\^FD{{STORAGE_L2}}^FS
 ^PQ{{QTY}},0,1,Y^XZ`;

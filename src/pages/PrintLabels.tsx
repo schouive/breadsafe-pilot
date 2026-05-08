@@ -142,6 +142,8 @@ export default function PrintLabels() {
       lotNumber: lot,
       ddm,
       quantity: Number(quantity),
+      storageInstructions: selected.storage_instructions,
+      thawingInstructions: selected.thawing_instructions,
     });
   };
 
@@ -624,8 +626,11 @@ function LabelMaskPreview({
               <span>{traces || '—'}</span>
             </div>
             <div className="italic break-words">
-              À conserver dans le sachet à température ambiante de préférence inférieure à 30°C
+              {product.storage_instructions || 'À conserver dans le sachet à température ambiante de préférence inférieure à 30°C'}
             </div>
+            {product.thawing_instructions && (
+              <div className="italic break-words">{product.thawing_instructions}</div>
+            )}
             <div className="min-h-0" style={{ overflow: 'hidden' }}>
               <div className="font-bold">Valeurs nutritionnelles pour 100g :</div>
               {nutriLines.map((l, i) => <div key={i} className="break-words">{l}</div>)}

@@ -459,7 +459,7 @@ export default function PrintLabels() {
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-bold uppercase tracking-wide text-primary">
-                  Données étiquette (depuis fiche technique)
+                  Aperçu du masque d'étiquette
                 </h3>
                 {selected.inco_status && (
                   <Badge variant={selected.inco_status === 'validated' ? 'default' : 'destructive'}>
@@ -468,52 +468,11 @@ export default function PrintLabels() {
                 )}
               </div>
 
-              <LabelDataBlock
-                title="Désignation produit"
-                content={selected.product_name || selected.erp_label}
+              <LabelMaskPreview
+                product={selected}
+                lot={lot}
+                ddm={ddm}
               />
-              <LabelDataBlock
-                title="Poids net"
-                content={selected.net_weight ? `${selected.net_weight} ${selected.net_weight_unit || 'g'}` : null}
-              />
-              <LabelDataBlock
-                title="Liste des ingrédients (INCO)"
-                html={selected.ingredients_html}
-              />
-              <LabelDataBlock
-                title="Allergènes"
-                content={selected.allergen_statement}
-              />
-              <LabelDataBlock
-                title="Conservation"
-                content={selected.storage_instructions}
-              />
-              {selected.thawing_instructions && (
-                <LabelDataBlock
-                  title="Décongélation"
-                  content={selected.thawing_instructions}
-                />
-              )}
-              <LabelDataBlock title="Valeurs nutritionnelles / 100 g">
-                {selected.nutrition ? (
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-1 text-sm">
-                    <NutriRow label="Énergie" value={
-                      selected.nutrition.energyKj || selected.nutrition.energyKcal
-                        ? `${selected.nutrition.energyKj ?? '—'} kJ / ${selected.nutrition.energyKcal ?? '—'} kcal`
-                        : null
-                    } />
-                    <NutriRow label="Matières grasses" value={fmtNutri(selected.nutrition.fat, 'g')} />
-                    <NutriRow label="dont AGS" value={fmtNutri(selected.nutrition.saturatedFat, 'g')} />
-                    <NutriRow label="Glucides" value={fmtNutri(selected.nutrition.carbohydrates, 'g')} />
-                    <NutriRow label="dont sucres" value={fmtNutri(selected.nutrition.sugars, 'g')} />
-                    <NutriRow label="Fibres" value={fmtNutri(selected.nutrition.fiber, 'g')} />
-                    <NutriRow label="Protéines" value={fmtNutri(selected.nutrition.protein, 'g')} />
-                    <NutriRow label="Sel" value={fmtNutri(selected.nutrition.salt, 'g')} />
-                  </div>
-                ) : (
-                  <p className="text-sm text-destructive">Aucune donnée nutritionnelle</p>
-                )}
-              </LabelDataBlock>
             </div>
 
             <Separator />

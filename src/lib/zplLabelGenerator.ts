@@ -87,6 +87,11 @@ export function fillZplTemplate(template: string, data: ZplLabelData): string {
   const nutri = formatNutrition(data.nutrition);
   const { j, yy } = computeJulianDay(data.ddm);
 
+  const storageText = [data.storageInstructions, data.thawingInstructions]
+    .filter(Boolean)
+    .join(' — ') || 'A conserver dans le sachet a temperature ambiante de preference inferieure a 30 C';
+  const storageLines = splitIntoLines(removeAccents(storageText), 42, 2);
+
   // Le lot peut être saisi avec ou sans préfixe "L" — on retire le L pour ne pas le doubler
   // (le template dessine déjà un "L" séparé en gros caractères)
   const lotValue = data.lotNumber.replace(/^L/i, '');

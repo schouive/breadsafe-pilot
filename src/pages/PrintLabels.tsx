@@ -654,7 +654,7 @@ function LabelMaskPreview({
         </div>
       </div>
       <p className="text-xs text-muted-foreground text-center mt-2">
-        Aperçu visuel du masque imprimé (150 × 100 mm).
+        Aperçu visuel du masque imprimé (101.6 × 63.5 mm).
       </p>
     </div>
   );

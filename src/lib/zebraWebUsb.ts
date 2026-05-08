@@ -12,6 +12,23 @@ const ZEBRA_VENDOR_ID = 0x0a5f; // Zebra Technologies
 interface ZebraDevice {
   device: USBDevice;
   endpointOut: number;
+  interfaceNumber: number;
+}
+
+export type ZebraPrintMethod = 'webusb' | 'browserprint';
+
+export interface ZebraPrintResult {
+  method: ZebraPrintMethod;
+}
+
+interface BrowserPrintDevice {
+  name: string;
+  uid: string;
+  connection: string;
+  deviceType: string;
+  version?: number;
+  provider?: string;
+  manufacturer?: string;
 }
 
 let cachedDevice: ZebraDevice | null = null;
@@ -66,18 +83,83 @@ async function openZebraDevice(forcePicker = false): Promise<ZebraDevice> {
     );
   }
 
-  cachedDevice = { device, endpointOut };
+  cachedDevice = { device, endpointOut, interfaceNumber };
   return cachedDevice;
+}
+
+function isUsbAccessBlocked(error: unknown): boolean {
+  const message = String((error as Error)?.message ?? error ?? '').toLowerCase();
+  return message.includes('access denied') || message.includes('utilisée par le pilote') || message.includes('claiminterface');
+}
+
+function browserPrintBaseUrl(): string {
+  return window.location.protocol === 'https:' ? 'https://localhost:9101/' : 'http://localhost:9100/';
+}
+
+function browserPrintRequest(method: 'GET' | 'POST', path: string, body?: unknown): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open(method, browserPrintBaseUrl() + path, true);
+    xhr.timeout = 6000;
+    xhr.onreadystatechange = () => {
+      if (xhr.readyState !== XMLHttpRequest.DONE) return;
+      if (xhr.status === 200) resolve(xhr.responseText);
+      else reject(new Error(xhr.responseText || `Service Zebra indisponible (${xhr.status || 'timeout'})`));
+    };
+    xhr.onerror = () => reject(new Error('Service Zebra Browser Print introuvable sur ce poste.'));
+    xhr.ontimeout = () => reject(new Error('Service Zebra Browser Print trop lent ou introuvable.'));
+    xhr.send(body ? JSON.stringify(body) : undefined);
+  });
+}
+
+async function getDefaultBrowserPrintDevice(): Promise<BrowserPrintDevice> {
+  const response = await browserPrintRequest('GET', 'default?type=printer');
+  if (!response) throw new Error('Aucune imprimante par défaut configurée dans Zebra Browser Print.');
+  return JSON.parse(response) as BrowserPrintDevice;
+}
+
+async function printZplWithBrowserPrint(zpl: string): Promise<void> {
+  const device = await getDefaultBrowserPrintDevice();
+  await browserPrintRequest('POST', 'write', {
+    device: {
+      name: device.name,
+      uid: device.uid,
+      connection: device.connection,
+      deviceType: device.deviceType,
+      version: device.version ?? 2,
+      provider: device.provider,
+      manufacturer: device.manufacturer,
+    },
+    data: zpl,
+  });
 }
 
 /**
  * Envoie le ZPL fourni à l'imprimante Zebra connectée.
  * Demande l'autorisation utilisateur lors du premier appel.
  */
-export async function printZpl(zpl: string, opts: { forcePicker?: boolean } = {}): Promise<void> {
-  const dev = (cachedDevice && !opts.forcePicker) ? cachedDevice : await openZebraDevice(opts.forcePicker);
-  const data = new TextEncoder().encode(zpl);
-  await dev.device.transferOut(dev.endpointOut, data);
+export async function printZpl(zpl: string, opts: { forcePicker?: boolean } = {}): Promise<ZebraPrintResult> {
+  try {
+    const dev = (cachedDevice && !opts.forcePicker) ? cachedDevice : await openZebraDevice(opts.forcePicker);
+    const data = new TextEncoder().encode(zpl);
+    await dev.device.transferOut(dev.endpointOut, data);
+    return { method: 'webusb' };
+  } catch (error) {
+    cachedDevice = null;
+    if (!isUsbAccessBlocked(error)) throw error;
+
+    try {
+      await printZplWithBrowserPrint(zpl);
+      return { method: 'browserprint' };
+    } catch (browserPrintError) {
+      throw new Error(
+        "L'imprimante est reconnue, mais Windows bloque l'accès WebUSB. " +
+        "Installez/ouvrez Zebra Browser Print puis définissez cette imprimante par défaut, ou utilisez le téléchargement ZPL. " +
+        `Détail WebUSB : ${(error as Error)?.message ?? error}. ` +
+        `Détail Browser Print : ${(browserPrintError as Error)?.message ?? browserPrintError}`
+      );
+    }
+  }
 }
 
 export function isZebraSupported(): boolean {

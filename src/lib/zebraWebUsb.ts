@@ -115,8 +115,25 @@ function shouldPreferBrowserPrint(): boolean {
   return !isWebUsbSupported() || navigator.userAgent.toLowerCase().includes('windows');
 }
 
+function isEmbeddedApp(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    return window.self !== window.top;
+  } catch {
+    return true;
+  }
+}
+
 function getBrowserPrintHelpMessage(detail?: unknown): string {
   const message = String((detail as Error)?.message ?? detail ?? 'Service Zebra Browser Print indisponible.');
+
+  if (isEmbeddedApp() && (message.toLowerCase().includes('certificat localhost') || message.toLowerCase().includes('cors') || message.toLowerCase().includes('bloqué par le navigateur'))) {
+    return (
+      'Zebra Browser Print est bloqué dans l’aperçu intégré du navigateur. ' +
+      'Ouvrez l’application dans un onglet normal (URL publiée ou domaine métier), puis relancez l’impression depuis là. ' +
+      `Détail : ${message}`
+    );
+  }
 
   if (message.toLowerCase().includes(BROWSER_PRINT_SSL_ACCEPTED_MESSAGE)) {
     return (

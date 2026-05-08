@@ -16,11 +16,6 @@ interface ZebraDevice {
 
 let cachedDevice: ZebraDevice | null = null;
 
-declare global {
-  interface Navigator {
-    usb?: USB;
-  }
-}
 
 function isWebUsbSupported(): boolean {
   return typeof navigator !== 'undefined' && !!navigator.usb;

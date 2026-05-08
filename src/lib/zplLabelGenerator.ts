@@ -53,14 +53,18 @@ function cleanHtml(html: string | null): string {
     .trim();
 }
 
-function computeJulianDay(iso: string): { j: string; yy: string } {
+function computeJulianDay(iso: string): { j: string; yy: string; fr: string } {
   const d = new Date(iso + 'T00:00:00');
-  if (isNaN(d.getTime())) return { j: '', yy: '' };
+  if (isNaN(d.getTime())) return { j: '', yy: '', fr: '' };
   const start = new Date(d.getFullYear(), 0, 0);
   const dayOfYear = Math.floor((d.getTime() - start.getTime()) / 86400000);
+  const dd = String(d.getDate()).padStart(2, '0');
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const yyyy = String(d.getFullYear());
   return {
     j: String(dayOfYear).padStart(3, '0'),
-    yy: String(d.getFullYear()).slice(-2),
+    yy: yyyy.slice(-2),
+    fr: `${dd}/${mm}/${yyyy}`,
   };
 }
 
@@ -84,14 +88,14 @@ function formatNutrition(n: ZplLabelData['nutrition']): [string, string, string,
  * Le template doit utiliser des placeholders au format {{KEY}}.
  */
 export function fillZplTemplate(template: string, data: ZplLabelData): string {
-  const ingrLines = splitIntoLines(cleanHtml(data.ingredientsHtml), 42, 6);
+  const ingrLines = splitIntoLines(cleanHtml(data.ingredientsHtml), 32, 5);
   const nutri = formatNutrition(data.nutrition);
-  const { j, yy } = computeJulianDay(data.ddm);
+  const { j, yy, fr } = computeJulianDay(data.ddm);
 
   const storageText = [data.storageInstructions, data.thawingInstructions]
     .filter(Boolean)
     .join(' — ') || 'A conserver dans le sachet a temperature ambiante de preference inferieure a 30 C';
-  const storageLines = splitIntoLines(removeAccents(storageText), 42, 2);
+  const storageLines = splitIntoLines(removeAccents(storageText), 36, 2);
 
   // Le lot peut être saisi avec ou sans préfixe "L" — on retire le L pour ne pas le doubler
   // (le template dessine déjà un "L" séparé en gros caractères)
@@ -111,8 +115,8 @@ export function fillZplTemplate(template: string, data: ZplLabelData): string {
     INGR_L4: ingrLines[3] || '',
     INGR_L5: ingrLines[4] || '',
     INGR_L6: ingrLines[5] || '',
-    ALLERGENES: '',
-    TRACES: tracesValue,
+    ALLERGENES: data.allergens ? removeAccents(data.allergens) : '',
+    TRACES: data.traces ? removeAccents(data.traces) : '',
     NUTRI_L1: nutri[0],
     NUTRI_L2: nutri[1],
     NUTRI_L3: nutri[2],
@@ -120,6 +124,7 @@ export function fillZplTemplate(template: string, data: ZplLabelData): string {
     LOT: lotValue,
     DDM_J: j,
     DDM_YY: yy,
+    DDM_FR: fr,
     QTY: String(Math.max(1, data.quantity)),
     STORAGE_L1: storageLines[0] || '',
     STORAGE_L2: storageLines[1] || '',

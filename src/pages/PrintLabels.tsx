@@ -556,7 +556,12 @@ function LabelMaskPreview({
     return `${w}${u}`;
   };
 
-  const baseName = product.product_name || product.erp_label;
+  // Retire un éventuel grammage en fin de nom (ex: "Buns Potatoe 90g" → "Buns Potatoe")
+  const stripTrailingWeight = (name: string): string =>
+    name.replace(/\s*\d+(?:[.,]\d+)?\s*(?:g|kg|gr|grammes?)\s*$/i, '').trim();
+
+  const rawName = product.product_name || product.erp_label;
+  const baseName = stripTrailingWeight(rawName);
   const designation = packCount > 1
     ? `${baseName} ${packCount}x${formatUnitWeight(unitWeight, unitWeightUnit)}`
     : `${baseName} ${formatUnitWeight(unitWeight, unitWeightUnit)}`;

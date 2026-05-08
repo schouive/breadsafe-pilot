@@ -1,0 +1,1 @@
+UPDATE label_templates SET zpl_content = (SELECT zpl_content FROM label_templates WHERE template_code='PRODUCT_LABEL' LIMIT 0); -- placeholder, will be replaced

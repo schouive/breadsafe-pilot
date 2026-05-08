@@ -37,6 +37,8 @@ export interface ZplLabelData {
   lotNumber: string;               // ex "L00326" (le préfixe L est inclus)
   ddm: string;                     // ISO yyyy-mm-dd
   quantity: number;
+  storageInstructions?: string | null;
+  thawingInstructions?: string | null;
 }
 
 function cleanHtml(html: string | null): string {

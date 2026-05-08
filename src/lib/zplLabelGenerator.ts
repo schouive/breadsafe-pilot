@@ -109,6 +109,8 @@ export function fillZplTemplate(template: string, data: ZplLabelData): string {
     DDM_J: j,
     DDM_YY: yy,
     QTY: String(Math.max(1, data.quantity)),
+    STORAGE_L1: storageLines[0] || '',
+    STORAGE_L2: storageLines[1] || '',
   };
 
   return template.replace(/\{\{(\w+)\}\}/g, (_, k) => replacements[k] ?? '');

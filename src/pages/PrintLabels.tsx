@@ -631,18 +631,19 @@ function LabelMaskPreview({
           >
             <div className="min-h-0" style={{ overflow: 'hidden' }}>
               <div className="font-bold">Ingrédients :</div>
-              <div className="break-words" style={{ display: '-webkit-box', WebkitLineClamp: 5, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                {ingredients || <span className="text-destructive">Manquant</span>}
-              </div>
+              {ingredientsHtml ? (
+                <div
+                  className="break-words"
+                  style={{ display: '-webkit-box', WebkitLineClamp: 6, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}
+                  dangerouslySetInnerHTML={{ __html: ingredientsHtml }}
+                />
+              ) : (
+                <div className="text-destructive">Manquant</div>
+              )}
             </div>
-            <div className="break-words">
-              <span className="font-bold">Allergène(s) : </span>
-              <span>{allergens || '—'}</span>
-            </div>
-            <div className="break-words">
-              <span className="font-bold">Trace(s) : </span>
-              <span>{traces || '—'}</span>
-            </div>
+            {traces && (
+              <div className="break-words">Traces éventuelles de : {traces}</div>
+            )}
             <div className="italic break-words">
               {product.storage_instructions || 'À conserver dans le sachet à température ambiante de préférence inférieure à 30°C'}
             </div>

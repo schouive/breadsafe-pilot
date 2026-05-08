@@ -15,6 +15,9 @@ import {
   type PrintProduct,
 } from '@/hooks/usePrintLabels';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
+import { fillZplTemplate, DEFAULT_PRODUCT_LABEL_ZPL } from '@/lib/zplLabelGenerator';
+import { printZpl, isZebraSupported, pickZebraPrinter } from '@/lib/zebraWebUsb';
 
 const FAMILIES = ['BUN', 'BAG', 'HDG', 'PDM', 'PLQ', 'SPC'];
 
@@ -119,15 +122,45 @@ export default function PrintLabels() {
       toast.error('Aucun template Zebra associé à cet article');
       return;
     }
+    if (!isZebraSupported()) {
+      toast.error("WebUSB non disponible. Utilisez Chrome/Edge en HTTPS.");
+      return;
+    }
     setPrinting(true);
     try {
-      console.log('[print-label]', {
-        erp_code: selected.erp_code,
-        final_sku: finalSku,
-        template: selected.template_name,
-        lot, ddm, quantity: Number(quantity),
+      // 1) Récupérer le contenu ZPL du template (BDD), fallback sur la constante locale
+      const { data: tpl } = await supabase
+        .from('label_templates')
+        .select('zpl_content')
+        .eq('template_code', 'PRODUCT_LABEL')
+        .eq('active', true)
+        .maybeSingle();
+      const zplTemplate = (tpl?.zpl_content as string | null) || DEFAULT_PRODUCT_LABEL_ZPL;
+
+      // 2) Construire les données et générer le ZPL final
+      const allergensText = (() => {
+        if (!selected.allergen_statement) return '';
+        // l'allergen_statement peut contenir "Présents: ... | Traces: ..."
+        return selected.allergen_statement;
+      })();
+      const zpl = fillZplTemplate(zplTemplate, {
+        designation: selected.product_name || selected.erp_label,
+        barcode: selected.barcode_value,
+        netWeight: selected.net_weight,
+        netWeightUnit: selected.net_weight_unit,
+        ingredientsHtml: selected.ingredients_html,
+        allergens: allergensText,
+        traces: '',
+        nutrition: selected.nutrition,
+        lotNumber: lot,
+        ddm,
+        quantity: Number(quantity),
       });
 
+      // 3) Envoi à l'imprimante Zebra
+      await printZpl(zpl);
+
+      // 4) Historique
       await recordPrint.mutateAsync({
         product_id: selected.id,
         final_sku: finalSku,
@@ -147,6 +180,15 @@ export default function PrintLabels() {
       toast.error(e?.message ?? 'Erreur impression');
     } finally {
       setPrinting(false);
+    }
+  };
+
+  const handlePickPrinter = async () => {
+    try {
+      await pickZebraPrinter();
+      toast.success('Imprimante Zebra sélectionnée');
+    } catch (e: any) {
+      toast.error(e?.message ?? 'Sélection annulée');
     }
   };
 
@@ -455,6 +497,9 @@ export default function PrintLabels() {
               <span className="text-sm text-muted-foreground">Template Zebra</span>
               <Badge variant="default" className="font-mono">{selected.template_name}</Badge>
             </div>
+            <Button variant="outline" size="sm" onClick={handlePickPrinter} className="w-full">
+              <Printer className="h-4 w-4 mr-2" /> Choisir / changer l'imprimante Zebra
+            </Button>
 
             <div className="flex gap-3 pt-2">
               <Button variant="outline" size="lg" onClick={() => setStep(2)} className="flex-1">

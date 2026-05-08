@@ -90,7 +90,7 @@ function formatNutrition(n: ZplLabelData['nutrition']): [string, string, string,
 export function fillZplTemplate(template: string, data: ZplLabelData): string {
   const ingrLines = splitIntoLines(cleanHtml(data.ingredientsHtml), 42, 6);
   const nutri = formatNutrition(data.nutrition);
-  const { j, yy } = computeJulianDay(data.ddm);
+  const { j, yy, fr } = computeJulianDay(data.ddm);
 
   const storageText = [data.storageInstructions, data.thawingInstructions]
     .filter(Boolean)

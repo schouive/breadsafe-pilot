@@ -596,19 +596,19 @@ function LabelMaskPreview({
         }}
       >
         {/* Header: logo M + wordmark + designation */}
-        <div className="flex items-center" style={{ gap: '1.5cqw', height: '14cqw' }}>
-          <div className="flex flex-col items-center shrink-0" style={{ width: '11cqw' }}>
-            <img src={labelLogoM} alt="" style={{ height: '8cqw' }} className="w-auto object-contain" />
-            <img src={labelWordmark} alt="Bread Shop" style={{ height: '3cqw', marginTop: '0.3cqw' }} className="w-auto object-contain" />
+        <div className="flex items-center shrink-0" style={{ gap: '1.5cqw', height: '11cqw' }}>
+          <div className="flex flex-col items-center shrink-0" style={{ width: '10cqw' }}>
+            <img src={labelLogoM} alt="" style={{ height: '7cqw' }} className="w-auto object-contain" />
+            <img src={labelWordmark} alt="Bread Shop" style={{ height: '2.5cqw', marginTop: '0.2cqw' }} className="w-auto object-contain" />
           </div>
           <div
-            className="flex-1 text-center font-extrabold leading-none truncate"
-            style={{ fontSize: '6.5cqw' }}
+            className="flex-1 text-center font-extrabold leading-none truncate min-w-0"
+            style={{ fontSize: '5.5cqw' }}
           >
             {designation}
           </div>
         </div>
-        <div style={{ borderTop: '0.4cqw solid #000', margin: '0.8cqw 0 1cqw' }} />
+        <div className="shrink-0" style={{ borderTop: '0.4cqw solid #000', margin: '0.6cqw 0' }} />
 
         {/* Body: 2 columns — fills remaining space, no overflow */}
         <div className="flex min-h-0 flex-1" style={{ gap: '1.5cqw', overflow: 'hidden' }}>

@@ -164,7 +164,7 @@ export function fillZplTemplate(template: string, data: ZplLabelData): string {
   };
 
   const filled = template.replace(/\{\{(\w+)\}\}/g, (_, k) => replacements[k] ?? '');
-  return rotateTextCcw90(filled);
+  return rotateLayout90CwTextFlipped(filled);
 }
 
 /**

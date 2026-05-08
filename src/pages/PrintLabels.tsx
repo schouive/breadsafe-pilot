@@ -214,8 +214,12 @@ export default function PrintLabels() {
 
   const handlePickPrinter = async () => {
     try {
-      await pickZebraPrinter();
-      toast.success('Imprimante Zebra sélectionnée');
+      const method = await pickZebraPrinter();
+      if (method === 'browserprint') {
+        toast.success('Imprimante détectée via Zebra Browser Print (prête)');
+      } else {
+        toast.success('Imprimante Zebra sélectionnée (WebUSB)');
+      }
     } catch (e: any) {
       toast.error(e?.message ?? 'Sélection annulée');
     }

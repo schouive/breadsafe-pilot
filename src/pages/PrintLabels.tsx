@@ -446,19 +446,6 @@ export default function PrintLabels() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <SummaryRow label="Article" value={`${selected.erp_code} — ${selected.erp_label}`} />
-            <SummaryRow label="SKU final" value={finalSku} mono />
-            <Separator />
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-              <SummaryRow label="Température" value={selected.temperature === 'FR' ? 'Frais' : 'Surgelé'} />
-              <SummaryRow label="Finition" value={selected.slicing === 'SLI' ? 'Tranché' : 'Non tranché'} />
-              <SummaryRow label="Conditionnement" value={PACKAGING_LABELS[selected.packaging]} />
-              <SummaryRow label="Lot" value={lot} mono />
-              <SummaryRow label="DDM" value={new Date(ddm).toLocaleDateString('fr-FR')} />
-              <SummaryRow label="Quantité" value={`${quantity} étiquette(s)`} />
-            </div>
-
-            <Separator />
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-bold uppercase tracking-wide text-primary">

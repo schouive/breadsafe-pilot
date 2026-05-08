@@ -92,6 +92,11 @@ function isUsbAccessBlocked(error: unknown): boolean {
   return message.includes('access denied') || message.includes('utilisée par le pilote') || message.includes('claiminterface');
 }
 
+function shouldPreferBrowserPrint(): boolean {
+  if (typeof navigator === 'undefined') return false;
+  return !isWebUsbSupported() || navigator.userAgent.toLowerCase().includes('windows');
+}
+
 function browserPrintBaseUrl(): string {
   return window.location.protocol === 'https:' ? 'https://localhost:9101/' : 'http://localhost:9100/';
 }
@@ -100,11 +105,15 @@ function browserPrintRequest(method: 'GET' | 'POST', path: string, body?: unknow
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.open(method, browserPrintBaseUrl() + path, true);
-    xhr.timeout = 6000;
+    xhr.timeout = 10000;
     xhr.onreadystatechange = () => {
       if (xhr.readyState !== XMLHttpRequest.DONE) return;
       if (xhr.status === 200) resolve(xhr.responseText);
-      else reject(new Error(xhr.responseText || `Service Zebra indisponible (${xhr.status || 'timeout'})`));
+      else reject(new Error(xhr.responseText || (
+        xhr.status === 0
+          ? 'Service Zebra Browser Print bloqué par le navigateur (certificat localhost ou CORS).'
+          : `Service Zebra indisponible (${xhr.status})`
+      )));
     };
     xhr.onerror = () => reject(new Error('Service Zebra Browser Print introuvable sur ce poste.'));
     xhr.ontimeout = () => reject(new Error('Service Zebra Browser Print trop lent ou introuvable.'));
@@ -139,6 +148,15 @@ async function printZplWithBrowserPrint(zpl: string): Promise<void> {
  * Demande l'autorisation utilisateur lors du premier appel.
  */
 export async function printZpl(zpl: string, opts: { forcePicker?: boolean } = {}): Promise<ZebraPrintResult> {
+  if (!opts.forcePicker && shouldPreferBrowserPrint()) {
+    try {
+      await printZplWithBrowserPrint(zpl);
+      return { method: 'browserprint' };
+    } catch (browserPrintError) {
+      if (!isWebUsbSupported()) throw browserPrintError;
+    }
+  }
+
   try {
     const dev = (cachedDevice && !opts.forcePicker) ? cachedDevice : await openZebraDevice(opts.forcePicker);
     const data = new TextEncoder().encode(zpl);

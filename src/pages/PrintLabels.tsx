@@ -563,11 +563,14 @@ function LabelMaskPreview({
     <div className="w-full overflow-x-auto bg-muted/30 p-4 rounded-md">
       <div
         className="mx-auto bg-white text-black shadow-md p-3"
-        style={{ width: '100%', maxWidth: 820, aspectRatio: '150 / 100', fontFamily: 'Arial, Helvetica, sans-serif' }}
+        style={{ width: '100%', maxWidth: 820, aspectRatio: '101.6 / 63.5', fontFamily: 'Arial, Helvetica, sans-serif' }}
       >
-        {/* Header: logo + designation */}
-        <div className="flex items-center gap-3">
-          <img src="/logo-breadshop.png" alt="Bread Shop" className="h-10 sm:h-14 w-auto shrink-0" />
+        {/* Header: logo M + wordmark + designation */}
+        <div className="flex items-center gap-2">
+          <div className="flex flex-col items-center shrink-0" style={{ width: 70 }}>
+            <img src={labelLogoM} alt="" className="h-8 sm:h-10 w-auto object-contain" />
+            <img src={labelWordmark} alt="Bread Shop" className="h-3 sm:h-4 w-auto object-contain mt-0.5" />
+          </div>
           <div className="flex-1 text-center font-extrabold text-lg sm:text-3xl truncate">
             {designation}
           </div>

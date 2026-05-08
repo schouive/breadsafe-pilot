@@ -162,6 +162,6 @@ export const DEFAULT_PRODUCT_LABEL_ZPL = `CT~~CD,~CC^~CT~
 ^FO338,28^GB195,409,12^FS
 ^FT562,347^A0B,29,28^FB192,1,0,C^FH\\^FDCarton et sachet^FS
 ^FT598,347^A0B,29,28^FB192,1,0,C^FH\\^FDrecyclables^FS
-^FT488,1193^A0B,38,36^FH\\^FDA conserver dans le sachet a temperature^FS
-^FT534,1193^A0B,38,36^FH\\^FDambiante de preference inferieure a 30 C^FS
+^FT488,1193^A0B,38,36^FH\\^FD{{STORAGE_L1}}^FS
+^FT534,1193^A0B,38,36^FH\\^FD{{STORAGE_L2}}^FS
 ^PQ{{QTY}},0,1,Y^XZ`;

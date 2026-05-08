@@ -610,31 +610,31 @@ function LabelMaskPreview({
         </div>
         <div style={{ borderTop: '0.4cqw solid #000', margin: '0.8cqw 0 1cqw' }} />
 
-        {/* Body: 2 columns */}
-        <div className="flex" style={{ gap: '1.5cqw', height: 'calc(100% - 17cqw)' }}>
+        {/* Body: 2 columns — fills remaining space, no overflow */}
+        <div className="flex min-h-0 flex-1" style={{ gap: '1.5cqw', overflow: 'hidden' }}>
           {/* Left column */}
           <div
-            className="flex-1 min-w-0 leading-tight"
-            style={{ fontSize: '2.6cqw', display: 'flex', flexDirection: 'column', gap: '0.6cqw' }}
+            className="flex-1 min-w-0 leading-tight overflow-hidden"
+            style={{ fontSize: '2.4cqw', display: 'flex', flexDirection: 'column', gap: '0.5cqw' }}
           >
-            <div>
+            <div className="min-h-0" style={{ overflow: 'hidden' }}>
               <div className="font-bold">Ingrédients :</div>
-              <div className="break-words">
+              <div className="break-words" style={{ display: '-webkit-box', WebkitLineClamp: 5, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
                 {ingredients || <span className="text-destructive">Manquant</span>}
               </div>
             </div>
-            <div>
+            <div className="break-words">
               <span className="font-bold">Allergène(s) : </span>
               <span>{allergens || '—'}</span>
             </div>
-            <div>
+            <div className="break-words">
               <span className="font-bold">Trace(s) : </span>
               <span>{traces || '—'}</span>
             </div>
-            <div className="italic">
-              A conserver dans le sachet à température ambiante de préférence inférieure à 30°C
+            <div className="italic break-words">
+              À conserver dans le sachet à température ambiante de préférence inférieure à 30°C
             </div>
-            <div>
+            <div className="min-h-0" style={{ overflow: 'hidden' }}>
               <div className="font-bold">Valeurs nutritionnelles pour 100g :</div>
               {nutriLines.map((l, i) => <div key={i} className="break-words">{l}</div>)}
             </div>

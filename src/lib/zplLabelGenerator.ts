@@ -53,14 +53,18 @@ function cleanHtml(html: string | null): string {
     .trim();
 }
 
-function computeJulianDay(iso: string): { j: string; yy: string } {
+function computeJulianDay(iso: string): { j: string; yy: string; fr: string } {
   const d = new Date(iso + 'T00:00:00');
-  if (isNaN(d.getTime())) return { j: '', yy: '' };
+  if (isNaN(d.getTime())) return { j: '', yy: '', fr: '' };
   const start = new Date(d.getFullYear(), 0, 0);
   const dayOfYear = Math.floor((d.getTime() - start.getTime()) / 86400000);
+  const dd = String(d.getDate()).padStart(2, '0');
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const yyyy = String(d.getFullYear());
   return {
     j: String(dayOfYear).padStart(3, '0'),
-    yy: String(d.getFullYear()).slice(-2),
+    yy: yyyy.slice(-2),
+    fr: `${dd}/${mm}/${yyyy}`,
   };
 }
 

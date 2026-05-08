@@ -142,6 +142,8 @@ export default function PrintLabels() {
       lotNumber: lot,
       ddm,
       quantity: Number(quantity),
+      storageInstructions: selected.storage_instructions,
+      thawingInstructions: selected.thawing_instructions,
     });
   };
 

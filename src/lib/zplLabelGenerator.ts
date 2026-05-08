@@ -53,14 +53,18 @@ function cleanHtml(html: string | null): string {
     .trim();
 }
 
-function computeJulianDay(iso: string): { j: string; yy: string } {
+function computeJulianDay(iso: string): { j: string; yy: string; fr: string } {
   const d = new Date(iso + 'T00:00:00');
-  if (isNaN(d.getTime())) return { j: '', yy: '' };
+  if (isNaN(d.getTime())) return { j: '', yy: '', fr: '' };
   const start = new Date(d.getFullYear(), 0, 0);
   const dayOfYear = Math.floor((d.getTime() - start.getTime()) / 86400000);
+  const dd = String(d.getDate()).padStart(2, '0');
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const yyyy = String(d.getFullYear());
   return {
     j: String(dayOfYear).padStart(3, '0'),
-    yy: String(d.getFullYear()).slice(-2),
+    yy: yyyy.slice(-2),
+    fr: `${dd}/${mm}/${yyyy}`,
   };
 }
 
@@ -86,7 +90,7 @@ function formatNutrition(n: ZplLabelData['nutrition']): [string, string, string,
 export function fillZplTemplate(template: string, data: ZplLabelData): string {
   const ingrLines = splitIntoLines(cleanHtml(data.ingredientsHtml), 42, 6);
   const nutri = formatNutrition(data.nutrition);
-  const { j, yy } = computeJulianDay(data.ddm);
+  const { j, yy, fr } = computeJulianDay(data.ddm);
 
   const storageText = [data.storageInstructions, data.thawingInstructions]
     .filter(Boolean)
@@ -120,6 +124,7 @@ export function fillZplTemplate(template: string, data: ZplLabelData): string {
     LOT: lotValue,
     DDM_J: j,
     DDM_YY: yy,
+    DDM_FR: fr,
     QTY: String(Math.max(1, data.quantity)),
     STORAGE_L1: storageLines[0] || '',
     STORAGE_L2: storageLines[1] || '',

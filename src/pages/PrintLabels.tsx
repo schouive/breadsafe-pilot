@@ -132,7 +132,7 @@ export default function PrintLabels() {
 
     return fillZplTemplate(zplTemplate, {
       designation: selected.product_name || selected.erp_label,
-      barcode: selected.barcode_value,
+      barcode: `${(selected.erp_code || '').replace(/\D/g, '')}${(lot || '').replace(/\D/g, '')}`,
       netWeight: selected.net_weight,
       netWeightUnit: selected.net_weight_unit,
       ingredientsHtml: selected.ingredients_html,
@@ -701,22 +701,25 @@ function LabelMaskPreview({
               </div>
               <img src={labelTriman} alt="Triman" style={{ height: '6cqw' }} className="w-auto object-contain" />
             </div>
-            {product.barcode_value ? (
-              <div className="shrink-0">
-                <div
-                  className="w-full"
-                  style={{
-                    height: '4cqw',
-                    background: 'repeating-linear-gradient(90deg, #000 0 2px, #fff 2px 4px, #000 4px 5px, #fff 5px 8px, #000 8px 9px, #fff 9px 11px)',
-                  }}
-                />
-                <div className="text-center font-mono truncate" style={{ fontSize: '2.2cqw' }}>
-                  {product.barcode_value}
+            {(() => {
+              const composed = `${(product.erp_code || '').replace(/\D/g, '')}${(lot || '').replace(/\D/g, '')}`;
+              return composed ? (
+                <div className="shrink-0">
+                  <div
+                    className="w-full"
+                    style={{
+                      height: '4cqw',
+                      background: 'repeating-linear-gradient(90deg, #000 0 2px, #fff 2px 4px, #000 4px 5px, #fff 5px 8px, #000 8px 9px, #fff 9px 11px)',
+                    }}
+                  />
+                  <div className="text-center font-mono truncate" style={{ fontSize: '2.2cqw' }}>
+                    {composed}
+                  </div>
                 </div>
-              </div>
-            ) : (
-              <div className="text-destructive text-center" style={{ fontSize: '2cqw' }}>Pas de code-barres</div>
-            )}
+              ) : (
+                <div className="text-destructive text-center" style={{ fontSize: '2cqw' }}>Pas de code-barres</div>
+              );
+            })()}
           </div>
         </div>
       </div>

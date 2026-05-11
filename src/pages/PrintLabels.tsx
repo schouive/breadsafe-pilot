@@ -128,12 +128,18 @@ export default function PrintLabels() {
       .eq('template_code', 'PRODUCT_LABEL')
       .eq('active', true)
       .maybeSingle();
-    const zplTemplate = (tpl?.zpl_content as string | null) || DEFAULT_PRODUCT_LABEL_ZPL;
+    const storedTemplate = tpl?.zpl_content as string | null;
+    const zplTemplate = storedTemplate?.includes('{{INGR_L20}}') && storedTemplate.includes('{{TRACES_L1}}')
+      ? storedTemplate
+      : DEFAULT_PRODUCT_LABEL_ZPL;
 
     // Poids net total = poids unitaire × nombre d'unités du conditionnement
     const PACK_COUNT_MAP: Record<string, number> = { U01: 1, C05: 5, C24: 24, PAL: 1 };
     const packQty = PACK_COUNT_MAP[selected.packaging] ?? 1;
     const totalNetWeight = selected.net_weight != null ? selected.net_weight * packQty : null;
+
+    const tracesFromStatement = extractTraces(selected.allergen_statement);
+    const traces = selected.traces_statement || tracesFromStatement;
 
     return fillZplTemplate(zplTemplate, {
       designation: selected.product_name || selected.erp_label,
@@ -142,7 +148,7 @@ export default function PrintLabels() {
       netWeightUnit: selected.net_weight_unit,
       ingredientsHtml: selected.ingredients_html,
       allergens: selected.allergen_statement || '',
-      traces: '',
+      traces,
       nutrition: selected.nutrition,
       lotNumber: lot,
       ddm,
@@ -591,7 +597,7 @@ function LabelMaskPreview({
     : '— kg';
   const ingredientsHtml = sanitizeIngredientsHtml(product.ingredients_html);
   const tracesFromStatement = extractTraces(product.allergen_statement);
-  const traces = (product as any).traces_statement || tracesFromStatement || '';
+  const traces = product.traces_statement || tracesFromStatement || '';
   const n = product.nutrition;
   const nutriLines = n ? [
     `Energie ${Math.round(n.energyKj ?? 0)} kJ / ${Math.round(n.energyKcal ?? 0)} kcal`,
@@ -651,7 +657,7 @@ function LabelMaskPreview({
             </div>
             {traces && (
               <div className="break-words shrink-0">
-                Traces éventuelles de : {traces}
+                Peut contenir des traces : {traces}
               </div>
             )}
             <div className="italic break-words shrink-0">

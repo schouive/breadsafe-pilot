@@ -21,6 +21,29 @@
 
 import { removeAccents, splitIntoLines } from './zebraLabelExport';
 
+/**
+ * Découpe un texte en lignes pleines en cassant uniquement sur les espaces (pas sur les virgules).
+ * Permet de remplir au maximum la largeur disponible de l'étiquette.
+ */
+function fillLines(text: string, maxLength: number, maxLines: number): string[] {
+  const clean = removeAccents((text || '').trim()).replace(/\s+/g, ' ');
+  const lines: string[] = [];
+  let remaining = clean;
+  while (remaining.length > 0 && lines.length < maxLines) {
+    if (remaining.length <= maxLength) {
+      lines.push(remaining);
+      remaining = '';
+      break;
+    }
+    let cut = remaining.lastIndexOf(' ', maxLength);
+    if (cut < Math.floor(maxLength * 0.5)) cut = maxLength;
+    lines.push(remaining.substring(0, cut).trim());
+    remaining = remaining.substring(cut).trim();
+  }
+  while (lines.length < maxLines) lines.push('');
+  return lines;
+}
+
 export interface ZplLabelData {
   designation: string;
   barcode: string | null;
@@ -113,22 +136,23 @@ function formatNutrition(n: ZplLabelData['nutrition']): [string, string, string,
  */
 export function fillZplTemplate(template: string, data: ZplLabelData): string {
   // Zone ingrédients maximisée : colonne gauche complète jusqu'aux cadres poids/DDM.
+  // On utilise ^FB natif (largeur 740 dots ≈ 6cm à 300 dpi) pour exploiter toute la largeur.
   const ingredientsText = zplSafe(cleanHtml(data.ingredientsHtml));
-  const ingrLines = splitIntoLines(ingredientsText, 45, 20);
+  const ingrLines = fillLines(ingredientsText, 80, 20);
   const nutri = formatNutrition(data.nutrition);
   const { j, yy, fr } = computeJulianDay(data.ddm);
 
   const storageText = [data.storageInstructions, data.thawingInstructions]
     .filter(Boolean)
     .join(' — ') || 'A conserver dans le sachet a temperature ambiante de preference inferieure a 30 C';
-  const storageLines = splitIntoLines(zplSafe(storageText), 58, 2);
+  const storageLines = fillLines(zplSafe(storageText), 90, 2);
 
   // Le lot peut être saisi avec ou sans préfixe "L" — on retire le L pour ne pas le doubler.
   const lotValue = data.lotNumber.replace(/^L/i, '');
 
   const traceSource = normalizeTraceValue(data.traces) || extractTracesFromStatement(data.allergens);
   const tracesText = traceSource ? `Peut contenir des traces : ${traceSource}` : '';
-  const tracesLines = splitIntoLines(tracesText, 58, 2);
+  const tracesLines = fillLines(tracesText, 80, 2);
 
   const replacements: Record<string, string> = {
     DESIGNATION: zplSafe(data.designation || ''),

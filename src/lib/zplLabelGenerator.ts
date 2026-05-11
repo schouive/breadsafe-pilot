@@ -138,7 +138,7 @@ export function fillZplTemplate(template: string, data: ZplLabelData): string {
   // Zone ingrédients maximisée : colonne gauche complète jusqu'aux cadres poids/DDM.
   // On utilise ^FB natif (largeur 740 dots ≈ 6cm à 300 dpi) pour exploiter toute la largeur.
   const ingredientsText = zplSafe(cleanHtml(data.ingredientsHtml));
-  const ingrLines = splitIntoLines(ingredientsText, 80, 20);
+  const ingrLines = fillLines(ingredientsText, 80, 20);
   const nutri = formatNutrition(data.nutrition);
   const { j, yy, fr } = computeJulianDay(data.ddm);
 

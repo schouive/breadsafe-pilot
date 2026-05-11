@@ -128,7 +128,10 @@ export default function PrintLabels() {
       .eq('template_code', 'PRODUCT_LABEL')
       .eq('active', true)
       .maybeSingle();
-    const zplTemplate = (tpl?.zpl_content as string | null) || DEFAULT_PRODUCT_LABEL_ZPL;
+    const storedTemplate = tpl?.zpl_content as string | null;
+    const zplTemplate = storedTemplate?.includes('{{INGR_L20}}') && storedTemplate.includes('{{TRACES_L1}}')
+      ? storedTemplate
+      : DEFAULT_PRODUCT_LABEL_ZPL;
 
     // Poids net total = poids unitaire × nombre d'unités du conditionnement
     const PACK_COUNT_MAP: Record<string, number> = { U01: 1, C05: 5, C24: 24, PAL: 1 };

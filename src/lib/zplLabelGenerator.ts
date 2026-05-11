@@ -21,6 +21,29 @@
 
 import { removeAccents, splitIntoLines } from './zebraLabelExport';
 
+/**
+ * Découpe un texte en lignes pleines en cassant uniquement sur les espaces (pas sur les virgules).
+ * Permet de remplir au maximum la largeur disponible de l'étiquette.
+ */
+function fillLines(text: string, maxLength: number, maxLines: number): string[] {
+  const clean = removeAccents((text || '').trim()).replace(/\s+/g, ' ');
+  const lines: string[] = [];
+  let remaining = clean;
+  while (remaining.length > 0 && lines.length < maxLines) {
+    if (remaining.length <= maxLength) {
+      lines.push(remaining);
+      remaining = '';
+      break;
+    }
+    let cut = remaining.lastIndexOf(' ', maxLength);
+    if (cut < Math.floor(maxLength * 0.5)) cut = maxLength;
+    lines.push(remaining.substring(0, cut).trim());
+    remaining = remaining.substring(cut).trim();
+  }
+  while (lines.length < maxLines) lines.push('');
+  return lines;
+}
+
 export interface ZplLabelData {
   designation: string;
   barcode: string | null;

@@ -176,19 +176,19 @@ export function fillZplTemplate(template: string, data: ZplLabelData): string {
 
   // Construction dynamique du bloc gauche avec ^FB pour exploiter toute la largeur.
   const bodyParts: string[] = [];
-  // Repère historique du template validé : ligne horizontale à y=120, titre ingrédients à y=156.
-  // On garde ce point fixe pour éviter qu'un template actif décalé ne remonte le bloc au-dessus de la ligne.
+  // ^FT positionne une baseline (pas le haut du texte), ce qui rendait le bloc visuellement trop haut sur Zebra.
+  // On utilise ^FO pour ancrer le haut réel du bloc sous la ligne horizontale du logo.
   let y = 156;
 
   const addBlock = (text: string, maxLines: number) => {
     if (!text) return;
     const lines = Math.min(maxLines, estimateLines(text));
-    bodyParts.push(`^FT18,${y}^A0N,${FONT_H},${FONT_W}^FB${FB_WIDTH},${lines},0,L,0^FH\\^FD${text}^FS`);
+    bodyParts.push(`^FO18,${y}^A0N,${FONT_H},${FONT_W}^FB${FB_WIDTH},${lines},0,L,0^FH\\^FD${text}^FS`);
     y += lines * LINE_GAP;
   };
 
   // Titre Ingrédients
-  bodyParts.push(`^FT18,${y}^A0N,28,22^FH\\^FDIngredients :^FS`);
+  bodyParts.push(`^FO18,${y}^A0N,28,22^FH\\^FDIngredients :^FS`);
   y += 36;
   addBlock(ingredientsText, 14);
   if (tracesText) {
@@ -198,10 +198,10 @@ export function fillZplTemplate(template: string, data: ZplLabelData): string {
   y += SECTION_GAP;
   addBlock(storageText, 3);
   y += SECTION_GAP;
-  bodyParts.push(`^FT18,${y}^A0N,${FONT_H},${FONT_W}^FH\\^FDValeurs nutritionnelles pour 100g :^FS`);
+  bodyParts.push(`^FO18,${y}^A0N,${FONT_H},${FONT_W}^FH\\^FDValeurs nutritionnelles pour 100g :^FS`);
   y += LINE_GAP;
   for (const line of nutri) {
-    bodyParts.push(`^FT18,${y}^A0N,${FONT_H},${FONT_W}^FH\\^FD${line}^FS`);
+    bodyParts.push(`^FO18,${y}^A0N,${FONT_H},${FONT_W}^FH\\^FD${line}^FS`);
     y += LINE_GAP;
   }
 

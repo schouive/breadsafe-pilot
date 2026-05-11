@@ -129,9 +129,10 @@ export default function PrintLabels() {
       .eq('active', true)
       .maybeSingle();
     const storedTemplate = tpl?.zpl_content as string | null;
+    const hasGraphicLogo = storedTemplate?.includes('^GFA');
     const hasDynamicBody = storedTemplate?.includes('{{BODY}}');
     const hasFullLegacyPlaceholders = storedTemplate?.includes('{{INGR_L20}}') && storedTemplate.includes('{{TRACES_L1}}');
-    const zplTemplate = hasDynamicBody || hasFullLegacyPlaceholders
+    const zplTemplate = hasGraphicLogo && (hasDynamicBody || hasFullLegacyPlaceholders)
       ? storedTemplate
       : DEFAULT_PRODUCT_LABEL_ZPL;
 

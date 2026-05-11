@@ -152,7 +152,7 @@ export function fillZplTemplate(template: string, data: ZplLabelData): string {
 
   const traceSource = normalizeTraceValue(data.traces) || extractTracesFromStatement(data.allergens);
   const tracesText = traceSource ? `Peut contenir des traces : ${traceSource}` : '';
-  const tracesLines = splitIntoLines(tracesText, 80, 2);
+  const tracesLines = fillLines(tracesText, 80, 2);
 
   const replacements: Record<string, string> = {
     DESIGNATION: zplSafe(data.designation || ''),

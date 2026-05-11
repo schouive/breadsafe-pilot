@@ -136,51 +136,65 @@ function formatNutrition(n: ZplLabelData['nutrition']): [string, string, string,
  */
 export function fillZplTemplate(template: string, data: ZplLabelData): string {
   // Police 9pt réelle à 300 dpi : hauteur ≈ 37 dots, largeur ≈ 22 dots.
-  // Largeur dispo 740 dots ≈ 6cm → ~33 caractères par ligne.
+  // Largeur dispo 740 dots ≈ 6cm. On utilise ^FB (auto-wrap natif Zebra)
+  // qui calcule la vraie largeur des caractères au lieu d'estimer manuellement.
   const FONT_H = 37;
   const FONT_W = 22;
-  const LINE_GAP = 40;          // espacement vertical entre lignes 9pt
-  const SECTION_GAP = 8;        // petit espace entre sections
-  const MAX_CHARS = 33;
+  const FB_WIDTH = 740;          // largeur de wrap en dots ≈ 6cm
+  const LINE_GAP = 42;           // espacement vertical entre lignes
+  const SECTION_GAP = 8;
+  // Estimation du nb de lignes : largeur moyenne d'un caractère ≈ FONT_W * 0.55
+  const CHARS_PER_LINE = Math.floor(FB_WIDTH / (FONT_W * 0.55));
+
+  const estimateLines = (text: string): number => {
+    if (!text) return 0;
+    // Découpe en respectant les espaces pour estimer plus juste
+    let lines = 0;
+    let remaining = text;
+    while (remaining.length > 0) {
+      if (remaining.length <= CHARS_PER_LINE) { lines++; break; }
+      let cut = remaining.lastIndexOf(' ', CHARS_PER_LINE);
+      if (cut < CHARS_PER_LINE * 0.5) cut = CHARS_PER_LINE;
+      lines++;
+      remaining = remaining.substring(cut).trim();
+    }
+    return Math.max(1, lines);
+  };
 
   const ingredientsText = zplSafe(cleanHtml(data.ingredientsHtml));
-  const ingrLines = fillLines(ingredientsText, MAX_CHARS, 24).filter(l => l.length > 0);
   const nutri = formatNutrition(data.nutrition);
   const { j, yy, fr } = computeJulianDay(data.ddm);
 
-  const storageText = [data.storageInstructions, data.thawingInstructions]
+  const storageText = zplSafe([data.storageInstructions, data.thawingInstructions]
     .filter(Boolean)
-    .join(' — ') || 'A conserver dans le sachet a temperature ambiante de preference inferieure a 30 C';
-  const storageLines = fillLines(zplSafe(storageText), MAX_CHARS, 3).filter(l => l.length > 0);
+    .join(' — ') || 'A conserver dans le sachet a temperature ambiante de preference inferieure a 30 C');
 
   const lotValue = data.lotNumber.replace(/^L/i, '');
 
   const traceSource = normalizeTraceValue(data.traces) || extractTracesFromStatement(data.allergens);
   const tracesText = traceSource ? `Peut contenir des traces : ${traceSource}` : '';
-  const tracesLines = tracesText ? fillLines(tracesText, MAX_CHARS, 3).filter(l => l.length > 0) : [];
 
-  // Construction dynamique du bloc gauche pour éliminer le saut de ligne entre sections.
+  // Construction dynamique du bloc gauche avec ^FB pour exploiter toute la largeur.
   const bodyParts: string[] = [];
   let y = 148;
+
+  const addBlock = (text: string, maxLines: number) => {
+    if (!text) return;
+    const lines = Math.min(maxLines, estimateLines(text));
+    bodyParts.push(`^FT18,${y}^A0N,${FONT_H},${FONT_W}^FB${FB_WIDTH},${lines},0,L,0^FH\\^FD${text}^FS`);
+    y += lines * LINE_GAP;
+  };
+
   // Titre Ingrédients
-  bodyParts.push(`^FT18,${y}^A0N,22,18^FH\\^FDIngredients :^FS`);
-  y += LINE_GAP;
-  for (const line of ingrLines) {
-    bodyParts.push(`^FT18,${y}^A0N,${FONT_H},${FONT_W}^FH\\^FD${line}^FS`);
-    y += LINE_GAP;
-  }
-  if (tracesLines.length > 0) {
+  bodyParts.push(`^FT18,${y}^A0N,28,22^FH\\^FDIngredients :^FS`);
+  y += 32;
+  addBlock(ingredientsText, 14);
+  if (tracesText) {
     y += SECTION_GAP;
-    for (const line of tracesLines) {
-      bodyParts.push(`^FT18,${y}^A0N,${FONT_H},${FONT_W}^FH\\^FD${line}^FS`);
-      y += LINE_GAP;
-    }
+    addBlock(tracesText, 3);
   }
   y += SECTION_GAP;
-  for (const line of storageLines) {
-    bodyParts.push(`^FT18,${y}^A0N,${FONT_H},${FONT_W}^FH\\^FD${line}^FS`);
-    y += LINE_GAP;
-  }
+  addBlock(storageText, 3);
   y += SECTION_GAP;
   bodyParts.push(`^FT18,${y}^A0N,${FONT_H},${FONT_W}^FH\\^FDValeurs nutritionnelles pour 100g :^FS`);
   y += LINE_GAP;
@@ -190,6 +204,11 @@ export function fillZplTemplate(template: string, data: ZplLabelData): string {
   }
 
   const body = bodyParts.join('\n');
+
+  // Compatibilité anciens templates (placeholders fixes)
+  const ingrLinesCompat = fillLines(ingredientsText, 33, 24);
+  const tracesLinesCompat = tracesText ? fillLines(tracesText, 33, 3) : [];
+  const storageLinesCompat = fillLines(storageText, 33, 3);
 
   const replacements: Record<string, string> = {
     DESIGNATION: zplSafe(data.designation || ''),
@@ -207,11 +226,11 @@ export function fillZplTemplate(template: string, data: ZplLabelData): string {
   };
 
   // Compatibilité avec anciens templates utilisant des placeholders fixes.
-  for (let i = 1; i <= 24; i++) replacements[`INGR_L${i}`] = ingrLines[i - 1] || '';
-  replacements.TRACES_L1 = tracesLines[0] || '';
-  replacements.TRACES_L2 = tracesLines[1] || '';
-  replacements.STORAGE_L1 = storageLines[0] || '';
-  replacements.STORAGE_L2 = storageLines[1] || '';
+  for (let i = 1; i <= 24; i++) replacements[`INGR_L${i}`] = ingrLinesCompat[i - 1] || '';
+  replacements.TRACES_L1 = tracesLinesCompat[0] || '';
+  replacements.TRACES_L2 = tracesLinesCompat[1] || '';
+  replacements.STORAGE_L1 = storageLinesCompat[0] || '';
+  replacements.STORAGE_L2 = storageLinesCompat[1] || '';
   replacements.NUTRI_L1 = nutri[0];
   replacements.NUTRI_L2 = nutri[1];
   replacements.NUTRI_L3 = nutri[2];

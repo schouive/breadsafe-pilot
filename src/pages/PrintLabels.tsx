@@ -135,6 +135,8 @@ export default function PrintLabels() {
     const packQty = PACK_COUNT_MAP[selected.packaging] ?? 1;
     const totalNetWeight = selected.net_weight != null ? selected.net_weight * packQty : null;
 
+    const tracesFromStatement = extractTraces(selected.allergen_statement);
+
     return fillZplTemplate(zplTemplate, {
       designation: selected.product_name || selected.erp_label,
       barcode: `${(selected.erp_code || '').replace(/\D/g, '')}${(lot || '').replace(/\D/g, '')}`,
@@ -142,7 +144,7 @@ export default function PrintLabels() {
       netWeightUnit: selected.net_weight_unit,
       ingredientsHtml: selected.ingredients_html,
       allergens: selected.allergen_statement || '',
-      traces: '',
+      traces: tracesFromStatement,
       nutrition: selected.nutrition,
       lotNumber: lot,
       ddm,

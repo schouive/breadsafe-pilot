@@ -21,6 +21,7 @@ export interface PrintProduct {
   net_weight_unit: string | null;
   ingredients_html: string | null;
   allergen_statement: string | null;
+  traces_statement: string | null;
   storage_instructions: string | null;
   thawing_instructions: string | null;
   nutrition: {
@@ -64,7 +65,7 @@ export function usePrintProducts() {
             family:product_families(code, label),
             sheet:product_sheets(
               product_name, net_weight, net_weight_unit,
-              inco_html, allergen_statement,
+              inco_html, allergen_statement, snapshot_allergens,
               storage_instructions, thawing_instructions,
               snapshot_nutrition, inco_status
             )
@@ -76,6 +77,7 @@ export function usePrintProducts() {
       if (error) throw error;
       return (data ?? []).map((a: any) => {
         const sheet = a.product?.sheet ?? null;
+        const snapshotAllergens = sheet?.snapshot_allergens as { secondary?: string[] } | null;
         return {
           id: a.id,
           erp_code: a.erp_code,
@@ -94,6 +96,7 @@ export function usePrintProducts() {
           net_weight_unit: sheet?.net_weight_unit ?? null,
           ingredients_html: sheet?.inco_html ?? null,
           allergen_statement: sheet?.allergen_statement ?? null,
+          traces_statement: snapshotAllergens?.secondary?.join(', ') ?? null,
           storage_instructions: sheet?.storage_instructions ?? null,
           thawing_instructions: sheet?.thawing_instructions ?? null,
           nutrition: sheet?.snapshot_nutrition ?? null,

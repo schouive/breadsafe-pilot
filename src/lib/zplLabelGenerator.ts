@@ -102,7 +102,7 @@ export function fillZplTemplate(template: string, data: ZplLabelData): string {
   const lotValue = data.lotNumber.replace(/^L/i, '');
 
   const tracesValue = data.traces
-    ? `Traces eventuelles de : ${removeAccents(data.traces)}`
+    ? `Peut contenir des traces : ${removeAccents(data.traces)}`
     : '';
 
   const replacements: Record<string, string> = {
@@ -115,8 +115,8 @@ export function fillZplTemplate(template: string, data: ZplLabelData): string {
     INGR_L4: ingrLines[3] || '',
     INGR_L5: ingrLines[4] || '',
     INGR_L6: ingrLines[5] || '',
-    ALLERGENES: data.allergens ? removeAccents(data.allergens) : '',
-    TRACES: data.traces ? removeAccents(data.traces) : '',
+    ALLERGENES: '',
+    TRACES: tracesValue,
     NUTRI_L1: nutri[0],
     NUTRI_L2: nutri[1],
     NUTRI_L3: nutri[2],

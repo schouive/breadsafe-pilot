@@ -135,24 +135,61 @@ function formatNutrition(n: ZplLabelData['nutrition']): [string, string, string,
  * Le template doit utiliser des placeholders au format {{KEY}}.
  */
 export function fillZplTemplate(template: string, data: ZplLabelData): string {
-  // Zone ingrédients maximisée : colonne gauche complète jusqu'aux cadres poids/DDM.
-  // On utilise ^FB natif (largeur 740 dots ≈ 6cm à 300 dpi) pour exploiter toute la largeur.
+  // Police ~9pt (height 18, width 12) pour ingrédients/traces/conservation/nutrition.
+  // Largeur dispo 740 dots ≈ 6cm → ~78 caractères par ligne en width 12.
+  const FONT_H = 18;
+  const FONT_W = 12;
+  const LINE_GAP = 20;          // espacement vertical entre lignes
+  const SECTION_GAP = 6;        // petit espace entre sections (pas de gros saut)
+  const MAX_CHARS = 78;
+
   const ingredientsText = zplSafe(cleanHtml(data.ingredientsHtml));
-  const ingrLines = fillLines(ingredientsText, 80, 20);
+  const ingrLines = fillLines(ingredientsText, MAX_CHARS, 24).filter(l => l.length > 0);
   const nutri = formatNutrition(data.nutrition);
   const { j, yy, fr } = computeJulianDay(data.ddm);
 
   const storageText = [data.storageInstructions, data.thawingInstructions]
     .filter(Boolean)
     .join(' — ') || 'A conserver dans le sachet a temperature ambiante de preference inferieure a 30 C';
-  const storageLines = fillLines(zplSafe(storageText), 90, 2);
+  const storageLines = fillLines(zplSafe(storageText), MAX_CHARS, 3).filter(l => l.length > 0);
 
-  // Le lot peut être saisi avec ou sans préfixe "L" — on retire le L pour ne pas le doubler.
   const lotValue = data.lotNumber.replace(/^L/i, '');
 
   const traceSource = normalizeTraceValue(data.traces) || extractTracesFromStatement(data.allergens);
   const tracesText = traceSource ? `Peut contenir des traces : ${traceSource}` : '';
-  const tracesLines = fillLines(tracesText, 80, 2);
+  const tracesLines = tracesText ? fillLines(tracesText, MAX_CHARS, 3).filter(l => l.length > 0) : [];
+
+  // Construction dynamique du bloc gauche pour éliminer le saut de ligne entre sections.
+  const bodyParts: string[] = [];
+  let y = 148;
+  // Titre Ingrédients
+  bodyParts.push(`^FT18,${y}^A0N,22,18^FH\\^FDIngredients :^FS`);
+  y += LINE_GAP;
+  for (const line of ingrLines) {
+    bodyParts.push(`^FT18,${y}^A0N,${FONT_H},${FONT_W}^FH\\^FD${line}^FS`);
+    y += LINE_GAP;
+  }
+  if (tracesLines.length > 0) {
+    y += SECTION_GAP;
+    for (const line of tracesLines) {
+      bodyParts.push(`^FT18,${y}^A0N,${FONT_H},${FONT_W}^FH\\^FD${line}^FS`);
+      y += LINE_GAP;
+    }
+  }
+  y += SECTION_GAP;
+  for (const line of storageLines) {
+    bodyParts.push(`^FT18,${y}^A0N,${FONT_H},${FONT_W}^FH\\^FD${line}^FS`);
+    y += LINE_GAP;
+  }
+  y += SECTION_GAP;
+  bodyParts.push(`^FT18,${y}^A0N,${FONT_H},${FONT_W}^FH\\^FDValeurs nutritionnelles pour 100g :^FS`);
+  y += LINE_GAP;
+  for (const line of nutri) {
+    bodyParts.push(`^FT18,${y}^A0N,${FONT_H},${FONT_W}^FH\\^FD${line}^FS`);
+    y += LINE_GAP;
+  }
+
+  const body = bodyParts.join('\n');
 
   const replacements: Record<string, string> = {
     DESIGNATION: zplSafe(data.designation || ''),
@@ -161,24 +198,24 @@ export function fillZplTemplate(template: string, data: ZplLabelData): string {
     INGREDIENTS: ingredientsText,
     ALLERGENES: '',
     TRACES: tracesText,
-    TRACES_L1: tracesLines[0] || '',
-    TRACES_L2: tracesLines[1] || '',
-    NUTRI_L1: nutri[0],
-    NUTRI_L2: nutri[1],
-    NUTRI_L3: nutri[2],
-    NUTRI_L4: nutri[3],
+    BODY: body,
     LOT: lotValue,
     DDM_J: j,
     DDM_YY: yy,
     DDM_FR: fr,
     QTY: String(Math.max(1, data.quantity)),
-    STORAGE_L1: storageLines[0] || '',
-    STORAGE_L2: storageLines[1] || '',
   };
 
-  ingrLines.forEach((line, index) => {
-    replacements[`INGR_L${index + 1}`] = line || '';
-  });
+  // Compatibilité avec anciens templates utilisant des placeholders fixes.
+  for (let i = 1; i <= 24; i++) replacements[`INGR_L${i}`] = ingrLines[i - 1] || '';
+  replacements.TRACES_L1 = tracesLines[0] || '';
+  replacements.TRACES_L2 = tracesLines[1] || '';
+  replacements.STORAGE_L1 = storageLines[0] || '';
+  replacements.STORAGE_L2 = storageLines[1] || '';
+  replacements.NUTRI_L1 = nutri[0];
+  replacements.NUTRI_L2 = nutri[1];
+  replacements.NUTRI_L3 = nutri[2];
+  replacements.NUTRI_L4 = nutri[3];
 
   return template.replace(/\{\{(\w+)\}\}/g, (_, k) => replacements[k] ?? '');
 }

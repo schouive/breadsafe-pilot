@@ -226,11 +226,11 @@ export function fillZplTemplate(template: string, data: ZplLabelData): string {
   };
 
   // Compatibilité avec anciens templates utilisant des placeholders fixes.
-  for (let i = 1; i <= 24; i++) replacements[`INGR_L${i}`] = ingrLines[i - 1] || '';
-  replacements.TRACES_L1 = tracesLines[0] || '';
-  replacements.TRACES_L2 = tracesLines[1] || '';
-  replacements.STORAGE_L1 = storageLines[0] || '';
-  replacements.STORAGE_L2 = storageLines[1] || '';
+  for (let i = 1; i <= 24; i++) replacements[`INGR_L${i}`] = ingrLinesCompat[i - 1] || '';
+  replacements.TRACES_L1 = tracesLinesCompat[0] || '';
+  replacements.TRACES_L2 = tracesLinesCompat[1] || '';
+  replacements.STORAGE_L1 = storageLinesCompat[0] || '';
+  replacements.STORAGE_L2 = storageLinesCompat[1] || '';
   replacements.NUTRI_L1 = nutri[0];
   replacements.NUTRI_L2 = nutri[1];
   replacements.NUTRI_L3 = nutri[2];

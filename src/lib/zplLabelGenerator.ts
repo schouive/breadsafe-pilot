@@ -113,22 +113,23 @@ function formatNutrition(n: ZplLabelData['nutrition']): [string, string, string,
  */
 export function fillZplTemplate(template: string, data: ZplLabelData): string {
   // Zone ingrédients maximisée : colonne gauche complète jusqu'aux cadres poids/DDM.
+  // On utilise ^FB natif (largeur 740 dots ≈ 6cm à 300 dpi) pour exploiter toute la largeur.
   const ingredientsText = zplSafe(cleanHtml(data.ingredientsHtml));
-  const ingrLines = splitIntoLines(ingredientsText, 45, 20);
+  const ingrLines = splitIntoLines(ingredientsText, 80, 20);
   const nutri = formatNutrition(data.nutrition);
   const { j, yy, fr } = computeJulianDay(data.ddm);
 
   const storageText = [data.storageInstructions, data.thawingInstructions]
     .filter(Boolean)
     .join(' — ') || 'A conserver dans le sachet a temperature ambiante de preference inferieure a 30 C';
-  const storageLines = splitIntoLines(zplSafe(storageText), 58, 2);
+  const storageLines = splitIntoLines(zplSafe(storageText), 90, 2);
 
   // Le lot peut être saisi avec ou sans préfixe "L" — on retire le L pour ne pas le doubler.
   const lotValue = data.lotNumber.replace(/^L/i, '');
 
   const traceSource = normalizeTraceValue(data.traces) || extractTracesFromStatement(data.allergens);
   const tracesText = traceSource ? `Peut contenir des traces : ${traceSource}` : '';
-  const tracesLines = splitIntoLines(tracesText, 58, 2);
+  const tracesLines = splitIntoLines(tracesText, 80, 2);
 
   const replacements: Record<string, string> = {
     DESIGNATION: zplSafe(data.designation || ''),

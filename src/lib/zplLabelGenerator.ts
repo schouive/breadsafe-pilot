@@ -135,13 +135,13 @@ function formatNutrition(n: ZplLabelData['nutrition']): [string, string, string,
  * Le template doit utiliser des placeholders au format {{KEY}}.
  */
 export function fillZplTemplate(template: string, data: ZplLabelData): string {
-  // Police ~9pt (height 18, width 12) pour ingrédients/traces/conservation/nutrition.
-  // Largeur dispo 740 dots ≈ 6cm → ~78 caractères par ligne en width 12.
-  const FONT_H = 18;
-  const FONT_W = 12;
-  const LINE_GAP = 20;          // espacement vertical entre lignes
-  const SECTION_GAP = 6;        // petit espace entre sections (pas de gros saut)
-  const MAX_CHARS = 78;
+  // Police 9pt réelle à 300 dpi : hauteur ≈ 37 dots, largeur ≈ 22 dots.
+  // Largeur dispo 740 dots ≈ 6cm → ~33 caractères par ligne.
+  const FONT_H = 37;
+  const FONT_W = 22;
+  const LINE_GAP = 40;          // espacement vertical entre lignes 9pt
+  const SECTION_GAP = 8;        // petit espace entre sections
+  const MAX_CHARS = 33;
 
   const ingredientsText = zplSafe(cleanHtml(data.ingredientsHtml));
   const ingrLines = fillLines(ingredientsText, MAX_CHARS, 24).filter(l => l.length > 0);

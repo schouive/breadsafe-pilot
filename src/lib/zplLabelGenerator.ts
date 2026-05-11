@@ -145,7 +145,7 @@ export function fillZplTemplate(template: string, data: ZplLabelData): string {
   const storageText = [data.storageInstructions, data.thawingInstructions]
     .filter(Boolean)
     .join(' — ') || 'A conserver dans le sachet a temperature ambiante de preference inferieure a 30 C';
-  const storageLines = splitIntoLines(zplSafe(storageText), 90, 2);
+  const storageLines = fillLines(zplSafe(storageText), 90, 2);
 
   // Le lot peut être saisi avec ou sans préfixe "L" — on retire le L pour ne pas le doubler.
   const lotValue = data.lotNumber.replace(/^L/i, '');

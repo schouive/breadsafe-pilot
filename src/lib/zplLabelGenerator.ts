@@ -176,7 +176,8 @@ export function fillZplTemplate(template: string, data: ZplLabelData): string {
 
   // Construction dynamique du bloc gauche avec ^FB pour exploiter toute la largeur.
   const bodyParts: string[] = [];
-  let y = 148;
+  // Position de départ : juste sous la ligne horizontale (y=118, épaisseur 6 → ~124)
+  let y = 150;
 
   const addBlock = (text: string, maxLines: number) => {
     if (!text) return;

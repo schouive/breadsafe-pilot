@@ -831,8 +831,7 @@ function LabelMaskPreview({
                     {barcodeBars.map((width, i) => (
                       <span
                         key={i}
-                        className={i % 2 === 0 ? 'bg-black' : 'bg-white'}
-                        style={{ flex: `${width} 0 0` }}
+                        style={{ flex: `${width} 0 0`, backgroundColor: i % 2 === 0 ? '#000' : '#fff' }}
                       />
                     ))}
                   </div>

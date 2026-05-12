@@ -224,20 +224,56 @@ export default function PrintLabels() {
       return;
     }
     setGeneratingPdf(true);
+    let offscreen: HTMLDivElement | null = null;
     try {
       const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
         import('html2canvas'),
         import('jspdf'),
       ]);
-      const node = previewRef.current;
-      const canvas = await html2canvas(node, {
-        scale: 3,
+
+      // Cible : la racine de l'étiquette (data-label-root) qui porte les container queries.
+      const labelRoot = previewRef.current.querySelector<HTMLElement>('[data-label-root]');
+      if (!labelRoot) throw new Error('Étiquette introuvable');
+
+      // Format réel : 101.6 × 63.5 mm. On rend à 12 px/mm pour une bonne netteté.
+      const PX_PER_MM = 12;
+      const widthPx = Math.round(101.6 * PX_PER_MM); // 1219
+      const heightPx = Math.round(63.5 * PX_PER_MM); // 762
+
+      // Clone hors écran à largeur fixe pour que les cqw se résolvent correctement.
+      const clone = labelRoot.cloneNode(true) as HTMLElement;
+      clone.style.width = `${widthPx}px`;
+      clone.style.maxWidth = `${widthPx}px`;
+      clone.style.height = `${heightPx}px`;
+      clone.style.aspectRatio = 'auto';
+      clone.style.margin = '0';
+      clone.style.boxShadow = 'none';
+
+      offscreen = document.createElement('div');
+      offscreen.style.position = 'fixed';
+      offscreen.style.left = '-10000px';
+      offscreen.style.top = '0';
+      offscreen.style.width = `${widthPx}px`;
+      offscreen.style.background = '#ffffff';
+      offscreen.style.zIndex = '-1';
+      offscreen.appendChild(clone);
+      document.body.appendChild(offscreen);
+
+      // Laisse le navigateur appliquer le layout (container queries).
+      await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+
+      const canvas = await html2canvas(clone, {
+        scale: 2,
         backgroundColor: '#ffffff',
         useCORS: true,
         logging: false,
+        width: widthPx,
+        height: heightPx,
+        windowWidth: widthPx,
+        windowHeight: heightPx,
       });
+
       const imgData = canvas.toDataURL('image/png');
-      // Format réel de l'étiquette : 101.6 × 63.5 mm (paysage)
       const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: [101.6, 63.5] });
       pdf.addImage(imgData, 'PNG', 0, 0, 101.6, 63.5);
       pdf.save(`${finalSku || selected.sku_base || 'etiquette'}_${lot || 'lot'}.pdf`);
@@ -245,6 +281,7 @@ export default function PrintLabels() {
     } catch (e: any) {
       toast.error(e?.message ?? 'Impossible de générer le PDF');
     } finally {
+      if (offscreen) offscreen.remove();
       setGeneratingPdf(false);
     }
   };

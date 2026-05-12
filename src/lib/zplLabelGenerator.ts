@@ -174,35 +174,50 @@ export function fillZplTemplate(template: string, data: ZplLabelData): string {
   const traceSource = normalizeTraceValue(data.traces) || extractTracesFromStatement(data.allergens);
   const tracesText = traceSource ? `Peut contenir des traces : ${traceSource}` : '';
 
-  // Construction dynamique du bloc gauche avec ^FB pour exploiter toute la largeur.
-  const bodyParts: string[] = [];
-  // ^FT positionne une baseline (pas le haut du texte), ce qui rendait le bloc visuellement trop haut sur Zebra.
-  // On utilise ^FO pour ancrer le haut réel du bloc sous la ligne horizontale du logo.
-  let y = 156;
+  // Limite physique de l'étiquette : 6 cm @ 300 dpi ≈ 708 dots.
+  // Pour garantir que la nutrition n'est jamais tronquée, on ancre les blocs du bas
+  // (nutrition, conservation, traces) à partir du bas, et l'ingrédients remplit l'espace restant.
+  const MAX_Y = 700;
+  const TITLE_H = 36;
 
-  const addBlock = (text: string, maxLines: number) => {
-    if (!text) return;
-    const lines = Math.min(maxLines, estimateLines(text));
-    bodyParts.push(`^FO18,${y}^A0N,${FONT_H},${FONT_W}^FB${FB_WIDTH},${lines},0,L,0^FH\\^FD${text}^FS`);
-    y += lines * LINE_GAP;
-  };
+  // Hauteurs des blocs du bas (calculées avec leur nombre de lignes réel)
+  const nutriLines = nutri.filter(Boolean).length;
+  const nutriBlockH = TITLE_H + nutriLines * LINE_GAP;
+  const storageLines = Math.min(3, estimateLines(storageText));
+  const storageBlockH = storageLines * LINE_GAP;
+  const tracesLines = tracesText ? Math.min(3, estimateLines(tracesText)) : 0;
+  const tracesBlockH = tracesLines ? tracesLines * LINE_GAP + SECTION_GAP : 0;
+
+  const bottomTotalH = nutriBlockH + SECTION_GAP + storageBlockH + tracesBlockH + SECTION_GAP;
+  const ingrTop = 156;
+  const ingrTitleH = TITLE_H;
+  const ingrAvailable = MAX_Y - bottomTotalH - ingrTop - ingrTitleH;
+  const ingrMaxLines = Math.max(2, Math.floor(ingrAvailable / LINE_GAP));
+  const ingrLines = Math.min(ingrMaxLines, estimateLines(ingredientsText));
+
+  const bodyParts: string[] = [];
 
   // Titre Ingrédients
-  bodyParts.push(`^FO18,${y}^A0N,28,22^FH\\^FDIngredients :^FS`);
-  y += 36;
-  addBlock(ingredientsText, 14);
-  if (tracesText) {
-    y += SECTION_GAP;
-    addBlock(tracesText, 3);
+  bodyParts.push(`^FO18,${ingrTop}^A0N,28,22^FH\\^FDIngredients :^FS`);
+  // Texte ingrédients
+  if (ingredientsText) {
+    bodyParts.push(`^FO18,${ingrTop + ingrTitleH}^A0N,${FONT_H},${FONT_W}^FB${FB_WIDTH},${ingrLines},0,L,0^FH\\^FD${ingredientsText}^FS`);
   }
-  y += SECTION_GAP;
-  addBlock(storageText, 3);
-  y += SECTION_GAP;
-  bodyParts.push(`^FO18,${y}^A0N,${FONT_H},${FONT_W}^FH\\^FDValeurs nutritionnelles pour 100g :^FS`);
-  y += LINE_GAP;
+
+  // Position du bas — on remonte depuis MAX_Y
+  let by = MAX_Y - bottomTotalH + SECTION_GAP;
+  if (tracesText) {
+    bodyParts.push(`^FO18,${by}^A0N,${FONT_H},${FONT_W}^FB${FB_WIDTH},${tracesLines},0,L,0^FH\\^FD${tracesText}^FS`);
+    by += tracesLines * LINE_GAP + SECTION_GAP;
+  }
+  bodyParts.push(`^FO18,${by}^A0N,${FONT_H},${FONT_W}^FB${FB_WIDTH},${storageLines},0,L,0^FH\\^FD${storageText}^FS`);
+  by += storageLines * LINE_GAP + SECTION_GAP;
+  bodyParts.push(`^FO18,${by}^A0N,${FONT_H},${FONT_W}^FH\\^FDValeurs nutritionnelles pour 100g :^FS`);
+  by += TITLE_H;
   for (const line of nutri) {
-    bodyParts.push(`^FO18,${y}^A0N,${FONT_H},${FONT_W}^FH\\^FD${line}^FS`);
-    y += LINE_GAP;
+    if (!line) continue;
+    bodyParts.push(`^FO18,${by}^A0N,${FONT_H},${FONT_W}^FH\\^FD${line}^FS`);
+    by += LINE_GAP;
   }
 
   const body = bodyParts.join('\n');
@@ -252,7 +267,7 @@ export const DEFAULT_PRODUCT_LABEL_ZPL = `CT~~CD,~CC^~CT~
 ^XA
 ^MMT
 ^PW1200
-^LL780
+^LL708
 ^LS0
 ${BREADSHOP_LABEL_LOGO_GFA}
 ^FT292,78^A0N,50,45^FB880,1,0,C,0^FH\^FD{{DESIGNATION}}^FS

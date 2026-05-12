@@ -520,6 +520,10 @@ export default function PrintLabels() {
             <Button variant="secondary" size="sm" onClick={handleDownloadZpl} className="w-full">
               <Download className="h-4 w-4 mr-2" /> Télécharger le ZPL de secours
             </Button>
+            <Button variant="secondary" size="sm" onClick={handleDownloadPdf} disabled={generatingPdf} className="w-full">
+              {generatingPdf ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2" />}
+              Télécharger l'étiquette en PDF
+            </Button>
 
             <div className="flex gap-3 pt-2">
               <Button variant="outline" size="lg" onClick={() => setStep(2)} className="flex-1">

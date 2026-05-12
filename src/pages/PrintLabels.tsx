@@ -122,19 +122,9 @@ export default function PrintLabels() {
 
   const buildZpl = async () => {
     if (!selected) throw new Error('Article manquant');
-    const { data: tpl } = await supabase
-      .from('label_templates')
-      .select('zpl_content')
-      .eq('template_code', 'PRODUCT_LABEL')
-      .eq('active', true)
-      .maybeSingle();
-    const storedTemplate = tpl?.zpl_content as string | null;
-    const hasGraphicLogo = storedTemplate?.includes('^GFA');
-    const hasDynamicBody = storedTemplate?.includes('{{BODY}}');
-    const hasFullLegacyPlaceholders = storedTemplate?.includes('{{INGR_L20}}') && storedTemplate.includes('{{TRACES_L1}}');
-    const zplTemplate = hasGraphicLogo && (hasDynamicBody || hasFullLegacyPlaceholders)
-      ? storedTemplate
-      : DEFAULT_PRODUCT_LABEL_ZPL;
+    // Le layout (logo, Triman, espacements) est maintenu côté code pour itérer rapidement.
+    // On ignore tout template stocké en BDD.
+    const zplTemplate = DEFAULT_PRODUCT_LABEL_ZPL;
 
     // Poids net total = poids unitaire × nombre d'unités du conditionnement
     const PACK_COUNT_MAP: Record<string, number> = { U01: 1, C05: 5, C24: 24, PAL: 1 };

@@ -211,8 +211,27 @@ export function fillZplTemplate(template: string, data: ZplLabelData): string {
   const tracesLinesCompat = tracesText ? fillLines(tracesText, 33, 3) : [];
   const storageLinesCompat = fillLines(storageText, 33, 3);
 
+  // Auto-ajustement de la taille du titre pour exploiter au mieux la largeur disponible (FB=880 dots).
+  // ^A0N est une police proportionnelle : largeur moyenne d'un caractère ≈ FW * 0.6.
+  const designationText = zplSafe(data.designation || '');
+  const TITLE_FB_WIDTH = 880;
+  const TITLE_FH_MAX = 50;
+  const TITLE_FW_MAX = 45;
+  const TITLE_FH_MIN = 26;
+  const TITLE_FW_MIN = 24;
+  let titleFw = TITLE_FW_MAX;
+  let titleFh = TITLE_FH_MAX;
+  if (designationText.length > 0) {
+    const maxFwForFit = Math.floor(TITLE_FB_WIDTH / (designationText.length * 0.6));
+    titleFw = Math.max(TITLE_FW_MIN, Math.min(TITLE_FW_MAX, maxFwForFit));
+    // Ratio H/W d'origine ≈ 50/45 = 1.11
+    titleFh = Math.max(TITLE_FH_MIN, Math.round(titleFw * (TITLE_FH_MAX / TITLE_FW_MAX)));
+  }
+
   const replacements: Record<string, string> = {
-    DESIGNATION: zplSafe(data.designation || ''),
+    DESIGNATION: designationText,
+    DESIGNATION_FH: String(titleFh),
+    DESIGNATION_FW: String(titleFw),
     BARCODE: (data.barcode || '').replace(/\D/g, ''),
     POIDS_NET: zplSafe(formatNetWeight(data.netWeight, data.netWeightUnit)),
     INGREDIENTS: ingredientsText,
@@ -254,7 +273,7 @@ export const DEFAULT_PRODUCT_LABEL_ZPL = `CT~~CD,~CC^~CT~
 ^LL780
 ^LS0
 ${BREADSHOP_LABEL_LOGO_GFA}
-^FT292,78^A0N,50,45^FB880,1,0,C,0^FH\^FD{{DESIGNATION}}^FS
+^FT292,78^A0N,{{DESIGNATION_FH}},{{DESIGNATION_FW}}^FB880,1,0,C,0^FH\^FD{{DESIGNATION}}^FS
 ^FO15,118^GB1170,0,6^FS
 {{BODY}}
 ^FO765,135^GB420,135,4^FS

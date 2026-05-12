@@ -678,6 +678,7 @@ function LabelMaskPreview({
   return (
     <div className="w-full overflow-x-auto bg-muted/30 p-4 rounded-md">
       <div
+        data-label-root
         className="mx-auto bg-white text-black shadow-md overflow-hidden"
         style={{
           width: '100%',

@@ -1,4 +1,4 @@
-import { Printer } from 'lucide-react';
+import { Printer, ListOrdered } from 'lucide-react';
 import { ModuleLayout } from './ModuleLayout';
 
 interface PrintLayoutProps {
@@ -7,6 +7,7 @@ interface PrintLayoutProps {
 
 const navigation = [
   { name: 'Étiquettes Production', href: '/print', icon: Printer },
+  { name: "Ordres d'impression", href: '/print/orders', icon: ListOrdered },
 ];
 
 export function PrintLayout({ children }: PrintLayoutProps) {

@@ -276,7 +276,26 @@ export default function PrintLabels() {
       offscreen.appendChild(clone);
       document.body.appendChild(offscreen);
 
-      await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+      await new Promise(r => requestAnimationFrame(r));
+
+      // Dans le clone PDF uniquement, on empêche les champs critiques de rester ellipsés
+      // par Tailwind (`truncate`) puis on réduit légèrement la police si nécessaire.
+      clone.querySelectorAll<HTMLElement>('[data-pdf-fit-width]').forEach((el) => {
+        el.style.overflow = 'visible';
+        el.style.textOverflow = 'clip';
+        el.style.whiteSpace = 'nowrap';
+        el.style.minWidth = '0';
+        const minFontSize = Number(el.dataset.pdfMinFont || 10);
+        let fontSize = parseFloat(window.getComputedStyle(el).fontSize) || minFontSize;
+        let guard = 0;
+        while (el.scrollWidth > el.clientWidth && fontSize > minFontSize && guard < 24) {
+          fontSize -= 0.75;
+          el.style.fontSize = `${fontSize}px`;
+          guard += 1;
+        }
+      });
+
+      await new Promise(r => requestAnimationFrame(r));
 
       const canvas = await html2canvas(clone, {
         scale: 2,
@@ -715,6 +734,8 @@ function LabelMaskPreview({
             <img src={labelWordmark} alt="Bread Shop" style={{ height: '2.5cqw', marginTop: '0.2cqw' }} className="w-auto object-contain" />
           </div>
           <div
+            data-pdf-fit-width
+            data-pdf-min-font="28"
             className="flex-1 text-center font-extrabold leading-none truncate min-w-0"
             style={{ fontSize: '5.5cqw' }}
           >
@@ -777,11 +798,11 @@ function LabelMaskPreview({
               <div className="truncate">À consommer de préférence</div>
               <div className="flex items-baseline" style={{ gap: '0.8cqw' }}>
                 <span>avant le :</span>
-                <span className="font-bold truncate" style={{ fontSize: '3.4cqw' }}>{ddmFr}</span>
+                <span data-pdf-fit-width data-pdf-min-font="18" className="font-bold truncate" style={{ fontSize: '3.4cqw' }}>{ddmFr}</span>
               </div>
               <div className="flex items-baseline" style={{ gap: '0.8cqw', marginTop: '0.3cqw' }}>
                 <span>Lot :</span>
-                <span className="font-bold tracking-wider truncate" style={{ fontSize: '3.4cqw' }}>{lotDisplay}</span>
+                <span data-pdf-fit-width data-pdf-min-font="18" className="font-bold tracking-wider truncate" style={{ fontSize: '3.4cqw' }}>{lotDisplay}</span>
               </div>
             </div>
 
@@ -795,15 +816,25 @@ function LabelMaskPreview({
             {(() => {
               const composed = `${(product.erp_code || '').replace(/\D/g, '')}${(lot || '').replace(/\D/g, '')}`;
               if (!composed) return null;
+              const barcodeBars = Array.from({ length: 64 }, (_, i) => {
+                const digit = Number(composed[i % composed.length] || 0);
+                return ((digit + i) % 3) + 1;
+              });
               return (
                 <div className="shrink-0" style={{ marginTop: 'auto' }}>
                   <div
-                    className="w-full"
+                    className="w-full flex overflow-hidden bg-white"
                     style={{
                       height: '3cqw',
-                      background: 'repeating-linear-gradient(90deg, #000 0 2px, #fff 2px 4px, #000 4px 5px, #fff 5px 8px, #000 8px 9px, #fff 9px 11px)',
                     }}
-                  />
+                  >
+                    {barcodeBars.map((width, i) => (
+                      <span
+                        key={i}
+                        style={{ flex: `${width} 0 0`, backgroundColor: i % 2 === 0 ? '#000' : '#fff' }}
+                      />
+                    ))}
+                  </div>
                   <div className="text-center font-mono truncate" style={{ fontSize: '1.8cqw', lineHeight: 1 }}>
                     {composed}
                   </div>

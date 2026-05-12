@@ -248,9 +248,10 @@ export default function PrintLabels() {
       clone.style.aspectRatio = 'auto';
       clone.style.margin = '0';
       clone.style.boxShadow = 'none';
-      // Évite que le code-barres en bas soit clippé par overflow-hidden + padding.
+      // Garde une vraie marge basse dans l'image capturée : le texte au bord exact
+      // de l'étiquette est sinon rogné par html2canvas / jsPDF.
       clone.style.overflow = 'visible';
-      clone.style.paddingBottom = '4px';
+      clone.style.paddingBottom = `${Math.round(2.4 * PX_PER_MM)}px`;
       // html2canvas v1 ne supporte pas les container queries (cqw/cqh).
       // On convertit toutes les unités cqw/cqh des styles inline en px.
       const CQW = widthPx / 100;
@@ -268,14 +269,23 @@ export default function PrintLabels() {
       }
       // Désactive le container query type sur la racine maintenant que les cqw sont résolus.
       clone.style.containerType = 'normal';
-      // Réserve une marge interne au rendu PDF pour éviter le clipping bas par html2canvas,
-      // sans modifier le positionnement de l'aperçu ni du ZPL.
+      // Dans le clone PDF uniquement, on supprime les clips verticaux responsables
+      // du rognage de la dernière ligne nutritionnelle et des chiffres du code-barres.
       clone.querySelectorAll<HTMLElement>('[data-pdf-bottom-safe]').forEach((el) => {
-        el.style.paddingBottom = '18px';
+        el.style.paddingBottom = '0';
+        el.style.overflow = 'visible';
         el.style.boxSizing = 'border-box';
       });
       clone.querySelectorAll<HTMLElement>('[data-pdf-no-bottom-clip]').forEach((el) => {
         el.style.overflow = 'visible';
+        el.style.clipPath = 'none';
+      });
+      clone.querySelectorAll<HTMLElement>('[data-pdf-barcode-value]').forEach((el) => {
+        el.style.overflow = 'visible';
+        el.style.textOverflow = 'clip';
+        el.style.whiteSpace = 'nowrap';
+        el.style.lineHeight = '1.25';
+        el.style.paddingBottom = '4px';
       });
 
       offscreen = document.createElement('div');
@@ -309,15 +319,16 @@ export default function PrintLabels() {
 
       await new Promise(r => requestAnimationFrame(r));
 
+      const captureHeightPx = heightPx + Math.round(1.8 * PX_PER_MM);
       const canvas = await html2canvas(clone, {
         scale: 2,
         backgroundColor: '#ffffff',
         useCORS: true,
         logging: false,
         width: widthPx,
-        height: heightPx,
+        height: captureHeightPx,
         windowWidth: widthPx,
-        windowHeight: heightPx,
+        windowHeight: captureHeightPx,
       });
 
       const imgData = canvas.toDataURL('image/png');
@@ -733,7 +744,7 @@ function LabelMaskPreview({
           aspectRatio: '101.6 / 63.5',
           fontFamily: 'Arial, Helvetica, sans-serif',
           containerType: 'inline-size',
-          padding: '1.5cqw',
+          padding: '1.5cqw 1.5cqw 2.8cqw',
           boxSizing: 'border-box',
           display: 'flex',
           flexDirection: 'column',
@@ -757,9 +768,10 @@ function LabelMaskPreview({
         <div className="shrink-0" style={{ borderTop: '0.4cqw solid #000', margin: '0.6cqw 0' }} />
 
         {/* Body: 2 columns — fills remaining space, no overflow */}
-        <div data-pdf-bottom-safe className="flex min-h-0 flex-1" style={{ gap: '1.5cqw', overflow: 'hidden' }}>
+        <div data-pdf-bottom-safe className="flex min-h-0 flex-1" style={{ gap: '1.5cqw', overflow: 'visible' }}>
           {/* Left column */}
           <div
+            data-pdf-no-bottom-clip
             className="flex-1 min-w-0 leading-tight overflow-hidden"
             style={{ fontSize: '2.6cqw', display: 'flex', flexDirection: 'column', gap: '0.5cqw' }}
           >
@@ -787,7 +799,7 @@ function LabelMaskPreview({
                 {product.thawing_instructions}
               </div>
             )}
-            <div data-pdf-no-bottom-clip className="shrink-0" style={{ overflow: 'hidden' }}>
+            <div data-pdf-no-bottom-clip className="shrink-0" style={{ overflow: 'visible', lineHeight: 1.16, paddingBottom: '0.35cqw' }}>
               <div className="font-bold">Valeurs nutritionnelles pour 100g :</div>
               {nutriLines.map((l, i) => (
                 <div key={i} className="break-words">{l}</div>
@@ -796,7 +808,7 @@ function LabelMaskPreview({
           </div>
 
           {/* Right column */}
-          <div data-pdf-no-bottom-clip className="flex flex-col shrink-0 overflow-hidden" style={{ width: '38%', gap: '0.8cqw' }}>
+            <div data-pdf-no-bottom-clip className="flex flex-col shrink-0" style={{ width: '38%', gap: '0.7cqw', overflow: 'visible' }}>
             {/* Poids net box — 6mm minimum (≈5.9cqw of 101.6mm width) */}
             <div className="border-2 border-black relative flex flex-col items-center justify-center shrink-0" style={{ padding: '0.6cqw', minHeight: '12cqw' }}>
               <div style={{ fontSize: '1.8cqw', position: 'absolute', top: '0.4cqw', right: '0.6cqw' }}>POIDS NET</div>
@@ -833,7 +845,7 @@ function LabelMaskPreview({
                 return ((digit + i) % 3) + 1;
               });
               return (
-                <div className="shrink-0" style={{ marginTop: 'auto' }}>
+                <div data-pdf-no-bottom-clip className="shrink-0" style={{ marginTop: 'auto', overflow: 'visible', paddingBottom: '0.3cqw' }}>
                   <div
                     className="w-full flex overflow-hidden bg-white"
                     style={{
@@ -847,7 +859,7 @@ function LabelMaskPreview({
                       />
                     ))}
                   </div>
-                  <div className="text-center font-mono truncate" style={{ fontSize: '1.8cqw', lineHeight: 1 }}>
+                  <div data-pdf-barcode-value className="text-center font-mono truncate" style={{ fontSize: '1.65cqw', lineHeight: 1.25 }}>
                     {composed}
                   </div>
                 </div>

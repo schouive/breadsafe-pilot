@@ -135,14 +135,11 @@ function formatNutrition(n: ZplLabelData['nutrition']): [string, string, string,
  * Le template doit utiliser des placeholders au format {{KEY}}.
  */
 export function fillZplTemplate(template: string, data: ZplLabelData): string {
-  // Police 9pt réelle à 300 dpi : hauteur ≈ 37 dots, largeur ≈ 22 dots.
-  // Largeur dispo 740 dots ≈ 6cm. On utilise ^FB (auto-wrap natif Zebra)
-  // qui calcule la vraie largeur des caractères au lieu d'estimer manuellement.
-  // Police d'origine restaurée. Compactage uniquement via SECTION_GAP=0.
+  // Police d'origine restaurée. Compactage via LINE_GAP réduit et SECTION_GAP=0.
   const FONT_H = 37;
   const FONT_W = 22;
   const FB_WIDTH = 740;          // largeur de wrap en dots ≈ 6cm
-  const LINE_GAP = 42;           // espacement vertical entre lignes
+  const LINE_GAP = 34;           // espacement vertical entre lignes
   const SECTION_GAP = 0;         // plus aucun espace entre blocs
   // Estimation du nb de lignes : largeur moyenne d'un caractère ≈ FONT_W * 0.55
   const CHARS_PER_LINE = Math.floor(FB_WIDTH / (FONT_W * 0.55));
@@ -168,7 +165,8 @@ export function fillZplTemplate(template: string, data: ZplLabelData): string {
 
   const storageText = zplSafe([data.storageInstructions, data.thawingInstructions]
     .filter(Boolean)
-    .join(' — ') || 'A conserver dans le sachet a temperature ambiante de preference inferieure a 30 C');
+    .join(' — ') || 'A conserver dans le sachet a temperature ambiante de preference inferieure a 30 C')
+    .replace(/temperature/g, 'temp.');
 
   const lotValue = data.lotNumber.replace(/^L/i, '');
 

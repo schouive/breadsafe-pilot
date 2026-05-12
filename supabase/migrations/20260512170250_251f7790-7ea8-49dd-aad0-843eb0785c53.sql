@@ -1,0 +1,2 @@
+ALTER TABLE public.erp_articles DROP CONSTRAINT erp_articles_packaging_code_check;
+ALTER TABLE public.erp_articles ADD CONSTRAINT erp_articles_packaging_code_check CHECK (packaging_code = ANY (ARRAY['U01'::text, 'C05'::text, 'C18'::text, 'C24'::text, 'PAL'::text]));

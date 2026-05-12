@@ -138,11 +138,12 @@ export function fillZplTemplate(template: string, data: ZplLabelData): string {
   // Police 9pt réelle à 300 dpi : hauteur ≈ 37 dots, largeur ≈ 22 dots.
   // Largeur dispo 740 dots ≈ 6cm. On utilise ^FB (auto-wrap natif Zebra)
   // qui calcule la vraie largeur des caractères au lieu d'estimer manuellement.
-  const FONT_H = 37;
-  const FONT_W = 22;
+  // Compactage : on doit tenir tout le contenu dans ~6cm de hauteur sous la ligne du logo.
+  const FONT_H = 26;
+  const FONT_W = 16;
   const FB_WIDTH = 740;          // largeur de wrap en dots ≈ 6cm
-  const LINE_GAP = 42;           // espacement vertical entre lignes
-  const SECTION_GAP = 8;
+  const LINE_GAP = 28;           // espacement vertical entre lignes (compacté)
+  const SECTION_GAP = 0;         // plus aucun espace entre blocs
   // Estimation du nb de lignes : largeur moyenne d'un caractère ≈ FONT_W * 0.55
   const CHARS_PER_LINE = Math.floor(FB_WIDTH / (FONT_W * 0.55));
 

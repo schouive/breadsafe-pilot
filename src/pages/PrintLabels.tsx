@@ -268,6 +268,15 @@ export default function PrintLabels() {
       }
       // Désactive le container query type sur la racine maintenant que les cqw sont résolus.
       clone.style.containerType = 'normal';
+      // Réserve une marge interne au rendu PDF pour éviter le clipping bas par html2canvas,
+      // sans modifier le positionnement de l'aperçu ni du ZPL.
+      clone.querySelectorAll<HTMLElement>('[data-pdf-bottom-safe]').forEach((el) => {
+        el.style.paddingBottom = '18px';
+        el.style.boxSizing = 'border-box';
+      });
+      clone.querySelectorAll<HTMLElement>('[data-pdf-no-bottom-clip]').forEach((el) => {
+        el.style.overflow = 'visible';
+      });
 
       offscreen = document.createElement('div');
       offscreen.style.position = 'fixed';
@@ -748,7 +757,7 @@ function LabelMaskPreview({
         <div className="shrink-0" style={{ borderTop: '0.4cqw solid #000', margin: '0.6cqw 0' }} />
 
         {/* Body: 2 columns — fills remaining space, no overflow */}
-        <div className="flex min-h-0 flex-1" style={{ gap: '1.5cqw', overflow: 'hidden' }}>
+        <div data-pdf-bottom-safe className="flex min-h-0 flex-1" style={{ gap: '1.5cqw', overflow: 'hidden' }}>
           {/* Left column */}
           <div
             className="flex-1 min-w-0 leading-tight overflow-hidden"
@@ -778,7 +787,7 @@ function LabelMaskPreview({
                 {product.thawing_instructions}
               </div>
             )}
-            <div className="shrink-0" style={{ overflow: 'hidden' }}>
+            <div data-pdf-no-bottom-clip className="shrink-0" style={{ overflow: 'hidden' }}>
               <div className="font-bold">Valeurs nutritionnelles pour 100g :</div>
               {nutriLines.map((l, i) => (
                 <div key={i} className="break-words">{l}</div>
@@ -787,7 +796,7 @@ function LabelMaskPreview({
           </div>
 
           {/* Right column */}
-          <div className="flex flex-col shrink-0 overflow-hidden" style={{ width: '38%', gap: '0.8cqw' }}>
+          <div data-pdf-no-bottom-clip className="flex flex-col shrink-0 overflow-hidden" style={{ width: '38%', gap: '0.8cqw' }}>
             {/* Poids net box — 6mm minimum (≈5.9cqw of 101.6mm width) */}
             <div className="border-2 border-black relative flex flex-col items-center justify-center shrink-0" style={{ padding: '0.6cqw', minHeight: '12cqw' }}>
               <div style={{ fontSize: '1.8cqw', position: 'absolute', top: '0.4cqw', right: '0.6cqw' }}>POIDS NET</div>

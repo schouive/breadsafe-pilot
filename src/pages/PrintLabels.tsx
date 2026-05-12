@@ -248,9 +248,10 @@ export default function PrintLabels() {
       clone.style.aspectRatio = 'auto';
       clone.style.margin = '0';
       clone.style.boxShadow = 'none';
-      // Évite que le code-barres en bas soit clippé par overflow-hidden + padding.
+      // Garde une vraie marge basse dans l'image capturée : le texte au bord exact
+      // de l'étiquette est sinon rogné par html2canvas / jsPDF.
       clone.style.overflow = 'visible';
-      clone.style.paddingBottom = '4px';
+      clone.style.paddingBottom = `${Math.round(2.4 * PX_PER_MM)}px`;
       // html2canvas v1 ne supporte pas les container queries (cqw/cqh).
       // On convertit toutes les unités cqw/cqh des styles inline en px.
       const CQW = widthPx / 100;
@@ -268,14 +269,23 @@ export default function PrintLabels() {
       }
       // Désactive le container query type sur la racine maintenant que les cqw sont résolus.
       clone.style.containerType = 'normal';
-      // Réserve une marge interne au rendu PDF pour éviter le clipping bas par html2canvas,
-      // sans modifier le positionnement de l'aperçu ni du ZPL.
+      // Dans le clone PDF uniquement, on supprime les clips verticaux responsables
+      // du rognage de la dernière ligne nutritionnelle et des chiffres du code-barres.
       clone.querySelectorAll<HTMLElement>('[data-pdf-bottom-safe]').forEach((el) => {
-        el.style.paddingBottom = '18px';
+        el.style.paddingBottom = '0';
+        el.style.overflow = 'visible';
         el.style.boxSizing = 'border-box';
       });
       clone.querySelectorAll<HTMLElement>('[data-pdf-no-bottom-clip]').forEach((el) => {
         el.style.overflow = 'visible';
+        el.style.clipPath = 'none';
+      });
+      clone.querySelectorAll<HTMLElement>('[data-pdf-barcode-value]').forEach((el) => {
+        el.style.overflow = 'visible';
+        el.style.textOverflow = 'clip';
+        el.style.whiteSpace = 'nowrap';
+        el.style.lineHeight = '1.25';
+        el.style.paddingBottom = '4px';
       });
 
       offscreen = document.createElement('div');
@@ -309,15 +319,16 @@ export default function PrintLabels() {
 
       await new Promise(r => requestAnimationFrame(r));
 
+      const captureHeightPx = heightPx + Math.round(1.8 * PX_PER_MM);
       const canvas = await html2canvas(clone, {
         scale: 2,
         backgroundColor: '#ffffff',
         useCORS: true,
         logging: false,
         width: widthPx,
-        height: heightPx,
+        height: captureHeightPx,
         windowWidth: widthPx,
-        windowHeight: heightPx,
+        windowHeight: captureHeightPx,
       });
 
       const imgData = canvas.toDataURL('image/png');

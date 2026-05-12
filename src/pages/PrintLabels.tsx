@@ -771,6 +771,7 @@ function LabelMaskPreview({
         <div data-pdf-bottom-safe className="flex min-h-0 flex-1" style={{ gap: '1.5cqw', overflow: 'visible' }}>
           {/* Left column */}
           <div
+            data-pdf-no-bottom-clip
             className="flex-1 min-w-0 leading-tight overflow-hidden"
             style={{ fontSize: '2.6cqw', display: 'flex', flexDirection: 'column', gap: '0.5cqw' }}
           >
@@ -798,7 +799,7 @@ function LabelMaskPreview({
                 {product.thawing_instructions}
               </div>
             )}
-            <div data-pdf-no-bottom-clip className="shrink-0" style={{ overflow: 'hidden' }}>
+            <div data-pdf-no-bottom-clip className="shrink-0" style={{ overflow: 'visible', lineHeight: 1.16, paddingBottom: '0.35cqw' }}>
               <div className="font-bold">Valeurs nutritionnelles pour 100g :</div>
               {nutriLines.map((l, i) => (
                 <div key={i} className="break-words">{l}</div>

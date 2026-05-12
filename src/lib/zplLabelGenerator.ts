@@ -215,16 +215,15 @@ export function fillZplTemplate(template: string, data: ZplLabelData): string {
   // ^A0N est une police proportionnelle : largeur moyenne d'un caractère ≈ FW * 0.6.
   const designationText = zplSafe(data.designation || '');
   const TITLE_FB_WIDTH = 880;
-  const TITLE_FH_MAX = 50;
-  const TITLE_FW_MAX = 45;
-  const TITLE_FH_MIN = 26;
-  const TITLE_FW_MIN = 24;
+  const TITLE_FH_MAX = 70;
+  const TITLE_FW_MAX = 63;
+  const TITLE_FH_MIN = 30;
+  const TITLE_FW_MIN = 27;
   let titleFw = TITLE_FW_MAX;
   let titleFh = TITLE_FH_MAX;
   if (designationText.length > 0) {
-    const maxFwForFit = Math.floor(TITLE_FB_WIDTH / (designationText.length * 0.6));
+    const maxFwForFit = Math.floor(TITLE_FB_WIDTH / (designationText.length * 0.58));
     titleFw = Math.max(TITLE_FW_MIN, Math.min(TITLE_FW_MAX, maxFwForFit));
-    // Ratio H/W d'origine ≈ 50/45 = 1.11
     titleFh = Math.max(TITLE_FH_MIN, Math.round(titleFw * (TITLE_FH_MAX / TITLE_FW_MAX)));
   }
 

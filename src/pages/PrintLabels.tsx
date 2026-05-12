@@ -276,7 +276,26 @@ export default function PrintLabels() {
       offscreen.appendChild(clone);
       document.body.appendChild(offscreen);
 
-      await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+      await new Promise(r => requestAnimationFrame(r));
+
+      // Dans le clone PDF uniquement, on empêche les champs critiques de rester ellipsés
+      // par Tailwind (`truncate`) puis on réduit légèrement la police si nécessaire.
+      clone.querySelectorAll<HTMLElement>('[data-pdf-fit-width]').forEach((el) => {
+        el.style.overflow = 'visible';
+        el.style.textOverflow = 'clip';
+        el.style.whiteSpace = 'nowrap';
+        el.style.minWidth = '0';
+        const minFontSize = Number(el.dataset.pdfMinFont || 10);
+        let fontSize = parseFloat(window.getComputedStyle(el).fontSize) || minFontSize;
+        let guard = 0;
+        while (el.scrollWidth > el.clientWidth && fontSize > minFontSize && guard < 24) {
+          fontSize -= 0.75;
+          el.style.fontSize = `${fontSize}px`;
+          guard += 1;
+        }
+      });
+
+      await new Promise(r => requestAnimationFrame(r));
 
       const canvas = await html2canvas(clone, {
         scale: 2,

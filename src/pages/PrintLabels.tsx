@@ -758,7 +758,7 @@ function LabelMaskPreview({
           </div>
           <div
             data-pdf-fit-width
-            data-pdf-min-font="28"
+            data-pdf-min-font="16"
             className="flex-1 text-center font-extrabold leading-none truncate min-w-0"
             style={{ fontSize: '5.5cqw' }}
           >

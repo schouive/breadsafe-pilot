@@ -816,15 +816,26 @@ function LabelMaskPreview({
             {(() => {
               const composed = `${(product.erp_code || '').replace(/\D/g, '')}${(lot || '').replace(/\D/g, '')}`;
               if (!composed) return null;
+              const barcodeBars = Array.from({ length: 64 }, (_, i) => {
+                const digit = Number(composed[i % composed.length] || 0);
+                return ((digit + i) % 3) + 1;
+              });
               return (
                 <div className="shrink-0" style={{ marginTop: 'auto' }}>
                   <div
-                    className="w-full"
+                    className="w-full flex overflow-hidden bg-white"
                     style={{
                       height: '3cqw',
-                      background: 'repeating-linear-gradient(90deg, #000 0 2px, #fff 2px 4px, #000 4px 5px, #fff 5px 8px, #000 8px 9px, #fff 9px 11px)',
                     }}
-                  />
+                  >
+                    {barcodeBars.map((width, i) => (
+                      <span
+                        key={i}
+                        className={i % 2 === 0 ? 'bg-black' : 'bg-white'}
+                        style={{ flex: `${width} 0 0` }}
+                      />
+                    ))}
+                  </div>
                   <div className="text-center font-mono truncate" style={{ fontSize: '1.8cqw', lineHeight: 1 }}>
                     {composed}
                   </div>

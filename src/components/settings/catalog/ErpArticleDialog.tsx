@@ -32,7 +32,7 @@ export function ErpArticleDialog({ open, onOpenChange, article }: Props) {
     product_id: '',
     temperature_state: 'FR' as 'FR' | 'FZ',
     slicing_state: 'WHO' as 'SLI' | 'WHO',
-    packaging_code: 'U01' as 'U01' | 'C05' | 'C24' | 'PAL',
+    packaging_code: 'U01' as 'U01' | 'C05' | 'C18' | 'C24' | 'PAL',
     barcode_value: '',
     template_id: '',
     active: true,

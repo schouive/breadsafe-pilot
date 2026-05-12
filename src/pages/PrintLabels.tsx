@@ -136,8 +136,22 @@ export default function PrintLabels() {
     const tracesFromStatement = extractTraces(selected.allergen_statement);
     const traces = selected.traces_statement || tracesFromStatement;
 
+    // Désignation : nom + conditionnement (ex. "Buns Potatoe 5x90g")
+    const unitW = selected.net_weight ?? 0;
+    const unitU = selected.net_weight_unit || 'kg';
+    const fmtUnit = (w: number, u: string) =>
+      u === 'kg' && w < 1 ? `${Math.round(w * 1000)}g` : `${w}${u}`;
+    const stripWeight = (n: string) =>
+      n.replace(/\s*\d+(?:[.,]\d+)?\s*(?:g|kg|gr|grammes?)\s*$/i, '').trim();
+    const baseN = stripWeight(selected.product_name || selected.erp_label);
+    const designationFull = unitW
+      ? (packQty > 1
+          ? `${baseN} ${packQty}x${fmtUnit(unitW, unitU)}`
+          : `${baseN} ${fmtUnit(unitW, unitU)}`)
+      : baseN;
+
     return fillZplTemplate(zplTemplate, {
-      designation: selected.product_name || selected.erp_label,
+      designation: designationFull,
       barcode: `${(selected.erp_code || '').replace(/\D/g, '')}${(lot || '').replace(/\D/g, '')}`,
       netWeight: totalNetWeight,
       netWeightUnit: selected.net_weight_unit,

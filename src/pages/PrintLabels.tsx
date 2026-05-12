@@ -134,8 +134,21 @@ export default function PrintLabels() {
     const tracesFromStatement = extractTraces(selected.allergen_statement);
     const traces = selected.traces_statement || tracesFromStatement;
 
+    // Désignation = "Nom produit" + "Conditionnement x poids unitaire" (ex: "Buns Brioche Sesame 24x90g")
+    const unitW = selected.net_weight ?? 0;
+    const unitU = selected.net_weight_unit || 'kg';
+    const formatUnitW = (w: number, u: string) =>
+      u === 'kg' && w < 1 ? `${Math.round(w * 1000)}g` : `${w}${u}`;
+    const stripTrailingW = (name: string) =>
+      name.replace(/\s*\d+(?:[.,]\d+)?\s*(?:g|kg|gr|grammes?)\s*$/i, '').trim();
+    const rawName = selected.product_name || selected.erp_label;
+    const baseName = stripTrailingW(rawName);
+    const designation = packQty > 1
+      ? `${baseName} ${packQty}x${formatUnitW(unitW, unitU)}`
+      : `${baseName} ${formatUnitW(unitW, unitU)}`;
+
     return fillZplTemplate(zplTemplate, {
-      designation: selected.product_name || selected.erp_label,
+      designation,
       barcode: `${(selected.erp_code || '').replace(/\D/g, '')}${(lot || '').replace(/\D/g, '')}`,
       netWeight: totalNetWeight,
       netWeightUnit: selected.net_weight_unit,

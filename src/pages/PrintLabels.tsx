@@ -501,12 +501,13 @@ export default function PrintLabels() {
                 )}
               </div>
 
-              <LabelMaskPreview
-                ref={previewRef}
-                product={selected}
-                lot={lot}
-                ddm={ddm}
-              />
+              <div ref={previewRef}>
+                <LabelMaskPreview
+                  product={selected}
+                  lot={lot}
+                  ddm={ddm}
+                />
+              </div>
             </div>
 
             <Separator />

@@ -744,7 +744,7 @@ function LabelMaskPreview({
           aspectRatio: '101.6 / 63.5',
           fontFamily: 'Arial, Helvetica, sans-serif',
           containerType: 'inline-size',
-          padding: '1.5cqw',
+          padding: '1.5cqw 1.5cqw 2.8cqw',
           boxSizing: 'border-box',
           display: 'flex',
           flexDirection: 'column',
@@ -768,7 +768,7 @@ function LabelMaskPreview({
         <div className="shrink-0" style={{ borderTop: '0.4cqw solid #000', margin: '0.6cqw 0' }} />
 
         {/* Body: 2 columns — fills remaining space, no overflow */}
-        <div data-pdf-bottom-safe className="flex min-h-0 flex-1" style={{ gap: '1.5cqw', overflow: 'hidden' }}>
+        <div data-pdf-bottom-safe className="flex min-h-0 flex-1" style={{ gap: '1.5cqw', overflow: 'visible' }}>
           {/* Left column */}
           <div
             className="flex-1 min-w-0 leading-tight overflow-hidden"
@@ -807,7 +807,7 @@ function LabelMaskPreview({
           </div>
 
           {/* Right column */}
-          <div data-pdf-no-bottom-clip className="flex flex-col shrink-0 overflow-hidden" style={{ width: '38%', gap: '0.8cqw' }}>
+            <div data-pdf-no-bottom-clip className="flex flex-col shrink-0" style={{ width: '38%', gap: '0.7cqw', overflow: 'visible' }}>
             {/* Poids net box — 6mm minimum (≈5.9cqw of 101.6mm width) */}
             <div className="border-2 border-black relative flex flex-col items-center justify-center shrink-0" style={{ padding: '0.6cqw', minHeight: '12cqw' }}>
               <div style={{ fontSize: '1.8cqw', position: 'absolute', top: '0.4cqw', right: '0.6cqw' }}>POIDS NET</div>
@@ -844,7 +844,7 @@ function LabelMaskPreview({
                 return ((digit + i) % 3) + 1;
               });
               return (
-                <div className="shrink-0" style={{ marginTop: 'auto' }}>
+                <div data-pdf-no-bottom-clip className="shrink-0" style={{ marginTop: 'auto', overflow: 'visible', paddingBottom: '0.3cqw' }}>
                   <div
                     className="w-full flex overflow-hidden bg-white"
                     style={{
@@ -858,7 +858,7 @@ function LabelMaskPreview({
                       />
                     ))}
                   </div>
-                  <div className="text-center font-mono truncate" style={{ fontSize: '1.8cqw', lineHeight: 1 }}>
+                  <div data-pdf-barcode-value className="text-center font-mono truncate" style={{ fontSize: '1.65cqw', lineHeight: 1.25 }}>
                     {composed}
                   </div>
                 </div>

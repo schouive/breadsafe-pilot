@@ -36,7 +36,7 @@ export interface ErpArticle {
   erp_label: string;
   temperature_state: 'FR' | 'FZ';
   slicing_state: 'SLI' | 'WHO';
-  packaging_code: 'U01' | 'C05' | 'C24' | 'PAL';
+  packaging_code: 'U01' | 'C05' | 'C18' | 'C24' | 'PAL';
   barcode_value: string | null;
   active: boolean;
   created_at: string;

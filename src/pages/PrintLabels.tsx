@@ -28,6 +28,7 @@ const FAMILIES = ['BUN', 'BAG', 'HDG', 'PDM', 'PLQ', 'SPC'];
 const PACKAGING_LABELS: Record<string, string> = {
   U01: 'Unité',
   C05: 'Carton de 5',
+  C18: 'Carton de 18',
   C24: 'Carton de 24',
   PAL: 'Palette',
 };
@@ -129,7 +130,7 @@ export default function PrintLabels() {
     const zplTemplate = DEFAULT_PRODUCT_LABEL_ZPL;
 
     // Poids net total = poids unitaire × nombre d'unités du conditionnement
-    const PACK_COUNT_MAP: Record<string, number> = { U01: 1, C05: 5, C24: 24, PAL: 1 };
+    const PACK_COUNT_MAP: Record<string, number> = { U01: 1, C05: 5, C18: 18, C24: 24, PAL: 1 };
     const packQty = PACK_COUNT_MAP[selected.packaging] ?? 1;
     const totalNetWeight = selected.net_weight != null ? selected.net_weight * packQty : null;
 
@@ -708,7 +709,7 @@ function LabelMaskPreview({
   const lotDisplay = lot ? (lot.startsWith('L') ? lot : `L${lot}`) : 'L-----';
 
   // Conditionnement → nombre d'unités par carton
-  const PACK_COUNT: Record<string, number> = { U01: 1, C05: 5, C24: 24, PAL: 1 };
+  const PACK_COUNT: Record<string, number> = { U01: 1, C05: 5, C18: 18, C24: 24, PAL: 1 };
   const packCount = PACK_COUNT[product.packaging] ?? 1;
   const unitWeight = product.net_weight ?? 0;
   const unitWeightUnit = product.net_weight_unit || 'kg';

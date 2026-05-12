@@ -188,9 +188,9 @@ export function fillZplTemplate(template: string, data: ZplLabelData): string {
     y += lines * LINE_GAP;
   };
 
-  // Titre Ingrédients
-  bodyParts.push(`^FO18,${y}^A0N,28,22^FH\\^FDIngredients :^FS`);
-  y += 36;
+  // Titre Ingrédients (compact)
+  bodyParts.push(`^FO18,${y}^A0N,22,18^FH\\^FDIngredients :^FS`);
+  y += 26;
   addBlock(ingredientsText, 14);
   if (tracesText) {
     y += SECTION_GAP;

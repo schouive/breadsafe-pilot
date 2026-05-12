@@ -95,6 +95,7 @@ export default function ErpArticlesSettings() {
                 <SelectItem value="all">Tous conditionnements</SelectItem>
                 <SelectItem value="U01">U01</SelectItem>
                 <SelectItem value="C05">C05</SelectItem>
+                <SelectItem value="C18">C18</SelectItem>
                 <SelectItem value="C24">C24</SelectItem>
                 <SelectItem value="PAL">PAL</SelectItem>
               </SelectContent>

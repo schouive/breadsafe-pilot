@@ -1047,6 +1047,98 @@ export type Database = {
         }
         Relationships: []
       }
+      print_batch_items: {
+        Row: {
+          batch_id: string
+          created_at: string
+          ddm_override: string | null
+          error_message: string | null
+          id: string
+          lot_override: string | null
+          order_index: number
+          printed_at: string | null
+          product_id: string
+          quantity: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          batch_id: string
+          created_at?: string
+          ddm_override?: string | null
+          error_message?: string | null
+          id?: string
+          lot_override?: string | null
+          order_index?: number
+          printed_at?: string | null
+          product_id: string
+          quantity?: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          batch_id?: string
+          created_at?: string
+          ddm_override?: string | null
+          error_message?: string | null
+          id?: string
+          lot_override?: string | null
+          order_index?: number
+          printed_at?: string | null
+          product_id?: string
+          quantity?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "print_batch_items_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "print_batches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      print_batches: {
+        Row: {
+          batch_number: string
+          created_at: string
+          created_by: string
+          global_ddm: string | null
+          global_lot: string | null
+          id: string
+          name: string | null
+          printed_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          batch_number?: string
+          created_at?: string
+          created_by: string
+          global_ddm?: string | null
+          global_lot?: string | null
+          id?: string
+          name?: string | null
+          printed_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          batch_number?: string
+          created_at?: string
+          created_by?: string
+          global_ddm?: string | null
+          global_lot?: string | null
+          id?: string
+          name?: string | null
+          printed_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       print_favorites: {
         Row: {
           created_at: string
@@ -1141,6 +1233,57 @@ export type Database = {
             columns: ["variant_id"]
             isOneToOne: false
             referencedRelation: "print_product_variants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      print_jobs: {
+        Row: {
+          batch_id: string | null
+          batch_item_id: string | null
+          created_at: string
+          error_message: string | null
+          id: string
+          operator_id: string
+          print_method: string | null
+          status: string
+          zpl_payload: string | null
+        }
+        Insert: {
+          batch_id?: string | null
+          batch_item_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          operator_id: string
+          print_method?: string | null
+          status?: string
+          zpl_payload?: string | null
+        }
+        Update: {
+          batch_id?: string | null
+          batch_item_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          operator_id?: string
+          print_method?: string | null
+          status?: string
+          zpl_payload?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "print_jobs_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "print_batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "print_jobs_batch_item_id_fkey"
+            columns: ["batch_item_id"]
+            isOneToOne: false
+            referencedRelation: "print_batch_items"
             referencedColumns: ["id"]
           },
         ]
@@ -2875,6 +3018,7 @@ export type Database = {
     }
     Functions: {
       generate_order_number: { Args: never; Returns: string }
+      generate_print_batch_number: { Args: never; Returns: string }
       generate_rd_trial_number: { Args: never; Returns: string }
       has_any_role: {
         Args: {

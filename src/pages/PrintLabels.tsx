@@ -818,8 +818,8 @@ function LabelMaskPreview({
             </div>
 
             {/* DDM + Lot box */}
-            <div className="border-2 border-black leading-tight shrink-0" style={{ padding: '0.6cqw', fontSize: '2.2cqw' }}>
-              <div className="truncate" style={{ lineHeight: 1.35, paddingBottom: '0.2cqw' }}>À consommer de préférence</div>
+            <div data-pdf-no-bottom-clip className="border-2 border-black leading-tight shrink-0" style={{ padding: '0.6cqw 0.6cqw 0.9cqw', fontSize: '2.2cqw', overflow: 'visible' }}>
+              <div data-pdf-no-bottom-clip style={{ display: 'block', minHeight: '3.6cqw', overflow: 'visible', textOverflow: 'clip', whiteSpace: 'nowrap', lineHeight: 1.55, paddingBottom: '0.65cqw' }}>À consommer de préférence</div>
               <div className="flex items-baseline" style={{ gap: '0.8cqw' }}>
                 <span>avant le :</span>
                 <span data-pdf-fit-width data-pdf-min-font="18" className="font-bold truncate" style={{ fontSize: '3.4cqw' }}>{ddmFr}</span>

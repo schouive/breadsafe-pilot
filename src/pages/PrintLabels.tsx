@@ -734,6 +734,8 @@ function LabelMaskPreview({
             <img src={labelWordmark} alt="Bread Shop" style={{ height: '2.5cqw', marginTop: '0.2cqw' }} className="w-auto object-contain" />
           </div>
           <div
+            data-pdf-fit-width
+            data-pdf-min-font="28"
             className="flex-1 text-center font-extrabold leading-none truncate min-w-0"
             style={{ fontSize: '5.5cqw' }}
           >
@@ -796,11 +798,11 @@ function LabelMaskPreview({
               <div className="truncate">À consommer de préférence</div>
               <div className="flex items-baseline" style={{ gap: '0.8cqw' }}>
                 <span>avant le :</span>
-                <span className="font-bold truncate" style={{ fontSize: '3.4cqw' }}>{ddmFr}</span>
+                <span data-pdf-fit-width data-pdf-min-font="18" className="font-bold truncate" style={{ fontSize: '3.4cqw' }}>{ddmFr}</span>
               </div>
               <div className="flex items-baseline" style={{ gap: '0.8cqw', marginTop: '0.3cqw' }}>
                 <span>Lot :</span>
-                <span className="font-bold tracking-wider truncate" style={{ fontSize: '3.4cqw' }}>{lotDisplay}</span>
+                <span data-pdf-fit-width data-pdf-min-font="18" className="font-bold tracking-wider truncate" style={{ fontSize: '3.4cqw' }}>{lotDisplay}</span>
               </div>
             </div>
 

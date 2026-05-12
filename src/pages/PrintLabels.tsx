@@ -218,6 +218,37 @@ export default function PrintLabels() {
     }
   };
 
+  const handleDownloadPdf = async () => {
+    if (!selected || !previewRef.current) {
+      toast.error('Aperçu indisponible');
+      return;
+    }
+    setGeneratingPdf(true);
+    try {
+      const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
+        import('html2canvas'),
+        import('jspdf'),
+      ]);
+      const node = previewRef.current;
+      const canvas = await html2canvas(node, {
+        scale: 3,
+        backgroundColor: '#ffffff',
+        useCORS: true,
+        logging: false,
+      });
+      const imgData = canvas.toDataURL('image/png');
+      // Format réel de l'étiquette : 101.6 × 63.5 mm (paysage)
+      const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: [101.6, 63.5] });
+      pdf.addImage(imgData, 'PNG', 0, 0, 101.6, 63.5);
+      pdf.save(`${finalSku || selected.sku_base || 'etiquette'}_${lot || 'lot'}.pdf`);
+      toast.success('PDF généré');
+    } catch (e: any) {
+      toast.error(e?.message ?? 'Impossible de générer le PDF');
+    } finally {
+      setGeneratingPdf(false);
+    }
+  };
+
   const handlePickPrinter = async () => {
     try {
       const method = await pickZebraPrinter();

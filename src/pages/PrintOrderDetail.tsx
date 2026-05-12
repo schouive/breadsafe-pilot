@@ -456,8 +456,14 @@ export default function PrintOrderDetail() {
                       </TableCell>
                       <TableCell>
                         <Input
-                          value={it.lot_override ?? ''}
-                          onChange={e => updateItem.mutate({ id: it.id, batch_id: batch.id, lot_override: e.target.value || null })}
+                          defaultValue={it.lot_override ?? ''}
+                          key={`lot-${it.id}-${it.updated_at}`}
+                          onBlur={e => {
+                            const v = e.target.value || null;
+                            if (v !== it.lot_override) {
+                              updateItem.mutate({ id: it.id, batch_id: batch.id, lot_override: v });
+                            }
+                          }}
                           placeholder={globalLot || 'Lot'}
                           className={cn('h-9 font-mono text-xs', !lot && 'border-destructive/50')}
                           disabled={printingAll}
@@ -466,8 +472,14 @@ export default function PrintOrderDetail() {
                       <TableCell>
                         <Input
                           type="date"
-                          value={it.ddm_override ?? ''}
-                          onChange={e => updateItem.mutate({ id: it.id, batch_id: batch.id, ddm_override: e.target.value || null })}
+                          defaultValue={it.ddm_override ?? ''}
+                          key={`ddm-${it.id}-${it.updated_at}`}
+                          onBlur={e => {
+                            const v = e.target.value || null;
+                            if (v !== it.ddm_override) {
+                              updateItem.mutate({ id: it.id, batch_id: batch.id, ddm_override: v });
+                            }
+                          }}
                           className={cn('h-9 text-xs', !ddm && 'border-destructive/50')}
                           disabled={printingAll}
                         />
@@ -476,8 +488,14 @@ export default function PrintOrderDetail() {
                         <Input
                           type="number"
                           min={1}
-                          value={it.quantity}
-                          onChange={e => updateItem.mutate({ id: it.id, batch_id: batch.id, quantity: Math.max(1, Number(e.target.value) || 1) })}
+                          defaultValue={it.quantity}
+                          key={`qty-${it.id}-${it.updated_at}`}
+                          onBlur={e => {
+                            const v = Math.max(1, Number(e.target.value) || 1);
+                            if (v !== it.quantity) {
+                              updateItem.mutate({ id: it.id, batch_id: batch.id, quantity: v });
+                            }
+                          }}
                           className="h-9 w-20"
                           disabled={printingAll}
                         />

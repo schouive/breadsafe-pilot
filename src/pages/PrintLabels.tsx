@@ -240,7 +240,7 @@ export default function PrintLabels() {
       const widthPx = Math.round(101.6 * PX_PER_MM); // 1219
       const heightPx = Math.round(63.5 * PX_PER_MM); // 762
 
-      // Clone hors écran à largeur fixe pour que les cqw se résolvent correctement.
+      // Clone hors écran à largeur fixe.
       const clone = labelRoot.cloneNode(true) as HTMLElement;
       clone.style.width = `${widthPx}px`;
       clone.style.maxWidth = `${widthPx}px`;
@@ -248,6 +248,23 @@ export default function PrintLabels() {
       clone.style.aspectRatio = 'auto';
       clone.style.margin = '0';
       clone.style.boxShadow = 'none';
+      // html2canvas v1 ne supporte pas les container queries (cqw/cqh).
+      // On convertit toutes les unités cqw/cqh des styles inline en px.
+      const CQW = widthPx / 100;
+      const CQH = heightPx / 100;
+      const convertCq = (val: string) =>
+        val
+          .replace(/(-?\d*\.?\d+)cqw/g, (_, n) => `${(parseFloat(n) * CQW).toFixed(3)}px`)
+          .replace(/(-?\d*\.?\d+)cqh/g, (_, n) => `${(parseFloat(n) * CQH).toFixed(3)}px`);
+      const allEls = [clone, ...Array.from(clone.querySelectorAll<HTMLElement>('*'))];
+      for (const el of allEls) {
+        const styleAttr = el.getAttribute('style');
+        if (styleAttr && /(cqw|cqh)/.test(styleAttr)) {
+          el.setAttribute('style', convertCq(styleAttr));
+        }
+      }
+      // Désactive le container query type sur la racine maintenant que les cqw sont résolus.
+      clone.style.containerType = 'normal';
 
       offscreen = document.createElement('div');
       offscreen.style.position = 'fixed';
@@ -259,7 +276,6 @@ export default function PrintLabels() {
       offscreen.appendChild(clone);
       document.body.appendChild(offscreen);
 
-      // Laisse le navigateur appliquer le layout (container queries).
       await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
 
       const canvas = await html2canvas(clone, {

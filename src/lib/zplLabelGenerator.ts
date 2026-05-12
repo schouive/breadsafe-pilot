@@ -174,50 +174,35 @@ export function fillZplTemplate(template: string, data: ZplLabelData): string {
   const traceSource = normalizeTraceValue(data.traces) || extractTracesFromStatement(data.allergens);
   const tracesText = traceSource ? `Peut contenir des traces : ${traceSource}` : '';
 
-  // Limite physique de l'étiquette : 6 cm @ 300 dpi ≈ 708 dots.
-  // Pour garantir que la nutrition n'est jamais tronquée, on ancre les blocs du bas
-  // (nutrition, conservation, traces) à partir du bas, et l'ingrédients remplit l'espace restant.
-  const MAX_Y = 700;
-  const TITLE_H = 36;
-
-  // Hauteurs des blocs du bas (calculées avec leur nombre de lignes réel)
-  const nutriLines = nutri.filter(Boolean).length;
-  const nutriBlockH = TITLE_H + nutriLines * LINE_GAP;
-  const storageLines = Math.min(3, estimateLines(storageText));
-  const storageBlockH = storageLines * LINE_GAP;
-  const tracesLines = tracesText ? Math.min(3, estimateLines(tracesText)) : 0;
-  const tracesBlockH = tracesLines ? tracesLines * LINE_GAP + SECTION_GAP : 0;
-
-  const bottomTotalH = nutriBlockH + SECTION_GAP + storageBlockH + tracesBlockH + SECTION_GAP;
-  const ingrTop = 156;
-  const ingrTitleH = TITLE_H;
-  const ingrAvailable = MAX_Y - bottomTotalH - ingrTop - ingrTitleH;
-  const ingrMaxLines = Math.max(2, Math.floor(ingrAvailable / LINE_GAP));
-  const ingrLines = Math.min(ingrMaxLines, estimateLines(ingredientsText));
-
+  // Construction dynamique du bloc gauche avec ^FB pour exploiter toute la largeur.
   const bodyParts: string[] = [];
+  // ^FT positionne une baseline (pas le haut du texte), ce qui rendait le bloc visuellement trop haut sur Zebra.
+  // On utilise ^FO pour ancrer le haut réel du bloc sous la ligne horizontale du logo.
+  let y = 156;
+
+  const addBlock = (text: string, maxLines: number) => {
+    if (!text) return;
+    const lines = Math.min(maxLines, estimateLines(text));
+    bodyParts.push(`^FO18,${y}^A0N,${FONT_H},${FONT_W}^FB${FB_WIDTH},${lines},0,L,0^FH\\^FD${text}^FS`);
+    y += lines * LINE_GAP;
+  };
 
   // Titre Ingrédients
-  bodyParts.push(`^FO18,${ingrTop}^A0N,28,22^FH\\^FDIngredients :^FS`);
-  // Texte ingrédients
-  if (ingredientsText) {
-    bodyParts.push(`^FO18,${ingrTop + ingrTitleH}^A0N,${FONT_H},${FONT_W}^FB${FB_WIDTH},${ingrLines},0,L,0^FH\\^FD${ingredientsText}^FS`);
-  }
-
-  // Position du bas — on remonte depuis MAX_Y
-  let by = MAX_Y - bottomTotalH + SECTION_GAP;
+  bodyParts.push(`^FO18,${y}^A0N,28,22^FH\\^FDIngredients :^FS`);
+  y += 36;
+  addBlock(ingredientsText, 14);
   if (tracesText) {
-    bodyParts.push(`^FO18,${by}^A0N,${FONT_H},${FONT_W}^FB${FB_WIDTH},${tracesLines},0,L,0^FH\\^FD${tracesText}^FS`);
-    by += tracesLines * LINE_GAP + SECTION_GAP;
+    y += SECTION_GAP;
+    addBlock(tracesText, 3);
   }
-  bodyParts.push(`^FO18,${by}^A0N,${FONT_H},${FONT_W}^FB${FB_WIDTH},${storageLines},0,L,0^FH\\^FD${storageText}^FS`);
-  by += storageLines * LINE_GAP + SECTION_GAP;
-  bodyParts.push(`^FO18,${by}^A0N,${FONT_H},${FONT_W}^FH\\^FDValeurs nutritionnelles pour 100g :^FS`);
-  by += TITLE_H;
+  y += SECTION_GAP;
+  addBlock(storageText, 3);
+  y += SECTION_GAP;
+  bodyParts.push(`^FO18,${y}^A0N,${FONT_H},${FONT_W}^FH\\^FDValeurs nutritionnelles pour 100g :^FS`);
+  y += LINE_GAP;
   for (const line of nutri) {
-    if (!line) continue;
-    bodyParts.push(`^FO18,${by}^A0N,${FONT_H},${FONT_W}^FH\\^FD${line}^FS`);
-    by += LINE_GAP;
+    bodyParts.push(`^FO18,${y}^A0N,${FONT_H},${FONT_W}^FH\\^FD${line}^FS`);
+    y += LINE_GAP;
   }
 
   const body = bodyParts.join('\n');
@@ -256,8 +241,6 @@ export function fillZplTemplate(template: string, data: ZplLabelData): string {
   return template.replace(/\{\{(\w+)\}\}/g, (_, k) => replacements[k] ?? '');
 }
 
-const TRIMAN_LOGO_GFA = `^FO750,450^GFA,350,350,7,0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000040000000000000C0000000000000E0000000000001E0000000000001F0000000000043F08000000001E3F9E000000003C7F8F00000000707FC38000000060FFC180000000E00001C0000001C00000E000000380000070000003000000300000030000003000000300000030000003000000300000030000003000000310000230000000300003000000003800070000000078000780000000FC000FC0000000FC000FC0000001FE001FE0000003FE001FF0000003FF003FF000000400000008000000040008000000000F003C0000000007F3F80000000001FFE0000000000006000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000^FS`;
-
 /**
  * Template ZPL par défaut (fallback si la BDD n'en contient pas).
  * Issu du fichier Etiquette2.prn fourni par le client.
@@ -269,7 +252,7 @@ export const DEFAULT_PRODUCT_LABEL_ZPL = `CT~~CD,~CC^~CT~
 ^XA
 ^MMT
 ^PW1200
-^LL708
+^LL780
 ^LS0
 ${BREADSHOP_LABEL_LOGO_GFA}
 ^FT292,78^A0N,50,45^FB880,1,0,C,0^FH\^FD{{DESIGNATION}}^FS
@@ -284,7 +267,6 @@ ${BREADSHOP_LABEL_LOGO_GFA}
 ^FT780,423^A0N,39,36^FH\^FDLot : L{{LOT}}^FS
 ^FT810,474^A0N,27,27^FH\^FDCarton et sachet^FS
 ^FT843,507^A0N,27,27^FH\^FDrecyclables^FS
-${TRIMAN_LOGO_GFA}
 ^BY3,2,82
 ^FO795,537^BCN,82,Y,N^FD>;{{BARCODE}}^FS
 ^PQ{{QTY}},0,1,Y^XZ`;

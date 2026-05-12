@@ -28,6 +28,7 @@ const FAMILIES = ['BUN', 'BAG', 'HDG', 'PDM', 'PLQ', 'SPC'];
 const PACKAGING_LABELS: Record<string, string> = {
   U01: 'Unité',
   C05: 'Carton de 5',
+  C18: 'Carton de 18',
   C24: 'Carton de 24',
   PAL: 'Palette',
 };

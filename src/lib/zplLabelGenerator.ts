@@ -140,7 +140,7 @@ export function fillZplTemplate(template: string, data: ZplLabelData): string {
   const FONT_W = 22;
   const FB_WIDTH = 740;          // largeur de wrap en dots ≈ 6cm
   const LINE_GAP = 34;           // espacement vertical entre lignes
-  const SECTION_GAP = 0;         // plus aucun espace entre blocs
+  const SECTION_GAP = 18;        // espace fixe entre blocs (ingrédients/traces/conservation/nutrition)
   // Estimation du nb de lignes : largeur moyenne d'un caractère ≈ FONT_W * 0.55
   const CHARS_PER_LINE = Math.floor(FB_WIDTH / (FONT_W * 0.55));
 

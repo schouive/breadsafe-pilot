@@ -47,6 +47,8 @@ export default function PrintLabels() {
 
   const searchRef = useRef<HTMLInputElement>(null);
   const lotRef = useRef<HTMLInputElement>(null);
+  const previewRef = useRef<HTMLDivElement>(null);
+  const [generatingPdf, setGeneratingPdf] = useState(false);
 
   const { data: products = [], isLoading: loadingProducts } = usePrintProducts();
   const { data: history = [] } = usePrintHistory(10);

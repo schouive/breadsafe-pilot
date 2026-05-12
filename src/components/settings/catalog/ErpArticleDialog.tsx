@@ -121,6 +121,7 @@ export function ErpArticleDialog({ open, onOpenChange, article }: Props) {
                 <SelectContent>
                   <SelectItem value="U01">U01 (unité)</SelectItem>
                   <SelectItem value="C05">C05 (carton 5)</SelectItem>
+                  <SelectItem value="C18">C18 (carton 18)</SelectItem>
                   <SelectItem value="C24">C24 (carton 24)</SelectItem>
                   <SelectItem value="PAL">PAL (palette)</SelectItem>
                 </SelectContent>

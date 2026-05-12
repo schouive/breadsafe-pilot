@@ -152,7 +152,7 @@ export function fillZplTemplate(template: string, data: ZplLabelData): string {
     while (remaining.length > 0) {
       if (remaining.length <= CHARS_PER_LINE) { lines++; break; }
       let cut = remaining.lastIndexOf(' ', CHARS_PER_LINE);
-      if (cut < CHARs_PER_LINE * 0.5) cut = CHARS_PER_LINE;
+      if (cut < CHARS_PER_LINE * 0.5) cut = CHARS_PER_LINE;
       lines++;
       remaining = remaining.substring(cut).trim();
     }

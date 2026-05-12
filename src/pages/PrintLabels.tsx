@@ -248,6 +248,9 @@ export default function PrintLabels() {
       clone.style.aspectRatio = 'auto';
       clone.style.margin = '0';
       clone.style.boxShadow = 'none';
+      // Évite que le code-barres en bas soit clippé par overflow-hidden + padding.
+      clone.style.overflow = 'visible';
+      clone.style.paddingBottom = '4px';
       // html2canvas v1 ne supporte pas les container queries (cqw/cqh).
       // On convertit toutes les unités cqw/cqh des styles inline en px.
       const CQW = widthPx / 100;

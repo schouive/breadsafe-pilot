@@ -146,10 +146,11 @@ export default function PrintProgramRun() {
     let ok = 0, fail = 0;
     const queue = lines.filter(l => l.status !== 'printed');
     for (const l of queue) {
-      updateLine(l.itemId, { status: 'printing', error: null });
+      const lot = computeLotNumber(l.productionDate);
+      updateLine(l.itemId, { status: 'printing', error: null, lot });
       try {
         const zpl = buildProductZpl({
-          product: l.product, lot: l.lot, ddm: l.ddm, quantity: l.quantity,
+          product: l.product, lot, ddm: l.ddm, quantity: l.quantity,
         });
         await printZpl(zpl);
         updateLine(l.itemId, { status: 'printed', error: null });
@@ -165,7 +166,7 @@ export default function PrintProgramRun() {
             slicing: l.product.slicing,
             packaging: l.product.packaging,
             template_name: l.product.template_name!,
-            lot_number: l.lot,
+            lot_number: lot,
             ddm: l.ddm,
             quantity: l.quantity,
           });

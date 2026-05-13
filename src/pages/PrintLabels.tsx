@@ -616,7 +616,7 @@ export default function PrintLabels() {
             <Separator />
             <div className="flex items-center justify-between bg-muted/50 p-3 rounded-md">
               <span className="text-sm text-muted-foreground">Template Zebra</span>
-              <Badge variant="default" className="font-mono">{selected.template_name}</Badge>
+              <Badge variant="default" className="font-mono">{selected.template_name || 'Étiquette produit standard'}</Badge>
             </div>
             <Button variant="outline" size="sm" onClick={handlePickPrinter} className="w-full">
               <Printer className="h-4 w-4 mr-2" /> Choisir / changer l'imprimante Zebra

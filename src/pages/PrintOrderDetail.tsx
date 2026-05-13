@@ -422,15 +422,16 @@ export default function PrintOrderDetail() {
             />
           </div>
           <div>
-            <Label htmlFor="global-lot">Lot global</Label>
+            <Label htmlFor="production-date">Date de fabrication</Label>
             <Input
-              id="global-lot"
-              value={globalLot}
-              onChange={e => setGlobalLot(e.target.value)}
-              onBlur={persistHeader}
-              placeholder="Ex. L13226"
-              className="font-mono"
+              id="production-date"
+              type="date"
+              value={productionDate}
+              onChange={e => handleProductionDateChange(e.target.value)}
             />
+            <p className="text-xs text-muted-foreground mt-1">
+              Lot généré : <span className="font-mono">{globalLot || '—'}</span>
+            </p>
           </div>
           <div>
             <Label htmlFor="global-ddm">DDM globale</Label>

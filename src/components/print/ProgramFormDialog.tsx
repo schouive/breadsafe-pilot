@@ -99,6 +99,10 @@ export function ProgramFormDialog({ open, onOpenChange, program, onSaved }: Prop
 
   useEffect(() => {
     if (!open) return;
+    if (!existingItems) {
+      setRows([]);
+      return;
+    }
     setRows(existingItems.map(it => ({
       erp_article_id: it.erp_article_id,
       default_quantity: it.default_quantity,

@@ -272,7 +272,7 @@ export default function PrintProgramRun() {
                   <TableHead className="w-40">Date fab.</TableHead>
                   <TableHead className="w-32">Lot</TableHead>
                   <TableHead className="w-40">DDM</TableHead>
-                  <TableHead className="w-32">Statut</TableHead>
+                  
                 </TableRow>
               </TableHeader>
               <TableBody>

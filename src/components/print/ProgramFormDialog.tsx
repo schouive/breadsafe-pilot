@@ -78,7 +78,7 @@ function ProductPicker({ value, onSelect, products }: {
 export function ProgramFormDialog({ open, onOpenChange, program, onSaved }: Props) {
   const isEdit = !!program;
   const { data: products = [] } = usePrintProducts();
-  const { data: existingItems = [] } = usePrintProgramItems(program?.id);
+  const { data: existingItems } = usePrintProgramItems(program?.id);
   const create = useCreatePrintProgram();
   const update = useUpdatePrintProgram();
   const replaceItems = useReplaceProgramItems();
@@ -99,6 +99,10 @@ export function ProgramFormDialog({ open, onOpenChange, program, onSaved }: Prop
 
   useEffect(() => {
     if (!open) return;
+    if (!existingItems) {
+      setRows([]);
+      return;
+    }
     setRows(existingItems.map(it => ({
       erp_article_id: it.erp_article_id,
       default_quantity: it.default_quantity,

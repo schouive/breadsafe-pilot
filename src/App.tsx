@@ -63,8 +63,6 @@ const AuditSettings = lazy(() => import("./pages/settings/AuditSettings"));
 const SecuritySettings = lazy(() => import("./pages/settings/SecuritySettings"));
 const FamiliesSettings = lazy(() => import("./pages/settings/catalog/FamiliesSettings"));
 const CatalogRecipesSettings = lazy(() => import("./pages/settings/catalog/CatalogRecipesSettings"));
-const MasterProductsSettings = lazy(() => import("./pages/settings/catalog/MasterProductsSettings"));
-const ErpArticlesSettings = lazy(() => import("./pages/settings/catalog/ErpArticlesSettings"));
 const TemplatesSettings = lazy(() => import("./pages/settings/catalog/TemplatesSettings"));
 
 
@@ -397,11 +395,11 @@ function AppRoutes() {
         <Route path="/settings/suppliers" element={<ProtectedRoute><SettingsLayout><SuppliersSettings /></SettingsLayout></ProtectedRoute>} />
         <Route path="/settings/raw-materials" element={<ProtectedRoute><SettingsLayout><RawMaterialsSettings /></SettingsLayout></ProtectedRoute>} />
         <Route path="/settings/non-food" element={<ProtectedRoute><SettingsLayout><NonFoodSettings /></SettingsLayout></ProtectedRoute>} />
-        <Route path="/settings/print-catalog" element={<Navigate to="/settings/catalog/erp-articles" replace />} />
+        <Route path="/settings/print-catalog" element={<Navigate to="/settings/catalog/templates" replace />} />
+        <Route path="/settings/catalog/master" element={<Navigate to="/products/sheets" replace />} />
+        <Route path="/settings/catalog/erp-articles" element={<Navigate to="/products/sheets" replace />} />
         <Route path="/settings/catalog/families" element={<ProtectedRoute><SettingsLayout><FamiliesSettings /></SettingsLayout></ProtectedRoute>} />
         <Route path="/settings/catalog/recipes" element={<ProtectedRoute><SettingsLayout><CatalogRecipesSettings /></SettingsLayout></ProtectedRoute>} />
-        <Route path="/settings/catalog/master" element={<ProtectedRoute><SettingsLayout><MasterProductsSettings /></SettingsLayout></ProtectedRoute>} />
-        <Route path="/settings/catalog/erp-articles" element={<ProtectedRoute><SettingsLayout><ErpArticlesSettings /></SettingsLayout></ProtectedRoute>} />
         <Route path="/settings/catalog/templates" element={<ProtectedRoute><SettingsLayout><TemplatesSettings /></SettingsLayout></ProtectedRoute>} />
         <Route path="/settings/users" element={<ProtectedRoute><SettingsLayout><UsersSettings /></SettingsLayout></ProtectedRoute>} />
         <Route path="/settings/audit" element={<ProtectedRoute><SettingsLayout><AuditSettings /></SettingsLayout></ProtectedRoute>} />

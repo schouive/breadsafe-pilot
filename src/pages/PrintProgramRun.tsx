@@ -80,7 +80,7 @@ export default function PrintProgramRun() {
       const prevById = new Map(prev.map(l => [l.itemId, l]));
       return items
         .map(it => {
-          const p = productById.get(it.erp_article_id);
+          const p = productById.get(it.packaging_id);
           if (!p) return null;
           const old = prevById.get(it.id);
           const lot = computeLotNumber(globalProductionDate);

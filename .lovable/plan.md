@@ -1,93 +1,95 @@
-# Programmes d'impression clients + Mode rapide
+# Refonte : Conditionnements dans la FT
 
 ## Objectif
+Simplifier la chaîne **FT → Produit Maître → Article ERP → Étiquette** en intégrant directement les conditionnements dans la Fiche Technique. Une FT contiendra une **sous-table de conditionnements**, et les étiquettes du catalogue d'impression seront générées directement depuis ces lignes.
 
-Remplacer la logique générique de `print_batches` (sessions ad‑hoc) par une logique métier : des **programmes clients** réutilisables, exécutés en quelques clics par les opérateurs, plus un **mode rapide** sans sauvegarde.
+## Architecture cible
 
-## Base de données
+```text
+AVANT :
+  product_sheets ──► products_master ──► erp_articles ──► print catalog
+                                          (C04/C05/U01...)
 
-Nouvelles tables (migration) :
+APRÈS :
+  product_sheets ──► product_sheet_packagings ──► print catalog
+                     (C04/C05/U01, code-barres,
+                      pcs/carton, poids carton...)
+```
 
-**print_programs**
-- `id` uuid PK
-- `name` text NOT NULL
-- `customer_code` text
-- `customer_name` text
-- `active` boolean default true
-- `created_by`, `created_at`, `updated_at`
+## 1. Nouvelle table `product_sheet_packagings`
 
-**print_program_items**
-- `id` uuid PK
-- `program_id` uuid FK → print_programs(id) ON DELETE CASCADE
-- `erp_article_id` uuid FK → erp_articles(id) ON DELETE CASCADE
-- `print_order` int default 0
-- `default_quantity` int default 1
-- `created_at`, `updated_at`
+Sous-table liée à `product_sheets`. Une ligne = un conditionnement vendable d'un même produit.
 
-RLS :
-- SELECT pour tous les utilisateurs authentifiés
-- INSERT/UPDATE/DELETE pour `admin` + `quality` + `office`
-- Opérateurs : lecture seule + exécution (pas de modif structure)
+Champs :
+- `product_sheet_id` (FK vers product_sheets)
+- `packaging_code` (U01, C04, C05, C18, C24, PAL)
+- `erp_code` (code interne, ex: PMC500-C04)
+- `erp_label` (libellé commercial, ex: "Pain de mie carton x4")
+- `barcode_value` (EAN13, optionnel)
+- `temperature_state` (FR/FZ)
+- `slicing_state` (SLI/WHO)
+- `pieces_per_carton`, `cartons_per_layer`, `layers_per_pallet`
+- `carton_weight`, `carton_dimensions`
+- `template_id` (FK vers `label_templates` pour le ZPL)
+- `active`, `print_order`
 
-Anciennes tables `print_batches` / `print_batch_items` / `print_jobs` : **conservées** (historique / journalisation), mais la nav et les pages génériques disparaissent.
+RLS : Admin / Bureau Méthodes manage, tous authentifiés peuvent voir.
 
-## Pages & navigation
+## 2. UI Fiche Technique
 
-`PrintLayout` — nouveau menu :
-- Étiquettes Production (`/print`) — inchangé
-- Programmes clients (`/print/programs`)
-- Impression rapide (`/print/quick`)
+Ajout d'une nouvelle section **"Conditionnements"** dans `TechnicalSheetFormDialog.tsx`, après la section Logistique :
 
-Suppression : `/print/orders` et `/print/orders/:id` (PrintOrdersList, PrintOrderDetail).
+- Tableau avec colonnes : Code (U01/C04…), Code ERP, Libellé, Code-barres, État (FR/FZ), Tranchage, Pcs/carton, Poids carton, Template ZPL, Actif
+- Bouton "+ Ajouter un conditionnement"
+- Suppression ligne par ligne
+- Le bloc Logistique global (pieces_per_carton, etc.) actuel devient la **valeur par défaut** réutilisée à la création d'une nouvelle ligne, puis chaque ligne est éditable indépendamment
 
-## UI : Programmes clients (`/print/programs`)
+## 3. Catalogue d'impression
 
-Grille de cartes :
-- Nom programme
-- Client (`customer_name` — `customer_code`)
-- Compteur produits
-- Badge actif / inactif
-- Boutons : **Ouvrir** (exécuter), **Modifier**, **Dupliquer**, **Désactiver/Activer**, **Supprimer** (admin)
+Le module **Étiquetage** (`PrintLabels.tsx`, `usePrintLabels`, `buildProductZpl`) lit désormais `product_sheet_packagings` au lieu de `erp_articles`.
 
-Bouton **+ Créer** en haut.
+- Sélecteur produit → liste des FT validées
+- Sélecteur conditionnement → lignes de `product_sheet_packagings` actives
+- Génération ZPL : utilise `template_id` + variables issues de la FT + ligne packaging
+- Programmes clients (`print_program_items`) : remplacement de `erp_article_id` par `packaging_id`
 
-Modal CRUD (`ProgramFormDialog`) :
-- name, customer_code, customer_name, active
-- Liste éditable des lignes : recherche article ERP, quantité par défaut, ordre (drag/handle simple), suppr ligne, dupliquer ligne
+## 4. Migration des données existantes
 
-## UI : Exécution programme (`/print/programs/:id/run`)
+Script SQL one-shot qui pour chaque `erp_articles` :
+1. Trouve la FT correspondante via `products_master.product_sheet_id`
+2. Crée une ligne `product_sheet_packagings` avec les mêmes valeurs
+3. Met à jour `print_program_items.packaging_id` à partir de `erp_article_id`
 
-Chargement auto de toutes les lignes du programme.
+Puis suppression des tables :
+- `article_templates`
+- `erp_articles`
+- `products_master`
+- `nutrition_profiles` (la nutrition vit déjà sur la recette via la vue SQL)
 
-En haut :
-- **Date de fabrication globale** (calendrier) → calcule lot global format `LJJJYY` (réutiliser `computeLotNumber` existant)
-- **DDM globale** (calendrier)
-- Bouton **« Appliquer à toutes les lignes »**
+## 5. Suppression UI
 
-Tableau lignes (lecture seule sauf qty/lot/ddm overrides) :
-- Code ERP · Nom produit · Quantité (éditable) · Lot (éditable, prérempli avec lot global) · Date fab (éditable) · DDM (éditable)
-- Statut par ligne : pending / printing / printed / failed
+À retirer du menu **Paramètres** :
+- Page "Référentiel Produits ERP" (`/settings/catalog/erp-articles`)
+- Page "Familles produits" si plus utilisée ailleurs (à vérifier)
+- Page "Conditionnements" globale → reste utile comme référentiel des codes valides
+- Page "Templates ZPL" → conservée
+- Import CSV des Articles ERP → supprimé
 
-Bouton **IMPRIMER LE PROGRAMME** : envoie ZPL ligne par ligne via WebUSB Zebra (réutilise `buildProductZpl` + `zebraWebUsb`). Statut mis à jour en direct.
+## Points techniques
 
-Aucune persistance d'« exécution » obligatoire (pas de batch créé). Optionnel : enregistrer dans `print_history` en best‑effort.
+- Type Supabase auto-régénéré après migration → adapter tous les hooks (`useProductCatalog`, `usePrintLabels`, `usePrintPrograms`)
+- La contrainte CHECK `packaging_code` migre vers la nouvelle table (U01, C04, C05, C18, C24, PAL)
+- Mémoire à mettre à jour : remplacer `referentiel-produits-erp-v1` par `conditionnements-dans-ft-v1`
 
-## UI : Impression rapide (`/print/quick`)
+## Périmètre exclu de ce lot
+- Pas de changement sur le moteur de recette / nutrition / INCO
+- Pas de changement sur le workflow de validation FT
+- Pas de changement sur les étiquettes carton (`carton_labels`)
 
-- Recherche article ERP (combobox, réutilise `usePrintProducts`)
-- Date de fabrication → lot auto (modifiable)
-- DDM
-- Quantité
-- Bouton **Imprimer** → ZPL direct, pas de sauvegarde
-- Petit historique de session en mémoire (les 10 dernières impressions de la session)
-
-## Détails techniques
-
-- Hook `usePrintPrograms` (list, get, create, update, duplicate, toggleActive, delete) + `usePrintProgramItems`
-- Réutilisation : `usePrintProducts` (articles ERP enrichis FT), `buildProductZpl`, `zebraWebUsb`, `computeLotNumber`
-- `src/integrations/supabase/types.ts` régénéré automatiquement après migration
-
-## Hors scope
-
-- Pas de modification de PrintLabels (étiquettes production) ni du module ERP
-- Pas de suppression physique des tables `print_batches` (gardées pour l'historique)
+## Étapes d'implémentation
+1. Migration SQL : création `product_sheet_packagings` + copie depuis `erp_articles` + mise à jour `print_program_items`
+2. UI FT : section Conditionnements
+3. Refacto étiquetage : lecture depuis nouvelle table
+4. Refacto programmes clients : nouveau FK
+5. Suppression menus + tables obsolètes
+6. Mise à jour mémoire projet

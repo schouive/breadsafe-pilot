@@ -17,7 +17,7 @@ export interface PrintProgram {
 export interface PrintProgramItem {
   id: string;
   program_id: string;
-  erp_article_id: string;
+  packaging_id: string;
   print_order: number;
   default_quantity: number;
   created_at: string;

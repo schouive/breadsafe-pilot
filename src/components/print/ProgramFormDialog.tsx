@@ -78,7 +78,7 @@ function ProductPicker({ value, onSelect, products }: {
 export function ProgramFormDialog({ open, onOpenChange, program, onSaved }: Props) {
   const isEdit = !!program;
   const { data: products = [] } = usePrintProducts();
-  const { data: existingItems = [] } = usePrintProgramItems(program?.id);
+  const { data: existingItems } = usePrintProgramItems(program?.id);
   const create = useCreatePrintProgram();
   const update = useUpdatePrintProgram();
   const replaceItems = useReplaceProgramItems();

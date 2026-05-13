@@ -174,10 +174,6 @@ export default function PrintLabels() {
       toast.error('Informations manquantes');
       return;
     }
-    if (!selected.template_name) {
-      toast.error('Aucun template Zebra associé à cet article');
-      return;
-    }
     if (!isZebraSupported()) {
       toast.error("WebUSB non disponible. Utilisez Chrome/Edge en HTTPS.");
       return;
@@ -198,7 +194,7 @@ export default function PrintLabels() {
         temperature: selected.temperature,
         slicing: selected.slicing,
         packaging: selected.packaging,
-        template_name: selected.template_name,
+        template_name: selected.template_name || 'DEFAULT',
         lot_number: lot,
         ddm,
         quantity: Number(quantity),
@@ -507,14 +503,10 @@ export default function PrintLabels() {
                           </div>
                           <div className="flex flex-wrap items-center gap-1">
                             <Badge variant="outline">{PACKAGING_LABELS[p.packaging] ?? p.packaging}</Badge>
-                            {!p.template_name && (
-                              <Badge variant="destructive" className="text-xs">Sans template</Badge>
-                            )}
                           </div>
                           <Button
                             className="w-full"
                             size="lg"
-                            disabled={!p.template_name}
                             onClick={() => { setSelected(p); setStep(2); }}
                           >
                             Sélectionner
@@ -624,7 +616,7 @@ export default function PrintLabels() {
             <Separator />
             <div className="flex items-center justify-between bg-muted/50 p-3 rounded-md">
               <span className="text-sm text-muted-foreground">Template Zebra</span>
-              <Badge variant="default" className="font-mono">{selected.template_name}</Badge>
+              <Badge variant="default" className="font-mono">{selected.template_name || 'Étiquette produit standard'}</Badge>
             </div>
             <Button variant="outline" size="sm" onClick={handlePickPrinter} className="w-full">
               <Printer className="h-4 w-4 mr-2" /> Choisir / changer l'imprimante Zebra

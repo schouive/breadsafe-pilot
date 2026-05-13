@@ -126,7 +126,8 @@ export default function PrintProgramRun() {
   const validate = (): string | null => {
     if (lines.length === 0) return 'Aucune ligne à imprimer';
     for (const l of lines) {
-      if (!l.lot.trim()) return `Lot manquant pour ${l.product.erp_code}`;
+      const lot = computeLotNumber(l.productionDate);
+      if (!lot.trim()) return `Date de fabrication manquante pour ${l.product.erp_code}`;
       if (!l.ddm) return `DDM manquante pour ${l.product.erp_code}`;
       if (!l.product.template_name) return `Aucun template Zebra pour ${l.product.erp_code}`;
       if (l.quantity < 1) return `Quantité invalide pour ${l.product.erp_code}`;
@@ -145,10 +146,11 @@ export default function PrintProgramRun() {
     let ok = 0, fail = 0;
     const queue = lines.filter(l => l.status !== 'printed');
     for (const l of queue) {
-      updateLine(l.itemId, { status: 'printing', error: null });
+      const lot = computeLotNumber(l.productionDate);
+      updateLine(l.itemId, { status: 'printing', error: null, lot });
       try {
         const zpl = buildProductZpl({
-          product: l.product, lot: l.lot, ddm: l.ddm, quantity: l.quantity,
+          product: l.product, lot, ddm: l.ddm, quantity: l.quantity,
         });
         await printZpl(zpl);
         updateLine(l.itemId, { status: 'printed', error: null });
@@ -164,7 +166,7 @@ export default function PrintProgramRun() {
             slicing: l.product.slicing,
             packaging: l.product.packaging,
             template_name: l.product.template_name!,
-            lot_number: l.lot,
+            lot_number: lot,
             ddm: l.ddm,
             quantity: l.quantity,
           });
@@ -278,8 +280,12 @@ export default function PrintProgramRun() {
                           className="h-9" />
                       </TableCell>
                       <TableCell>
-                        <Input value={l.lot} onChange={e => updateLine(l.itemId, { lot: e.target.value })}
-                          className="h-9 font-mono text-xs" />
+                        <Input
+                          value={computeLotNumber(l.productionDate)}
+                          readOnly
+                          tabIndex={-1}
+                          className="h-9 font-mono text-xs bg-muted cursor-not-allowed"
+                        />
                       </TableCell>
                       <TableCell>
                         <Input type="date" value={l.ddm} onChange={e => updateLine(l.itemId, { ddm: e.target.value })}

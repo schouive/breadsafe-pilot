@@ -49,8 +49,9 @@ const TimeTrackingLayout = lazy(() => import("@/components/layout/TimeTrackingLa
 const RDTrialsList = lazy(() => import("./pages/RDTrialsList"));
 const RDTrialDetail = lazy(() => import("./pages/RDTrialDetail"));
 const PrintLabels = lazy(() => import("./pages/PrintLabels"));
-const PrintOrdersList = lazy(() => import("./pages/PrintOrdersList"));
-const PrintOrderDetail = lazy(() => import("./pages/PrintOrderDetail"));
+const PrintProgramsList = lazy(() => import("./pages/PrintProgramsList"));
+const PrintProgramRun = lazy(() => import("./pages/PrintProgramRun"));
+const PrintQuick = lazy(() => import("./pages/PrintQuick"));
 const ColdRoomsSettings = lazy(() => import("./pages/settings/ColdRoomsSettings"));
 const MetalDetectorSettingsPage = lazy(() => import("./pages/settings/MetalDetectorSettingsPage"));
 const SuppliersSettings = lazy(() => import("./pages/settings/SuppliersSettings"));

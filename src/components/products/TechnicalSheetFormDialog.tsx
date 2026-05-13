@@ -921,6 +921,21 @@ export function TechnicalSheetFormDialog({
             </div>
           </div>
 
+          {/* Packagings */}
+          <Separator />
+          {sheet?.id ? (
+            <PackagingsSection productSheetId={sheet.id} />
+          ) : (
+            <div className="space-y-2">
+              <h4 className="font-medium text-sm uppercase tracking-wider flex items-center gap-2">
+                Conditionnements (étiquetage)
+              </h4>
+              <p className="text-sm text-muted-foreground italic">
+                Enregistrez d'abord la fiche pour ajouter des conditionnements (U01, C04, C05…).
+              </p>
+            </div>
+          )}
+
           {/* Conservation & Usage */}
           <Separator />
           <div className="space-y-4">

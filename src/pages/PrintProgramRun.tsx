@@ -123,6 +123,20 @@ export default function PrintProgramRun() {
     });
   };
 
+  const handleGlobalProductionDateChange = (val: string) => {
+    setGlobalProductionDate(val);
+    setLines(prev => prev.map(l =>
+      l.status === 'printed'
+        ? l
+        : { ...l, productionDate: val, lot: computeLotNumber(val) }
+    ));
+  };
+
+  const handleGlobalDdmChange = (val: string) => {
+    setGlobalDdm(val);
+    setLines(prev => prev.map(l => l.status === 'printed' ? l : { ...l, ddm: val }));
+  };
+
   const validate = (): string | null => {
     if (lines.length === 0) return 'Aucune ligne à imprimer';
     for (const l of lines) {
@@ -226,14 +240,14 @@ export default function PrintProgramRun() {
         <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
           <div>
             <Label>Date de fabrication globale</Label>
-            <Input type="date" value={globalProductionDate} onChange={e => setGlobalProductionDate(e.target.value)} />
+            <Input type="date" value={globalProductionDate} onChange={e => handleGlobalProductionDateChange(e.target.value)} />
             <p className="text-xs text-muted-foreground mt-1">
               Lot : <span className="font-mono">{computeLotNumber(globalProductionDate) || '—'}</span>
             </p>
           </div>
           <div>
             <Label>DDM globale</Label>
-            <Input type="date" value={globalDdm} onChange={e => setGlobalDdm(e.target.value)} />
+            <Input type="date" value={globalDdm} onChange={e => handleGlobalDdmChange(e.target.value)} />
           </div>
           <Button variant="secondary" onClick={applyGlobalsToAll}>
             <Wand2 className="h-4 w-4 mr-2" /> Appliquer à toutes les lignes

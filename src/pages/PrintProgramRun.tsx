@@ -303,13 +303,6 @@ export default function PrintProgramRun() {
                         <Input type="date" value={l.ddm} onChange={e => updateLine(l.itemId, { ddm: e.target.value })}
                           className="h-9" />
                       </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className={cn('gap-1', s.cls)}>
-                          <Icon className={cn('h-3 w-3', l.status === 'printing' && 'animate-spin')} />
-                          {s.label}
-                        </Badge>
-                        {l.error && <p className="text-xs text-destructive mt-1 truncate" title={l.error}>{l.error}</p>}
-                      </TableCell>
                     </TableRow>
                   );
                 })}

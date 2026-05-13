@@ -174,10 +174,6 @@ export default function PrintLabels() {
       toast.error('Informations manquantes');
       return;
     }
-    if (!selected.template_name) {
-      toast.error('Aucun template Zebra associé à cet article');
-      return;
-    }
     if (!isZebraSupported()) {
       toast.error("WebUSB non disponible. Utilisez Chrome/Edge en HTTPS.");
       return;

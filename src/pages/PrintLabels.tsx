@@ -194,7 +194,7 @@ export default function PrintLabels() {
         temperature: selected.temperature,
         slicing: selected.slicing,
         packaging: selected.packaging,
-        template_name: selected.template_name,
+        template_name: selected.template_name || 'DEFAULT',
         lot_number: lot,
         ddm,
         quantity: Number(quantity),

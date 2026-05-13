@@ -113,16 +113,58 @@ export default function PrintOrderDetail() {
 
   const [name, setName] = useState('');
   const [globalLot, setGlobalLot] = useState('');
+  const [productionDate, setProductionDate] = useState('');
   const [globalDdm, setGlobalDdm] = useState('');
   const [printingAll, setPrintingAll] = useState(false);
   const [previewItem, setPreviewItem] = useState<string | null>(null);
+
+  // L + jour de l'année (3 chiffres) + 2 derniers chiffres de l'année
+  // Ex: 03 janvier 2026 -> L00326
+  const computeLotNumber = (isoDate: string): string => {
+    if (!isoDate) return '';
+    const d = new Date(isoDate + 'T00:00:00');
+    if (isNaN(d.getTime())) return '';
+    const start = new Date(d.getFullYear(), 0, 0);
+    const dayOfYear = Math.floor((d.getTime() - start.getTime()) / 86400000);
+    return `L${String(dayOfYear).padStart(3, '0')}${String(d.getFullYear()).slice(-2)}`;
+  };
+
+  // Reverse: lot "L00326" -> ISO date "2026-01-03"
+  const lotToIsoDate = (lot: string | null | undefined): string => {
+    if (!lot) return '';
+    const m = /^L(\d{3})(\d{2})$/.exec(lot.trim());
+    if (!m) return '';
+    const day = parseInt(m[1], 10);
+    const year = 2000 + parseInt(m[2], 10);
+    const d = new Date(year, 0, day);
+    if (isNaN(d.getTime())) return '';
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  };
 
   useEffect(() => {
     if (!batch) return;
     setName(batch.name ?? '');
     setGlobalLot(batch.global_lot ?? '');
+    setProductionDate(lotToIsoDate(batch.global_lot));
     setGlobalDdm(batch.global_ddm ?? '');
   }, [batch]);
+
+  const handleProductionDateChange = (val: string) => {
+    setProductionDate(val);
+    const lot = computeLotNumber(val);
+    setGlobalLot(lot);
+    if (batch) {
+      updateBatch.mutate({
+        id: batch.id,
+        name: name || null,
+        global_lot: lot || null,
+        global_ddm: globalDdm || null,
+      });
+    }
+  };
 
   const productById = useMemo(() => {
     const map = new Map<string, PrintProduct>();
@@ -380,15 +422,16 @@ export default function PrintOrderDetail() {
             />
           </div>
           <div>
-            <Label htmlFor="global-lot">Lot global</Label>
+            <Label htmlFor="production-date">Date de fabrication</Label>
             <Input
-              id="global-lot"
-              value={globalLot}
-              onChange={e => setGlobalLot(e.target.value)}
-              onBlur={persistHeader}
-              placeholder="Ex. L13226"
-              className="font-mono"
+              id="production-date"
+              type="date"
+              value={productionDate}
+              onChange={e => handleProductionDateChange(e.target.value)}
             />
+            <p className="text-xs text-muted-foreground mt-1">
+              Lot généré : <span className="font-mono">{globalLot || '—'}</span>
+            </p>
           </div>
           <div>
             <Label htmlFor="global-ddm">DDM globale</Label>

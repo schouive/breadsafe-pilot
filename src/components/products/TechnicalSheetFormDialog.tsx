@@ -129,8 +129,6 @@ export function TechnicalSheetFormDialog({
     product_name: '',
     description: '',
     product_reference: '',
-    brand: '',
-    barcode: '',
     net_weight: '',
     net_weight_unit: 'g',
     pieces_per_carton: '',

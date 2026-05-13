@@ -347,25 +347,37 @@ function AppRoutes() {
           }
         />
         <Route
-          path="/print/orders"
+          path="/print/programs"
           element={
             <ProtectedRoute>
               <PrintLayout>
-                <PrintOrdersList />
+                <PrintProgramsList />
               </PrintLayout>
             </ProtectedRoute>
           }
         />
         <Route
-          path="/print/orders/:id"
+          path="/print/programs/:id/run"
           element={
             <ProtectedRoute>
               <PrintLayout>
-                <PrintOrderDetail />
+                <PrintProgramRun />
               </PrintLayout>
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/print/quick"
+          element={
+            <ProtectedRoute>
+              <PrintLayout>
+                <PrintQuick />
+              </PrintLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route path="/print/orders" element={<Navigate to="/print/programs" replace />} />
+        <Route path="/print/orders/:id" element={<Navigate to="/print/programs" replace />} />
         <Route path="/products/print" element={<Navigate to="/print" replace />} />
 
         {/* Settings Module Routes */}

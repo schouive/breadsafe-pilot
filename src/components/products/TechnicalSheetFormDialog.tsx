@@ -919,7 +919,29 @@ export function TechnicalSheetFormDialog({
                 value={formData.carton_dimensions}
                 onChange={(e) => setFormData({ ...formData, carton_dimensions: e.target.value })}
               />
-            </div>
+          </div>
+
+          {/* Packagings (only in edit mode, after FT exists) */}
+          {mode === 'edit' && sheet?.id && (
+            <>
+              <Separator />
+              <div className="space-y-4">
+                <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wider">
+                  3 bis. Conditionnements (étiquetage)
+                </h4>
+                <PackagingsSection
+                  productSheetId={sheet.id}
+                  defaults={{
+                    pieces_per_carton: formData.pieces_per_carton,
+                    carton_weight: formData.carton_weight,
+                    carton_dimensions: formData.carton_dimensions,
+                    product_name: formData.product_name,
+                    product_reference: formData.product_reference,
+                  }}
+                />
+              </div>
+            </>
+          )}
           </div>
 
           {/* Conservation & Usage */}

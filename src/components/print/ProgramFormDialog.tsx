@@ -206,12 +206,6 @@ export function ProgramFormDialog({ open, onOpenChange, program, onSaved }: Prop
                     products={products}
                   />
                 </div>
-                <Input
-                  type="number" min={1}
-                  value={r.default_quantity}
-                  onChange={e => updateRow(i, { default_quantity: parseInt(e.target.value, 10) || 1 })}
-                  className="w-20 h-9"
-                />
                 <Button size="icon" variant="ghost" onClick={() => moveRow(i, -1)} disabled={i === 0}>
                   <ArrowUp className="h-4 w-4" />
                 </Button>

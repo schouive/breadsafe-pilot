@@ -126,7 +126,8 @@ export default function PrintProgramRun() {
   const validate = (): string | null => {
     if (lines.length === 0) return 'Aucune ligne à imprimer';
     for (const l of lines) {
-      if (!l.lot.trim()) return `Lot manquant pour ${l.product.erp_code}`;
+      const lot = computeLotNumber(l.productionDate);
+      if (!lot.trim()) return `Date de fabrication manquante pour ${l.product.erp_code}`;
       if (!l.ddm) return `DDM manquante pour ${l.product.erp_code}`;
       if (!l.product.template_name) return `Aucun template Zebra pour ${l.product.erp_code}`;
       if (l.quantity < 1) return `Quantité invalide pour ${l.product.erp_code}`;

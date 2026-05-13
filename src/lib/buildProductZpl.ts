@@ -1,7 +1,7 @@
 import { fillZplTemplate, DEFAULT_PRODUCT_LABEL_ZPL } from '@/lib/zplLabelGenerator';
 import type { PrintProduct } from '@/hooks/usePrintLabels';
 
-const PACK_COUNT_MAP: Record<string, number> = { U01: 1, C4: 4, C05: 5, C18: 18, C24: 24, PAL: 1 };
+const PACK_COUNT_MAP: Record<string, number> = { U01: 1, C04: 4, C05: 5, C18: 18, C24: 24, PAL: 1 };
 
 function extractTraces(statement: string | null | undefined): string {
   if (!statement) return '';

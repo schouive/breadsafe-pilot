@@ -1,92 +1,93 @@
-## Module "Référentiel Produits" — Étape 1
+# Programmes d'impression clients + Mode rapide
 
-### Stratégie générale
+## Objectif
 
-Réutiliser les tables déjà existantes (`recipes`, `product_families`, `label_templates`) et migrer/remplacer `print_products` + `print_product_variants` par le nouveau modèle plus propre **Produits maîtres ↔ Articles ERP**.
+Remplacer la logique générique de `print_batches` (sessions ad‑hoc) par une logique métier : des **programmes clients** réutilisables, exécutés en quelques clics par les opérateurs, plus un **mode rapide** sans sauvegarde.
 
-### Schéma BDD (migration Supabase)
+## Base de données
 
-**Tables conservées et étendues :**
-- `product_families` : déjà existante (BUN, BAG, etc.) — aucun changement
-- `recipes` : déjà existante — aucun changement
-- `label_templates` : déjà existante — ajout colonne `template_code` typé (PRODUCT_LABEL / CARTON_LABEL / PALETTE_LABEL) si manquant
+Nouvelles tables (migration) :
 
-**Nouvelles tables :**
+**print_programs**
+- `id` uuid PK
+- `name` text NOT NULL
+- `customer_code` text
+- `customer_name` text
+- `active` boolean default true
+- `created_by`, `created_at`, `updated_at`
 
-1. **`nutrition_profiles`** — profil nutritionnel partagé (kJ, kcal, lipides, AGS, glucides, sucres, fibres, protéines, sel)
+**print_program_items**
+- `id` uuid PK
+- `program_id` uuid FK → print_programs(id) ON DELETE CASCADE
+- `erp_article_id` uuid FK → erp_articles(id) ON DELETE CASCADE
+- `print_order` int default 0
+- `default_quantity` int default 1
+- `created_at`, `updated_at`
 
-2. **`products_master`** — produit générique
-   - `sku_base`, `label`, `family_id` → product_families, `recipe_id` → recipes, `nutrition_profile_id` → nutrition_profiles, `active`
+RLS :
+- SELECT pour tous les utilisateurs authentifiés
+- INSERT/UPDATE/DELETE pour `admin` + `quality` + `office`
+- Opérateurs : lecture seule + exécution (pas de modif structure)
 
-3. **`erp_articles`** — référence vendable EBP
-   - `product_id` → products_master, `erp_code` (unique), `erp_label`, `temperature_state` (FR/FZ), `slicing_state` (SLI/WHO), `packaging_code` (U01/C05/C24/PAL), `barcode_value`, `active`
+Anciennes tables `print_batches` / `print_batch_items` / `print_jobs` : **conservées** (historique / journalisation), mais la nav et les pages génériques disparaissent.
 
-4. **`article_templates`** — liaison article ↔ template Zebra
-   - `erp_article_id`, `template_id`
+## Pages & navigation
 
-5. **Vue `product_label_view`** — JOIN complet pour l'impression : sku_base, code/libellé ERP, famille, recette, ingrédients (depuis `recipe_ingredients`), allergènes (agrégés), nutrition, template Zebra
+`PrintLayout` — nouveau menu :
+- Étiquettes Production (`/print`) — inchangé
+- Programmes clients (`/print/programs`)
+- Impression rapide (`/print/quick`)
 
-**Migration de données :**
-- Migrer `print_products` → `products_master` (label, sku_base, family, recipe_id)
-- Migrer `print_product_variants` (combinaisons FR/FZ × SLI/WHO × U01/C05/C24/PAL) → `erp_articles` avec `erp_code` généré (`{sku_base}-{temp}-{slicing}-{packaging}`)
-- Migrer les `template_name` vers `article_templates`
-- Conserver `print_history` et `print_favorites` (basculer leurs FK vers `erp_articles`, ou conserver les références originales temporairement)
+Suppression : `/print/orders` et `/print/orders/:id` (PrintOrdersList, PrintOrderDetail).
 
-**Sécurité :** RLS identiques au pattern actuel — Admin/Bureau gèrent, tout authentifié lit. Soft-delete via `active=false`. Audit via `audit_logs` existant.
+## UI : Programmes clients (`/print/programs`)
 
-### Routes & UI
+Grille de cartes :
+- Nom programme
+- Client (`customer_name` — `customer_code`)
+- Compteur produits
+- Badge actif / inactif
+- Boutons : **Ouvrir** (exécuter), **Modifier**, **Dupliquer**, **Désactiver/Activer**, **Supprimer** (admin)
 
-Nouvelle section "Référentiel Produits" dans la sidebar Paramètres remplaçant "Catalogue Impression".
+Bouton **+ Créer** en haut.
 
-```
-/settings/catalog/families       → Familles (CRUD existant déjà côté DB)
-/settings/catalog/recipes        → Liste recettes (lecture, lien vers /products/recipes)
-/settings/catalog/master         → Produits maîtres (CRUD complet)
-/settings/catalog/erp-articles   → Articles ERP (CRUD + import CSV + filtres)
-/settings/catalog/templates      → Templates Zebra (CRUD)
-```
+Modal CRUD (`ProgramFormDialog`) :
+- name, customer_code, customer_name, active
+- Liste éditable des lignes : recherche article ERP, quantité par défaut, ordre (drag/handle simple), suppr ligne, dupliquer ligne
 
-### Pages à créer
+## UI : Exécution programme (`/print/programs/:id/run`)
 
-1. **FamiliesSettings** — table simple (code, libellé, actif)
-2. **MasterProductsSettings** — recherche, table (sku_base, label, famille, recette, profil nutri, actif), dialog création/édition/duplication, désactivation soft
-3. **ErpArticlesSettings** — recherche, filtres (famille, température, conditionnement, actif), table, dialog création/édition, **bouton "Importer CSV"** (parser papaparse, mapping colonnes, prévisualisation, dry-run, insertion)
-4. **TemplatesSettings** — CRUD templates Zebra
-5. **CatalogRecipesSettings** — vue lecture seule des recettes liées
+Chargement auto de toutes les lignes du programme.
 
-### Composants partagés
+En haut :
+- **Date de fabrication globale** (calendrier) → calcule lot global format `LJJJYY` (réutiliser `computeLotNumber` existant)
+- **DDM globale** (calendrier)
+- Bouton **« Appliquer à toutes les lignes »**
 
-- `useMasterProducts`, `useErpArticles`, `useNutritionProfiles`, `useProductLabelView` (hooks React Query)
-- `MasterProductDialog`, `ErpArticleDialog`, `ErpCsvImportDialog`
-- Validation Zod : `erp_code` obligatoire, `product_id` obligatoire pour article ERP, `recipe_id` obligatoire pour produit maître, `template_id` obligatoire pour article ERP
+Tableau lignes (lecture seule sauf qty/lot/ddm overrides) :
+- Code ERP · Nom produit · Quantité (éditable) · Lot (éditable, prérempli avec lot global) · Date fab (éditable) · DDM (éditable)
+- Statut par ligne : pending / printing / printed / failed
 
-### Import CSV (Articles ERP)
+Bouton **IMPRIMER LE PROGRAMME** : envoie ZPL ligne par ligne via WebUSB Zebra (réutilise `buildProductZpl` + `zebraWebUsb`). Statut mis à jour en direct.
 
-Format attendu (séparateur `;`) :
-```
-erp_code;erp_label;sku_base_master;temperature;slicing;packaging;barcode;template_code
-```
-- Lookup `sku_base_master` dans `products_master`
-- Lookup `template_code` dans `label_templates`
-- Affichage des erreurs ligne par ligne avant import
-- Insertion en batch, création automatique des `article_templates`
+Aucune persistance d'« exécution » obligatoire (pas de batch créé). Optionnel : enregistrer dans `print_history` en best‑effort.
 
-### Impacts sur l'existant
+## UI : Impression rapide (`/print/quick`)
 
-- `/print` (PrintLabels) : adapter pour requêter `product_label_view` au lieu de `print_products`/`print_product_variants`
-- `/settings/print-catalog` : remplacé par `/settings/catalog/master` (redirect)
-- `usePrintLabels` hook : adapter requête
+- Recherche article ERP (combobox, réutilise `usePrintProducts`)
+- Date de fabrication → lot auto (modifiable)
+- DDM
+- Quantité
+- Bouton **Imprimer** → ZPL direct, pas de sauvegarde
+- Petit historique de session en mémoire (les 10 dernières impressions de la session)
 
-### Hors périmètre Étape 1
+## Détails techniques
 
-- Synchronisation API EBP (à venir : import CSV manuel uniquement, comme demandé)
-- Historique des modifications détaillé (utiliser audit_logs existant pour MVP)
-- Refonte complète de `/print` (sera adapté lors de l'étape 2)
+- Hook `usePrintPrograms` (list, get, create, update, duplicate, toggleActive, delete) + `usePrintProgramItems`
+- Réutilisation : `usePrintProducts` (articles ERP enrichis FT), `buildProductZpl`, `zebraWebUsb`, `computeLotNumber`
+- `src/integrations/supabase/types.ts` régénéré automatiquement après migration
 
-### Livrables
+## Hors scope
 
-- 1 migration Supabase (création tables + vue + RLS + migration de données)
-- ~5 nouvelles pages dans `src/pages/settings/catalog/`
-- ~4 hooks dans `src/hooks/`
-- ~3 dialogs dans `src/components/settings/catalog/`
-- Mise à jour `SettingsLayout` (sidebar) + `App.tsx` (routes)
+- Pas de modification de PrintLabels (étiquettes production) ni du module ERP
+- Pas de suppression physique des tables `print_batches` (gardées pour l'historique)

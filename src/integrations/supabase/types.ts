@@ -1448,6 +1448,91 @@ export type Database = {
           },
         ]
       }
+      print_program_items: {
+        Row: {
+          created_at: string
+          default_quantity: number
+          erp_article_id: string
+          id: string
+          print_order: number
+          program_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          default_quantity?: number
+          erp_article_id: string
+          id?: string
+          print_order?: number
+          program_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          default_quantity?: number
+          erp_article_id?: string
+          id?: string
+          print_order?: number
+          program_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "print_program_items_erp_article_id_fkey"
+            columns: ["erp_article_id"]
+            isOneToOne: false
+            referencedRelation: "erp_articles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "print_program_items_erp_article_id_fkey"
+            columns: ["erp_article_id"]
+            isOneToOne: false
+            referencedRelation: "product_label_view"
+            referencedColumns: ["erp_article_id"]
+          },
+          {
+            foreignKeyName: "print_program_items_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "print_programs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      print_programs: {
+        Row: {
+          active: boolean
+          created_at: string
+          created_by: string
+          customer_code: string | null
+          customer_name: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          created_by: string
+          customer_code?: string | null
+          customer_name?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          created_by?: string
+          customer_code?: string | null
+          customer_name?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       product_families: {
         Row: {
           active: boolean

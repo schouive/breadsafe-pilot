@@ -507,14 +507,10 @@ export default function PrintLabels() {
                           </div>
                           <div className="flex flex-wrap items-center gap-1">
                             <Badge variant="outline">{PACKAGING_LABELS[p.packaging] ?? p.packaging}</Badge>
-                            {!p.template_name && (
-                              <Badge variant="destructive" className="text-xs">Sans template</Badge>
-                            )}
                           </div>
                           <Button
                             className="w-full"
                             size="lg"
-                            disabled={!p.template_name}
                             onClick={() => { setSelected(p); setStep(2); }}
                           >
                             Sélectionner

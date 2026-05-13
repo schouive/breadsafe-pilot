@@ -182,14 +182,6 @@ export function ProgramFormDialog({ open, onOpenChange, program, onSaved }: Prop
             <Label htmlFor="prog-name">Nom du programme *</Label>
             <Input id="prog-name" value={name} onChange={e => setName(e.target.value)} placeholder="Ex. Livraison hebdo Carrefour" />
           </div>
-          <div>
-            <Label htmlFor="prog-cust-code">Code client</Label>
-            <Input id="prog-cust-code" value={customerCode} onChange={e => setCustomerCode(e.target.value)} placeholder="Ex. CRF" />
-          </div>
-          <div>
-            <Label htmlFor="prog-cust-name">Nom client</Label>
-            <Input id="prog-cust-name" value={customerName} onChange={e => setCustomerName(e.target.value)} placeholder="Ex. Carrefour Rive Sud" />
-          </div>
           <div className="md:col-span-2 flex items-center gap-2">
             <Switch id="prog-active" checked={active} onCheckedChange={setActive} />
             <Label htmlFor="prog-active">Actif</Label>

@@ -123,6 +123,20 @@ export default function PrintProgramRun() {
     });
   };
 
+  const handleGlobalProductionDateChange = (val: string) => {
+    setGlobalProductionDate(val);
+    setLines(prev => prev.map(l =>
+      l.status === 'printed'
+        ? l
+        : { ...l, productionDate: val, lot: computeLotNumber(val) }
+    ));
+  };
+
+  const handleGlobalDdmChange = (val: string) => {
+    setGlobalDdm(val);
+    setLines(prev => prev.map(l => l.status === 'printed' ? l : { ...l, ddm: val }));
+  };
+
   const validate = (): string | null => {
     if (lines.length === 0) return 'Aucune ligne à imprimer';
     for (const l of lines) {

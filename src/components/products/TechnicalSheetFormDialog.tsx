@@ -143,7 +143,6 @@ export function TechnicalSheetFormDialog({
     thawing_instructions: '',
     usage_instructions: 'Toaster le produit ou le chauffer sur la plancha avant son utilisation',
     quality_comment: '',
-    origin_country: '',
     is_published: false,
   });
   // Fetch sub-ingredients for all PI in the recipe

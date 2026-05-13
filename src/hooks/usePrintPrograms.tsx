@@ -166,7 +166,7 @@ export function useDuplicatePrintProgram() {
         const { error: e4 } = await supabase.from('print_program_items').insert(
           items.map((it: any) => ({
             program_id: copy.id,
-            erp_article_id: it.erp_article_id,
+            packaging_id: it.packaging_id,
             print_order: it.print_order,
             default_quantity: it.default_quantity,
           })),
@@ -189,7 +189,7 @@ export function useReplaceProgramItems() {
   return useMutation({
     mutationFn: async ({ programId, items }: {
       programId: string;
-      items: { erp_article_id: string; print_order: number; default_quantity: number }[];
+      items: { packaging_id: string; print_order: number; default_quantity: number }[];
     }) => {
       const { error: delErr } = await supabase.from('print_program_items').delete().eq('program_id', programId);
       if (delErr) throw delErr;

@@ -16,7 +16,7 @@ import {
 } from '@/hooks/usePrintPrograms';
 
 interface RowDraft {
-  erp_article_id: string;
+  packaging_id: string;
   default_quantity: number;
 }
 
@@ -104,7 +104,7 @@ export function ProgramFormDialog({ open, onOpenChange, program, onSaved }: Prop
       return;
     }
     setRows(existingItems.map(it => ({
-      erp_article_id: it.erp_article_id,
+      packaging_id: it.packaging_id,
       default_quantity: it.default_quantity,
     })));
   }, [open, existingItems]);
@@ -124,11 +124,11 @@ export function ProgramFormDialog({ open, onOpenChange, program, onSaved }: Prop
     [copy[idx], copy[j]] = [copy[j], copy[idx]];
     return copy;
   });
-  const addRow = () => setRows(prev => [...prev, { erp_article_id: '', default_quantity: 1 }]);
+  const addRow = () => setRows(prev => [...prev, { packaging_id: '', default_quantity: 1 }]);
 
   const handleSave = async () => {
     if (!name.trim()) { toast.error('Le nom est obligatoire'); return; }
-    const cleanRows = rows.filter(r => r.erp_article_id);
+    const cleanRows = rows.filter(r => r.packaging_id);
     try {
       let pid = program?.id;
       if (isEdit && program) {
@@ -154,7 +154,7 @@ export function ProgramFormDialog({ open, onOpenChange, program, onSaved }: Prop
         await replaceItems.mutateAsync({
           programId: pid,
           items: cleanRows.map((r, i) => ({
-            erp_article_id: r.erp_article_id,
+            packaging_id: r.packaging_id,
             print_order: i,
             default_quantity: Math.max(1, r.default_quantity || 1),
           })),
@@ -201,8 +201,8 @@ export function ProgramFormDialog({ open, onOpenChange, program, onSaved }: Prop
                 <span className="text-xs text-muted-foreground w-6 shrink-0 text-center">{i + 1}</span>
                 <div className="flex-1 min-w-0">
                   <ProductPicker
-                    value={r.erp_article_id}
-                    onSelect={id => updateRow(i, { erp_article_id: id })}
+                    value={r.packaging_id}
+                    onSelect={id => updateRow(i, { packaging_id: id })}
                     products={products}
                   />
                 </div>

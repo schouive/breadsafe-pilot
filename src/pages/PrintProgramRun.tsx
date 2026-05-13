@@ -277,8 +277,6 @@ export default function PrintProgramRun() {
               </TableHeader>
               <TableBody>
                 {lines.map(l => {
-                  const s = STATUS_BADGE[l.status];
-                  const Icon = s.icon;
                   return (
                     <TableRow key={l.itemId}>
                       <TableCell className="font-mono text-xs">{l.product.erp_code}</TableCell>

@@ -240,7 +240,7 @@ export default function PrintProgramRun() {
         <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
           <div>
             <Label>Date de fabrication globale</Label>
-            <Input type="date" value={globalProductionDate} onChange={e => setGlobalProductionDate(e.target.value)} />
+            <Input type="date" value={globalProductionDate} onChange={e => handleGlobalProductionDateChange(e.target.value)} />
             <p className="text-xs text-muted-foreground mt-1">
               Lot : <span className="font-mono">{computeLotNumber(globalProductionDate) || '—'}</span>
             </p>

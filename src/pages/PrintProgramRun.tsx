@@ -241,9 +241,6 @@ export default function PrintProgramRun() {
           <div>
             <Label>Date de fabrication globale</Label>
             <Input type="date" value={globalProductionDate} onChange={e => handleGlobalProductionDateChange(e.target.value)} />
-            <p className="text-xs text-muted-foreground mt-1">
-              Lot : <span className="font-mono">{computeLotNumber(globalProductionDate) || '—'}</span>
-            </p>
           </div>
           <div>
             <Label>DDM globale</Label>

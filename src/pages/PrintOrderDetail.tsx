@@ -263,20 +263,24 @@ export default function PrintOrderDetail() {
           status: 'success',
           print_method: result.method,
         });
-        // Historique global d'étiquettes
-        await recordHistory.mutateAsync({
-          product_id: p.id,
-          final_sku: computeFinalSku(p),
-          sku_base: p.sku_base,
-          old_code: p.erp_code,
-          temperature: p.temperature,
-          slicing: p.slicing,
-          packaging: p.packaging,
-          template_name: p.template_name!,
-          lot_number: lot,
-          ddm,
-          quantity: it.quantity,
-        });
+        // Historique global d'étiquettes (best-effort, ne doit pas faire échouer l'impression)
+        try {
+          await recordHistory.mutateAsync({
+            product_id: p.id,
+            final_sku: computeFinalSku(p),
+            sku_base: p.sku_base,
+            old_code: p.erp_code,
+            temperature: p.temperature,
+            slicing: p.slicing,
+            packaging: p.packaging,
+            template_name: p.template_name!,
+            lot_number: lot,
+            ddm,
+            quantity: it.quantity,
+          });
+        } catch (histErr) {
+          console.warn('print_history skipped:', histErr);
+        }
         okCount++;
       } catch (e: any) {
         failCount++;

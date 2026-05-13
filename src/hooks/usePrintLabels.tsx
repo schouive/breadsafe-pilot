@@ -11,7 +11,7 @@ export interface PrintProduct {
   label: string;             // products_master.label
   temperature: 'FR' | 'FZ';
   slicing: 'SLI' | 'WHO';
-  packaging: 'U01' | 'C05' | 'C18' | 'C24' | 'PAL';
+  packaging: 'U01' | 'C4' | 'C05' | 'C18' | 'C24' | 'PAL';
   template_name: string | null;
   barcode_value: string | null;
   active: boolean;

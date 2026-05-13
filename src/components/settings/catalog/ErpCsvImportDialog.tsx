@@ -38,7 +38,7 @@ interface ValidatedRow extends CsvRow {
 
 const TEMP_VALS = ['FR', 'FZ'];
 const SLI_VALS = ['SLI', 'WHO'];
-const PACK_VALS = ['U01', 'C05', 'C18', 'C24', 'PAL'];
+const PACK_VALS = ['U01', 'C4', 'C05', 'C18', 'C24', 'PAL'];
 
 export function ErpCsvImportDialog({ open, onOpenChange }: Props) {
   const qc = useQueryClient();

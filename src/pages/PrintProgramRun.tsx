@@ -247,7 +247,7 @@ export default function PrintProgramRun() {
           </div>
           <div>
             <Label>DDM globale</Label>
-            <Input type="date" value={globalDdm} onChange={e => setGlobalDdm(e.target.value)} />
+            <Input type="date" value={globalDdm} onChange={e => handleGlobalDdmChange(e.target.value)} />
           </div>
           <Button variant="secondary" onClick={applyGlobalsToAll}>
             <Wand2 className="h-4 w-4 mr-2" /> Appliquer à toutes les lignes

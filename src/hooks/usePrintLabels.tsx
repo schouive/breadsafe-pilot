@@ -3,12 +3,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
 export interface PrintProduct {
-  id: string;                // erp_articles.id
+  id: string;                // product_sheet_packagings.id
   erp_code: string;
   erp_label: string;
-  sku_base: string;          // products_master.sku_base
-  family: string;            // family code
-  label: string;             // products_master.label
+  sku_base: string;          // product_sheets.product_reference (fallback erp_code)
+  family: string;            // '—' (familles supprimées de ce flux)
+  label: string;             // product_sheets.product_name
   temperature: 'FR' | 'FZ';
   slicing: 'SLI' | 'WHO';
   packaging: 'U01' | 'C04' | 'C05' | 'C18' | 'C24' | 'PAL';
@@ -53,44 +53,40 @@ export interface PrintHistoryEntry {
 
 export function usePrintProducts() {
   return useQuery({
-    queryKey: ['print_products_erp'],
+    queryKey: ['print_products_psp'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('erp_articles')
+      const { data, error } = await (supabase as any)
+        .from('product_sheet_packagings')
         .select(`
           id, erp_code, erp_label, temperature_state, slicing_state,
           packaging_code, barcode_value, active,
-          product:products_master!inner(
-            sku_base, label,
-            family:product_families(code, label),
-            sheet:product_sheets(
-              product_name, net_weight, net_weight_unit,
-              inco_html, allergen_statement, snapshot_allergens,
-              storage_instructions, thawing_instructions,
-              snapshot_nutrition, inco_status
-            )
-          ),
-          templates:article_templates(template:label_templates(template_code, template_name))
+          template:label_templates(template_code, template_name),
+          sheet:product_sheets!inner(
+            product_name, product_reference, net_weight, net_weight_unit,
+            inco_html, allergen_statement, snapshot_allergens,
+            storage_instructions, thawing_instructions,
+            snapshot_nutrition, inco_status
+          )
         `)
         .eq('active', true)
         .order('erp_code');
       if (error) throw error;
-      return (data ?? []).map((a: any) => {
-        const sheet = a.product?.sheet ?? null;
+      return ((data ?? []) as any[]).map((p) => {
+        const sheet = p.sheet ?? null;
         const snapshotAllergens = sheet?.snapshot_allergens as { secondary?: string[] } | null;
         return {
-          id: a.id,
-          erp_code: a.erp_code,
-          erp_label: a.erp_label,
-          sku_base: a.product?.sku_base ?? a.erp_code,
-          label: a.product?.label ?? a.erp_label,
-          family: a.product?.family?.code ?? '—',
-          temperature: a.temperature_state,
-          slicing: a.slicing_state,
-          packaging: a.packaging_code,
-          template_name: a.templates?.[0]?.template?.template_code ?? null,
-          barcode_value: a.barcode_value,
-          active: a.active,
+          id: p.id,
+          erp_code: p.erp_code,
+          erp_label: p.erp_label,
+          sku_base: sheet?.product_reference ?? p.erp_code,
+          label: sheet?.product_name ?? p.erp_label,
+          family: '—',
+          temperature: p.temperature_state,
+          slicing: p.slicing_state,
+          packaging: p.packaging_code,
+          template_name: p.template?.template_code ?? null,
+          barcode_value: p.barcode_value,
+          active: p.active,
           product_name: sheet?.product_name ?? null,
           net_weight: sheet?.net_weight ?? null,
           net_weight_unit: sheet?.net_weight_unit ?? null,
@@ -101,8 +97,8 @@ export function usePrintProducts() {
           thawing_instructions: sheet?.thawing_instructions ?? null,
           nutrition: sheet?.snapshot_nutrition ?? null,
           inco_status: sheet?.inco_status ?? null,
-        };
-      }) as PrintProduct[];
+        } as PrintProduct;
+      });
     },
   });
 }

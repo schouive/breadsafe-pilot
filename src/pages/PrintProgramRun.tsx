@@ -278,8 +278,12 @@ export default function PrintProgramRun() {
                           className="h-9" />
                       </TableCell>
                       <TableCell>
-                        <Input value={l.lot} onChange={e => updateLine(l.itemId, { lot: e.target.value })}
-                          className="h-9 font-mono text-xs" />
+                        <Input
+                          value={computeLotNumber(l.productionDate)}
+                          readOnly
+                          tabIndex={-1}
+                          className="h-9 font-mono text-xs bg-muted cursor-not-allowed"
+                        />
                       </TableCell>
                       <TableCell>
                         <Input type="date" value={l.ddm} onChange={e => updateLine(l.itemId, { ddm: e.target.value })}

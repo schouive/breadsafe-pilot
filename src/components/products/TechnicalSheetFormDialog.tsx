@@ -932,9 +932,6 @@ export function TechnicalSheetFormDialog({
                 <PackagingsSection
                   productSheetId={sheet.id}
                   defaults={{
-                    pieces_per_carton: formData.pieces_per_carton,
-                    carton_weight: formData.carton_weight,
-                    carton_dimensions: formData.carton_dimensions,
                     product_name: formData.product_name,
                     product_reference: formData.product_reference,
                   }}

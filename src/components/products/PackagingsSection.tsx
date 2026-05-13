@@ -249,36 +249,6 @@ export function PackagingsSection({ productSheetId, defaults }: Props) {
                   />
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs">État</Label>
-                  <Select
-                    value={d.temperature_state}
-                    onValueChange={(v) => update(p.id, { temperature_state: v })}
-                  >
-                    <SelectTrigger className="h-9">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="FR">FR (Frais)</SelectItem>
-                      <SelectItem value="FZ">FZ (Surgelé)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">Tranchage</Label>
-                  <Select
-                    value={d.slicing_state}
-                    onValueChange={(v) => update(p.id, { slicing_state: v })}
-                  >
-                    <SelectTrigger className="h-9">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="WHO">WHO (Entier)</SelectItem>
-                      <SelectItem value="SLI">SLI (Tranché)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1">
                   <Label className="text-xs">Pcs / carton</Label>
                   <Input
                     className="h-9"

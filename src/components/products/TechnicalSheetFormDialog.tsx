@@ -129,8 +129,6 @@ export function TechnicalSheetFormDialog({
     product_name: '',
     description: '',
     product_reference: '',
-    brand: '',
-    barcode: '',
     net_weight: '',
     net_weight_unit: 'g',
     pieces_per_carton: '',
@@ -145,7 +143,6 @@ export function TechnicalSheetFormDialog({
     thawing_instructions: '',
     usage_instructions: 'Toaster le produit ou le chauffer sur la plancha avant son utilisation',
     quality_comment: '',
-    origin_country: '',
     is_published: false,
   });
   // Fetch sub-ingredients for all PI in the recipe
@@ -332,8 +329,6 @@ export function TechnicalSheetFormDialog({
           product_name: sheet.product_name || '',
           description: sheetAny.description || '',
           product_reference: sheetAny.product_reference || '',
-          brand: sheet.brand || '',
-          barcode: sheet.barcode || '',
           net_weight: sheet.net_weight?.toString() || '',
           net_weight_unit: sheet.net_weight_unit || 'g',
           pieces_per_carton: sheetAny.pieces_per_carton?.toString() || '',
@@ -348,7 +343,6 @@ export function TechnicalSheetFormDialog({
           thawing_instructions: sheetAny.thawing_instructions || '',
           usage_instructions: sheet.usage_instructions || '',
           quality_comment: sheetAny.quality_comment || '',
-          origin_country: sheet.origin_country || '',
           is_published: sheet.is_published,
         });
         if (sheetAny.product_image_url) {
@@ -364,8 +358,6 @@ export function TechnicalSheetFormDialog({
           product_name: '',
           description: '',
           product_reference: '',
-          brand: '',
-          barcode: '',
           net_weight: '',
           net_weight_unit: 'g',
           pieces_per_carton: '',
@@ -380,7 +372,6 @@ export function TechnicalSheetFormDialog({
           thawing_instructions: '',
           usage_instructions: 'Toaster le produit ou le chauffer sur la plancha avant son utilisation',
           quality_comment: '',
-          origin_country: '',
           is_published: false,
         });
         setImageFile(null);
@@ -493,8 +484,8 @@ export function TechnicalSheetFormDialog({
         product_name: formData.product_name.trim(),
         description: formData.description.trim() || null,
         product_reference: formData.product_reference.trim() || null,
-        brand: formData.brand.trim() || null,
-        barcode: formData.barcode.trim() || null,
+        brand: null,
+        barcode: null,
         net_weight: formData.net_weight ? parseFloat(formData.net_weight) : null,
         net_weight_unit: formData.net_weight_unit,
         pieces_per_carton: formData.pieces_per_carton ? parseInt(formData.pieces_per_carton) : null,
@@ -508,7 +499,7 @@ export function TechnicalSheetFormDialog({
         thawing_instructions: formData.thawing_instructions.trim() || null,
         usage_instructions: formData.usage_instructions.trim() || null,
         quality_comment: formData.quality_comment.trim() || null,
-        origin_country: formData.origin_country.trim() || null,
+        origin_country: null,
         product_image_url: imageUrl,
         is_published: formData.is_published,
         published_at: formData.is_published ? new Date().toISOString() : null,
@@ -795,7 +786,7 @@ export function TechnicalSheetFormDialog({
               2. Données commerciales
             </h4>
             
-            <div className="grid grid-cols-3 gap-4">
+            <div>
               <div className="space-y-2">
                 <Label htmlFor="reference">Référence produit</Label>
                 <Input
@@ -803,24 +794,6 @@ export function TechnicalSheetFormDialog({
                   placeholder="REF-001"
                   value={formData.product_reference}
                   onChange={(e) => setFormData({ ...formData, product_reference: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="brand">Marque</Label>
-                <Input
-                  id="brand"
-                  placeholder="Breadshop"
-                  value={formData.brand}
-                  onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="barcode">Code-barres</Label>
-                <Input
-                  id="barcode"
-                  placeholder="3701234567890"
-                  value={formData.barcode}
-                  onChange={(e) => setFormData({ ...formData, barcode: e.target.value })}
                 />
               </div>
             </div>
@@ -852,15 +825,6 @@ export function TechnicalSheetFormDialog({
                     </SelectContent>
                   </Select>
                 </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="origin">Pays d'origine</Label>
-                <Input
-                  id="origin"
-                  placeholder="France"
-                  value={formData.origin_country}
-                  onChange={(e) => setFormData({ ...formData, origin_country: e.target.value })}
-                />
               </div>
               <div className="space-y-2">
                 <Label>Visuel produit</Label>

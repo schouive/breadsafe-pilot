@@ -36,7 +36,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { generateIngredientLists, markdownToUppercase } from '@/lib/ingredientListGenerator';
 import { supabase } from '@/integrations/supabase/client';
 import { optimizeImage } from '@/lib/imageOptimization';
-import { PackagingsSection } from './PackagingsSection';
 const WEIGHT_UNITS = ['g', 'kg', 'L', 'mL', 'cl'];
 
 const ALL_ALLERGENS = [
@@ -921,21 +920,6 @@ export function TechnicalSheetFormDialog({
               />
             </div>
           </div>
-
-          {/* Packagings */}
-          <Separator />
-          {sheet?.id ? (
-            <PackagingsSection productSheetId={sheet.id} />
-          ) : (
-            <div className="space-y-2">
-              <h4 className="font-medium text-sm uppercase tracking-wider flex items-center gap-2">
-                Conditionnements (étiquetage)
-              </h4>
-              <p className="text-sm text-muted-foreground italic">
-                Enregistrez d'abord la fiche pour ajouter des conditionnements (U01, C04, C05…).
-              </p>
-            </div>
-          )}
 
           {/* Conservation & Usage */}
           <Separator />

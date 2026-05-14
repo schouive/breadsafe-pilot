@@ -228,7 +228,7 @@ export default function PrintProgramRun() {
           <Button variant="outline" onClick={handlePickPrinter}>
             <Printer className="h-4 w-4 mr-2" /> Imprimante
           </Button>
-          <Button size="lg" onClick={handlePrint} disabled={!ready || printingAll}>
+          <Button size="lg" onClick={handlePrint} disabled={printingAll || lines.length === 0}>
             {printingAll ? <Loader2 className="h-5 w-5 mr-2 animate-spin" /> : <Printer className="h-5 w-5 mr-2" />}
             IMPRIMER LE PROGRAMME
           </Button>

@@ -154,6 +154,7 @@ export default function PrintProgramRun() {
     if (err) { toast.error(err); return; }
     setPrintingAll(true);
     let ok = 0, fail = 0;
+    const failures: string[] = [];
     const queue = lines.filter(l => l.status !== 'printed' && l.quantity > 0);
     for (const l of queue) {
       const lot = computeLotNumber(l.productionDate);
@@ -182,14 +183,17 @@ export default function PrintProgramRun() {
           });
         } catch (e) { console.warn('print_history skipped', e); }
       } catch (e: any) {
-        updateLine(l.itemId, { status: 'failed', error: e?.message || 'Erreur impression' });
+        const msg = e?.message || 'Erreur impression';
+        console.error('[PrintProgramRun] échec impression', l.product.erp_code, e);
+        updateLine(l.itemId, { status: 'failed', error: msg });
+        failures.push(`${l.product.erp_code}: ${msg}`);
         fail++;
       }
     }
     setPrintingAll(false);
     if (fail === 0) toast.success(`${ok} ligne(s) imprimée(s)`);
-    else if (ok === 0) toast.error(`Échec : ${fail} ligne(s)`);
-    else toast.warning(`${ok} OK · ${fail} échec(s)`);
+    else if (ok === 0) toast.error(`Échec impression — ${failures[0]}`, { duration: 8000 });
+    else toast.warning(`${ok} OK · ${fail} échec(s) — ${failures[0]}`, { duration: 8000 });
   };
 
   const handlePickPrinter = async () => {

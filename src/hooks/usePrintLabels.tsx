@@ -69,6 +69,7 @@ export function usePrintProducts() {
           )
         `)
         .eq('active', true)
+        .eq('sheet.inco_status', 'validated')
         .order('erp_code');
       if (error) throw error;
       return ((data ?? []) as any[]).map((p) => {

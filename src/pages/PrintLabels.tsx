@@ -57,6 +57,24 @@ export default function PrintLabels() {
   const lotRef = useRef<HTMLInputElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
   const [generatingPdf, setGeneratingPdf] = useState(false);
+  const [addOpen, setAddOpen] = useState(false);
+  const [deleting, setDeleting] = useState<PrintProduct | null>(null);
+  const qc = useQueryClient();
+
+  const handleDelete = async () => {
+    if (!deleting) return;
+    const { error } = await supabase
+      .from('product_sheet_packagings')
+      .delete()
+      .eq('id', deleting.id);
+    if (error) {
+      toast.error('Erreur suppression', { description: error.message });
+      return;
+    }
+    toast.success('Étiquette supprimée du catalogue');
+    qc.invalidateQueries({ queryKey: ['print_products_psp'] });
+    setDeleting(null);
+  };
 
   const { data: products = [], isLoading: loadingProducts } = usePrintProducts();
   const { data: history = [] } = usePrintHistory(10);

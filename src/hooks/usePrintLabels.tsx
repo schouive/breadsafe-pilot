@@ -7,7 +7,8 @@ export interface PrintProduct {
   erp_code: string;
   erp_label: string;
   sku_base: string;          // product_sheets.product_reference (fallback erp_code)
-  family: string;            // '—' (familles supprimées de ce flux)
+  family: string;            // code famille (ou '—')
+  family_label: string;      // libellé famille
   label: string;             // product_sheets.product_name
   temperature: 'FR' | 'FZ';
   slicing: 'SLI' | 'WHO';

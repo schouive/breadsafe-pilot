@@ -15,6 +15,7 @@ import {
   Boxes,
   Barcode,
   FileBadge,
+  Container,
 } from 'lucide-react';
 import { ModuleLayout } from './ModuleLayout';
 
@@ -26,6 +27,7 @@ const settingsNavigation = [
   { name: 'Général', href: '/settings', icon: Settings },
   { name: '— Référentiel Produits —', href: '#catalog', icon: Boxes, isHeader: true },
   { name: 'Familles', href: '/settings/catalog/families', icon: FolderTree },
+  { name: 'Conditionnements', href: '/settings/catalog/packaging-types', icon: Container },
   { name: 'Templates Zebra', href: '/settings/catalog/templates', icon: FileBadge },
   { name: '— HACCP —', href: '#haccp', icon: Snowflake, isHeader: true },
   { name: 'Chambres froides', href: '/settings/cold-rooms', icon: Snowflake },

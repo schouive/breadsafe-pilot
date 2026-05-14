@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,8 +9,13 @@ import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import {
   Printer, Search, ArrowLeft, Star, History, Check, Loader2,
-  Download,
+  Download, Plus, Trash2,
 } from 'lucide-react';
+import { AddLabelToCatalogDialog } from '@/components/print/AddLabelToCatalogDialog';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import {
   usePrintProducts, usePrintHistory,
   usePrintFavorites, useToggleFavorite, useRecordPrint,
@@ -51,6 +57,24 @@ export default function PrintLabels() {
   const lotRef = useRef<HTMLInputElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
   const [generatingPdf, setGeneratingPdf] = useState(false);
+  const [addOpen, setAddOpen] = useState(false);
+  const [deleting, setDeleting] = useState<PrintProduct | null>(null);
+  const qc = useQueryClient();
+
+  const handleDelete = async () => {
+    if (!deleting) return;
+    const { error } = await supabase
+      .from('product_sheet_packagings')
+      .delete()
+      .eq('id', deleting.id);
+    if (error) {
+      toast.error('Erreur suppression', { description: error.message });
+      return;
+    }
+    toast.success('Étiquette supprimée du catalogue');
+    qc.invalidateQueries({ queryKey: ['print_products_psp'] });
+    setDeleting(null);
+  };
 
   const { data: products = [], isLoading: loadingProducts } = usePrintProducts();
   const { data: history = [] } = usePrintHistory(10);
@@ -382,11 +406,18 @@ export default function PrintLabels() {
             Étape {step}/3 — {['Article', 'Lot & DDM', 'Confirmation'][step - 1]}
           </p>
         </div>
-        {step > 1 && (
-          <Button variant="outline" size="lg" onClick={reset}>
-            <ArrowLeft className="h-5 w-5 mr-2" /> Recommencer
-          </Button>
-        )}
+        <div className="flex gap-2">
+          {step === 1 && (
+            <Button variant="outline" size="lg" onClick={() => setAddOpen(true)}>
+              <Plus className="h-5 w-5 mr-2" /> Ajouter une étiquette
+            </Button>
+          )}
+          {step > 1 && (
+            <Button variant="outline" size="lg" onClick={reset}>
+              <ArrowLeft className="h-5 w-5 mr-2" /> Recommencer
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Stepper */}
@@ -504,13 +535,24 @@ export default function PrintLabels() {
                           <div className="flex flex-wrap items-center gap-1">
                             <Badge variant="outline">{PACKAGING_LABELS[p.packaging] ?? p.packaging}</Badge>
                           </div>
-                          <Button
-                            className="w-full"
-                            size="lg"
-                            onClick={() => { setSelected(p); setStep(2); }}
-                          >
-                            Sélectionner
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button
+                              className="flex-1"
+                              size="lg"
+                              onClick={() => { setSelected(p); setStep(2); }}
+                            >
+                              Sélectionner
+                            </Button>
+                            <Button
+                              size="icon"
+                              variant="outline"
+                              className="h-11 w-11 shrink-0 text-destructive hover:text-destructive"
+                              onClick={() => setDeleting(p)}
+                              title="Supprimer cette étiquette du catalogue"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </CardContent>
                       </Card>
                     );
@@ -649,6 +691,30 @@ export default function PrintLabels() {
           </CardContent>
         </Card>
       )}
+
+      <AddLabelToCatalogDialog open={addOpen} onOpenChange={setAddOpen} />
+
+      <AlertDialog open={!!deleting} onOpenChange={(o) => !o && setDeleting(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer cette étiquette du catalogue ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleting && (
+                <>
+                  L'étiquette <strong>{deleting.erp_code}</strong> — {deleting.erp_label} sera retirée du catalogue d'impression.
+                  Cette action est irréversible.
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

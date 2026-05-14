@@ -62,6 +62,16 @@ export function useValidateProductSheetInco() {
       if (sheetError) throw sheetError;
       if ((sheet as any).inco_status !== 'draft') throw new Error('Seul un brouillon INCO peut être validé');
 
+      // Au moins un conditionnement est obligatoire pour valider la fiche technique
+      const { count: packagingCount, error: pkgError } = await (supabase as any)
+        .from('product_sheet_packagings')
+        .select('id', { count: 'exact', head: true })
+        .eq('product_sheet_id', id);
+      if (pkgError) throw pkgError;
+      if (!packagingCount || packagingCount === 0) {
+        throw new Error("Au moins un conditionnement doit être sélectionné dans la fiche technique avant validation.");
+      }
+
       const { data, error } = await supabase
         .from('product_sheets')
         .update({

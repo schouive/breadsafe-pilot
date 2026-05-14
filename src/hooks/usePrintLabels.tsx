@@ -71,6 +71,7 @@ export function usePrintProducts() {
           )
         `)
         .eq('active', true)
+        .eq('in_print_catalog', true)
         .eq('sheet.inco_status', 'validated')
         .order('erp_code');
       if (error) throw error;

@@ -65,7 +65,7 @@ export default function PrintLabels() {
     if (!deleting) return;
     const { error } = await supabase
       .from('product_sheet_packagings')
-      .delete()
+      .update({ in_print_catalog: false })
       .eq('id', deleting.id);
     if (error) {
       toast.error('Erreur suppression', { description: error.message });

@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { RecipeIngredient } from './useRecipes';
 import { IntermediateProductCost } from './useIntermediateProductCost';
+import { roundToSignificantFigures } from '@/lib/utils';
 
 export interface BakerCalculation {
   ingredientId: string;

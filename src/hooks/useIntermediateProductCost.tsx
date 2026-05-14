@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { roundToSignificantFigures } from '@/lib/utils';
 
 export interface IntermediateProductCost {
   recipeId: string;

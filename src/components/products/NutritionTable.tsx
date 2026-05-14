@@ -7,6 +7,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { formatSignificantFigures } from '@/lib/utils';
 
 interface NutritionTableProps {
   nutrition: RecipeNutrition | null | undefined;

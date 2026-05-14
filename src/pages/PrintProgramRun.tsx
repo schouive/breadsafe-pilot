@@ -275,8 +275,8 @@ export default function PrintProgramRun() {
                       <TableCell className="font-mono text-xs">{l.product.erp_code}</TableCell>
                       <TableCell className="text-sm">{l.product.erp_label}</TableCell>
                       <TableCell>
-                        <Input type="number" min={1} value={l.quantity}
-                          onChange={e => updateLine(l.itemId, { quantity: parseInt(e.target.value, 10) || 1 })}
+                        <Input type="number" min={0} value={l.quantity}
+                          onChange={e => updateLine(l.itemId, { quantity: Math.max(0, parseInt(e.target.value, 10) || 0) })}
                           className="h-9" />
                       </TableCell>
                       <TableCell>

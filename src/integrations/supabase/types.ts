@@ -2832,6 +2832,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      round_sig: { Args: { sig_digits: number; val: number }; Returns: number }
     }
     Enums: {
       app_role:

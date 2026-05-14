@@ -152,10 +152,6 @@ export default function PrintProgramRun() {
   const handlePrint = async () => {
     const err = validate();
     if (err) { toast.error(err); return; }
-    if (!isZebraSupported()) {
-      toast.error('WebUSB non disponible. Utilisez Chrome/Edge en HTTPS.');
-      return;
-    }
     setPrintingAll(true);
     let ok = 0, fail = 0;
     const queue = lines.filter(l => l.status !== 'printed');

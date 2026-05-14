@@ -206,10 +206,6 @@ export default function PrintLabels() {
       toast.error('Informations manquantes');
       return;
     }
-    if (!isZebraSupported()) {
-      toast.error("WebUSB non disponible. Utilisez Chrome/Edge en HTTPS.");
-      return;
-    }
     setPrinting(true);
     try {
       const zpl = await buildZpl();

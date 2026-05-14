@@ -103,6 +103,14 @@ export default function PrintLabels() {
     return list.slice(0, 80);
   }, [products, search, familyFilter, showFavoritesOnly, favorites]);
 
+  const availableFamilies = useMemo(() => {
+    const map = new Map<string, string>();
+    products.forEach(p => {
+      if (p.family && p.family !== '—') map.set(p.family, p.family_label || p.family);
+    });
+    return Array.from(map.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+  }, [products]);
+
   const finalSku = selected
     ? `${selected.sku_base}-${selected.temperature}-${selected.slicing}-${selected.packaging}`
     : '';

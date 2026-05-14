@@ -143,7 +143,6 @@ export default function PrintProgramRun() {
       const lot = computeLotNumber(l.productionDate);
       if (!lot.trim()) return `Date de fabrication manquante pour ${l.product.erp_code}`;
       if (!l.ddm) return `DDM manquante pour ${l.product.erp_code}`;
-      if (!l.product.template_name) return `Aucun template Zebra pour ${l.product.erp_code}`;
       if (l.quantity < 1) return `Quantité invalide pour ${l.product.erp_code}`;
     }
     return null;

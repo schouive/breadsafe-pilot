@@ -156,7 +156,9 @@ export default function PrintProgramRun() {
     let ok = 0, fail = 0;
     const failures: string[] = [];
     const queue = lines.filter(l => l.status !== 'printed' && l.quantity > 0);
-    for (const l of queue) {
+    const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
+    for (let qi = 0; qi < queue.length; qi++) {
+      const l = queue[qi];
       const lot = computeLotNumber(l.productionDate);
       updateLine(l.itemId, { status: 'printing', error: null, lot });
       try {

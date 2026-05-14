@@ -37,6 +37,7 @@ import { generateIngredientLists, markdownToUppercase } from '@/lib/ingredientLi
 import { supabase } from '@/integrations/supabase/client';
 import { optimizeImage } from '@/lib/imageOptimization';
 import { PackagingsSection } from './PackagingsSection';
+import { useFamilies } from '@/hooks/useProductCatalog';
 const WEIGHT_UNITS = ['g', 'kg', 'L', 'mL', 'cl'];
 
 const ALL_ALLERGENS = [
@@ -143,6 +144,7 @@ export function TechnicalSheetFormDialog({
     product_name: '',
     description: '',
     product_reference: '',
+    family_id: '',
     net_weight: '',
     net_weight_unit: 'g',
     pieces_per_carton: '',
@@ -160,6 +162,7 @@ export function TechnicalSheetFormDialog({
     quality_comment: '',
     is_published: false,
   });
+  const { data: families = [] } = useFamilies();
   // Fetch sub-ingredients for all PI in the recipe
   useEffect(() => {
     const fetchPiSubIngredients = async () => {
@@ -344,6 +347,7 @@ export function TechnicalSheetFormDialog({
           product_name: sheet.product_name || '',
           description: sheetAny.description || '',
           product_reference: sheetAny.product_reference || '',
+          family_id: sheetAny.family_id || '',
           net_weight: sheet.net_weight?.toString() || '',
           net_weight_unit: sheet.net_weight_unit || 'g',
           pieces_per_carton: sheetAny.pieces_per_carton?.toString() || '',
@@ -374,6 +378,7 @@ export function TechnicalSheetFormDialog({
           product_name: '',
           description: '',
           product_reference: '',
+          family_id: '',
           net_weight: '',
           net_weight_unit: 'g',
           pieces_per_carton: '',
@@ -501,6 +506,7 @@ export function TechnicalSheetFormDialog({
         product_name: formData.product_name.trim(),
         description: formData.description.trim() || null,
         product_reference: formData.product_reference.trim() || null,
+        family_id: formData.family_id || null,
         brand: null,
         barcode: null,
         net_weight: formData.net_weight ? parseFloat(formData.net_weight) : null,
@@ -622,6 +628,29 @@ export function TechnicalSheetFormDialog({
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 rows={2}
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="family">Famille de produit</Label>
+              <Select
+                value={formData.family_id || 'none'}
+                onValueChange={(v) => setFormData({ ...formData, family_id: v === 'none' ? '' : v })}
+              >
+                <SelectTrigger id="family">
+                  <SelectValue placeholder="Sélectionnez une famille (optionnel)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">— Aucune —</SelectItem>
+                  {families.filter((f: any) => f.active).map((f: any) => (
+                    <SelectItem key={f.id} value={f.id}>
+                      <span className="font-mono mr-2">{f.code}</span>{f.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Permet de classer la FT et de la retrouver plus rapidement dans le catalogue d'impression.
+              </p>
             </div>
           </div>
 

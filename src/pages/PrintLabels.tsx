@@ -29,7 +29,7 @@ import labelLogoM from '@/assets/label-logo-m.png';
 import labelWordmark from '@/assets/label-wordmark.png';
 import labelTriman from '@/assets/label-triman.png';
 
-const FAMILIES = ['BUN', 'BAG', 'HDG', 'PDM', 'PLQ', 'SPC'];
+
 
 const PACKAGING_LABELS: Record<string, string> = {
   U01: 'Unité',
@@ -102,6 +102,14 @@ export default function PrintLabels() {
     }
     return list.slice(0, 80);
   }, [products, search, familyFilter, showFavoritesOnly, favorites]);
+
+  const availableFamilies = useMemo(() => {
+    const map = new Map<string, string>();
+    products.forEach(p => {
+      if (p.family && p.family !== '—') map.set(p.family, p.family_label || p.family);
+    });
+    return Array.from(map.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+  }, [products]);
 
   const finalSku = selected
     ? `${selected.sku_base}-${selected.temperature}-${selected.slicing}-${selected.packaging}`
@@ -486,14 +494,15 @@ export default function PrintLabels() {
                 >
                   Toutes
                 </Button>
-                {FAMILIES.map(f => (
+                {availableFamilies.map(([code, label]) => (
                   <Button
-                    key={f}
+                    key={code}
                     size="sm"
-                    variant={familyFilter === f ? 'default' : 'outline'}
-                    onClick={() => setFamilyFilter(f)}
+                    variant={familyFilter === code ? 'default' : 'outline'}
+                    onClick={() => setFamilyFilter(code)}
+                    title={label}
                   >
-                    {f}
+                    {code}
                   </Button>
                 ))}
               </div>

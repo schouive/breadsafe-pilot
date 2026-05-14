@@ -1,0 +1,2 @@
+ALTER TABLE public.product_sheets ADD COLUMN IF NOT EXISTS family_id uuid REFERENCES public.product_families(id) ON DELETE SET NULL;
+CREATE INDEX IF NOT EXISTS idx_product_sheets_family_id ON public.product_sheets(family_id);

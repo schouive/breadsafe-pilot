@@ -73,8 +73,6 @@ export default function PrintQuick() {
     if (!ddm) { toast.error('DDM manquante'); return; }
     if (!product.template_name) { toast.error('Aucun template Zebra pour cet article'); return; }
     if (quantity < 1) { toast.error('Quantité invalide'); return; }
-    if (!isZebraSupported()) { toast.error('WebUSB non disponible'); return; }
-
     setPrinting(true);
     try {
       const zpl = buildProductZpl({ product, lot, ddm, quantity });

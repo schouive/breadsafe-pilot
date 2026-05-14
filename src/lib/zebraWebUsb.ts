@@ -293,10 +293,23 @@ export async function pickZebraPrinter(): Promise<ZebraPrintMethod> {
   selectedUsbDevice = null;
   preferredPrintMethod = null;
 
-  // Quand l'utilisateur clique explicitement sur "Choisir imprimante",
-  // on tente d'abord d'ouvrir la fenêtre native WebUSB pour lui laisser
-  // sélectionner sa Zebra. L'accès réel au port sera vérifié au moment
-  // d'imprimer, avec repli Browser Print si Windows bloque ensuite WebUSB.
+  // Sur Windows / Surface, l'imprimante Zebra est souvent en WiFi ou réseau :
+  // WebUSB ne verra rien. On essaie donc Browser Print en priorité.
+  if (shouldPreferBrowserPrint()) {
+    try {
+      const device = await getDefaultBrowserPrintDevice();
+      if (device?.name) {
+        preferredPrintMethod = 'browserprint';
+        return 'browserprint';
+      }
+    } catch (browserPrintError) {
+      // Si Browser Print n'est pas dispo, on tentera WebUSB ci-dessous.
+      if (!isWebUsbSupported()) {
+        throw new Error(getBrowserPrintHelpMessage(browserPrintError));
+      }
+    }
+  }
+
   if (isWebUsbSupported()) {
     try {
       selectedUsbDevice = await requestZebraDevice();
@@ -305,10 +318,6 @@ export async function pickZebraPrinter(): Promise<ZebraPrintMethod> {
     } catch (error) {
       const message = String((error as Error)?.message ?? error ?? '').toLowerCase();
       if (message.includes('no device selected')) throw error;
-
-      if (!shouldPreferBrowserPrint()) {
-        throw error;
-      }
     }
   }
 
@@ -322,5 +331,5 @@ export async function pickZebraPrinter(): Promise<ZebraPrintMethod> {
     throw new Error(getBrowserPrintHelpMessage(error));
   }
 
-  throw new Error('Aucune imprimante Zebra disponible.');
+  throw new Error('Aucune imprimante Zebra disponible (ni USB, ni Browser Print).');
 }

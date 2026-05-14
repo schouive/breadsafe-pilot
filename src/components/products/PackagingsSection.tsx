@@ -90,11 +90,17 @@ export function PackagingsSection({ productSheetId, defaults }: Props) {
         <Package className="h-4 w-4 text-primary" />
         <h5 className="font-medium text-sm">
           Conditionnements disponibles ({packagings.length})
+          <span className="text-destructive ml-1">*</span>
         </h5>
       </div>
       <p className="text-xs text-muted-foreground">
-        Cliquez pour sélectionner les conditionnements proposés à l'impression d'étiquettes pour ce produit.
+        Sélectionnez au moins un conditionnement. Les étiquettes d'impression deviendront disponibles dans le module Étiquetage <strong>une fois la fiche technique validée</strong>.
       </p>
+      {packagings.length === 0 && (
+        <p className="text-xs text-destructive">
+          Au moins un conditionnement est requis pour valider la fiche technique.
+        </p>
+      )}
       <div className="flex flex-wrap gap-2">
         {packagingTypes.map((t) => {
           const isSelected = selectedCodes.has(t.code);

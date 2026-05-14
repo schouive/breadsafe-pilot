@@ -156,7 +156,7 @@ export function ProgramFormDialog({ open, onOpenChange, program, onSaved }: Prop
           items: cleanRows.map((r, i) => ({
             packaging_id: r.packaging_id,
             print_order: i,
-            default_quantity: Math.max(1, r.default_quantity || 1),
+            default_quantity: Math.max(0, r.default_quantity || 0),
           })),
         });
       }

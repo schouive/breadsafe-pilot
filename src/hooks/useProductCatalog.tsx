@@ -16,6 +16,21 @@ export function useFamilies() {
   });
 }
 
+// ============ PACKAGING TYPES ============
+export function usePackagingTypes() {
+  return useQuery({
+    queryKey: ['packaging_types'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('packaging_types')
+        .select('*')
+        .order('code');
+      if (error) throw error;
+      return data;
+    },
+  });
+}
+
 // ============ RECIPES ============
 export function useCatalogRecipes() {
   return useQuery({

@@ -58,6 +58,11 @@ const STORAGE_OPTIONS = [
   { value: 'other', label: 'Autre (saisie manuelle)' },
 ];
 
+const USAGE_OPTIONS = [
+  { value: 'toaster', label: 'Toaster le produit ou le chauffer sur la plancha avant son utilisation' },
+  { value: 'other', label: 'Autre (saisie manuelle)' },
+];
+
 const DEFAULT_THAWING_INSTRUCTIONS = 'Décongeler à température ambiante, ne pas recongeler';
 
 // Helper to determine storage type from existing storage instructions
@@ -66,6 +71,14 @@ function determineStorageType(storageInstructions: string | null): 'ambient' | '
   const normalized = storageInstructions.toLowerCase();
   if (normalized.includes('-18') || normalized.includes('congel')) return 'frozen';
   if (normalized.includes('ambiante') && normalized.includes('30')) return 'ambient';
+  return 'other';
+}
+
+// Helper to determine usage type from existing usage instructions
+function determineUsageType(usageInstructions: string | null): 'toaster' | 'other' {
+  if (!usageInstructions) return 'toaster';
+  const normalized = usageInstructions.toLowerCase();
+  if (normalized.includes('toaster') || normalized.includes('plancha')) return 'toaster';
   return 'other';
 }
 

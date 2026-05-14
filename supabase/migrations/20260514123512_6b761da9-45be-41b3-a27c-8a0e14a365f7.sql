@@ -1,0 +1,1 @@
+ALTER TABLE public.product_sheet_packagings DROP CONSTRAINT IF EXISTS product_sheet_packagings_packaging_code_check;

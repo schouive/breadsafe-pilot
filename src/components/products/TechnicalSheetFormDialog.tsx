@@ -628,6 +628,29 @@ export function TechnicalSheetFormDialog({
                 rows={2}
               />
             </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="family">Famille de produit</Label>
+              <Select
+                value={formData.family_id || 'none'}
+                onValueChange={(v) => setFormData({ ...formData, family_id: v === 'none' ? '' : v })}
+              >
+                <SelectTrigger id="family">
+                  <SelectValue placeholder="Sélectionnez une famille (optionnel)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">— Aucune —</SelectItem>
+                  {families.filter((f: any) => f.active).map((f: any) => (
+                    <SelectItem key={f.id} value={f.id}>
+                      <span className="font-mono mr-2">{f.code}</span>{f.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Permet de classer la FT et de la retrouver plus rapidement dans le catalogue d'impression.
+              </p>
+            </div>
           </div>
 
           {/* INCO & Allergens - Editable */}

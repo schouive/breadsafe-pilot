@@ -174,7 +174,7 @@ export default function PrintProgramRun() {
             temperature: l.product.temperature,
             slicing: l.product.slicing,
             packaging: l.product.packaging,
-            template_name: l.product.template_name!,
+            template_name: l.product.template_name || 'DEFAULT',
             lot_number: lot,
             ddm: l.ddm,
             quantity: l.quantity,

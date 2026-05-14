@@ -36,7 +36,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { generateIngredientLists, markdownToUppercase } from '@/lib/ingredientListGenerator';
 import { supabase } from '@/integrations/supabase/client';
 import { optimizeImage } from '@/lib/imageOptimization';
-import { PackagingsSection } from './PackagingsSection';
+
 import { useFamilies } from '@/hooks/useProductCatalog';
 const WEIGHT_UNITS = ['g', 'kg', 'L', 'mL', 'cl'];
 
@@ -967,23 +967,6 @@ export function TechnicalSheetFormDialog({
           </div>
 
           {/* Packagings (only in edit mode, after FT exists) */}
-          {mode === 'edit' && sheet?.id && (
-            <>
-              <Separator />
-              <div className="space-y-4">
-                <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wider">
-                  3 bis. Conditionnements (étiquetage)
-                </h4>
-                <PackagingsSection
-                  productSheetId={sheet.id}
-                  defaults={{
-                    product_name: formData.product_name,
-                    product_reference: formData.product_reference,
-                  }}
-                />
-              </div>
-            </>
-          )}
           </div>
 
           {/* Conservation & Usage */}

@@ -144,6 +144,7 @@ export function TechnicalSheetFormDialog({
     product_name: '',
     description: '',
     product_reference: '',
+    family_id: '',
     net_weight: '',
     net_weight_unit: 'g',
     pieces_per_carton: '',
@@ -161,6 +162,7 @@ export function TechnicalSheetFormDialog({
     quality_comment: '',
     is_published: false,
   });
+  const { data: families = [] } = useFamilies();
   // Fetch sub-ingredients for all PI in the recipe
   useEffect(() => {
     const fetchPiSubIngredients = async () => {

@@ -36,7 +36,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { generateIngredientLists, markdownToUppercase } from '@/lib/ingredientListGenerator';
 import { supabase } from '@/integrations/supabase/client';
 import { optimizeImage } from '@/lib/imageOptimization';
-import { PackagingsSection } from './PackagingsSection';
+
 import { useFamilies } from '@/hooks/useProductCatalog';
 const WEIGHT_UNITS = ['g', 'kg', 'L', 'mL', 'cl'];
 

@@ -535,13 +535,24 @@ export default function PrintLabels() {
                           <div className="flex flex-wrap items-center gap-1">
                             <Badge variant="outline">{PACKAGING_LABELS[p.packaging] ?? p.packaging}</Badge>
                           </div>
-                          <Button
-                            className="w-full"
-                            size="lg"
-                            onClick={() => { setSelected(p); setStep(2); }}
-                          >
-                            Sélectionner
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button
+                              className="flex-1"
+                              size="lg"
+                              onClick={() => { setSelected(p); setStep(2); }}
+                            >
+                              Sélectionner
+                            </Button>
+                            <Button
+                              size="icon"
+                              variant="outline"
+                              className="h-11 w-11 shrink-0 text-destructive hover:text-destructive"
+                              onClick={() => setDeleting(p)}
+                              title="Supprimer cette étiquette du catalogue"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </CardContent>
                       </Card>
                     );

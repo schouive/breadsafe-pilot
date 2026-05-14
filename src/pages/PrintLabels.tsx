@@ -494,14 +494,15 @@ export default function PrintLabels() {
                 >
                   Toutes
                 </Button>
-                {FAMILIES.map(f => (
+                {availableFamilies.map(([code, label]) => (
                   <Button
-                    key={f}
+                    key={code}
                     size="sm"
-                    variant={familyFilter === f ? 'default' : 'outline'}
-                    onClick={() => setFamilyFilter(f)}
+                    variant={familyFilter === code ? 'default' : 'outline'}
+                    onClick={() => setFamilyFilter(code)}
+                    title={label}
                   >
-                    {f}
+                    {code}
                   </Button>
                 ))}
               </div>

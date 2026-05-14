@@ -406,11 +406,18 @@ export default function PrintLabels() {
             Étape {step}/3 — {['Article', 'Lot & DDM', 'Confirmation'][step - 1]}
           </p>
         </div>
-        {step > 1 && (
-          <Button variant="outline" size="lg" onClick={reset}>
-            <ArrowLeft className="h-5 w-5 mr-2" /> Recommencer
-          </Button>
-        )}
+        <div className="flex gap-2">
+          {step === 1 && (
+            <Button variant="outline" size="lg" onClick={() => setAddOpen(true)}>
+              <Plus className="h-5 w-5 mr-2" /> Ajouter une étiquette
+            </Button>
+          )}
+          {step > 1 && (
+            <Button variant="outline" size="lg" onClick={reset}>
+              <ArrowLeft className="h-5 w-5 mr-2" /> Recommencer
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Stepper */}

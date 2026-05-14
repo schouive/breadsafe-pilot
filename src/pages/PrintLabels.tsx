@@ -520,7 +520,7 @@ export default function PrintLabels() {
                                 {p.erp_code}
                               </p>
                               <p className="text-sm font-medium leading-tight mt-1">
-                                {p.erp_label}
+                                {(p.erp_label || '').replace(new RegExp(`\\s+${p.packaging}\\s*$`), '').trim() || p.erp_label}
                               </p>
                             </div>
                             <Button

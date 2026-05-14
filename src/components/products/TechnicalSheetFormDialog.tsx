@@ -347,6 +347,7 @@ export function TechnicalSheetFormDialog({
           product_name: sheet.product_name || '',
           description: sheetAny.description || '',
           product_reference: sheetAny.product_reference || '',
+          family_id: sheetAny.family_id || '',
           net_weight: sheet.net_weight?.toString() || '',
           net_weight_unit: sheet.net_weight_unit || 'g',
           pieces_per_carton: sheetAny.pieces_per_carton?.toString() || '',

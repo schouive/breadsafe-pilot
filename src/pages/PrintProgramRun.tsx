@@ -211,7 +211,7 @@ export default function PrintProgramRun() {
   const ready = !validate();
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-6 max-w-7xl mx-auto pb-28">
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="icon" onClick={() => navigate('/print/programs')}>
@@ -308,6 +308,33 @@ export default function PrintProgramRun() {
           )}
         </CardContent>
       </Card>
+
+      {/* Sticky action bar — garantit l'accès tactile au bouton Imprimer sur tablette */}
+      <div
+        className="fixed bottom-0 left-0 right-0 z-40 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 px-4 py-3"
+        style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}
+      >
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-3 flex-wrap">
+          <div className="text-sm text-muted-foreground">
+            {lines.length} ligne(s) · {lines.filter(l => l.status === 'printed').length} imprimée(s)
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" size="lg" onClick={handlePickPrinter} type="button">
+              <Printer className="h-5 w-5 mr-2" /> Imprimante
+            </Button>
+            <Button
+              size="lg"
+              type="button"
+              onClick={handlePrint}
+              disabled={printingAll || lines.length === 0}
+              className="min-w-[220px]"
+            >
+              {printingAll ? <Loader2 className="h-5 w-5 mr-2 animate-spin" /> : <Printer className="h-5 w-5 mr-2" />}
+              IMPRIMER LE PROGRAMME
+            </Button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

@@ -172,8 +172,7 @@ export default function PrintLabels() {
     const zplTemplate = DEFAULT_PRODUCT_LABEL_ZPL;
 
     // Poids net total = poids unitaire × nombre d'unités du conditionnement
-    const PACK_COUNT_MAP: Record<string, number> = { U01: 1, C04: 4, C05: 5, C18: 18, C24: 24, PAL: 1 };
-    const packQty = PACK_COUNT_MAP[selected.packaging] ?? 1;
+    const packQty = getPackCount(selected.packaging);
     const totalNetWeight = selected.net_weight != null ? selected.net_weight * packQty : null;
 
     const tracesFromStatement = extractTraces(selected.allergen_statement);

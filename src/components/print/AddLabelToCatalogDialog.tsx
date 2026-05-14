@@ -48,21 +48,25 @@ export function AddLabelToCatalogDialog({ open, onOpenChange }: Props) {
     },
   });
 
-  // Conditionnements déjà liés à la FT sélectionnée (pour éviter les doublons)
+  // Conditionnements de la FT sélectionnée + statut catalogue
   const { data: existing = [] } = useQuery({
     queryKey: ['psp-existing', sheetId],
     enabled: open && !!sheetId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from('product_sheet_packagings')
-        .select('packaging_code')
+        .select('id, packaging_code, in_print_catalog')
         .eq('product_sheet_id', sheetId);
       if (error) throw error;
-      return data.map((r: any) => r.packaging_code as string);
+      return data as { id: string; packaging_code: string; in_print_catalog: boolean }[];
     },
   });
 
-  const existingSet = useMemo(() => new Set(existing), [existing]);
+  const existingMap = useMemo(() => {
+    const m = new Map<string, { id: string; in_print_catalog: boolean }>();
+    existing.forEach((r) => m.set(r.packaging_code, { id: r.id, in_print_catalog: r.in_print_catalog }));
+    return m;
+  }, [existing]);
   const selectedSheet = sheets.find((s: any) => s.id === sheetId);
 
   const reset = () => {
@@ -75,25 +79,36 @@ export function AddLabelToCatalogDialog({ open, onOpenChange }: Props) {
       toast.error('Sélectionnez une fiche technique et un conditionnement');
       return;
     }
-    if (existingSet.has(packagingCode)) {
-      toast.error('Cette étiquette existe déjà dans le catalogue');
+    const already = existingMap.get(packagingCode);
+    if (already?.in_print_catalog) {
+      toast.error('Cette étiquette est déjà dans le catalogue');
       return;
     }
     setSaving(true);
     try {
       const baseRef = (selectedSheet as any).product_reference || 'PROD';
       const baseName = (selectedSheet as any).product_name || 'Produit';
-      const { error } = await supabase
-        .from('product_sheet_packagings')
-        .insert({
-          product_sheet_id: sheetId,
-          packaging_code: packagingCode,
-          erp_code: `${baseRef}-${packagingCode}`,
-          erp_label: `${baseName} ${packagingCode}`,
-          temperature_state: 'FR',
-          slicing_state: 'WHO',
-          active: true,
-        });
+      let error: any = null;
+      if (already) {
+        // Le conditionnement existe déjà sur la FT mais pas dans le catalogue → activer le flag
+        ({ error } = await supabase
+          .from('product_sheet_packagings')
+          .update({ in_print_catalog: true, active: true })
+          .eq('id', already.id));
+      } else {
+        ({ error } = await supabase
+          .from('product_sheet_packagings')
+          .insert({
+            product_sheet_id: sheetId,
+            packaging_code: packagingCode,
+            erp_code: `${baseRef}-${packagingCode}`,
+            erp_label: `${baseName} ${packagingCode}`,
+            temperature_state: 'FR',
+            slicing_state: 'WHO',
+            active: true,
+            in_print_catalog: true,
+          }));
+      }
       if (error) throw error;
       toast.success('Étiquette ajoutée au catalogue');
       qc.invalidateQueries({ queryKey: ['print_products_psp'] });
@@ -148,10 +163,10 @@ export function AddLabelToCatalogDialog({ open, onOpenChange }: Props) {
               </SelectTrigger>
               <SelectContent>
                 {packagingTypes.map((t: any) => {
-                  const used = existingSet.has(t.code);
+                  const inCatalog = existingMap.get(t.code)?.in_print_catalog;
                   return (
-                    <SelectItem key={t.code} value={t.code} disabled={used}>
-                      {t.code} — {t.label}{used ? ' (déjà ajouté)' : ''}
+                    <SelectItem key={t.code} value={t.code} disabled={!!inCatalog}>
+                      {t.code} — {t.label}{inCatalog ? ' (déjà dans le catalogue)' : ''}
                     </SelectItem>
                   );
                 })}

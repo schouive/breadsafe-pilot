@@ -124,7 +124,7 @@ export function ProgramFormDialog({ open, onOpenChange, program, onSaved }: Prop
     [copy[idx], copy[j]] = [copy[j], copy[idx]];
     return copy;
   });
-  const addRow = () => setRows(prev => [...prev, { packaging_id: '', default_quantity: 1 }]);
+  const addRow = () => setRows(prev => [...prev, { packaging_id: '', default_quantity: 0 }]);
 
   const handleSave = async () => {
     if (!name.trim()) { toast.error('Le nom est obligatoire'); return; }

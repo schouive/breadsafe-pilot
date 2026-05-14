@@ -29,7 +29,7 @@ import labelLogoM from '@/assets/label-logo-m.png';
 import labelWordmark from '@/assets/label-wordmark.png';
 import labelTriman from '@/assets/label-triman.png';
 
-const FAMILIES = ['BUN', 'BAG', 'HDG', 'PDM', 'PLQ', 'SPC'];
+
 
 const PACKAGING_LABELS: Record<string, string> = {
   U01: 'Unité',

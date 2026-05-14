@@ -87,7 +87,7 @@ export default function PrintProgramRun() {
           return {
             itemId: it.id,
             product: p,
-            quantity: old?.quantity ?? it.default_quantity,
+            quantity: old?.quantity ?? 0,
             lot: old?.lot ?? lot,
             productionDate: old?.productionDate ?? globalProductionDate,
             ddm: old?.ddm ?? globalDdm,
@@ -139,11 +139,12 @@ export default function PrintProgramRun() {
 
   const validate = (): string | null => {
     if (lines.length === 0) return 'Aucune ligne à imprimer';
-    for (const l of lines) {
+    const toPrint = lines.filter(l => l.quantity > 0);
+    if (toPrint.length === 0) return 'Aucune quantité à imprimer (toutes à 0)';
+    for (const l of toPrint) {
       const lot = computeLotNumber(l.productionDate);
       if (!lot.trim()) return `Date de fabrication manquante pour ${l.product.erp_code}`;
       if (!l.ddm) return `DDM manquante pour ${l.product.erp_code}`;
-      if (l.quantity < 1) return `Quantité invalide pour ${l.product.erp_code}`;
     }
     return null;
   };
@@ -153,7 +154,7 @@ export default function PrintProgramRun() {
     if (err) { toast.error(err); return; }
     setPrintingAll(true);
     let ok = 0, fail = 0;
-    const queue = lines.filter(l => l.status !== 'printed');
+    const queue = lines.filter(l => l.status !== 'printed' && l.quantity > 0);
     for (const l of queue) {
       const lot = computeLotNumber(l.productionDate);
       updateLine(l.itemId, { status: 'printing', error: null, lot });
@@ -274,8 +275,8 @@ export default function PrintProgramRun() {
                       <TableCell className="font-mono text-xs">{l.product.erp_code}</TableCell>
                       <TableCell className="text-sm">{l.product.erp_label}</TableCell>
                       <TableCell>
-                        <Input type="number" min={1} value={l.quantity}
-                          onChange={e => updateLine(l.itemId, { quantity: parseInt(e.target.value, 10) || 1 })}
+                        <Input type="number" min={0} value={l.quantity}
+                          onChange={e => updateLine(l.itemId, { quantity: Math.max(0, parseInt(e.target.value, 10) || 0) })}
                           className="h-9" />
                       </TableCell>
                       <TableCell>

@@ -31,7 +31,7 @@ export interface BuildProductZplInput {
  * de son lot/DDM/quantité. Réutilise exactement la logique de PrintLabels.
  */
 export function buildProductZpl({ product, lot, ddm, quantity }: BuildProductZplInput): string {
-  const packQty = PACK_COUNT_MAP[product.packaging] ?? 1;
+  const packQty = getPackCount(product.packaging);
   const totalNetWeight = product.net_weight != null ? product.net_weight * packQty : null;
 
   const tracesFromStatement = extractTraces(product.allergen_statement);

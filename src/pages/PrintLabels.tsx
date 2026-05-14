@@ -25,6 +25,7 @@ import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { fillZplTemplate, DEFAULT_PRODUCT_LABEL_ZPL } from '@/lib/zplLabelGenerator';
 import { printZpl, pickZebraPrinter } from '@/lib/zebraWebUsb';
+import { getPackCount } from '@/lib/buildProductZpl';
 import labelLogoM from '@/assets/label-logo-m.png';
 import labelWordmark from '@/assets/label-wordmark.png';
 import labelTriman from '@/assets/label-triman.png';
@@ -37,7 +38,15 @@ const PACKAGING_LABELS: Record<string, string> = {
   C05: 'Carton de 5',
   C18: 'Carton de 18',
   C24: 'Carton de 24',
+  C45: 'Carton de 45',
   PAL: 'Palette',
+};
+
+const labelForPackaging = (code: string | null | undefined): string => {
+  if (!code) return '';
+  if (PACKAGING_LABELS[code]) return PACKAGING_LABELS[code];
+  const m = code.match(/^C0*(\d+)$/i);
+  return m ? `Carton de ${m[1]}` : code;
 };
 
 export default function PrintLabels() {
@@ -163,8 +172,7 @@ export default function PrintLabels() {
     const zplTemplate = DEFAULT_PRODUCT_LABEL_ZPL;
 
     // Poids net total = poids unitaire × nombre d'unités du conditionnement
-    const PACK_COUNT_MAP: Record<string, number> = { U01: 1, C04: 4, C05: 5, C18: 18, C24: 24, PAL: 1 };
-    const packQty = PACK_COUNT_MAP[selected.packaging] ?? 1;
+    const packQty = getPackCount(selected.packaging);
     const totalNetWeight = selected.net_weight != null ? selected.net_weight * packQty : null;
 
     const tracesFromStatement = extractTraces(selected.allergen_statement);
@@ -773,8 +781,7 @@ function LabelMaskPreview({
   const lotDisplay = lot ? (lot.startsWith('L') ? lot : `L${lot}`) : 'L-----';
 
   // Conditionnement → nombre d'unités par carton
-  const PACK_COUNT: Record<string, number> = { U01: 1, C04: 4, C05: 5, C18: 18, C24: 24, PAL: 1 };
-  const packCount = PACK_COUNT[product.packaging] ?? 1;
+  const packCount = getPackCount(product.packaging);
   const unitWeight = product.net_weight ?? 0;
   const unitWeightUnit = product.net_weight_unit || 'kg';
 

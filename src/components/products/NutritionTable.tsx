@@ -62,7 +62,7 @@ export function NutritionTable({ nutrition }: NutritionTableProps) {
                     {label.trim()}
                   </TableCell>
                   <TableCell className="text-right">
-                    {typeof value === 'number' ? value.toFixed(2) : value} {unit}
+                    {typeof value === 'number' ? formatSignificantFigures(value, 2) : value} {unit}
                   </TableCell>
                 </TableRow>
               );

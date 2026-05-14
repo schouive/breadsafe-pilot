@@ -781,8 +781,7 @@ function LabelMaskPreview({
   const lotDisplay = lot ? (lot.startsWith('L') ? lot : `L${lot}`) : 'L-----';
 
   // Conditionnement → nombre d'unités par carton
-  const PACK_COUNT: Record<string, number> = { U01: 1, C04: 4, C05: 5, C18: 18, C24: 24, PAL: 1 };
-  const packCount = PACK_COUNT[product.packaging] ?? 1;
+  const packCount = getPackCount(product.packaging);
   const unitWeight = product.net_weight ?? 0;
   const unitWeightUnit = product.net_weight_unit || 'kg';
 

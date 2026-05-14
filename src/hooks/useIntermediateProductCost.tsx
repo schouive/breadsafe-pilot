@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { roundToSignificantFigures } from '@/lib/utils';
 
 export interface IntermediateProductCost {
   recipeId: string;
@@ -157,15 +158,15 @@ export function useIntermediateProductCosts() {
         const finalWeightGrams = finalWeightKg * 1000;
         const nutritionPer100g = finalWeightGrams > 0
           ? {
-              energyKcal: (totalNutrition.energyKcal / finalWeightGrams) * 100,
-              energyKj: (totalNutrition.energyKj / finalWeightGrams) * 100,
-              fat: (totalNutrition.fat / finalWeightGrams) * 100,
-              saturatedFat: (totalNutrition.saturatedFat / finalWeightGrams) * 100,
-              carbohydrates: (totalNutrition.carbohydrates / finalWeightGrams) * 100,
-              sugars: (totalNutrition.sugars / finalWeightGrams) * 100,
-              fiber: (totalNutrition.fiber / finalWeightGrams) * 100,
-              protein: (totalNutrition.protein / finalWeightGrams) * 100,
-              salt: (totalNutrition.salt / finalWeightGrams) * 100,
+              energyKcal: roundToSignificantFigures((totalNutrition.energyKcal / finalWeightGrams) * 100, 2),
+              energyKj: roundToSignificantFigures((totalNutrition.energyKj / finalWeightGrams) * 100, 2),
+              fat: roundToSignificantFigures((totalNutrition.fat / finalWeightGrams) * 100, 2),
+              saturatedFat: roundToSignificantFigures((totalNutrition.saturatedFat / finalWeightGrams) * 100, 2),
+              carbohydrates: roundToSignificantFigures((totalNutrition.carbohydrates / finalWeightGrams) * 100, 2),
+              sugars: roundToSignificantFigures((totalNutrition.sugars / finalWeightGrams) * 100, 2),
+              fiber: roundToSignificantFigures((totalNutrition.fiber / finalWeightGrams) * 100, 2),
+              protein: roundToSignificantFigures((totalNutrition.protein / finalWeightGrams) * 100, 2),
+              salt: roundToSignificantFigures((totalNutrition.salt / finalWeightGrams) * 100, 2),
             }
           : {
               energyKcal: 0,

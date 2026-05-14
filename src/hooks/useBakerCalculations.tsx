@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { RecipeIngredient } from './useRecipes';
 import { IntermediateProductCost } from './useIntermediateProductCost';
+import { roundToSignificantFigures } from '@/lib/utils';
 
 export interface BakerCalculation {
   ingredientId: string;
@@ -273,15 +274,15 @@ export function useBakerCalculations(
     const cookedWeightGrams = cookedWeightKg * 1000;
     const nutritionPer100g = cookedWeightGrams > 0
       ? {
-          energyKcal: (totalNutrition.energyKcal / cookedWeightGrams) * 100,
-          energyKj: (totalNutrition.energyKj / cookedWeightGrams) * 100,
-          fat: (totalNutrition.fat / cookedWeightGrams) * 100,
-          saturatedFat: (totalNutrition.saturatedFat / cookedWeightGrams) * 100,
-          carbohydrates: (totalNutrition.carbohydrates / cookedWeightGrams) * 100,
-          sugars: (totalNutrition.sugars / cookedWeightGrams) * 100,
-          fiber: (totalNutrition.fiber / cookedWeightGrams) * 100,
-          protein: (totalNutrition.protein / cookedWeightGrams) * 100,
-          salt: (totalNutrition.salt / cookedWeightGrams) * 100,
+          energyKcal: roundToSignificantFigures((totalNutrition.energyKcal / cookedWeightGrams) * 100, 2),
+          energyKj: roundToSignificantFigures((totalNutrition.energyKj / cookedWeightGrams) * 100, 2),
+          fat: roundToSignificantFigures((totalNutrition.fat / cookedWeightGrams) * 100, 2),
+          saturatedFat: roundToSignificantFigures((totalNutrition.saturatedFat / cookedWeightGrams) * 100, 2),
+          carbohydrates: roundToSignificantFigures((totalNutrition.carbohydrates / cookedWeightGrams) * 100, 2),
+          sugars: roundToSignificantFigures((totalNutrition.sugars / cookedWeightGrams) * 100, 2),
+          fiber: roundToSignificantFigures((totalNutrition.fiber / cookedWeightGrams) * 100, 2),
+          protein: roundToSignificantFigures((totalNutrition.protein / cookedWeightGrams) * 100, 2),
+          salt: roundToSignificantFigures((totalNutrition.salt / cookedWeightGrams) * 100, 2),
         }
       : {
           energyKcal: 0,

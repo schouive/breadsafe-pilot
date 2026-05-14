@@ -58,6 +58,11 @@ const STORAGE_OPTIONS = [
   { value: 'other', label: 'Autre (saisie manuelle)' },
 ];
 
+const USAGE_OPTIONS = [
+  { value: 'toaster', label: 'Toaster le produit ou le chauffer sur la plancha avant son utilisation' },
+  { value: 'other', label: 'Autre (saisie manuelle)' },
+];
+
 const DEFAULT_THAWING_INSTRUCTIONS = 'Décongeler à température ambiante, ne pas recongeler';
 
 // Helper to determine storage type from existing storage instructions
@@ -66,6 +71,14 @@ function determineStorageType(storageInstructions: string | null): 'ambient' | '
   const normalized = storageInstructions.toLowerCase();
   if (normalized.includes('-18') || normalized.includes('congel')) return 'frozen';
   if (normalized.includes('ambiante') && normalized.includes('30')) return 'ambient';
+  return 'other';
+}
+
+// Helper to determine usage type from existing usage instructions
+function determineUsageType(usageInstructions: string | null): 'toaster' | 'other' {
+  if (!usageInstructions) return 'toaster';
+  const normalized = usageInstructions.toLowerCase();
+  if (normalized.includes('toaster') || normalized.includes('plancha')) return 'toaster';
   return 'other';
 }
 
@@ -143,6 +156,7 @@ export function TechnicalSheetFormDialog({
     dlc_ddm_days: '',
     thawing_instructions: '',
     usage_instructions: 'Toaster le produit ou le chauffer sur la plancha avant son utilisation',
+    usage_type: 'toaster' as 'toaster' | 'other',
     quality_comment: '',
     is_published: false,
   });
@@ -343,6 +357,7 @@ export function TechnicalSheetFormDialog({
           dlc_ddm_days: sheetAny.dlc_ddm_days?.toString() || '',
           thawing_instructions: sheetAny.thawing_instructions || '',
           usage_instructions: sheet.usage_instructions || '',
+          usage_type: determineUsageType(sheet.usage_instructions),
           quality_comment: sheetAny.quality_comment || '',
           is_published: sheet.is_published,
         });
@@ -372,6 +387,7 @@ export function TechnicalSheetFormDialog({
           dlc_ddm_days: '',
           thawing_instructions: '',
           usage_instructions: 'Toaster le produit ou le chauffer sur la plancha avant son utilisation',
+          usage_type: 'toaster' as 'toaster' | 'other',
           quality_comment: '',
           is_published: false,
         });
@@ -1035,14 +1051,31 @@ export function TechnicalSheetFormDialog({
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="usage">Conseils de mise en œuvre</Label>
-              <Textarea
-                id="usage"
-                placeholder="Réchauffer au four à 180°C pendant 5 minutes..."
-                value={formData.usage_instructions}
-                onChange={(e) => setFormData({ ...formData, usage_instructions: e.target.value })}
-                rows={2}
-              />
+              <Label htmlFor="usage">Conseils de mise en oeuvre</Label>
+              <Select
+                value={formData.usage_type}
+                onValueChange={(value) => {
+                  const type = value as 'toaster' | 'other';
+                  const defaultText = type === 'toaster' ? 'Toaster le produit ou le chauffer sur la plancha avant son utilisation' : '';
+                  setFormData({ ...formData, usage_type: type, usage_instructions: defaultText });
+                }}
+              >
+                <SelectTrigger id="usage"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {USAGE_OPTIONS.map((o) => (
+                    <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {formData.usage_type === 'other' && (
+                <Textarea
+                  id="usage-custom"
+                  placeholder="Saisir le conseil de mise en oeuvre personnalise..."
+                  value={formData.usage_instructions}
+                  onChange={(e) => setFormData({ ...formData, usage_instructions: e.target.value })}
+                  rows={2}
+                />
+              )}
             </div>
           </div>
 

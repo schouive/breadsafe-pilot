@@ -87,7 +87,7 @@ export default function PrintProgramRun() {
           return {
             itemId: it.id,
             product: p,
-            quantity: old?.quantity ?? it.default_quantity,
+            quantity: old?.quantity ?? 0,
             lot: old?.lot ?? lot,
             productionDate: old?.productionDate ?? globalProductionDate,
             ddm: old?.ddm ?? globalDdm,

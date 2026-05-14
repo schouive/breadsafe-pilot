@@ -357,6 +357,7 @@ export function TechnicalSheetFormDialog({
           dlc_ddm_days: sheetAny.dlc_ddm_days?.toString() || '',
           thawing_instructions: sheetAny.thawing_instructions || '',
           usage_instructions: sheet.usage_instructions || '',
+          usage_type: determineUsageType(sheet.usage_instructions),
           quality_comment: sheetAny.quality_comment || '',
           is_published: sheet.is_published,
         });

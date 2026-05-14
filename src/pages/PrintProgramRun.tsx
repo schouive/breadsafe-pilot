@@ -191,6 +191,9 @@ export default function PrintProgramRun() {
         failures.push(`${l.product.erp_code}: ${msg}`);
         fail++;
       }
+      // Laisser le temps à la Zebra de traiter le job avant d'envoyer le suivant.
+      // Sans cette pause, certaines étiquettes sont perdues quand on enchaîne plusieurs ZPL.
+      if (qi < queue.length - 1) await sleep(800);
     }
     setPrintingAll(false);
     if (fail === 0) toast.success(`${ok} ligne(s) imprimée(s)`);

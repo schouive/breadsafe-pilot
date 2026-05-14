@@ -38,7 +38,15 @@ const PACKAGING_LABELS: Record<string, string> = {
   C05: 'Carton de 5',
   C18: 'Carton de 18',
   C24: 'Carton de 24',
+  C45: 'Carton de 45',
   PAL: 'Palette',
+};
+
+const labelForPackaging = (code: string | null | undefined): string => {
+  if (!code) return '';
+  if (PACKAGING_LABELS[code]) return PACKAGING_LABELS[code];
+  const m = code.match(/^C0*(\d+)$/i);
+  return m ? `Carton de ${m[1]}` : code;
 };
 
 export default function PrintLabels() {

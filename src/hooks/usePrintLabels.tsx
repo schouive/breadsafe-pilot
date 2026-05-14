@@ -66,7 +66,8 @@ export function usePrintProducts() {
             product_name, product_reference, net_weight, net_weight_unit,
             inco_html, allergen_statement, snapshot_allergens,
             storage_instructions, thawing_instructions,
-            snapshot_nutrition, inco_status
+            snapshot_nutrition, inco_status,
+            family:product_families(code, label)
           )
         `)
         .eq('active', true)
@@ -82,7 +83,8 @@ export function usePrintProducts() {
           erp_label: p.erp_label,
           sku_base: sheet?.product_reference ?? p.erp_code,
           label: sheet?.product_name ?? p.erp_label,
-          family: '—',
+          family: sheet?.family?.code ?? '—',
+          family_label: sheet?.family?.label ?? '—',
           temperature: p.temperature_state,
           slicing: p.slicing_state,
           packaging: p.packaging_code,

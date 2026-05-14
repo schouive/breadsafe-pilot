@@ -75,6 +75,7 @@ export function PackagingsSection({ productSheetId, defaults }: Props) {
           temperature_state: 'FR',
           slicing_state: 'WHO',
           active: true,
+          in_print_catalog: false,
         });
       if (error) {
         toast.error('Erreur ajout', { description: error.message });

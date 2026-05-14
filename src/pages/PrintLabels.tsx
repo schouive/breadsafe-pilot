@@ -691,6 +691,30 @@ export default function PrintLabels() {
           </CardContent>
         </Card>
       )}
+
+      <AddLabelToCatalogDialog open={addOpen} onOpenChange={setAddOpen} />
+
+      <AlertDialog open={!!deleting} onOpenChange={(o) => !o && setDeleting(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer cette étiquette du catalogue ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleting && (
+                <>
+                  L'étiquette <strong>{deleting.erp_code}</strong> — {deleting.erp_label} sera retirée du catalogue d'impression.
+                  Cette action est irréversible.
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

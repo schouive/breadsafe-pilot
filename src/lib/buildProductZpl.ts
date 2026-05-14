@@ -1,7 +1,17 @@
 import { fillZplTemplate, DEFAULT_PRODUCT_LABEL_ZPL } from '@/lib/zplLabelGenerator';
 import type { PrintProduct } from '@/hooks/usePrintLabels';
 
-const PACK_COUNT_MAP: Record<string, number> = { U01: 1, C04: 4, C05: 5, C18: 18, C24: 24, PAL: 1 };
+const PACK_COUNT_MAP: Record<string, number> = { U01: 1, C04: 4, C05: 5, C18: 18, C24: 24, C45: 45, PAL: 1 };
+
+/** Renvoie le nombre d'unités d'un code de conditionnement.
+ * Reconnaît la table connue, sinon parse "C<nn>" (ex. C45 -> 45). */
+export function getPackCount(code: string | null | undefined): number {
+  if (!code) return 1;
+  if (PACK_COUNT_MAP[code] != null) return PACK_COUNT_MAP[code];
+  const m = code.match(/^C0*(\d+)$/i);
+  if (m) return parseInt(m[1], 10);
+  return 1;
+}
 
 function extractTraces(statement: string | null | undefined): string {
   if (!statement) return '';

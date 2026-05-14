@@ -1445,6 +1445,7 @@ export type Database = {
           description: string | null
           dlc_ddm_days: number | null
           dlc_ddm_type: string | null
+          family_id: string | null
           id: string
           inco_html: string | null
           inco_html_original: string | null
@@ -1492,6 +1493,7 @@ export type Database = {
           description?: string | null
           dlc_ddm_days?: number | null
           dlc_ddm_type?: string | null
+          family_id?: string | null
           id?: string
           inco_html?: string | null
           inco_html_original?: string | null
@@ -1539,6 +1541,7 @@ export type Database = {
           description?: string | null
           dlc_ddm_days?: number | null
           dlc_ddm_type?: string | null
+          family_id?: string | null
           id?: string
           inco_html?: string | null
           inco_html_original?: string | null
@@ -1574,6 +1577,13 @@ export type Database = {
           version?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "product_sheets_family_id_fkey"
+            columns: ["family_id"]
+            isOneToOne: false
+            referencedRelation: "product_families"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "product_sheets_recipe_id_fkey"
             columns: ["recipe_id"]

@@ -8,7 +8,7 @@ import { Zap, Search, Printer, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { usePrintProducts, type PrintProduct, useRecordPrint } from '@/hooks/usePrintLabels';
 import { buildProductZpl, computeFinalSku } from '@/lib/buildProductZpl';
-import { printZpl, isZebraSupported, pickZebraPrinter } from '@/lib/zebraWebUsb';
+import { printZpl, pickZebraPrinter } from '@/lib/zebraWebUsb';
 
 function computeLotNumber(isoDate: string): string {
   if (!isoDate) return '';
@@ -71,7 +71,6 @@ export default function PrintQuick() {
     if (!product) { toast.error('Sélectionnez un article'); return; }
     if (!lot.trim()) { toast.error('Lot manquant'); return; }
     if (!ddm) { toast.error('DDM manquante'); return; }
-    if (!product.template_name) { toast.error('Aucun template Zebra pour cet article'); return; }
     if (quantity < 1) { toast.error('Quantité invalide'); return; }
     setPrinting(true);
     try {
@@ -93,7 +92,7 @@ export default function PrintQuick() {
           temperature: product.temperature,
           slicing: product.slicing,
           packaging: product.packaging,
-          template_name: product.template_name,
+          template_name: product.template_name || 'DEFAULT',
           lot_number: lot,
           ddm,
           quantity,

@@ -15,7 +15,7 @@ import { toast } from 'sonner';
 import { usePrintProgram, usePrintProgramItems } from '@/hooks/usePrintPrograms';
 import { usePrintProducts, type PrintProduct, useRecordPrint } from '@/hooks/usePrintLabels';
 import { buildProductZpl, computeFinalSku } from '@/lib/buildProductZpl';
-import { printZpl, isZebraSupported, pickZebraPrinter } from '@/lib/zebraWebUsb';
+import { printZpl, pickZebraPrinter } from '@/lib/zebraWebUsb';
 import { cn } from '@/lib/utils';
 
 type LineStatus = 'pending' | 'printing' | 'printed' | 'failed';

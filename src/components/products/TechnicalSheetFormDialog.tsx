@@ -156,6 +156,7 @@ export function TechnicalSheetFormDialog({
     dlc_ddm_days: '',
     thawing_instructions: '',
     usage_instructions: 'Toaster le produit ou le chauffer sur la plancha avant son utilisation',
+    usage_type: 'toaster' as 'toaster' | 'other',
     quality_comment: '',
     is_published: false,
   });

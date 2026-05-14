@@ -400,6 +400,7 @@ function AppRoutes() {
         <Route path="/settings/catalog/master" element={<Navigate to="/products/sheets" replace />} />
         <Route path="/settings/catalog/erp-articles" element={<Navigate to="/products/sheets" replace />} />
         <Route path="/settings/catalog/families" element={<ProtectedRoute><SettingsLayout><FamiliesSettings /></SettingsLayout></ProtectedRoute>} />
+        <Route path="/settings/catalog/packaging-types" element={<ProtectedRoute><SettingsLayout><PackagingTypesSettings /></SettingsLayout></ProtectedRoute>} />
         <Route path="/settings/catalog/recipes" element={<ProtectedRoute><SettingsLayout><CatalogRecipesSettings /></SettingsLayout></ProtectedRoute>} />
         <Route path="/settings/catalog/templates" element={<ProtectedRoute><SettingsLayout><TemplatesSettings /></SettingsLayout></ProtectedRoute>} />
         <Route path="/settings/users" element={<ProtectedRoute><SettingsLayout><UsersSettings /></SettingsLayout></ProtectedRoute>} />

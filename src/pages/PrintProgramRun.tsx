@@ -9,7 +9,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
 import {
-  ArrowLeft, Printer, Loader2, Check, X, Clock, Wand2,
+  ArrowLeft, Printer, Loader2, Check, X, Clock, Wand2, type LucideIcon,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { usePrintProgram, usePrintProgramItems } from '@/hooks/usePrintPrograms';
@@ -31,7 +31,7 @@ interface Line {
   error?: string | null;
 }
 
-const STATUS_BADGE: Record<LineStatus, { label: string; cls: string; icon: any }> = {
+const STATUS_BADGE: Record<LineStatus, { label: string; cls: string; icon: LucideIcon }> = {
   pending: { label: 'En attente', cls: 'bg-muted text-muted-foreground', icon: Clock },
   printing: { label: 'Impression…', cls: 'bg-amber-500/15 text-amber-700 border-amber-500/30', icon: Loader2 },
   printed: { label: 'Imprimé', cls: 'bg-emerald-500/15 text-emerald-700 border-emerald-500/30', icon: Check },
@@ -50,6 +50,30 @@ function computeLotNumber(isoDate: string): string {
 function todayIso(): string {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+const PRINT_CHUNK_SIZE = 10;
+const PRINT_DELAY_BASE_MS = 1200;
+const PRINT_DELAY_PER_LABEL_MS = 550;
+
+function splitQuantityForPrinter(quantity: number): number[] {
+  const safeQuantity = Math.max(0, Math.floor(quantity || 0));
+  const chunks: number[] = [];
+  let remaining = safeQuantity;
+  while (remaining > 0) {
+    const chunk = Math.min(PRINT_CHUNK_SIZE, remaining);
+    chunks.push(chunk);
+    remaining -= chunk;
+  }
+  return chunks;
+}
+
+function getPrinterCooldownMs(quantity: number): number {
+  return PRINT_DELAY_BASE_MS + quantity * PRINT_DELAY_PER_LABEL_MS;
+}
+
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : 'Erreur impression';
 }
 
 export default function PrintProgramRun() {
@@ -162,10 +186,18 @@ export default function PrintProgramRun() {
       const lot = computeLotNumber(l.productionDate);
       updateLine(l.itemId, { status: 'printing', error: null, lot });
       try {
-        const zpl = buildProductZpl({
-          product: l.product, lot, ddm: l.ddm, quantity: l.quantity,
-        });
-        await printZpl(zpl);
+        const chunks = splitQuantityForPrinter(l.quantity);
+        for (let ci = 0; ci < chunks.length; ci++) {
+          const chunkQuantity = chunks[ci];
+          const zpl = buildProductZpl({
+            product: l.product, lot, ddm: l.ddm, quantity: chunkQuantity,
+          });
+          await printZpl(zpl);
+
+          const hasMoreChunks = ci < chunks.length - 1;
+          const hasMoreLines = qi < queue.length - 1;
+          if (hasMoreChunks || hasMoreLines) await sleep(getPrinterCooldownMs(chunkQuantity));
+        }
         updateLine(l.itemId, { status: 'printed', error: null });
         ok++;
         // historique best-effort
@@ -184,16 +216,13 @@ export default function PrintProgramRun() {
             quantity: l.quantity,
           });
         } catch (e) { console.warn('print_history skipped', e); }
-      } catch (e: any) {
-        const msg = e?.message || 'Erreur impression';
+      } catch (e: unknown) {
+        const msg = getErrorMessage(e);
         console.error('[PrintProgramRun] échec impression', l.product.erp_code, e);
         updateLine(l.itemId, { status: 'failed', error: msg });
         failures.push(`${l.product.erp_code}: ${msg}`);
         fail++;
       }
-      // Laisser le temps à la Zebra de traiter le job avant d'envoyer le suivant.
-      // Sans cette pause, certaines étiquettes sont perdues quand on enchaîne plusieurs ZPL.
-      if (qi < queue.length - 1) await sleep(800);
     }
     setPrintingAll(false);
     if (fail === 0) toast.success(`${ok} ligne(s) imprimée(s)`);
@@ -203,7 +232,7 @@ export default function PrintProgramRun() {
 
   const handlePickPrinter = async () => {
     try { await pickZebraPrinter(); toast.success('Imprimante sélectionnée'); }
-    catch (e: any) { toast.error(e?.message || 'Sélection annulée'); }
+    catch (e: unknown) { toast.error(e instanceof Error ? e.message : 'Sélection annulée'); }
   };
 
   if (loadingProg || loadingProducts) {

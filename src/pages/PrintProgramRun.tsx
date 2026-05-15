@@ -216,8 +216,8 @@ export default function PrintProgramRun() {
             quantity: l.quantity,
           });
         } catch (e) { console.warn('print_history skipped', e); }
-      } catch (e: any) {
-        const msg = e?.message || 'Erreur impression';
+      } catch (e: unknown) {
+        const msg = getErrorMessage(e);
         console.error('[PrintProgramRun] échec impression', l.product.erp_code, e);
         updateLine(l.itemId, { status: 'failed', error: msg });
         failures.push(`${l.product.erp_code}: ${msg}`);
@@ -232,7 +232,7 @@ export default function PrintProgramRun() {
 
   const handlePickPrinter = async () => {
     try { await pickZebraPrinter(); toast.success('Imprimante sélectionnée'); }
-    catch (e: any) { toast.error(e?.message || 'Sélection annulée'); }
+    catch (e: unknown) { toast.error(e instanceof Error ? e.message : 'Sélection annulée'); }
   };
 
   if (loadingProg || loadingProducts) {

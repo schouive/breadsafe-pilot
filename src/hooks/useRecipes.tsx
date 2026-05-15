@@ -455,7 +455,8 @@ export function useProductSheets() {
         .from('product_sheets')
         .select(`
           *,
-          recipes (name, code)
+          recipes (name, code),
+          family:product_families (id, code, label)
         `)
         .order('product_name');
       

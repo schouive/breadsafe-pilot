@@ -9,7 +9,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
 import {
-  ArrowLeft, Printer, Loader2, Check, X, Clock, Wand2,
+  ArrowLeft, Printer, Loader2, Check, X, Clock, Wand2, type LucideIcon,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { usePrintProgram, usePrintProgramItems } from '@/hooks/usePrintPrograms';
@@ -31,7 +31,7 @@ interface Line {
   error?: string | null;
 }
 
-const STATUS_BADGE: Record<LineStatus, { label: string; cls: string; icon: any }> = {
+const STATUS_BADGE: Record<LineStatus, { label: string; cls: string; icon: LucideIcon }> = {
   pending: { label: 'En attente', cls: 'bg-muted text-muted-foreground', icon: Clock },
   printing: { label: 'Impression…', cls: 'bg-amber-500/15 text-amber-700 border-amber-500/30', icon: Loader2 },
   printed: { label: 'Imprimé', cls: 'bg-emerald-500/15 text-emerald-700 border-emerald-500/30', icon: Check },
@@ -70,6 +70,10 @@ function splitQuantityForPrinter(quantity: number): number[] {
 
 function getPrinterCooldownMs(quantity: number): number {
   return PRINT_DELAY_BASE_MS + quantity * PRINT_DELAY_PER_LABEL_MS;
+}
+
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : 'Erreur impression';
 }
 
 export default function PrintProgramRun() {

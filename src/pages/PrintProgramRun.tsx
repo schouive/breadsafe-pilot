@@ -52,6 +52,26 @@ function todayIso(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
+const PRINT_CHUNK_SIZE = 10;
+const PRINT_DELAY_BASE_MS = 1200;
+const PRINT_DELAY_PER_LABEL_MS = 550;
+
+function splitQuantityForPrinter(quantity: number): number[] {
+  const safeQuantity = Math.max(0, Math.floor(quantity || 0));
+  const chunks: number[] = [];
+  let remaining = safeQuantity;
+  while (remaining > 0) {
+    const chunk = Math.min(PRINT_CHUNK_SIZE, remaining);
+    chunks.push(chunk);
+    remaining -= chunk;
+  }
+  return chunks;
+}
+
+function getPrinterCooldownMs(quantity: number): number {
+  return PRINT_DELAY_BASE_MS + quantity * PRINT_DELAY_PER_LABEL_MS;
+}
+
 export default function PrintProgramRun() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -162,10 +182,18 @@ export default function PrintProgramRun() {
       const lot = computeLotNumber(l.productionDate);
       updateLine(l.itemId, { status: 'printing', error: null, lot });
       try {
-        const zpl = buildProductZpl({
-          product: l.product, lot, ddm: l.ddm, quantity: l.quantity,
-        });
-        await printZpl(zpl);
+        const chunks = splitQuantityForPrinter(l.quantity);
+        for (let ci = 0; ci < chunks.length; ci++) {
+          const chunkQuantity = chunks[ci];
+          const zpl = buildProductZpl({
+            product: l.product, lot, ddm: l.ddm, quantity: chunkQuantity,
+          });
+          await printZpl(zpl);
+
+          const hasMoreChunks = ci < chunks.length - 1;
+          const hasMoreLines = qi < queue.length - 1;
+          if (hasMoreChunks || hasMoreLines) await sleep(getPrinterCooldownMs(chunkQuantity));
+        }
         updateLine(l.itemId, { status: 'printed', error: null });
         ok++;
         // historique best-effort
@@ -191,9 +219,6 @@ export default function PrintProgramRun() {
         failures.push(`${l.product.erp_code}: ${msg}`);
         fail++;
       }
-      // Laisser le temps à la Zebra de traiter le job avant d'envoyer le suivant.
-      // Sans cette pause, certaines étiquettes sont perdues quand on enchaîne plusieurs ZPL.
-      if (qi < queue.length - 1) await sleep(800);
     }
     setPrintingAll(false);
     if (fail === 0) toast.success(`${ok} ligne(s) imprimée(s)`);

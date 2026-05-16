@@ -16,7 +16,6 @@ export default function PrintProgramsList() {
   const navigate = useNavigate();
   const { data: programs = [], isLoading } = usePrintPrograms();
   const { data: counts = {} } = useProgramItemCounts();
-  
   const del = useDeletePrintProgram();
   const dup = useDuplicatePrintProgram();
 

@@ -346,7 +346,7 @@ export function isZebraSupported(): boolean {
 export async function pickZebraPrinter(): Promise<ZebraPrintMethod> {
   cachedDevice = null;
   selectedUsbDevice = null;
-  preferredPrintMethod = null;
+  setPreferredPrintMethod(null);
 
   // Sur Windows / Surface, l'imprimante Zebra est souvent en WiFi ou réseau :
   // WebUSB ne verra rien. On essaie donc Browser Print en priorité.
@@ -354,7 +354,7 @@ export async function pickZebraPrinter(): Promise<ZebraPrintMethod> {
     try {
       const device = await getDefaultBrowserPrintDevice();
       if (device?.name) {
-        preferredPrintMethod = 'browserprint';
+        setPreferredPrintMethod('browserprint');
         return 'browserprint';
       }
     } catch (browserPrintError) {
@@ -368,7 +368,7 @@ export async function pickZebraPrinter(): Promise<ZebraPrintMethod> {
   if (isWebUsbSupported()) {
     try {
       selectedUsbDevice = await requestZebraDevice();
-      preferredPrintMethod = 'webusb';
+      setPreferredPrintMethod('webusb');
       return 'webusb';
     } catch (error) {
       const message = String((error as Error)?.message ?? error ?? '').toLowerCase();
@@ -379,7 +379,7 @@ export async function pickZebraPrinter(): Promise<ZebraPrintMethod> {
   try {
     const device = await getDefaultBrowserPrintDevice();
     if (device?.name) {
-      preferredPrintMethod = 'browserprint';
+      setPreferredPrintMethod('browserprint');
       return 'browserprint';
     }
   } catch (error) {

@@ -197,7 +197,7 @@ export default function PrintProgramRun() {
           const zpl = buildProductZpl({
             product: l.product, lot, ddm: l.ddm, quantity: chunkQuantity,
           });
-          await printZpl(zpl);
+          const result = await printZpl(zpl);
 
           const hasMoreChunks = ci < chunks.length - 1;
           const hasMoreLines = qi < queue.length - 1;
@@ -236,7 +236,10 @@ export default function PrintProgramRun() {
   };
 
   const handlePickPrinter = async () => {
-    try { await pickZebraPrinter(); toast.success('Imprimante sélectionnée'); }
+    try {
+      const method = await pickZebraPrinter();
+      toast.success(method === 'browserprint' ? 'Imprimante détectée via Zebra Browser Print (prête)' : 'Imprimante Zebra sélectionnée (WebUSB)');
+    }
     catch (e: unknown) { toast.error(e instanceof Error ? e.message : 'Sélection annulée'); }
   };
 

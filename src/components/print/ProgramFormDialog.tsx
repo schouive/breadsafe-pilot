@@ -5,7 +5,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
+
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Trash2, Plus, Copy, Search, Loader2, ArrowUp, ArrowDown } from 'lucide-react';
 import { toast } from 'sonner';

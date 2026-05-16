@@ -36,7 +36,28 @@ let selectedUsbDevice: USBDevice | null = null;
 let preferredPrintMethod: ZebraPrintMethod | null = null;
 
 const BROWSER_PRINT_SSL_ACCEPTED_MESSAGE = 'ssl certificate has been accepted. retry connection.';
+const PREFERRED_PRINT_METHOD_STORAGE_KEY = 'breadshop_preferred_zebra_print_method';
 
+
+function getPreferredPrintMethod(): ZebraPrintMethod | null {
+  if (preferredPrintMethod) return preferredPrintMethod;
+  if (typeof window === 'undefined') return null;
+
+  const stored = window.localStorage.getItem(PREFERRED_PRINT_METHOD_STORAGE_KEY);
+  if (stored === 'webusb' || stored === 'browserprint') {
+    preferredPrintMethod = stored;
+    return stored;
+  }
+  return null;
+}
+
+function setPreferredPrintMethod(method: ZebraPrintMethod | null) {
+  preferredPrintMethod = method;
+  if (typeof window === 'undefined') return;
+
+  if (method) window.localStorage.setItem(PREFERRED_PRINT_METHOD_STORAGE_KEY, method);
+  else window.localStorage.removeItem(PREFERRED_PRINT_METHOD_STORAGE_KEY);
+}
 
 function isWebUsbSupported(): boolean {
   return typeof navigator !== 'undefined' && !!navigator.usb;
@@ -105,7 +126,7 @@ async function openZebraDevice(forcePicker = false, allowPicker = true): Promise
   }
 
   cachedDevice = { device, endpointOut, interfaceNumber };
-  preferredPrintMethod = 'webusb';
+  setPreferredPrintMethod('webusb');
   return cachedDevice;
 }
 
@@ -253,10 +274,13 @@ async function printZplWithBrowserPrint(zpl: string): Promise<void> {
  * Demande l'autorisation utilisateur lors du premier appel.
  */
 export async function printZpl(zpl: string, opts: { forcePicker?: boolean } = {}): Promise<ZebraPrintResult> {
-  if (!opts.forcePicker && preferredPrintMethod !== 'webusb' && shouldPreferBrowserPrint()) {
+  const hasUserActivation = typeof navigator !== 'undefined' && !!navigator.userActivation?.isActive;
+  const methodPreference = getPreferredPrintMethod();
+
+  if (!opts.forcePicker && methodPreference !== 'webusb' && shouldPreferBrowserPrint()) {
     try {
       await printZplWithBrowserPrint(zpl);
-      preferredPrintMethod = 'browserprint';
+      setPreferredPrintMethod('browserprint');
       return { method: 'browserprint' };
     } catch (browserPrintError) {
       // Si WebUSB est dispo, on tente en repli avant d'abandonner
@@ -265,7 +289,7 @@ export async function printZpl(zpl: string, opts: { forcePicker?: boolean } = {}
         throw new Error(getBrowserPrintHelpMessage(browserPrintError));
       }
       try {
-        const dev = cachedDevice ?? await openZebraDevice(false, false);
+        const dev = cachedDevice ?? await openZebraDevice(false, hasUserActivation);
         const data = new TextEncoder().encode(zpl);
         await dev.device.transferOut(dev.endpointOut, data);
         return { method: 'webusb' };
@@ -290,7 +314,7 @@ export async function printZpl(zpl: string, opts: { forcePicker?: boolean } = {}
     if (!opts.forcePicker) {
       try {
         await printZplWithBrowserPrint(zpl);
-        preferredPrintMethod = 'browserprint';
+        setPreferredPrintMethod('browserprint');
         return { method: 'browserprint' };
       } catch (browserPrintError) {
         if (isUsbAccessBlocked(error)) {

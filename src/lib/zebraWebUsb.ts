@@ -265,7 +265,7 @@ export async function printZpl(zpl: string, opts: { forcePicker?: boolean } = {}
         throw new Error(getBrowserPrintHelpMessage(browserPrintError));
       }
       try {
-        const dev = cachedDevice ?? await openZebraDevice(false);
+        const dev = cachedDevice ?? await openZebraDevice(false, false);
         const data = new TextEncoder().encode(zpl);
         await dev.device.transferOut(dev.endpointOut, data);
         return { method: 'webusb' };

@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import {
   PlusCircle, ListOrdered, Loader2, Pencil, Copy, Trash2, Play, Users,
 } from 'lucide-react';
@@ -52,7 +51,7 @@ export default function PrintProgramsList() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {programs.map(p => (
-            <Card key={p.id} className={!p.active ? 'opacity-60' : ''}>
+            <Card key={p.id}>
               <CardContent className="p-4 space-y-3">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
@@ -62,9 +61,6 @@ export default function PrintProgramsList() {
                       {p.customer_name || '—'}{p.customer_code ? ` (${p.customer_code})` : ''}
                     </p>
                   </div>
-                  <Badge variant={p.active ? 'default' : 'outline'}>
-                    {p.active ? 'Actif' : 'Inactif'}
-                  </Badge>
                 </div>
 
                 <div className="text-xs text-muted-foreground">
@@ -75,7 +71,6 @@ export default function PrintProgramsList() {
                   <Button
                     size="sm"
                     onClick={() => navigate(`/print/programs/${p.id}/run`)}
-                    disabled={!p.active}
                   >
                     <Play className="h-4 w-4 mr-1" /> Ouvrir
                   </Button>

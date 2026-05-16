@@ -197,7 +197,7 @@ export default function PrintProgramRun() {
           const zpl = buildProductZpl({
             product: l.product, lot, ddm: l.ddm, quantity: chunkQuantity,
           });
-          const result = await printZpl(zpl);
+          await printZpl(zpl);
 
           const hasMoreChunks = ci < chunks.length - 1;
           const hasMoreLines = qi < queue.length - 1;

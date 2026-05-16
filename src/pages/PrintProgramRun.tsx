@@ -314,9 +314,27 @@ export default function PrintProgramRun() {
                       <TableCell className="font-mono text-xs">{l.product.erp_code}</TableCell>
                       <TableCell className="text-sm">{l.product.erp_label}</TableCell>
                       <TableCell>
-                        <Input type="number" min={0} value={l.quantity}
-                          onChange={e => updateLine(l.itemId, { quantity: Math.max(0, parseInt(e.target.value, 10) || 0) })}
-                          className="h-9" />
+                        <Input
+                          type="number"
+                          min={0}
+                          value={rawQuantities[l.itemId] ?? (l.quantity === 0 ? '' : String(l.quantity))}
+                          onChange={e => {
+                            const val = e.target.value;
+                            setRawQuantities(prev => ({ ...prev, [l.itemId]: val }));
+                            const num = val === '' ? 0 : parseInt(val, 10);
+                            if (!isNaN(num) && num >= 0) {
+                              updateLine(l.itemId, { quantity: num });
+                            }
+                          }}
+                          onBlur={() => {
+                            setRawQuantities(prev => {
+                              const next = { ...prev };
+                              delete next[l.itemId];
+                              return next;
+                            });
+                          }}
+                          className="h-9"
+                        />
                       </TableCell>
                       <TableCell>
                         <Input type="date" value={l.productionDate}

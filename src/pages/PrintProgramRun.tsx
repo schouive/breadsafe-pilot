@@ -94,6 +94,7 @@ export default function PrintProgramRun() {
   const [globalProductionDate, setGlobalProductionDate] = useState(initialDate);
   const [globalDdm, setGlobalDdm] = useState('');
   const [lines, setLines] = useState<Line[]>([]);
+  const [rawQuantities, setRawQuantities] = useState<Record<string, string>>({});
   const [printingAll, setPrintingAll] = useState(false);
 
   // Build lines from program + erp products

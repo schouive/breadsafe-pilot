@@ -76,6 +76,10 @@ function getErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : 'Erreur impression';
 }
 
+function normalizeQuantityInput(value: string): string {
+  return value.replace(/\D/g, '').replace(/^0+(?=\d)/, '');
+}
+
 export default function PrintProgramRun() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -315,11 +319,21 @@ export default function PrintProgramRun() {
                       <TableCell className="text-sm">{l.product.erp_label}</TableCell>
                       <TableCell>
                         <Input
-                          type="number"
-                          min={0}
+                          type="text"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          autoComplete="off"
                           value={rawQuantities[l.itemId] ?? (l.quantity === 0 ? '' : String(l.quantity))}
+                          onFocus={e => {
+                            const input = e.currentTarget;
+                            setRawQuantities(prev => ({
+                              ...prev,
+                              [l.itemId]: prev[l.itemId] ?? (l.quantity === 0 ? '' : String(l.quantity)),
+                            }));
+                            requestAnimationFrame(() => input.select());
+                          }}
                           onChange={e => {
-                            const val = e.target.value;
+                            const val = normalizeQuantityInput(e.target.value);
                             setRawQuantities(prev => ({ ...prev, [l.itemId]: val }));
                             const num = val === '' ? 0 : parseInt(val, 10);
                             if (!isNaN(num) && num >= 0) {
@@ -327,11 +341,10 @@ export default function PrintProgramRun() {
                             }
                           }}
                           onBlur={() => {
-                            setRawQuantities(prev => {
-                              const next = { ...prev };
-                              delete next[l.itemId];
-                              return next;
-                            });
+                            setRawQuantities(prev => ({
+                              ...prev,
+                              [l.itemId]: l.quantity === 0 ? '' : String(l.quantity),
+                            }));
                           }}
                           className="h-9"
                         />

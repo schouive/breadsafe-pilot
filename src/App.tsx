@@ -51,7 +51,7 @@ const RDTrialDetail = lazy(() => import("./pages/RDTrialDetail"));
 const PrintLabels = lazy(() => import("./pages/PrintLabels"));
 const PrintProgramsList = lazy(() => import("./pages/PrintProgramsList"));
 const PrintProgramRun = lazy(() => import("./pages/PrintProgramRun"));
-const PrintQuick = lazy(() => import("./pages/PrintQuick"));
+
 const ColdRoomsSettings = lazy(() => import("./pages/settings/ColdRoomsSettings"));
 const MetalDetectorSettingsPage = lazy(() => import("./pages/settings/MetalDetectorSettingsPage"));
 const SuppliersSettings = lazy(() => import("./pages/settings/SuppliersSettings"));
@@ -361,16 +361,6 @@ function AppRoutes() {
             <ProtectedRoute>
               <PrintLayout>
                 <PrintProgramRun />
-              </PrintLayout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/print/quick"
-          element={
-            <ProtectedRoute>
-              <PrintLayout>
-                <PrintQuick />
               </PrintLayout>
             </ProtectedRoute>
           }

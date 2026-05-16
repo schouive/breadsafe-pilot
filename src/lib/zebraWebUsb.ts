@@ -117,11 +117,11 @@ async function openZebraDevice(forcePicker = false, allowPicker = true): Promise
 
   try {
     await device.claimInterface(interfaceNumber);
-  } catch (e: any) {
+  } catch (e: unknown) {
     throw new Error(
       "Impossible d'accéder à l'imprimante (peut-être utilisée par le pilote système). " +
       "Sur Linux, débranchez/rebranchez l'imprimante ; sur Windows, utilisez Zebra Setup Utilities pour libérer le port. " +
-      `Détail : ${e?.message ?? e}`
+      `Détail : ${(e as Error)?.message ?? e}`
     );
   }
 

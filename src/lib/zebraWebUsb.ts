@@ -282,20 +282,31 @@ export async function printZpl(zpl: string, opts: { forcePicker?: boolean } = {}
     return { method: 'webusb' };
   } catch (error) {
     cachedDevice = null;
-    if (!isUsbAccessBlocked(error)) throw error;
 
-    try {
-      await printZplWithBrowserPrint(zpl);
-      preferredPrintMethod = 'browserprint';
-      return { method: 'browserprint' };
-    } catch (browserPrintError) {
-      throw new Error(
-        "L'imprimante est reconnue, mais Windows bloque l'accès WebUSB. " +
-        "Installez/ouvrez Zebra Browser Print puis définissez cette imprimante par défaut, ou utilisez le téléchargement ZPL. " +
-        `Détail WebUSB : ${(error as Error)?.message ?? error}. ` +
-        `Détail Browser Print : ${(browserPrintError as Error)?.message ?? browserPrintError}`
-      );
+    if (!opts.forcePicker) {
+      try {
+        await printZplWithBrowserPrint(zpl);
+        preferredPrintMethod = 'browserprint';
+        return { method: 'browserprint' };
+      } catch (browserPrintError) {
+        if (isUsbAccessBlocked(error)) {
+          throw new Error(
+            "L'imprimante est reconnue, mais Windows bloque l'accès WebUSB. " +
+            "Installez/ouvrez Zebra Browser Print puis définissez cette imprimante par défaut, ou utilisez le téléchargement ZPL. " +
+            `Détail WebUSB : ${(error as Error)?.message ?? error}. ` +
+            `Détail Browser Print : ${(browserPrintError as Error)?.message ?? browserPrintError}`
+          );
+        }
+
+        throw new Error(
+          "Aucune imprimante compatible détectée en WebUSB, et Zebra Browser Print n'a pas pris le relais. " +
+          `Détail WebUSB : ${(error as Error)?.message ?? error}. ` +
+          `Détail Browser Print : ${(browserPrintError as Error)?.message ?? browserPrintError}`
+        );
+      }
     }
+
+    throw error;
   }
 }
 

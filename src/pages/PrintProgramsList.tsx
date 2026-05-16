@@ -4,10 +4,10 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
-  PlusCircle, ListOrdered, Loader2, Pencil, Copy, Power, Trash2, Play, Users,
+  PlusCircle, ListOrdered, Loader2, Pencil, Copy, Trash2, Play, Users,
 } from 'lucide-react';
 import {
-  usePrintPrograms, useProgramItemCounts, useUpdatePrintProgram,
+  usePrintPrograms, useProgramItemCounts,
   useDeletePrintProgram, useDuplicatePrintProgram, type PrintProgram,
 } from '@/hooks/usePrintPrograms';
 import { ProgramFormDialog } from '@/components/print/ProgramFormDialog';
@@ -16,7 +16,6 @@ export default function PrintProgramsList() {
   const navigate = useNavigate();
   const { data: programs = [], isLoading } = usePrintPrograms();
   const { data: counts = {} } = useProgramItemCounts();
-  const update = useUpdatePrintProgram();
   const del = useDeletePrintProgram();
   const dup = useDuplicatePrintProgram();
 
@@ -85,12 +84,6 @@ export default function PrintProgramsList() {
                   </Button>
                   <Button size="sm" variant="outline" onClick={() => dup.mutate(p.id)} disabled={dup.isPending}>
                     <Copy className="h-4 w-4 mr-1" /> Dupliquer
-                  </Button>
-                  <Button
-                    size="sm" variant="outline"
-                    onClick={() => update.mutate({ id: p.id, active: !p.active })}
-                  >
-                    <Power className="h-4 w-4 mr-1" /> {p.active ? 'Désactiver' : 'Activer'}
                   </Button>
                   <Button
                     size="sm" variant="ghost"

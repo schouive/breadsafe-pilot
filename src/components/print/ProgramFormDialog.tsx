@@ -5,7 +5,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
+
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Trash2, Plus, Copy, Search, Loader2, ArrowUp, ArrowDown } from 'lucide-react';
 import { toast } from 'sonner';
@@ -86,7 +86,6 @@ export function ProgramFormDialog({ open, onOpenChange, program, onSaved }: Prop
   const [name, setName] = useState('');
   const [customerCode, setCustomerCode] = useState('');
   const [customerName, setCustomerName] = useState('');
-  const [active, setActive] = useState(true);
   const [rows, setRows] = useState<RowDraft[]>([]);
 
   useEffect(() => {
@@ -94,7 +93,6 @@ export function ProgramFormDialog({ open, onOpenChange, program, onSaved }: Prop
     setName(program?.name ?? '');
     setCustomerCode(program?.customer_code ?? '');
     setCustomerName(program?.customer_name ?? '');
-    setActive(program?.active ?? true);
   }, [open, program]);
 
   useEffect(() => {
@@ -137,7 +135,6 @@ export function ProgramFormDialog({ open, onOpenChange, program, onSaved }: Prop
           name: name.trim(),
           customer_code: customerCode.trim() || null,
           customer_name: customerName.trim() || null,
-          active,
         });
       } else {
         const created = await create.mutateAsync({
@@ -146,9 +143,6 @@ export function ProgramFormDialog({ open, onOpenChange, program, onSaved }: Prop
           customer_name: customerName.trim() || null,
         });
         pid = created.id;
-        if (!active) {
-          await update.mutateAsync({ id: created.id, active: false });
-        }
       }
       if (pid) {
         await replaceItems.mutateAsync({
@@ -181,10 +175,6 @@ export function ProgramFormDialog({ open, onOpenChange, program, onSaved }: Prop
           <div className="md:col-span-2">
             <Label htmlFor="prog-name">Nom du programme *</Label>
             <Input id="prog-name" value={name} onChange={e => setName(e.target.value)} placeholder="Ex. Livraison hebdo Carrefour" />
-          </div>
-          <div className="md:col-span-2 flex items-center gap-2">
-            <Switch id="prog-active" checked={active} onCheckedChange={setActive} />
-            <Label htmlFor="prog-active">Actif</Label>
           </div>
         </div>
 

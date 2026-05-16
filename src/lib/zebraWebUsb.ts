@@ -255,7 +255,23 @@ export async function printZpl(zpl: string, opts: { forcePicker?: boolean } = {}
       preferredPrintMethod = 'browserprint';
       return { method: 'browserprint' };
     } catch (browserPrintError) {
-      throw new Error(getBrowserPrintHelpMessage(browserPrintError));
+      // Si WebUSB est dispo, on tente en repli avant d'abandonner
+      // (utile quand Browser Print n'est pas installé / bloqué par le navigateur).
+      if (!isWebUsbSupported()) {
+        throw new Error(getBrowserPrintHelpMessage(browserPrintError));
+      }
+      try {
+        const dev = cachedDevice ?? await openZebraDevice(false);
+        const data = new TextEncoder().encode(zpl);
+        await dev.device.transferOut(dev.endpointOut, data);
+        return { method: 'webusb' };
+      } catch (webUsbError) {
+        cachedDevice = null;
+        throw new Error(
+          getBrowserPrintHelpMessage(browserPrintError) +
+          ` · WebUSB indisponible : ${(webUsbError as Error)?.message ?? webUsbError}`
+        );
+      }
     }
   }
 

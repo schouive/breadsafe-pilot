@@ -236,7 +236,10 @@ export default function PrintProgramRun() {
   };
 
   const handlePickPrinter = async () => {
-    try { await pickZebraPrinter(); toast.success('Imprimante sélectionnée'); }
+    try {
+      const method = await pickZebraPrinter();
+      toast.success(method === 'browserprint' ? 'Imprimante détectée via Zebra Browser Print (prête)' : 'Imprimante Zebra sélectionnée (WebUSB)');
+    }
     catch (e: unknown) { toast.error(e instanceof Error ? e.message : 'Sélection annulée'); }
   };
 

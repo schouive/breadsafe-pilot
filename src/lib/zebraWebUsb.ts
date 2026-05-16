@@ -50,7 +50,7 @@ async function requestZebraDevice(): Promise<USBDevice> {
   return navigator.usb!.requestDevice({ filters: [{ vendorId: ZEBRA_VENDOR_ID }] });
 }
 
-async function openZebraDevice(forcePicker = false): Promise<ZebraDevice> {
+async function openZebraDevice(forcePicker = false, allowPicker = true): Promise<ZebraDevice> {
   if (!isWebUsbSupported()) {
     throw new Error("WebUSB n'est pas supporté par ce navigateur (utilisez Chrome ou Edge en HTTPS).");
   }
@@ -66,9 +66,13 @@ async function openZebraDevice(forcePicker = false): Promise<ZebraDevice> {
     }
   }
 
-  if (!device) {
+  if (!device && allowPicker) {
     device = await requestZebraDevice();
     selectedUsbDevice = device;
+  }
+
+  if (!device) {
+    throw new Error("Aucune imprimante Zebra déjà autorisée en WebUSB. Utilisez le bouton Imprimante pour sélectionner l'imprimante USB, ou Zebra Browser Print pour une imprimante réseau/WiFi.");
   }
 
   if (!device.opened) await device.open();
@@ -261,7 +265,7 @@ export async function printZpl(zpl: string, opts: { forcePicker?: boolean } = {}
         throw new Error(getBrowserPrintHelpMessage(browserPrintError));
       }
       try {
-        const dev = cachedDevice ?? await openZebraDevice(false);
+        const dev = cachedDevice ?? await openZebraDevice(false, false);
         const data = new TextEncoder().encode(zpl);
         await dev.device.transferOut(dev.endpointOut, data);
         return { method: 'webusb' };

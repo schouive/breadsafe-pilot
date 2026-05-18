@@ -218,19 +218,6 @@ export function RecipeManagement() {
       </Card>
 
       {/* Add Dialog */}
-      <RecipeFormDialog
-        open={isAddOpen}
-        onOpenChange={setIsAddOpen}
-        recipe={null}
-      />
-
-      {/* Edit Dialog */}
-      <RecipeFormDialog
-        open={!!editingRecipe}
-        onOpenChange={(open) => !open && setEditingRecipe(null)}
-        recipe={editingRecipe}
-      />
-
       {/* View Sheet */}
       <RecipeDetailSheet
         open={!!viewingRecipe}

@@ -197,10 +197,7 @@ export async function generateTechnicalSheetPDF(sheet: ProductSheet): Promise<vo
   const productInfo = [
     ['Désignation commerciale', sheetData.product_name || '—'],
     ['Référence produit', sheetData.product_reference || '—'],
-    ['Marque', sheetData.brand || '—'],
-    ['Code-barres', sheetData.barcode || '—'],
     ['Poids net', sheetData.net_weight ? `${sheetData.net_weight} ${sheetData.net_weight_unit}` : '—'],
-    ['Pays d\'origine', sheetData.origin_country || '—'],
   ];
 
   const sectionStartY = yPos;

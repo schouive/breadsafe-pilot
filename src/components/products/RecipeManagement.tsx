@@ -105,11 +105,10 @@ function RecipeRow({
 }
 
 export function RecipeManagement() {
+  const navigate = useNavigate();
   const { data: recipes, isLoading } = useRecipes();
   const deleteRecipe = useDeleteRecipe();
   
-  const [isAddOpen, setIsAddOpen] = useState(false);
-  const [editingRecipe, setEditingRecipe] = useState<Recipe | null>(null);
   const [viewingRecipe, setViewingRecipe] = useState<Recipe | null>(null);
   const [deletingRecipe, setDeletingRecipe] = useState<Recipe | null>(null);
 

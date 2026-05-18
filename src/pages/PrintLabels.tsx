@@ -143,7 +143,7 @@ export default function PrintLabels() {
   const handleProductionDateChange = (val: string) => {
     setProductionDate(val);
     setLot(computeLotNumber(val));
-    setDdm(computeDdm(val, selected?.temperature));
+    setDdm(computeDdm(val, selected?.storage_instructions));
   };
 
   const reset = () => {
@@ -558,7 +558,7 @@ export default function PrintLabels() {
                               size="lg"
                               onClick={() => {
                                 setSelected(p);
-                                if (productionDate) setDdm(computeDdm(productionDate, p.temperature));
+                                if (productionDate) setDdm(computeDdm(productionDate, p.storage_instructions));
                                 setStep(2);
                               }}
                             >

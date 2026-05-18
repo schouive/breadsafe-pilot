@@ -77,15 +77,6 @@ export function ProductSheetDetailSheet({ open, onOpenChange, sheet }: ProductSh
         <div className="mt-6 space-y-6">
           {/* Quick info */}
           <div className="grid grid-cols-2 gap-4">
-            {sheet.barcode && (
-              <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
-                <Barcode className="h-5 w-5 text-muted-foreground" />
-                <div>
-                  <p className="text-xs text-muted-foreground">Code-barres</p>
-                  <p className="font-mono text-sm">{sheet.barcode}</p>
-                </div>
-              </div>
-            )}
             {sheet.net_weight && (
               <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
                 <Scale className="h-5 w-5 text-muted-foreground" />

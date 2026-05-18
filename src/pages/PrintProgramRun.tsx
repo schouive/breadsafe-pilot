@@ -191,10 +191,15 @@ export default function PrintProgramRun() {
     setPrintingAll(true);
     // Pré-chauffe Zebra Browser Print (évite l'erreur "n'est pas prêt" au 1er envoi sur Windows).
     await warmUpBrowserPrint();
+    const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
+    // Sentinel : un ZPL no-op (~HS = demande de statut, ne sort pas d'étiquette)
+    // pour réellement réveiller la file d'impression avant la 1ère vraie étiquette.
+    // Sur certains postes Windows, les 1ers jobs envoyés trop tôt après warm-up sont silencieusement perdus.
+    try { await printZpl('~HS'); } catch (e) { console.warn('warm-up sentinel skipped', e); }
+    await sleep(1500);
     let ok = 0, fail = 0;
     const failures: string[] = [];
     const queue = lines.filter(l => l.status !== 'printed' && l.quantity > 0);
-    const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
     for (let qi = 0; qi < queue.length; qi++) {
       const l = queue[qi];
       const lot = computeLotNumber(l.productionDate);

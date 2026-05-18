@@ -59,7 +59,6 @@ function RecipeRow({
             )}
           </div>
           <div className="flex items-center gap-3 text-sm text-muted-foreground">
-            {recipe.category && <span>{recipe.category}</span>}
             <span className="flex items-center gap-1">
               <Scale className="h-3 w-3" />
               {recipe.yield_quantity} {recipe.yield_unit}

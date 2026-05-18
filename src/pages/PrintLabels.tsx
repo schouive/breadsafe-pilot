@@ -26,6 +26,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { fillZplTemplate, DEFAULT_PRODUCT_LABEL_ZPL } from '@/lib/zplLabelGenerator';
 import { printZpl, pickZebraPrinter } from '@/lib/zebraWebUsb';
 import { getPackCount } from '@/lib/buildProductZpl';
+import { computeDdm } from '@/lib/ddm';
 import labelLogoM from '@/assets/label-logo-m.png';
 import labelWordmark from '@/assets/label-wordmark.png';
 import labelTriman from '@/assets/label-triman.png';
@@ -142,6 +143,7 @@ export default function PrintLabels() {
   const handleProductionDateChange = (val: string) => {
     setProductionDate(val);
     setLot(computeLotNumber(val));
+    setDdm(computeDdm(val, selected?.temperature));
   };
 
   const reset = () => {
@@ -554,7 +556,11 @@ export default function PrintLabels() {
                             <Button
                               className="flex-1"
                               size="lg"
-                              onClick={() => { setSelected(p); setStep(2); }}
+                              onClick={() => {
+                                setSelected(p);
+                                if (productionDate) setDdm(computeDdm(productionDate, p.temperature));
+                                setStep(2);
+                              }}
                             >
                               Sélectionner
                             </Button>

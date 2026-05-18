@@ -17,6 +17,7 @@ import { usePrintProducts, type PrintProduct, useRecordPrint } from '@/hooks/use
 import { buildProductZpl, computeFinalSku } from '@/lib/buildProductZpl';
 import { printZpl, pickZebraPrinter, warmUpBrowserPrint } from '@/lib/zebraWebUsb';
 import { cn } from '@/lib/utils';
+import { computeDdm } from '@/lib/ddm';
 
 type LineStatus = 'pending' | 'printing' | 'printed' | 'failed';
 
@@ -117,13 +118,14 @@ export default function PrintProgramRun() {
           if (!p) return null;
           const old = prevById.get(it.id);
           const lot = computeLotNumber(globalProductionDate);
+          const autoDdm = computeDdm(globalProductionDate, p.temperature);
           return {
             itemId: it.id,
             product: p,
             quantity: old?.quantity ?? 0,
             lot: old?.lot ?? lot,
             productionDate: old?.productionDate ?? globalProductionDate,
-            ddm: old?.ddm ?? globalDdm,
+            ddm: old?.ddm ?? autoDdm,
             status: old?.status ?? 'pending',
             error: old?.error ?? null,
           } as Line;
@@ -142,7 +144,8 @@ export default function PrintProgramRun() {
       ...l,
       productionDate: globalProductionDate,
       lot,
-      ddm: globalDdm,
+      // DDM = manuelle si renseignée, sinon auto selon température produit
+      ddm: globalDdm || computeDdm(globalProductionDate, l.product.temperature),
       status: 'pending',
       error: null,
     })));
@@ -150,10 +153,10 @@ export default function PrintProgramRun() {
   };
 
   const handleLineProductionDateChange = (itemId: string, val: string) => {
-    updateLine(itemId, {
-      productionDate: val,
-      lot: computeLotNumber(val),
-    });
+    setLines(prev => prev.map(l => l.itemId === itemId
+      ? { ...l, productionDate: val, lot: computeLotNumber(val), ddm: computeDdm(val, l.product.temperature) }
+      : l
+    ));
   };
 
   const handleGlobalProductionDateChange = (val: string) => {
@@ -161,7 +164,7 @@ export default function PrintProgramRun() {
     setLines(prev => prev.map(l =>
       l.status === 'printed'
         ? l
-        : { ...l, productionDate: val, lot: computeLotNumber(val) }
+        : { ...l, productionDate: val, lot: computeLotNumber(val), ddm: computeDdm(val, l.product.temperature) }
     ));
   };
 

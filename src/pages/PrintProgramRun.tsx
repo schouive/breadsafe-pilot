@@ -182,6 +182,8 @@ export default function PrintProgramRun() {
     const err = validate();
     if (err) { toast.error(err); return; }
     setPrintingAll(true);
+    // Pré-chauffe Zebra Browser Print (évite l'erreur "n'est pas prêt" au 1er envoi sur Windows).
+    await warmUpBrowserPrint();
     let ok = 0, fail = 0;
     const failures: string[] = [];
     const queue = lines.filter(l => l.status !== 'printed' && l.quantity > 0);

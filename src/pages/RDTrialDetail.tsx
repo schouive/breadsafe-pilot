@@ -178,15 +178,9 @@ export default function RDTrialDetail() {
         <AccordionItem value="formulation" className="border rounded-lg bg-card px-4">
           <AccordionTrigger className="hover:no-underline">Formulation</AccordionTrigger>
           <AccordionContent className="space-y-3 pt-2">
-            <div className="grid md:grid-cols-2 gap-3">
-              <div>
-                <Label>Hydratation totale (%)</Label>
-                <Input type="number" step="0.1" value={form.total_hydration ?? ''} onChange={(e) => setField('total_hydration', e.target.value)} />
-              </div>
-              <div>
-                <Label>Observations formulation</Label>
-                <Input value={form.formulation_notes ?? ''} onChange={(e) => setField('formulation_notes', e.target.value)} />
-              </div>
+            <div>
+              <Label>Hydratation totale (%)</Label>
+              <Input type="number" step="0.1" value={form.total_hydration ?? ''} onChange={(e) => setField('total_hydration', e.target.value)} />
             </div>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
@@ -196,7 +190,7 @@ export default function RDTrialDetail() {
               <div className="space-y-2">
                 {data!.ingredients.map((ing) => (
                   <div key={ing.id} className="grid grid-cols-12 gap-2 items-end p-2 rounded border bg-muted/20">
-                    <div className="col-span-12 md:col-span-5">
+                    <div className="col-span-12 md:col-span-8">
                       <Label className="text-xs flex items-center gap-2">
                         Nom
                         {ing.raw_material_id ? (
@@ -207,13 +201,9 @@ export default function RDTrialDetail() {
                       </Label>
                       <Input defaultValue={ing.ingredient_name} onBlur={(e) => upsertIng.mutate({ ...ing, ingredient_name: e.target.value })} />
                     </div>
-                    <div className="col-span-6 md:col-span-2">
+                    <div className="col-span-10 md:col-span-3">
                       <Label className="text-xs">% Boul.</Label>
                       <Input type="number" step="0.1" defaultValue={ing.baker_percentage ?? ''} onBlur={(e) => upsertIng.mutate({ ...ing, baker_percentage: e.target.value === '' ? null : Number(e.target.value) })} />
-                    </div>
-                    <div className="col-span-10 md:col-span-4">
-                      <Label className="text-xs">Commentaire</Label>
-                      <Input defaultValue={ing.observations ?? ''} onBlur={(e) => upsertIng.mutate({ ...ing, observations: e.target.value })} />
                     </div>
                     <div className="col-span-2 md:col-span-1 flex justify-end">
                       <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => deleteIng.mutate({ id: ing.id, trialId: id! })}>
@@ -223,6 +213,10 @@ export default function RDTrialDetail() {
                   </div>
                 ))}
                 {data!.ingredients.length === 0 && <p className="text-sm text-muted-foreground text-center py-3">Aucun ingrédient</p>}
+              </div>
+              <div className="pt-2">
+                <Label>Commentaire</Label>
+                <Textarea rows={3} value={form.formulation_notes ?? ''} onChange={(e) => setField('formulation_notes', e.target.value)} placeholder="Commentaire global sur la formulation / les ingrédients" />
               </div>
             </div>
           </AccordionContent>

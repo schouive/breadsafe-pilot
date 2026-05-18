@@ -95,15 +95,6 @@ export function ProductSheetDetailSheet({ open, onOpenChange, sheet }: ProductSh
                 </div>
               </div>
             )}
-            {sheet.origin_country && (
-              <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
-                <MapPin className="h-5 w-5 text-muted-foreground" />
-                <div>
-                  <p className="text-xs text-muted-foreground">Origine</p>
-                  <p className="font-medium">{sheet.origin_country}</p>
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Allergens */}

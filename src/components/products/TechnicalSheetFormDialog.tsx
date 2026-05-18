@@ -507,8 +507,6 @@ export function TechnicalSheetFormDialog({
         description: formData.description.trim() || null,
         product_reference: formData.product_reference.trim() || null,
         family_id: formData.family_id || null,
-        brand: null,
-        barcode: null,
         net_weight: formData.net_weight ? parseFloat(formData.net_weight) : null,
         net_weight_unit: formData.net_weight_unit,
         pieces_per_carton: formData.pieces_per_carton ? parseInt(formData.pieces_per_carton) : null,

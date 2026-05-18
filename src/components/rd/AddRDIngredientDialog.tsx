@@ -6,12 +6,9 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger,
 } from '@/components/ui/dialog';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Search } from 'lucide-react';
 import { useFoodRawMaterials } from '@/hooks/useSuppliers';
 import { useUpsertTrialIngredient } from '@/hooks/useRDTrials';
-
-const UNITS = ['kg', 'g', 'L', 'mL', 'unité'];
 
 interface Props {
   trialId: string;
@@ -24,8 +21,6 @@ export function AddRDIngredientDialog({ trialId, orderIndex }: Props) {
   const [search, setSearch] = useState('');
   const [selectedId, setSelectedId] = useState<string>('');
   const [manualName, setManualName] = useState('');
-  const [quantity, setQuantity] = useState('');
-  const [unit, setUnit] = useState('kg');
   const { data: materials } = useFoodRawMaterials();
   const upsert = useUpsertTrialIngredient();
 
@@ -40,11 +35,10 @@ export function AddRDIngredientDialog({ trialId, orderIndex }: Props) {
   }, [materials, search]);
 
   const reset = () => {
-    setSelectedId(''); setManualName(''); setQuantity(''); setUnit('kg'); setSearch(''); setTab('catalog');
+    setSelectedId(''); setManualName(''); setSearch(''); setTab('catalog');
   };
 
   const handleSubmit = async () => {
-    const qty = Number(quantity) || 0;
     if (tab === 'catalog') {
       const mat = materials?.find((m) => m.id === selectedId);
       if (!mat) return;
@@ -52,8 +46,8 @@ export function AddRDIngredientDialog({ trialId, orderIndex }: Props) {
         trial_id: trialId,
         ingredient_name: mat.name,
         raw_material_id: mat.id,
-        quantity: qty,
-        unit,
+        quantity: 0,
+        unit: 'kg',
         order_index: orderIndex,
       });
     } else {
@@ -62,8 +56,8 @@ export function AddRDIngredientDialog({ trialId, orderIndex }: Props) {
         trial_id: trialId,
         ingredient_name: manualName.trim(),
         raw_material_id: null,
-        quantity: qty,
-        unit,
+        quantity: 0,
+        unit: 'kg',
         order_index: orderIndex,
       });
     }
@@ -125,22 +119,6 @@ export function AddRDIngredientDialog({ trialId, orderIndex }: Props) {
             </div>
           </TabsContent>
         </Tabs>
-
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <Label>Quantité</Label>
-            <Input type="number" step="0.001" value={quantity} onChange={(e) => setQuantity(e.target.value)} placeholder="0" />
-          </div>
-          <div>
-            <Label>Unité</Label>
-            <Select value={unit} onValueChange={setUnit}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {UNITS.map((u) => <SelectItem key={u} value={u}>{u}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)}>Annuler</Button>

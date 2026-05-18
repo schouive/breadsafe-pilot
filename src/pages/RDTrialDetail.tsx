@@ -170,22 +170,6 @@ export default function RDTrialDetail() {
                   </SelectContent>
                 </Select>
               </div>
-              <div>
-                <Label>Nom recette (libre)</Label>
-                <Input value={form.recipe_name_text ?? ''} onChange={(e) => setField('recipe_name_text', e.target.value)} />
-              </div>
-              <div>
-                <Label>Version recette</Label>
-                <Input value={form.recipe_version_text ?? ''} onChange={(e) => setField('recipe_version_text', e.target.value)} />
-              </div>
-              <div>
-                <Label>Produit concerné</Label>
-                <Input value={form.product_concerned ?? ''} onChange={(e) => setField('product_concerned', e.target.value)} />
-              </div>
-              <div>
-                <Label>Opérateur</Label>
-                <Input value={form.operator_name ?? ''} onChange={(e) => setField('operator_name', e.target.value)} />
-              </div>
               <div className="md:col-span-2">
                 <Label>Objectif du test</Label>
                 <Textarea value={form.objective ?? ''} onChange={(e) => setField('objective', e.target.value)} rows={2} />
@@ -216,7 +200,7 @@ export default function RDTrialDetail() {
               <div className="space-y-2">
                 {data!.ingredients.map((ing) => (
                   <div key={ing.id} className="grid grid-cols-12 gap-2 items-end p-2 rounded border bg-muted/20">
-                    <div className="col-span-12 md:col-span-4">
+                    <div className="col-span-12 md:col-span-5">
                       <Label className="text-xs flex items-center gap-2">
                         Nom
                         {ing.raw_material_id ? (
@@ -227,20 +211,12 @@ export default function RDTrialDetail() {
                       </Label>
                       <Input defaultValue={ing.ingredient_name} onBlur={(e) => upsertIng.mutate({ ...ing, ingredient_name: e.target.value })} />
                     </div>
-                    <div className="col-span-4 md:col-span-2">
-                      <Label className="text-xs">Qté</Label>
-                      <Input type="number" step="0.001" defaultValue={ing.quantity} onBlur={(e) => upsertIng.mutate({ ...ing, quantity: Number(e.target.value) || 0 })} />
-                    </div>
-                    <div className="col-span-4 md:col-span-2">
-                      <Label className="text-xs">Unité</Label>
-                      <Input defaultValue={ing.unit} onBlur={(e) => upsertIng.mutate({ ...ing, unit: e.target.value })} />
-                    </div>
-                    <div className="col-span-4 md:col-span-2">
+                    <div className="col-span-6 md:col-span-2">
                       <Label className="text-xs">% Boul.</Label>
                       <Input type="number" step="0.1" defaultValue={ing.baker_percentage ?? ''} onBlur={(e) => upsertIng.mutate({ ...ing, baker_percentage: e.target.value === '' ? null : Number(e.target.value) })} />
                     </div>
-                    <div className="col-span-10 md:col-span-1">
-                      <Label className="text-xs">Obs.</Label>
+                    <div className="col-span-10 md:col-span-4">
+                      <Label className="text-xs">Commentaire</Label>
                       <Input defaultValue={ing.observations ?? ''} onBlur={(e) => upsertIng.mutate({ ...ing, observations: e.target.value })} />
                     </div>
                     <div className="col-span-2 md:col-span-1 flex justify-end">
@@ -286,15 +262,10 @@ export default function RDTrialDetail() {
         <AccordionItem value="kneading" className="border rounded-lg bg-card px-4">
           <AccordionTrigger className="hover:no-underline">Pétrissage</AccordionTrigger>
           <AccordionContent className="grid md:grid-cols-2 gap-3 pt-2">
-            <div><Label>Type de pétrin</Label><Input value={form.mixer_type ?? ''} onChange={(e) => setField('mixer_type', e.target.value)} /></div>
-            <div><Label>Frasage</Label><Input value={form.frasage_notes ?? ''} onChange={(e) => setField('frasage_notes', e.target.value)} /></div>
             <div><Label>Autolyse</Label><Input value={form.autolyse_notes ?? ''} onChange={(e) => setField('autolyse_notes', e.target.value)} /></div>
             <div><Label>Bassinage</Label><Input value={form.bassinage_notes ?? ''} onChange={(e) => setField('bassinage_notes', e.target.value)} /></div>
             <div><Label>Vitesse 1</Label><Input value={form.speed1_value ?? ''} onChange={(e) => setField('speed1_value', e.target.value)} /></div>
-            <div><Label>Durée vitesse 1 (min)</Label><Input type="number" step="0.5" value={form.speed1_duration_min ?? ''} onChange={(e) => setField('speed1_duration_min', e.target.value)} /></div>
             <div><Label>Vitesse 2</Label><Input value={form.speed2_value ?? ''} onChange={(e) => setField('speed2_value', e.target.value)} /></div>
-            <div><Label>Durée vitesse 2 (min)</Label><Input type="number" step="0.5" value={form.speed2_duration_min ?? ''} onChange={(e) => setField('speed2_duration_min', e.target.value)} /></div>
-            <div><Label>Temps total (min)</Label><Input type="number" step="0.5" value={form.kneading_total_min ?? ''} onChange={(e) => setField('kneading_total_min', e.target.value)} /></div>
             <div className="md:col-span-2"><Label>Observations</Label><Textarea rows={2} value={form.kneading_observations ?? ''} onChange={(e) => setField('kneading_observations', e.target.value)} /></div>
           </AccordionContent>
         </AccordionItem>
@@ -413,52 +384,6 @@ export default function RDTrialDetail() {
             <div className="md:col-span-3">
               <Label>Notes d'évaluation</Label>
               <Textarea rows={2} value={form.eval_notes ?? ''} onChange={(e) => setField('eval_notes', e.target.value)} />
-            </div>
-          </AccordionContent>
-        </AccordionItem>
-
-        {/* JOURNAL */}
-        <AccordionItem value="journal" className="border rounded-lg bg-card px-4">
-          <AccordionTrigger className="hover:no-underline">
-            Journal de process <Badge variant="outline" className="ml-2">{data!.journal.length}</Badge>
-          </AccordionTrigger>
-          <AccordionContent className="space-y-3 pt-2">
-            <div className="flex gap-2">
-              <Input
-                placeholder="Ajouter un commentaire horodaté…"
-                value={journalText}
-                onChange={(e) => setJournalText(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && journalText.trim()) {
-                    addJournal.mutate({ trialId: id!, comment: journalText.trim() });
-                    setJournalText('');
-                  }
-                }}
-              />
-              <Button
-                onClick={() => {
-                  if (!journalText.trim()) return;
-                  addJournal.mutate({ trialId: id!, comment: journalText.trim() });
-                  setJournalText('');
-                }}
-              >
-                <MessageSquarePlus className="h-4 w-4 mr-1" /> Ajouter
-              </Button>
-            </div>
-            <div className="space-y-2">
-              {data!.journal.map((j) => (
-                <div key={j.id} className="flex items-start gap-3 p-3 rounded border bg-muted/20">
-                  <Clock className="h-4 w-4 mt-1 text-muted-foreground shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs text-muted-foreground">{format(new Date(j.entry_time), "dd MMM yyyy 'à' HH:mm", { locale: fr })}{j.author_name ? ` — ${j.author_name}` : ''}</p>
-                    <p className="text-sm whitespace-pre-wrap">{j.comment}</p>
-                  </div>
-                  <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => deleteJournal.mutate({ id: j.id, trialId: id! })}>
-                    <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                  </Button>
-                </div>
-              ))}
-              {data!.journal.length === 0 && <p className="text-sm text-muted-foreground text-center py-3">Aucune entrée</p>}
             </div>
           </AccordionContent>
         </AccordionItem>

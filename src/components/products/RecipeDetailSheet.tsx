@@ -247,18 +247,6 @@ export function RecipeDetailSheet({ open, onOpenChange, recipe }: RecipeDetailSh
               </>
             )}
 
-            {/* Preparation notes */}
-            {recipe.preparation_notes && (
-              <>
-                <Separator />
-                <div>
-                  <h4 className="font-medium mb-2">Notes de préparation</h4>
-                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                    {recipe.preparation_notes}
-                  </p>
-                </div>
-              </>
-            )}
           </div>
         </SheetContent>
       </Sheet>

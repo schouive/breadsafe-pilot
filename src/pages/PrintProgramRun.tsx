@@ -118,7 +118,7 @@ export default function PrintProgramRun() {
           if (!p) return null;
           const old = prevById.get(it.id);
           const lot = computeLotNumber(globalProductionDate);
-          const autoDdm = computeDdm(globalProductionDate, p.temperature);
+          const autoDdm = computeDdm(globalProductionDate, p.storage_instructions);
           return {
             itemId: it.id,
             product: p,
@@ -145,7 +145,7 @@ export default function PrintProgramRun() {
       productionDate: globalProductionDate,
       lot,
       // DDM = manuelle si renseignée, sinon auto selon température produit
-      ddm: globalDdm || computeDdm(globalProductionDate, l.product.temperature),
+      ddm: globalDdm || computeDdm(globalProductionDate, l.product.storage_instructions),
       status: 'pending',
       error: null,
     })));
@@ -154,7 +154,7 @@ export default function PrintProgramRun() {
 
   const handleLineProductionDateChange = (itemId: string, val: string) => {
     setLines(prev => prev.map(l => l.itemId === itemId
-      ? { ...l, productionDate: val, lot: computeLotNumber(val), ddm: computeDdm(val, l.product.temperature) }
+      ? { ...l, productionDate: val, lot: computeLotNumber(val), ddm: computeDdm(val, l.product.storage_instructions) }
       : l
     ));
   };
@@ -164,7 +164,7 @@ export default function PrintProgramRun() {
     setLines(prev => prev.map(l =>
       l.status === 'printed'
         ? l
-        : { ...l, productionDate: val, lot: computeLotNumber(val), ddm: computeDdm(val, l.product.temperature) }
+        : { ...l, productionDate: val, lot: computeLotNumber(val), ddm: computeDdm(val, l.product.storage_instructions) }
     ));
   };
 

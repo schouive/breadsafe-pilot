@@ -145,7 +145,7 @@ export function RecipeManagement() {
                 <CardDescription>Gérez vos recettes et leurs compositions</CardDescription>
               </div>
             </div>
-            <Button onClick={() => setIsAddOpen(true)}>
+            <Button onClick={() => navigate('/products/new-recipe')}>
               <Plus className="h-4 w-4 mr-2" />
               Nouvelle recette
             </Button>
@@ -158,7 +158,7 @@ export function RecipeManagement() {
             <div className="text-center py-12">
               <ChefHat className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
               <p className="text-muted-foreground mb-4">Aucune recette enregistrée</p>
-              <Button variant="outline" onClick={() => setIsAddOpen(true)}>
+              <Button variant="outline" onClick={() => navigate('/products/new-recipe')}>
                 <Plus className="h-4 w-4 mr-2" />
                 Créer une recette
               </Button>

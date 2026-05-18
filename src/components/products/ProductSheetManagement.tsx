@@ -48,7 +48,7 @@ export function ProductSheetManagement() {
       if (statusFilter === 'published' && !s.is_published) return false;
       if (statusFilter === 'draft' && s.is_published) return false;
       if (q) {
-        const hay = [s.product_name, s.product_reference, s.brand, s.snapshot_recipe_name, s.family?.label]
+        const hay = [s.product_name, s.product_reference, s.snapshot_recipe_name, s.family?.label]
           .filter(Boolean).join(' ').toLowerCase();
         if (!hay.includes(q)) return false;
       }

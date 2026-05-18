@@ -125,16 +125,6 @@ export function IngredientFormDialog({ open, onOpenChange, recipeId }: Ingredien
               </Select>
             </div>
           </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="notes">Notes</Label>
-            <Input
-              id="notes"
-              placeholder="Instructions particulières..."
-              value={formData.notes}
-              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-            />
-          </div>
         </div>
 
         <DialogFooter>

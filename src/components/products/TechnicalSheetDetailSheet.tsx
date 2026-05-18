@@ -207,12 +207,6 @@ export function TechnicalSheetDetailSheet({ open, onOpenChange, sheet }: Technic
                   <div><p className="text-xs text-muted-foreground">{sheetData.dlc_ddm_type || 'DLC'}</p><p className="font-medium">{sheetData.dlc_ddm_days} jours</p></div>
                 </div>
               )}
-              {sheetData.origin_country && (
-                <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
-                  <MapPin className="h-5 w-5 text-muted-foreground" />
-                  <div><p className="text-xs text-muted-foreground">Origine</p><p className="font-medium">{sheetData.origin_country}</p></div>
-                </div>
-              )}
               {sheetData.snapshot_recipe_name && (
                 <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
                   <FileText className="h-5 w-5 text-muted-foreground" />

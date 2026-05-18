@@ -520,7 +520,7 @@ export function TechnicalSheetFormDialog({
         thawing_instructions: formData.thawing_instructions.trim() || null,
         usage_instructions: formData.usage_instructions.trim() || null,
         quality_comment: formData.quality_comment.trim() || null,
-        origin_country: null,
+        
         product_image_url: imageUrl,
         is_published: formData.is_published,
         published_at: formData.is_published ? new Date().toISOString() : null,

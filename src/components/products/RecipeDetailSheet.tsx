@@ -78,7 +78,6 @@ export function RecipeDetailSheet({ open, onOpenChange, recipe }: RecipeDetailSh
                 <SheetTitle className="text-left">{recipe.name}</SheetTitle>
                 <SheetDescription className="text-left">
                   {recipe.code && <Badge variant="outline" className="mr-2">{recipe.code}</Badge>}
-                  {recipe.category}
                 </SheetDescription>
               </div>
             </div>

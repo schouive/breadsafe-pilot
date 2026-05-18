@@ -219,10 +219,17 @@ function browserPrintRequest(method: 'GET' | 'POST', path: string, body?: unknow
   });
 }
 
-async function getDefaultBrowserPrintDevice(): Promise<BrowserPrintDevice> {
+let cachedBrowserPrintDevice: { device: BrowserPrintDevice; ts: number } | null = null;
+const BROWSER_PRINT_DEVICE_TTL_MS = 60_000;
+
+async function getDefaultBrowserPrintDevice(forceRefresh = false): Promise<BrowserPrintDevice> {
+  if (!forceRefresh && cachedBrowserPrintDevice && (Date.now() - cachedBrowserPrintDevice.ts) < BROWSER_PRINT_DEVICE_TTL_MS) {
+    return cachedBrowserPrintDevice.device;
+  }
+
   let lastError: unknown;
 
-  for (let attempt = 0; attempt < 3; attempt += 1) {
+  for (let attempt = 0; attempt < 4; attempt += 1) {
     try {
       const response = await browserPrintRequest('GET', 'default?type=printer');
       if (!response) throw new Error('Aucune imprimante par défaut configurée dans Zebra Browser Print.');
@@ -237,12 +244,22 @@ async function getDefaultBrowserPrintDevice(): Promise<BrowserPrintDevice> {
         throw new Error(response);
       }
 
-      return JSON.parse(response) as BrowserPrintDevice;
+      const device = JSON.parse(response) as BrowserPrintDevice;
+      cachedBrowserPrintDevice = { device, ts: Date.now() };
+      return device;
     } catch (error) {
       lastError = error;
 
-      if (isBrowserPrintSslAcceptedRetryMessage(error) && attempt < 2) {
+      if (isBrowserPrintSslAcceptedRetryMessage(error) && attempt < 3) {
         await sleep(1200);
+        continue;
+      }
+
+      // Transient network / service warm-up : on retente quelques fois.
+      const msg = String((error as Error)?.message ?? error ?? '').toLowerCase();
+      const transient = msg.includes('trop lent') || msg.includes('introuvable') || msg.includes('bloqué par le navigateur') || msg.includes('indisponible');
+      if (transient && attempt < 3) {
+        await sleep(800);
         continue;
       }
 
@@ -253,8 +270,7 @@ async function getDefaultBrowserPrintDevice(): Promise<BrowserPrintDevice> {
   throw new Error(String((lastError as Error)?.message ?? lastError ?? 'Aucune imprimante Browser Print disponible.'));
 }
 
-async function printZplWithBrowserPrint(zpl: string): Promise<void> {
-  const device = await getDefaultBrowserPrintDevice();
+async function browserPrintWrite(device: BrowserPrintDevice, zpl: string): Promise<void> {
   await browserPrintRequest('POST', 'write', {
     device: {
       name: device.name,
@@ -267,6 +283,34 @@ async function printZplWithBrowserPrint(zpl: string): Promise<void> {
     },
     data: zpl,
   });
+}
+
+async function printZplWithBrowserPrint(zpl: string): Promise<void> {
+  let device = await getDefaultBrowserPrintDevice();
+  let lastError: unknown;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      await browserPrintWrite(device, zpl);
+      return;
+    } catch (error) {
+      lastError = error;
+      const msg = String((error as Error)?.message ?? error ?? '').toLowerCase();
+      // Retente sur erreurs transitoires (service en cours de chauffe, hoquet réseau local).
+      const transient = msg.includes('trop lent') || msg.includes('introuvable') || msg.includes('bloqué par le navigateur') || msg.includes('indisponible') || isBrowserPrintSslAcceptedRetryMessage(error);
+      if (!transient || attempt === 2) throw error;
+      await sleep(800);
+      // Au 2ᵉ retry, on rafraîchit le device par sécurité.
+      if (attempt === 1) {
+        try { device = await getDefaultBrowserPrintDevice(true); } catch { /* on garde l'ancien */ }
+      }
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error(String(lastError));
+}
+
+/** Warm-up : vérifie en amont que Browser Print est joignable et met le device en cache. */
+export async function warmUpBrowserPrint(): Promise<void> {
+  try { await getDefaultBrowserPrintDevice(true); } catch { /* silencieux : printZpl fera remonter l'erreur réelle */ }
 }
 
 /**

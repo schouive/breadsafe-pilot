@@ -181,7 +181,7 @@ export function RecipeManagement() {
                         key={recipe.id}
                         recipe={recipe}
                         onView={() => setViewingRecipe(recipe)}
-                        onEdit={() => setEditingRecipe(recipe)}
+                        onEdit={() => navigate(`/products/recipes/edit/${recipe.id}`)}
                         onDelete={() => setDeletingRecipe(recipe)}
                       />
                     ))}

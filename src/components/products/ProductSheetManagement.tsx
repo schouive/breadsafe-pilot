@@ -211,7 +211,7 @@ export function ProductSheetManagement() {
                       </div>
                       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
                         {(sheet as any).snapshot_recipe_name && <span className="truncate">Recette: {(sheet as any).snapshot_recipe_name}</span>}
-                        {sheet.brand && <span>• {sheet.brand}</span>}
+                        
                         {sheet.net_weight && (
                           <span>• {sheet.net_weight} {sheet.net_weight_unit}</span>
                         )}

@@ -1437,12 +1437,9 @@ export type Database = {
       product_sheets: {
         Row: {
           allergen_statement: string | null
-          barcode: string | null
-          brand: string | null
           carton_dimensions: string | null
           carton_weight: number | null
           cartons_per_layer: number | null
-          certifications: string[] | null
           created_at: string
           created_by: string | null
           description: string | null
@@ -1462,7 +1459,6 @@ export type Database = {
           layers_per_pallet: number | null
           net_weight: number | null
           net_weight_unit: string | null
-          origin_country: string | null
           pieces_per_carton: number | null
           product_image_url: string | null
           product_name: string
@@ -1485,12 +1481,9 @@ export type Database = {
         }
         Insert: {
           allergen_statement?: string | null
-          barcode?: string | null
-          brand?: string | null
           carton_dimensions?: string | null
           carton_weight?: number | null
           cartons_per_layer?: number | null
-          certifications?: string[] | null
           created_at?: string
           created_by?: string | null
           description?: string | null
@@ -1510,7 +1503,6 @@ export type Database = {
           layers_per_pallet?: number | null
           net_weight?: number | null
           net_weight_unit?: string | null
-          origin_country?: string | null
           pieces_per_carton?: number | null
           product_image_url?: string | null
           product_name: string
@@ -1533,12 +1525,9 @@ export type Database = {
         }
         Update: {
           allergen_statement?: string | null
-          barcode?: string | null
-          brand?: string | null
           carton_dimensions?: string | null
           carton_weight?: number | null
           cartons_per_layer?: number | null
-          certifications?: string[] | null
           created_at?: string
           created_by?: string | null
           description?: string | null
@@ -1558,7 +1547,6 @@ export type Database = {
           layers_per_pallet?: number | null
           net_weight?: number | null
           net_weight_unit?: string | null
-          origin_country?: string | null
           pieces_per_carton?: number | null
           product_image_url?: string | null
           product_name?: string
@@ -2192,7 +2180,6 @@ export type Database = {
           created_at: string
           id: string
           ingredient_recipe_id: string | null
-          notes: string | null
           order_index: number
           quantity: number
           raw_material_id: string | null
@@ -2205,7 +2192,6 @@ export type Database = {
           created_at?: string
           id?: string
           ingredient_recipe_id?: string | null
-          notes?: string | null
           order_index?: number
           quantity: number
           raw_material_id?: string | null
@@ -2218,7 +2204,6 @@ export type Database = {
           created_at?: string
           id?: string
           ingredient_recipe_id?: string | null
-          notes?: string | null
           order_index?: number
           quantity?: number
           raw_material_id?: string | null
@@ -2282,7 +2267,6 @@ export type Database = {
         Row: {
           baking_ratio: number | null
           calculation_mode: string
-          category: string | null
           code: string | null
           created_at: string
           created_by: string | null
@@ -2292,11 +2276,9 @@ export type Database = {
           inco_name: string | null
           is_active: boolean
           name: string
-          preparation_notes: string | null
           process: string | null
           process_losses: number | null
           recipe_type: string
-          reference_flour_id: string | null
           status: string | null
           updated_at: string
           yield_quantity: number
@@ -2305,7 +2287,6 @@ export type Database = {
         Insert: {
           baking_ratio?: number | null
           calculation_mode?: string
-          category?: string | null
           code?: string | null
           created_at?: string
           created_by?: string | null
@@ -2315,11 +2296,9 @@ export type Database = {
           inco_name?: string | null
           is_active?: boolean
           name: string
-          preparation_notes?: string | null
           process?: string | null
           process_losses?: number | null
           recipe_type?: string
-          reference_flour_id?: string | null
           status?: string | null
           updated_at?: string
           yield_quantity?: number
@@ -2328,7 +2307,6 @@ export type Database = {
         Update: {
           baking_ratio?: number | null
           calculation_mode?: string
-          category?: string | null
           code?: string | null
           created_at?: string
           created_by?: string | null
@@ -2338,25 +2316,15 @@ export type Database = {
           inco_name?: string | null
           is_active?: boolean
           name?: string
-          preparation_notes?: string | null
           process?: string | null
           process_losses?: number | null
           recipe_type?: string
-          reference_flour_id?: string | null
           status?: string | null
           updated_at?: string
           yield_quantity?: number
           yield_unit?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "recipes_reference_flour_id_fkey"
-            columns: ["reference_flour_id"]
-            isOneToOne: false
-            referencedRelation: "raw_materials"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       storage_temperature_records: {
         Row: {

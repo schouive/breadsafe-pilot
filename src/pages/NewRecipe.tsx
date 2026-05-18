@@ -207,7 +207,7 @@ export default function NewRecipe() {
         recipe_type: formData.recipeType,
         calculation_mode: formData.calculationMode,
         status: formData.status,
-        reference_flour_id: null,
+        
         baking_ratio: parseFloat(formData.bakingRatio) || 0.9,
         process_losses: parseFloat(formData.processLosses) || 0,
         yield_quantity: 1,

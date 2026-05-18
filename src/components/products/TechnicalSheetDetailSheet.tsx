@@ -195,12 +195,6 @@ export function TechnicalSheetDetailSheet({ open, onOpenChange, sheet }: Technic
                   <div><p className="text-xs text-muted-foreground">Référence</p><p className="font-medium">{sheetData.product_reference}</p></div>
                 </div>
               )}
-              {sheetData.barcode && (
-                <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
-                  <Barcode className="h-5 w-5 text-muted-foreground" />
-                  <div><p className="text-xs text-muted-foreground">Code-barres</p><p className="font-mono text-sm">{sheetData.barcode}</p></div>
-                </div>
-              )}
               {sheetData.net_weight && (
                 <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
                   <Scale className="h-5 w-5 text-muted-foreground" />

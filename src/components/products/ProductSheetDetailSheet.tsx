@@ -54,7 +54,7 @@ export function ProductSheetDetailSheet({ open, onOpenChange, sheet }: ProductSh
               <div>
                 <SheetTitle className="text-left">{sheet.product_name}</SheetTitle>
                 <SheetDescription className="text-left">
-                  {sheet.brand && <span className="mr-2">{sheet.brand}</span>}
+                  
                   {sheet.recipes?.name && (
                     <Badge variant="outline">Recette: {sheet.recipes.name}</Badge>
                   )}

@@ -36,7 +36,6 @@ export function IngredientFormDialog({ open, onOpenChange, recipeId }: Ingredien
     raw_material_id: '',
     quantity: '',
     unit: 'kg',
-    notes: '',
   });
 
   const activeMaterials = rawMaterials?.filter(m => m.is_active) || [];
@@ -49,14 +48,12 @@ export function IngredientFormDialog({ open, onOpenChange, recipeId }: Ingredien
       raw_material_id: formData.raw_material_id,
       quantity: parseFloat(formData.quantity),
       unit: formData.unit,
-      notes: formData.notes.trim() || null,
     });
     
     setFormData({
       raw_material_id: '',
       quantity: '',
       unit: 'kg',
-      notes: '',
     });
     onOpenChange(false);
   };

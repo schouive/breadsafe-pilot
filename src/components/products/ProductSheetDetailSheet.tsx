@@ -54,7 +54,7 @@ export function ProductSheetDetailSheet({ open, onOpenChange, sheet }: ProductSh
               <div>
                 <SheetTitle className="text-left">{sheet.product_name}</SheetTitle>
                 <SheetDescription className="text-left">
-                  {sheet.brand && <span className="mr-2">{sheet.brand}</span>}
+                  
                   {sheet.recipes?.name && (
                     <Badge variant="outline">Recette: {sheet.recipes.name}</Badge>
                   )}
@@ -77,15 +77,6 @@ export function ProductSheetDetailSheet({ open, onOpenChange, sheet }: ProductSh
         <div className="mt-6 space-y-6">
           {/* Quick info */}
           <div className="grid grid-cols-2 gap-4">
-            {sheet.barcode && (
-              <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
-                <Barcode className="h-5 w-5 text-muted-foreground" />
-                <div>
-                  <p className="text-xs text-muted-foreground">Code-barres</p>
-                  <p className="font-mono text-sm">{sheet.barcode}</p>
-                </div>
-              </div>
-            )}
             {sheet.net_weight && (
               <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
                 <Scale className="h-5 w-5 text-muted-foreground" />
@@ -101,15 +92,6 @@ export function ProductSheetDetailSheet({ open, onOpenChange, sheet }: ProductSh
                 <div>
                   <p className="text-xs text-muted-foreground">Durée de vie</p>
                   <p className="font-medium">{sheet.shelf_life_days} jours</p>
-                </div>
-              </div>
-            )}
-            {sheet.origin_country && (
-              <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
-                <MapPin className="h-5 w-5 text-muted-foreground" />
-                <div>
-                  <p className="text-xs text-muted-foreground">Origine</p>
-                  <p className="font-medium">{sheet.origin_country}</p>
                 </div>
               </div>
             )}

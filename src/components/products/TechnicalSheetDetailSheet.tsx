@@ -155,7 +155,7 @@ export function TechnicalSheetDetailSheet({ open, onOpenChange, sheet }: Technic
                 <div>
                   <SheetTitle className="text-left">{sheetData.product_name}</SheetTitle>
                   <SheetDescription className="text-left flex items-center gap-2">
-                    {sheetData.brand && <span>{sheetData.brand}</span>}
+                    
                     {sheetData.version && <Badge variant="outline">v{sheetData.version}</Badge>}
                     {sheetData.is_published ? (
                       <Badge className="bg-success/10 text-success border-success/30">
@@ -195,12 +195,6 @@ export function TechnicalSheetDetailSheet({ open, onOpenChange, sheet }: Technic
                   <div><p className="text-xs text-muted-foreground">Référence</p><p className="font-medium">{sheetData.product_reference}</p></div>
                 </div>
               )}
-              {sheetData.barcode && (
-                <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
-                  <Barcode className="h-5 w-5 text-muted-foreground" />
-                  <div><p className="text-xs text-muted-foreground">Code-barres</p><p className="font-mono text-sm">{sheetData.barcode}</p></div>
-                </div>
-              )}
               {sheetData.net_weight && (
                 <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
                   <Scale className="h-5 w-5 text-muted-foreground" />
@@ -211,12 +205,6 @@ export function TechnicalSheetDetailSheet({ open, onOpenChange, sheet }: Technic
                 <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
                   <Calendar className="h-5 w-5 text-muted-foreground" />
                   <div><p className="text-xs text-muted-foreground">{sheetData.dlc_ddm_type || 'DLC'}</p><p className="font-medium">{sheetData.dlc_ddm_days} jours</p></div>
-                </div>
-              )}
-              {sheetData.origin_country && (
-                <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
-                  <MapPin className="h-5 w-5 text-muted-foreground" />
-                  <div><p className="text-xs text-muted-foreground">Origine</p><p className="font-medium">{sheetData.origin_country}</p></div>
                 </div>
               )}
               {sheetData.snapshot_recipe_name && (

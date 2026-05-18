@@ -197,10 +197,7 @@ export async function generateTechnicalSheetPDF(sheet: ProductSheet): Promise<vo
   const productInfo = [
     ['Désignation commerciale', sheetData.product_name || '—'],
     ['Référence produit', sheetData.product_reference || '—'],
-    ['Marque', sheetData.brand || '—'],
-    ['Code-barres', sheetData.barcode || '—'],
     ['Poids net', sheetData.net_weight ? `${sheetData.net_weight} ${sheetData.net_weight_unit}` : '—'],
-    ['Pays d\'origine', sheetData.origin_country || '—'],
   ];
 
   const sectionStartY = yPos;
@@ -751,10 +748,7 @@ export async function printTechnicalSheet(sheet: any): Promise<void> {
         <div class="info-list">
           <div class="info-row"><span class="info-label">Désignation commerciale</span><span class="info-value">${sheetData.product_name || '—'}</span></div>
           <div class="info-row"><span class="info-label">Référence produit</span><span class="info-value">${sheetData.product_reference || '—'}</span></div>
-          <div class="info-row"><span class="info-label">Marque</span><span class="info-value">${sheetData.brand || '—'}</span></div>
-          <div class="info-row"><span class="info-label">Code-barres</span><span class="info-value">${sheetData.barcode || '—'}</span></div>
           <div class="info-row"><span class="info-label">Poids net</span><span class="info-value">${sheetData.net_weight ? `${sheetData.net_weight} ${sheetData.net_weight_unit}` : '—'}</span></div>
-          <div class="info-row"><span class="info-label">Pays d'origine</span><span class="info-value">${sheetData.origin_country || '—'}</span></div>
         </div>
       </div>
       ${sheetData.product_image_url ? `

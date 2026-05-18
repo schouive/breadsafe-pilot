@@ -48,7 +48,7 @@ export function ProductSheetManagement() {
       if (statusFilter === 'published' && !s.is_published) return false;
       if (statusFilter === 'draft' && s.is_published) return false;
       if (q) {
-        const hay = [s.product_name, s.product_reference, s.brand, s.snapshot_recipe_name, s.family?.label]
+        const hay = [s.product_name, s.product_reference, s.snapshot_recipe_name, s.family?.label]
           .filter(Boolean).join(' ').toLowerCase();
         if (!hay.includes(q)) return false;
       }
@@ -211,7 +211,7 @@ export function ProductSheetManagement() {
                       </div>
                       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
                         {(sheet as any).snapshot_recipe_name && <span className="truncate">Recette: {(sheet as any).snapshot_recipe_name}</span>}
-                        {sheet.brand && <span>• {sheet.brand}</span>}
+                        
                         {sheet.net_weight && (
                           <span>• {sheet.net_weight} {sheet.net_weight_unit}</span>
                         )}

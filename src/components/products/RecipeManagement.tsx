@@ -1,11 +1,11 @@
 import { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Plus, BookOpen, Edit2, Trash2, Eye, ChefHat, Scale, FlaskConical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useRecipes, useDeleteRecipe, Recipe } from '@/hooks/useRecipes';
 import { cn } from '@/lib/utils';
-import { RecipeFormDialog } from './RecipeFormDialog';
 import { RecipeDetailSheet } from './RecipeDetailSheet';
 import {
   AlertDialog,
@@ -59,7 +59,6 @@ function RecipeRow({
             )}
           </div>
           <div className="flex items-center gap-3 text-sm text-muted-foreground">
-            {recipe.category && <span>{recipe.category}</span>}
             <span className="flex items-center gap-1">
               <Scale className="h-3 w-3" />
               {recipe.yield_quantity} {recipe.yield_unit}
@@ -106,11 +105,10 @@ function RecipeRow({
 }
 
 export function RecipeManagement() {
+  const navigate = useNavigate();
   const { data: recipes, isLoading } = useRecipes();
   const deleteRecipe = useDeleteRecipe();
   
-  const [isAddOpen, setIsAddOpen] = useState(false);
-  const [editingRecipe, setEditingRecipe] = useState<Recipe | null>(null);
   const [viewingRecipe, setViewingRecipe] = useState<Recipe | null>(null);
   const [deletingRecipe, setDeletingRecipe] = useState<Recipe | null>(null);
 
@@ -147,7 +145,7 @@ export function RecipeManagement() {
                 <CardDescription>Gérez vos recettes et leurs compositions</CardDescription>
               </div>
             </div>
-            <Button onClick={() => setIsAddOpen(true)}>
+            <Button onClick={() => navigate('/products/new-recipe')}>
               <Plus className="h-4 w-4 mr-2" />
               Nouvelle recette
             </Button>
@@ -160,7 +158,7 @@ export function RecipeManagement() {
             <div className="text-center py-12">
               <ChefHat className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
               <p className="text-muted-foreground mb-4">Aucune recette enregistrée</p>
-              <Button variant="outline" onClick={() => setIsAddOpen(true)}>
+              <Button variant="outline" onClick={() => navigate('/products/new-recipe')}>
                 <Plus className="h-4 w-4 mr-2" />
                 Créer une recette
               </Button>
@@ -183,7 +181,7 @@ export function RecipeManagement() {
                         key={recipe.id}
                         recipe={recipe}
                         onView={() => setViewingRecipe(recipe)}
-                        onEdit={() => setEditingRecipe(recipe)}
+                        onEdit={() => navigate(`/products/recipes/edit/${recipe.id}`)}
                         onDelete={() => setDeletingRecipe(recipe)}
                       />
                     ))}
@@ -207,7 +205,7 @@ export function RecipeManagement() {
                         key={recipe.id}
                         recipe={recipe}
                         onView={() => setViewingRecipe(recipe)}
-                        onEdit={() => setEditingRecipe(recipe)}
+                        onEdit={() => navigate(`/products/recipes/edit/${recipe.id}`)}
                         onDelete={() => setDeletingRecipe(recipe)}
                       />
                     ))}
@@ -220,19 +218,6 @@ export function RecipeManagement() {
       </Card>
 
       {/* Add Dialog */}
-      <RecipeFormDialog
-        open={isAddOpen}
-        onOpenChange={setIsAddOpen}
-        recipe={null}
-      />
-
-      {/* Edit Dialog */}
-      <RecipeFormDialog
-        open={!!editingRecipe}
-        onOpenChange={(open) => !open && setEditingRecipe(null)}
-        recipe={editingRecipe}
-      />
-
       {/* View Sheet */}
       <RecipeDetailSheet
         open={!!viewingRecipe}

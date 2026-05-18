@@ -78,7 +78,6 @@ export function RecipeDetailSheet({ open, onOpenChange, recipe }: RecipeDetailSh
                 <SheetTitle className="text-left">{recipe.name}</SheetTitle>
                 <SheetDescription className="text-left">
                   {recipe.code && <Badge variant="outline" className="mr-2">{recipe.code}</Badge>}
-                  {recipe.category}
                 </SheetDescription>
               </div>
             </div>
@@ -248,18 +247,6 @@ export function RecipeDetailSheet({ open, onOpenChange, recipe }: RecipeDetailSh
               </>
             )}
 
-            {/* Preparation notes */}
-            {recipe.preparation_notes && (
-              <>
-                <Separator />
-                <div>
-                  <h4 className="font-medium mb-2">Notes de préparation</h4>
-                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                    {recipe.preparation_notes}
-                  </p>
-                </div>
-              </>
-            )}
           </div>
         </SheetContent>
       </Sheet>

@@ -12,11 +12,15 @@ import { printZpl, pickZebraPrinter } from '@/lib/zebraWebUsb';
 
 function computeLotNumber(isoDate: string): string {
   if (!isoDate) return '';
-  const d = new Date(isoDate + 'T00:00:00');
-  if (isNaN(d.getTime())) return '';
-  const start = new Date(d.getFullYear(), 0, 0);
-  const dayOfYear = Math.floor((d.getTime() - start.getTime()) / 86400000);
-  return `L${String(dayOfYear).padStart(3, '0')}${String(d.getFullYear()).slice(-2)}`;
+  const m = isoDate.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return '';
+  const year = parseInt(m[1], 10);
+  const month = parseInt(m[2], 10);
+  const day = parseInt(m[3], 10);
+  const d = Date.UTC(year, month - 1, day);
+  const start = Date.UTC(year, 0, 0);
+  const dayOfYear = Math.round((d - start) / 86400000);
+  return `L${String(dayOfYear).padStart(3, '0')}${String(year).slice(-2)}`;
 }
 
 function todayIso(): string {

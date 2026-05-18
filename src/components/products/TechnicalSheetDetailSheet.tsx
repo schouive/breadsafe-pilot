@@ -155,7 +155,7 @@ export function TechnicalSheetDetailSheet({ open, onOpenChange, sheet }: Technic
                 <div>
                   <SheetTitle className="text-left">{sheetData.product_name}</SheetTitle>
                   <SheetDescription className="text-left flex items-center gap-2">
-                    {sheetData.brand && <span>{sheetData.brand}</span>}
+                    
                     {sheetData.version && <Badge variant="outline">v{sheetData.version}</Badge>}
                     {sheetData.is_published ? (
                       <Badge className="bg-success/10 text-success border-success/30">

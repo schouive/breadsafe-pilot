@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Plus, Trash2, Save, Clock, MessageSquarePlus } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,13 +12,12 @@ import { Switch } from '@/components/ui/switch';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import {
   useRDTrial, useUpdateRDTrial, useUpsertTrialIngredient, useDeleteTrialIngredient,
-  useUpsertTrialRabat, useDeleteTrialRabat, useAddJournalEntry, useDeleteJournalEntry,
+  useUpsertTrialRabat, useDeleteTrialRabat,
   RD_TRIAL_STATUSES, RD_TRIAL_DECISIONS, getStatusMeta,
 } from '@/hooks/useRDTrials';
 import { useActiveRecipes } from '@/hooks/useRecipes';
 import { AddRDIngredientDialog } from '@/components/rd/AddRDIngredientDialog';
 import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 
 const N = (v: any) => (v === '' || v == null ? null : Number(v));
@@ -37,14 +36,11 @@ export default function RDTrialDetail() {
   const deleteIng = useDeleteTrialIngredient();
   const upsertRab = useUpsertTrialRabat();
   const deleteRab = useDeleteTrialRabat();
-  const addJournal = useAddJournalEntry();
-  const deleteJournal = useDeleteJournalEntry();
   const { data: recipes } = useActiveRecipes();
 
   const [form, setForm] = useState<any>(null);
   const saveTimer = useRef<any>(null);
   const [saving, setSaving] = useState(false);
-  const [journalText, setJournalText] = useState('');
 
   useEffect(() => {
     if (data?.trial) setForm(data.trial);

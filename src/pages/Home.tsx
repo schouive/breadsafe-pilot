@@ -125,10 +125,10 @@ export default function Home() {
   const modules = allModules.filter((module) => {
     if (module.href === '/haccp') return canAccessModule('haccp');
     if (module.href === '/orders') return canAccessModule('orders');
-    if (module.href === '/products') return canAccessModule('products');
-    if (module.href === '/print') return canAccessModule('products');
+    if (module.href === '/products') return canAccessModule('products') || canAccessModule('rd');
+    if (module.href === '/print') return canAccessModule('labeling');
     if (module.href === '/settings') return canAccessModule('settings');
-    if (module.href === '/time-tracking') return true;
+    if (module.href === '/time-tracking') return canAccessModule('time_tracking');
     return true;
   });
 

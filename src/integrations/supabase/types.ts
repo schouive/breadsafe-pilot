@@ -2699,6 +2699,30 @@ export type Database = {
         }
         Relationships: []
       }
+      user_module_access: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          module: Database["public"]["Enums"]["app_module"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          module: Database["public"]["Enums"]["app_module"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          module?: Database["public"]["Enums"]["app_module"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
@@ -2806,6 +2830,13 @@ export type Database = {
         }
         Returns: boolean
       }
+      has_module_access: {
+        Args: {
+          _module: Database["public"]["Enums"]["app_module"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -2816,6 +2847,14 @@ export type Database = {
       round_sig: { Args: { sig_digits: number; val: number }; Returns: number }
     }
     Enums: {
+      app_module:
+        | "haccp"
+        | "products"
+        | "labeling"
+        | "orders"
+        | "time_tracking"
+        | "rd"
+        | "settings"
       app_role:
         | "operator"
         | "quality_assistant"
@@ -2968,6 +3007,15 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_module: [
+        "haccp",
+        "products",
+        "labeling",
+        "orders",
+        "time_tracking",
+        "rd",
+        "settings",
+      ],
       app_role: [
         "operator",
         "quality_assistant",

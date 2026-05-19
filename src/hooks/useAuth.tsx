@@ -1,7 +1,8 @@
 import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { AppRole, hasModuleAccess, hasPermission, RolePermissions } from '@/types/roles';
+import { AppRole, hasPermission, RolePermissions } from '@/types/roles';
+import { AppModule } from '@/types/modules';
 
 interface Profile {
   id: string;
@@ -16,12 +17,13 @@ interface AuthContextType {
   session: Session | null;
   profile: Profile | null;
   roles: AppRole[];
+  modules: AppModule[];
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   hasRole: (role: AppRole) => boolean;
-  canAccessModule: (module: keyof RolePermissions['modules'], access?: 'read' | 'write' | 'full') => boolean;
+  canAccessModule: (module: AppModule, access?: 'read' | 'write' | 'full') => boolean;
   canPerform: (permission: keyof Omit<RolePermissions, 'modules'>) => boolean;
 }
 
@@ -32,6 +34,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [roles, setRoles] = useState<AppRole[]>([]);
+  const [modules, setModules] = useState<AppModule[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -49,6 +52,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } else {
           setProfile(null);
           setRoles([]);
+          setModules([]);
         }
       }
     );
@@ -84,10 +88,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .from('user_roles')
         .select('role')
         .eq('user_id', userId);
-      
-      if (rolesData) {
-        setRoles(rolesData.map(r => r.role as AppRole));
-      }
+
+      const rolesList = (rolesData ?? []).map((r) => r.role as AppRole);
+      setRoles(rolesList);
+
+      // Fetch module access
+      const { data: modulesData } = await supabase
+        .from('user_module_access')
+        .select('module')
+        .eq('user_id', userId);
+      setModules((modulesData ?? []).map((m) => m.module as AppModule));
     } catch (error) {
       console.error('Error fetching user data:', error);
     }
@@ -123,16 +133,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSession(null);
     setProfile(null);
     setRoles([]);
+    setModules([]);
   };
 
   const hasRole = (role: AppRole) => roles.includes(role);
-  
-  const canAccessModule = (
-    module: keyof RolePermissions['modules'], 
-    access: 'read' | 'write' | 'full' = 'read'
-  ) => hasModuleAccess(roles, module, access);
-  
-  const canPerform = (permission: keyof Omit<RolePermissions, 'modules'>) => 
+
+  // Admin a accès à tout. Sinon on regarde la table user_module_access.
+  const canAccessModule = (module: AppModule, _access: 'read' | 'write' | 'full' = 'read') => {
+    if (roles.includes('admin')) return true;
+    return modules.includes(module);
+  };
+
+  const canPerform = (permission: keyof Omit<RolePermissions, 'modules'>) =>
     hasPermission(roles, permission);
 
   return (
@@ -142,6 +154,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         session,
         profile,
         roles,
+        modules,
         loading,
         signIn,
         signUp,

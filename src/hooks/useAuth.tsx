@@ -88,10 +88,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .from('user_roles')
         .select('role')
         .eq('user_id', userId);
-      
-      if (rolesData) {
-        setRoles(rolesData.map(r => r.role as AppRole));
-      }
+
+      const rolesList = (rolesData ?? []).map((r) => r.role as AppRole);
+      setRoles(rolesList);
+
+      // Fetch module access
+      const { data: modulesData } = await supabase
+        .from('user_module_access')
+        .select('module')
+        .eq('user_id', userId);
+      setModules((modulesData ?? []).map((m) => m.module as AppModule));
     } catch (error) {
       console.error('Error fetching user data:', error);
     }

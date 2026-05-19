@@ -143,3 +143,68 @@ export function useUpdateUserStatus() {
     },
   });
 }
+
+/**
+ * Met à jour les modules accessibles pour un utilisateur + définit s'il est admin.
+ * Si admin = true → on lui donne le rôle 'admin' (les modules sont implicites).
+ * Sinon → rôle 'operator' + liste de modules cochés.
+ */
+export function useUpdateUserAccess() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async ({
+      userId,
+      isAdmin,
+      modules,
+    }: {
+      userId: string;
+      isAdmin: boolean;
+      modules: AppModule[];
+    }) => {
+      // 1. Reset des rôles
+      const { error: delRolesErr } = await supabase
+        .from('user_roles')
+        .delete()
+        .eq('user_id', userId);
+      if (delRolesErr) throw delRolesErr;
+
+      const { error: insRoleErr } = await supabase
+        .from('user_roles')
+        .insert({ user_id: userId, role: isAdmin ? 'admin' : 'operator' });
+      if (insRoleErr) throw insRoleErr;
+
+      // 2. Reset des modules
+      const { error: delModErr } = await supabase
+        .from('user_module_access')
+        .delete()
+        .eq('user_id', userId);
+      if (delModErr) throw delModErr;
+
+      // 3. Insertion des modules (uniquement si pas admin — admin a tout)
+      if (!isAdmin && modules.length > 0) {
+        const rows = modules.map((m) => ({ user_id: userId, module: m }));
+        const { error: insModErr } = await supabase
+          .from('user_module_access')
+          .insert(rows);
+        if (insModErr) throw insModErr;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users-with-roles'] });
+      toast({
+        title: 'Accès mis à jour',
+        description: 'Les accès de l\'utilisateur ont été modifiés.',
+      });
+    },
+    onError: (error: any) => {
+      console.error('Error updating access:', error);
+      toast({
+        title: 'Erreur',
+        description: error?.message || 'Impossible de modifier les accès.',
+        variant: 'destructive',
+      });
+    },
+  });
+}

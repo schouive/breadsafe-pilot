@@ -34,6 +34,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [roles, setRoles] = useState<AppRole[]>([]);
+  const [modules, setModules] = useState<AppModule[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

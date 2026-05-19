@@ -198,11 +198,15 @@ export default function PrintProgramRun() {
     // Pré-chauffe Zebra Browser Print (évite l'erreur "n'est pas prêt" au 1er envoi sur Windows).
     await warmUpBrowserPrint();
     const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
-    // Sentinel : un ZPL no-op (~HS = demande de statut, ne sort pas d'étiquette)
-    // pour réellement réveiller la file d'impression avant la 1ère vraie étiquette.
-    // Sur certains postes Windows, les 1ers jobs envoyés trop tôt après warm-up sont silencieusement perdus.
-    try { await printZpl('~HS'); } catch (e) { console.warn('warm-up sentinel skipped', e); }
-    await sleep(1500);
+    // Warm-up renforcé : on envoie 2 sentinels ~HS (no-op : demande de statut,
+    // ne sort pas d'étiquette) espacés, puis on attend que la file Browser Print
+    // soit pleinement ouverte. Sans ça, sur Windows les 1ers vrais jobs sont
+    // parfois silencieusement avalés (bug constaté : programme démarrant à la
+    // 3ᵉ ligne au lieu de la 1ʳᵉ).
+    try { await printZpl('~HS'); } catch (e) { console.warn('warm-up sentinel 1 skipped', e); }
+    await sleep(800);
+    try { await printZpl('~HS'); } catch (e) { console.warn('warm-up sentinel 2 skipped', e); }
+    await sleep(2000);
     let ok = 0, fail = 0;
     const failures: string[] = [];
     const queue = lines.filter(l => l.status !== 'printed' && l.quantity > 0);
@@ -211,6 +215,11 @@ export default function PrintProgramRun() {
       const lot = computeLotNumber(l.productionDate);
       updateLine(l.itemId, { status: 'printing', error: null, lot });
       try {
+        // Sentinel avant chaque ligne : garantit que la file n'est pas endormie
+        // entre deux produits (le temps de cooldown peut endormir Browser Print).
+        try { await printZpl('~HS'); } catch { /* ignoré */ }
+        await sleep(400);
+
         const chunks = splitQuantityForPrinter(l.quantity);
         for (let ci = 0; ci < chunks.length; ci++) {
           const chunkQuantity = chunks[ci];

@@ -133,16 +133,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSession(null);
     setProfile(null);
     setRoles([]);
+    setModules([]);
   };
 
   const hasRole = (role: AppRole) => roles.includes(role);
-  
-  const canAccessModule = (
-    module: keyof RolePermissions['modules'], 
-    access: 'read' | 'write' | 'full' = 'read'
-  ) => hasModuleAccess(roles, module, access);
-  
-  const canPerform = (permission: keyof Omit<RolePermissions, 'modules'>) => 
+
+  // Admin a accès à tout. Sinon on regarde la table user_module_access.
+  const canAccessModule = (module: AppModule, _access: 'read' | 'write' | 'full' = 'read') => {
+    if (roles.includes('admin')) return true;
+    return modules.includes(module);
+  };
+
+  const canPerform = (permission: keyof Omit<RolePermissions, 'modules'>) =>
     hasPermission(roles, permission);
 
   return (
@@ -152,6 +154,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         session,
         profile,
         roles,
+        modules,
         loading,
         signIn,
         signUp,

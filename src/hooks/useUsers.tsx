@@ -37,11 +37,22 @@ export function useUsers() {
 
       if (rolesError) throw rolesError;
 
+      // Récupérer les accès modules
+      const { data: allModules, error: modulesError } = await supabase
+        .from('user_module_access')
+        .select('user_id, module');
+
+      if (modulesError) throw modulesError;
+
       // Combiner les données
       const usersWithRoles: UserWithRole[] = (profiles || []).map((profile) => {
         const userRoles = (allRoles || [])
           .filter((r) => r.user_id === profile.id)
           .map((r) => r.role as AppRole);
+
+        const userModules = (allModules || [])
+          .filter((m) => m.user_id === profile.id)
+          .map((m) => m.module as AppModule);
 
         return {
           id: profile.id,
@@ -52,6 +63,7 @@ export function useUsers() {
           last_sign_in_at: profile.last_sign_in_at,
           created_at: profile.created_at,
           roles: userRoles.length > 0 ? userRoles : ['operator' as AppRole],
+          modules: userModules,
         };
       });
 

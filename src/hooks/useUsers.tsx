@@ -13,6 +13,7 @@ export interface UserWithRole {
   last_sign_in_at: string | null;
   created_at: string;
   roles: AppRole[];
+  modules: AppModule[];
 }
 
 export function useUsers() {

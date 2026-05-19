@@ -1,7 +1,8 @@
 import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { AppRole, hasModuleAccess, hasPermission, RolePermissions } from '@/types/roles';
+import { AppRole, hasPermission, RolePermissions } from '@/types/roles';
+import { AppModule } from '@/types/modules';
 
 interface Profile {
   id: string;
@@ -16,12 +17,13 @@ interface AuthContextType {
   session: Session | null;
   profile: Profile | null;
   roles: AppRole[];
+  modules: AppModule[];
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   hasRole: (role: AppRole) => boolean;
-  canAccessModule: (module: keyof RolePermissions['modules'], access?: 'read' | 'write' | 'full') => boolean;
+  canAccessModule: (module: AppModule, access?: 'read' | 'write' | 'full') => boolean;
   canPerform: (permission: keyof Omit<RolePermissions, 'modules'>) => boolean;
 }
 

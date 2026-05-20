@@ -198,18 +198,29 @@ export default function PrintProgramRun() {
     const err = validate();
     if (err) { toast.error(err); return; }
     setPrintingAll(true);
-    // Pré-chauffe Zebra Browser Print (évite l'erreur "n'est pas prêt" au 1er envoi sur Windows).
-    await warmUpBrowserPrint();
     const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
-    // Warm-up renforcé : on envoie 2 sentinels ~HS (no-op : demande de statut,
-    // ne sort pas d'étiquette) espacés, puis on attend que la file Browser Print
-    // soit pleinement ouverte. Sans ça, sur Windows les 1ers vrais jobs sont
-    // parfois silencieusement avalés (bug constaté : programme démarrant à la
-    // 3ᵉ ligne au lieu de la 1ʳᵉ).
-    try { await printZpl('~HS'); } catch (e) { console.warn('warm-up sentinel 1 skipped', e); }
-    await sleep(800);
-    try { await printZpl('~HS'); } catch (e) { console.warn('warm-up sentinel 2 skipped', e); }
-    await sleep(2000);
+
+    // Pré-chauffe Zebra Browser Print (silencieuse).
+    await warmUpBrowserPrint();
+
+    // Pré-vérification réelle de la connexion imprimante : on envoie un format
+    // ZPL vide (^XA^XZ : ne sort aucune étiquette mais valide le pipeline
+    // Browser Print → USB → Zebra). Si ça échoue, on abandonne AVANT de
+    // marquer la 1ʳᵉ ligne en échec — sinon l'utilisateur voit "Buns potatoe :
+    // aucune imprimante" et la ligne est sautée.
+    try {
+      await printZpl('^XA^XZ');
+    } catch (e) {
+      setPrintingAll(false);
+      toast.error(
+        `Imprimante non joignable — ${getErrorMessage(e)}. Cliquez sur "Imprimante" pour la sélectionner puis relancez.`,
+        { duration: 10000 },
+      );
+      return;
+    }
+    // Laisse le temps à l'imprimante de traiter le format vide et d'être prête.
+    await sleep(1500);
+
     let ok = 0, fail = 0;
     const failures: string[] = [];
     const queue = lines.filter(l => l.status !== 'printed' && l.quantity > 0);
@@ -218,11 +229,6 @@ export default function PrintProgramRun() {
       const lot = computeLotNumber(l.productionDate);
       updateLine(l.itemId, { status: 'printing', error: null, lot });
       try {
-        // Sentinel avant chaque ligne : garantit que la file n'est pas endormie
-        // entre deux produits (le temps de cooldown peut endormir Browser Print).
-        try { await printZpl('~HS'); } catch { /* ignoré */ }
-        await sleep(400);
-
         const chunks = splitQuantityForPrinter(l.quantity);
         for (let ci = 0; ci < chunks.length; ci++) {
           const chunkQuantity = chunks[ci];
@@ -233,7 +239,14 @@ export default function PrintProgramRun() {
 
           const hasMoreChunks = ci < chunks.length - 1;
           const hasMoreLines = qi < queue.length - 1;
-          if (hasMoreChunks || hasMoreLines) await sleep(getPrinterCooldownMs(chunkQuantity));
+          // On cool down après chaque chunk pour laisser le buffer Zebra se
+          // vider. Entre deux lignes différentes on ajoute une pause de
+          // sécurité supplémentaire (changement produit + nouveau format).
+          if (hasMoreChunks) {
+            await sleep(getPrinterCooldownMs(chunkQuantity));
+          } else if (hasMoreLines) {
+            await sleep(getPrinterCooldownMs(chunkQuantity) + PRINT_INTER_LINE_MS);
+          }
         }
         updateLine(l.itemId, { status: 'printed', error: null });
         ok++;

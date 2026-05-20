@@ -57,15 +57,18 @@ function todayIso(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-// Taille max d'un job ^PQ envoyé en une fois. La Zebra accepte jusqu'à 99999
-// mais on garde 50 pour limiter le risque de saturation du buffer interne USB
-// (constaté sur ZD420 quand on envoie ^PQ160 d'un coup : 50 étiquettes peuvent
-// être silencieusement perdues).
-const PRINT_CHUNK_SIZE = 50;
-// Temps d'impression typique d'une étiquette ~800ms à 4ips. On laisse 900ms
-// par étiquette + 1,5s de marge pour que le buffer se vide entre deux jobs.
-const PRINT_DELAY_BASE_MS = 1500;
-const PRINT_DELAY_PER_LABEL_MS = 900;
+// Taille max d'un job ^PQ envoyé en une fois. On garde 25 pour limiter le
+// risque de saturation du buffer interne USB de la ZD420 sur grosses séries.
+const PRINT_CHUNK_SIZE = 25;
+// Temps d'impression typique d'une étiquette ~800ms à 4ips. On laisse 1s par
+// étiquette + 2s de marge pour que le buffer se vide intégralement entre deux
+// envois — sinon le job suivant est silencieusement avalé ou l'imprimante
+// tombe en "attente de données" (constaté quand l'envoi suivant arrive avant
+// que le tampon ne soit vide).
+const PRINT_DELAY_BASE_MS = 2000;
+const PRINT_DELAY_PER_LABEL_MS = 1000;
+// Pause supplémentaire entre deux lignes différentes (changement de produit).
+const PRINT_INTER_LINE_MS = 3000;
 
 function splitQuantityForPrinter(quantity: number): number[] {
   const safeQuantity = Math.max(0, Math.floor(quantity || 0));

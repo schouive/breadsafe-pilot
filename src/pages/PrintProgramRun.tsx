@@ -57,15 +57,18 @@ function todayIso(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-// Taille max d'un job ^PQ envoyé en une fois. La Zebra accepte jusqu'à 99999
-// mais on garde 50 pour limiter le risque de saturation du buffer interne USB
-// (constaté sur ZD420 quand on envoie ^PQ160 d'un coup : 50 étiquettes peuvent
-// être silencieusement perdues).
-const PRINT_CHUNK_SIZE = 50;
-// Temps d'impression typique d'une étiquette ~800ms à 4ips. On laisse 900ms
-// par étiquette + 1,5s de marge pour que le buffer se vide entre deux jobs.
-const PRINT_DELAY_BASE_MS = 1500;
-const PRINT_DELAY_PER_LABEL_MS = 900;
+// Taille max d'un job ^PQ envoyé en une fois. On garde 25 pour limiter le
+// risque de saturation du buffer interne USB de la ZD420 sur grosses séries.
+const PRINT_CHUNK_SIZE = 25;
+// Temps d'impression typique d'une étiquette ~800ms à 4ips. On laisse 1s par
+// étiquette + 2s de marge pour que le buffer se vide intégralement entre deux
+// envois — sinon le job suivant est silencieusement avalé ou l'imprimante
+// tombe en "attente de données" (constaté quand l'envoi suivant arrive avant
+// que le tampon ne soit vide).
+const PRINT_DELAY_BASE_MS = 2000;
+const PRINT_DELAY_PER_LABEL_MS = 1000;
+// Pause supplémentaire entre deux lignes différentes (changement de produit).
+const PRINT_INTER_LINE_MS = 3000;
 
 function splitQuantityForPrinter(quantity: number): number[] {
   const safeQuantity = Math.max(0, Math.floor(quantity || 0));
@@ -195,18 +198,29 @@ export default function PrintProgramRun() {
     const err = validate();
     if (err) { toast.error(err); return; }
     setPrintingAll(true);
-    // Pré-chauffe Zebra Browser Print (évite l'erreur "n'est pas prêt" au 1er envoi sur Windows).
-    await warmUpBrowserPrint();
     const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
-    // Warm-up renforcé : on envoie 2 sentinels ~HS (no-op : demande de statut,
-    // ne sort pas d'étiquette) espacés, puis on attend que la file Browser Print
-    // soit pleinement ouverte. Sans ça, sur Windows les 1ers vrais jobs sont
-    // parfois silencieusement avalés (bug constaté : programme démarrant à la
-    // 3ᵉ ligne au lieu de la 1ʳᵉ).
-    try { await printZpl('~HS'); } catch (e) { console.warn('warm-up sentinel 1 skipped', e); }
-    await sleep(800);
-    try { await printZpl('~HS'); } catch (e) { console.warn('warm-up sentinel 2 skipped', e); }
-    await sleep(2000);
+
+    // Pré-chauffe Zebra Browser Print (silencieuse).
+    await warmUpBrowserPrint();
+
+    // Pré-vérification réelle de la connexion imprimante : on envoie un format
+    // ZPL vide (^XA^XZ : ne sort aucune étiquette mais valide le pipeline
+    // Browser Print → USB → Zebra). Si ça échoue, on abandonne AVANT de
+    // marquer la 1ʳᵉ ligne en échec — sinon l'utilisateur voit "Buns potatoe :
+    // aucune imprimante" et la ligne est sautée.
+    try {
+      await printZpl('^XA^XZ');
+    } catch (e) {
+      setPrintingAll(false);
+      toast.error(
+        `Imprimante non joignable — ${getErrorMessage(e)}. Cliquez sur "Imprimante" pour la sélectionner puis relancez.`,
+        { duration: 10000 },
+      );
+      return;
+    }
+    // Laisse le temps à l'imprimante de traiter le format vide et d'être prête.
+    await sleep(1500);
+
     let ok = 0, fail = 0;
     const failures: string[] = [];
     const queue = lines.filter(l => l.status !== 'printed' && l.quantity > 0);
@@ -215,11 +229,6 @@ export default function PrintProgramRun() {
       const lot = computeLotNumber(l.productionDate);
       updateLine(l.itemId, { status: 'printing', error: null, lot });
       try {
-        // Sentinel avant chaque ligne : garantit que la file n'est pas endormie
-        // entre deux produits (le temps de cooldown peut endormir Browser Print).
-        try { await printZpl('~HS'); } catch { /* ignoré */ }
-        await sleep(400);
-
         const chunks = splitQuantityForPrinter(l.quantity);
         for (let ci = 0; ci < chunks.length; ci++) {
           const chunkQuantity = chunks[ci];
@@ -230,7 +239,14 @@ export default function PrintProgramRun() {
 
           const hasMoreChunks = ci < chunks.length - 1;
           const hasMoreLines = qi < queue.length - 1;
-          if (hasMoreChunks || hasMoreLines) await sleep(getPrinterCooldownMs(chunkQuantity));
+          // On cool down après chaque chunk pour laisser le buffer Zebra se
+          // vider. Entre deux lignes différentes on ajoute une pause de
+          // sécurité supplémentaire (changement produit + nouveau format).
+          if (hasMoreChunks) {
+            await sleep(getPrinterCooldownMs(chunkQuantity));
+          } else if (hasMoreLines) {
+            await sleep(getPrinterCooldownMs(chunkQuantity) + PRINT_INTER_LINE_MS);
+          }
         }
         updateLine(l.itemId, { status: 'printed', error: null });
         ok++;

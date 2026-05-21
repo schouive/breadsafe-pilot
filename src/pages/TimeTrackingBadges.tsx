@@ -12,6 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Users, Plus, Edit2, Trash2, Scan, UserCheck, UserX, LinkIcon } from 'lucide-react';
 import { toast } from 'sonner';
+import { useBadgeScan } from '@/hooks/useBadgeScan';
 
 interface Employee {
   id: string;

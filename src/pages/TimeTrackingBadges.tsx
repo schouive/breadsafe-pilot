@@ -12,6 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Users, Plus, Edit2, Trash2, Scan, UserCheck, UserX, LinkIcon } from 'lucide-react';
 import { toast } from 'sonner';
+import { useBadgeScan } from '@/hooks/useBadgeScan';
 
 interface Employee {
   id: string;
@@ -41,6 +42,17 @@ export default function TimeTrackingBadges() {
   const [editing, setEditing] = useState<Employee | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState<Omit<Employee, 'id'>>(emptyForm);
+
+  // Capture RFID scans while the form dialog is open so the stored badge_id
+  // matches exactly what the OS keyboard layout produces at the kiosk.
+  useBadgeScan({
+    enabled: showForm,
+    cooldownMs: 500,
+    onScan: ({ badgeId }) => {
+      setForm((f) => ({ ...f, badge_id: badgeId }));
+      toast.success(`Badge capturé : ${badgeId}`);
+    },
+  });
 
   const { data: employees = [], isLoading } = useQuery({
     queryKey: ['employees'],
@@ -310,9 +322,13 @@ export default function TimeTrackingBadges() {
               <Input
                 value={form.badge_id || ''}
                 onChange={(e) => setForm({ ...form, badge_id: e.target.value })}
-                placeholder="Scannez le badge..."
+                placeholder="Scannez le badge ici..."
                 className="font-mono"
+                data-badge-scanner="true"
               />
+              <p className="text-xs text-muted-foreground mt-1">
+                Approchez le badge du lecteur — l'ID sera capturé automatiquement (recommandé plutôt que la saisie manuelle).
+              </p>
             </div>
 
             <div>

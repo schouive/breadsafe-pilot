@@ -322,9 +322,13 @@ export default function TimeTrackingBadges() {
               <Input
                 value={form.badge_id || ''}
                 onChange={(e) => setForm({ ...form, badge_id: e.target.value })}
-                placeholder="Scannez le badge..."
+                placeholder="Scannez le badge ici..."
                 className="font-mono"
+                data-badge-scanner="true"
               />
+              <p className="text-xs text-muted-foreground mt-1">
+                Approchez le badge du lecteur — l'ID sera capturé automatiquement (recommandé plutôt que la saisie manuelle).
+              </p>
             </div>
 
             <div>

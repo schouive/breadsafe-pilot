@@ -2,157 +2,224 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { CreditCard, Plus, Trash2, Scan } from 'lucide-react';
+import { Users, Plus, Edit2, Trash2, Scan, UserCheck, UserX, LinkIcon } from 'lucide-react';
 import { toast } from 'sonner';
+
+interface Employee {
+  id: string;
+  full_name: string;
+  badge_id: string | null;
+  photo_url: string | null;
+  position: string | null;
+  email: string | null;
+  hire_date: string | null;
+  is_active: boolean;
+  user_id: string | null;
+}
+
+const emptyForm: Omit<Employee, 'id'> = {
+  full_name: '',
+  badge_id: '',
+  photo_url: '',
+  position: '',
+  email: '',
+  hire_date: '',
+  is_active: true,
+  user_id: null,
+};
 
 export default function TimeTrackingBadges() {
   const queryClient = useQueryClient();
-  const [showAssign, setShowAssign] = useState(false);
-  const [selectedUser, setSelectedUser] = useState('');
-  const [badgeId, setBadgeId] = useState('');
-  const [scanMode, setScanMode] = useState(false);
+  const [editing, setEditing] = useState<Employee | null>(null);
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState<Omit<Employee, 'id'>>(emptyForm);
 
-  // All profiles
-  const { data: profiles = [], isLoading } = useQuery({
-    queryKey: ['profiles-badges'],
+  const { data: employees = [], isLoading } = useQuery({
+    queryKey: ['employees'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('profiles')
-        .select('id, full_name, email, badge_id, photo_url, avatar_url, is_active')
+        .from('employees')
+        .select('*')
         .order('full_name');
       if (error) throw error;
-      return data || [];
+      return (data || []) as Employee[];
     },
   });
 
-  const assignBadge = useMutation({
-    mutationFn: async ({ userId, badgeId }: { userId: string; badgeId: string }) => {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ badge_id: badgeId })
-        .eq('id', userId);
-      if (error) throw error;
+  const saveEmployee = useMutation({
+    mutationFn: async () => {
+      const payload = {
+        full_name: form.full_name.trim(),
+        badge_id: form.badge_id?.trim() || null,
+        photo_url: form.photo_url?.trim() || null,
+        position: form.position?.trim() || null,
+        email: form.email?.trim() || null,
+        hire_date: form.hire_date || null,
+        is_active: form.is_active,
+      };
+      if (editing) {
+        const { error } = await supabase.from('employees').update(payload).eq('id', editing.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from('employees').insert(payload);
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['profiles-badges'] });
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
       queryClient.invalidateQueries({ queryKey: ['employees-badges'] });
-      toast.success('Badge assigné avec succès');
-      setShowAssign(false);
-      setSelectedUser('');
-      setBadgeId('');
+      toast.success(editing ? 'Employé mis à jour' : 'Employé créé');
+      closeForm();
     },
     onError: (error: any) => {
       if (error?.message?.includes('unique') || error?.message?.includes('duplicate')) {
         toast.error('Ce badge est déjà assigné à un autre employé');
       } else {
-        toast.error("Erreur lors de l'assignation du badge");
+        toast.error('Erreur : ' + (error?.message || 'inconnue'));
       }
     },
   });
 
-  const removeBadge = useMutation({
-    mutationFn: async (userId: string) => {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ badge_id: null })
-        .eq('id', userId);
+  const deleteEmployee = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('employees').delete().eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['profiles-badges'] });
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
       queryClient.invalidateQueries({ queryKey: ['employees-badges'] });
-      toast.success('Badge retiré');
+      toast.success('Employé supprimé');
     },
+    onError: (e: any) => toast.error('Suppression impossible : ' + (e?.message || '')),
   });
+
+  const openCreate = () => {
+    setEditing(null);
+    setForm(emptyForm);
+    setShowForm(true);
+  };
+
+  const openEdit = (emp: Employee) => {
+    setEditing(emp);
+    setForm({
+      full_name: emp.full_name,
+      badge_id: emp.badge_id || '',
+      photo_url: emp.photo_url || '',
+      position: emp.position || '',
+      email: emp.email || '',
+      hire_date: emp.hire_date || '',
+      is_active: emp.is_active,
+      user_id: emp.user_id,
+    });
+    setShowForm(true);
+  };
+
+  const closeForm = () => {
+    setShowForm(false);
+    setEditing(null);
+    setForm(emptyForm);
+  };
 
   const getInitials = (name: string) =>
     name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2);
 
-  const usersWithBadges = profiles.filter((p) => p.badge_id);
-  const usersWithoutBadges = profiles.filter((p) => !p.badge_id && p.is_active);
-
-  // Handle scan input for badge assignment
-  const handleBadgeInput = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && badgeId.trim()) {
-      e.preventDefault();
-    }
-  };
+  const active = employees.filter((e) => e.is_active);
+  const inactive = employees.filter((e) => !e.is_active);
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Gestion des badges</h1>
-          <p className="text-sm text-muted-foreground">Associer des badges RFID aux employés</p>
+          <h1 className="text-2xl font-bold text-foreground">Employés & badges</h1>
+          <p className="text-sm text-muted-foreground">
+            Gérez tous les employés (avec ou sans compte app) et leurs badges RFID
+          </p>
         </div>
-        <Button onClick={() => setShowAssign(true)}>
+        <Button onClick={openCreate}>
           <Plus className="h-4 w-4 mr-2" />
-          Assigner un badge
+          Nouvel employé
         </Button>
       </div>
 
-      {/* Badges Table */}
       <Card>
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
-            <CreditCard className="h-5 w-5" />
-            Badges assignés ({usersWithBadges.length})
+            <Users className="h-5 w-5" />
+            Employés actifs ({active.length})
           </CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading ? (
             <p className="text-muted-foreground text-center py-8">Chargement...</p>
-          ) : usersWithBadges.length === 0 ? (
-            <p className="text-muted-foreground text-center py-8">Aucun badge assigné</p>
+          ) : active.length === 0 ? (
+            <p className="text-muted-foreground text-center py-8">Aucun employé actif</p>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Employé</TableHead>
-                  <TableHead>Badge ID</TableHead>
-                  <TableHead>Statut</TableHead>
-                  <TableHead>Actions</TableHead>
+                  <TableHead>Poste</TableHead>
+                  <TableHead>Badge</TableHead>
+                  <TableHead>Compte app</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {usersWithBadges.map((profile) => (
-                  <TableRow key={profile.id}>
+                {active.map((emp) => (
+                  <TableRow key={emp.id}>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <Avatar className="h-8 w-8">
-                          <AvatarImage src={profile.photo_url || profile.avatar_url || ''} />
+                          <AvatarImage src={emp.photo_url || ''} />
                           <AvatarFallback className="text-xs bg-primary/10 text-primary">
-                            {getInitials(profile.full_name)}
+                            {getInitials(emp.full_name)}
                           </AvatarFallback>
                         </Avatar>
                         <div>
-                          <span className="font-medium">{profile.full_name}</span>
-                          <span className="block text-xs text-muted-foreground">{profile.email}</span>
+                          <span className="font-medium">{emp.full_name}</span>
+                          {emp.email && (
+                            <span className="block text-xs text-muted-foreground">{emp.email}</span>
+                          )}
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell className="font-mono">{profile.badge_id}</TableCell>
-                    <TableCell>
-                      <Badge variant={profile.is_active ? 'default' : 'secondary'}>
-                        {profile.is_active ? 'Actif' : 'Inactif'}
-                      </Badge>
+                    <TableCell className="text-sm">{emp.position || <span className="text-muted-foreground">—</span>}</TableCell>
+                    <TableCell className="font-mono text-sm">
+                      {emp.badge_id || <span className="text-muted-foreground italic">Aucun</span>}
                     </TableCell>
                     <TableCell>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="text-destructive"
-                        onClick={() => removeBadge.mutate(profile.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
+                      {emp.user_id ? (
+                        <Badge variant="outline" className="text-xs">
+                          <LinkIcon className="h-3 w-3 mr-1" /> Lié
+                        </Badge>
+                      ) : (
+                        <Badge variant="secondary" className="text-xs">Badge seul</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button size="sm" variant="ghost" onClick={() => openEdit(emp)}>
+                        <Edit2 className="h-4 w-4" />
                       </Button>
+                      {!emp.user_id && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-destructive"
+                          onClick={() => {
+                            if (confirm(`Supprimer ${emp.full_name} ?`)) deleteEmployee.mutate(emp.id);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -162,61 +229,126 @@ export default function TimeTrackingBadges() {
         </CardContent>
       </Card>
 
-      {/* Assign Badge Dialog */}
-      <Dialog open={showAssign} onOpenChange={setShowAssign}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Assigner un badge RFID</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <label className="text-sm font-medium">Employé</label>
-              <Select value={selectedUser} onValueChange={setSelectedUser}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Sélectionner un employé" />
-                </SelectTrigger>
-                <SelectContent>
-                  {usersWithoutBadges.map((u) => (
-                    <SelectItem key={u.id} value={u.id}>
-                      {u.full_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+      {inactive.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2 text-muted-foreground">
+              <UserX className="h-5 w-5" />
+              Employés inactifs ({inactive.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {inactive.map((emp) => (
+                <div key={emp.id} className="flex items-center justify-between p-2 rounded border bg-muted/30">
+                  <span className="text-sm">{emp.full_name}</span>
+                  <Button size="sm" variant="ghost" onClick={() => openEdit(emp)}>
+                    <Edit2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
             </div>
+          </CardContent>
+        </Card>
+      )}
+
+      <Dialog open={showForm} onOpenChange={(o) => !o && closeForm()}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{editing ? 'Modifier l\'employé' : 'Nouvel employé'}</DialogTitle>
+            <DialogDescription>
+              {editing?.user_id
+                ? 'Cet employé a un compte app — les modifications ne synchronisent pas le compte.'
+                : 'Employé badge-only (pas de compte app nécessaire pour pointer).'}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
             <div>
-              <label className="text-sm font-medium flex items-center gap-2">
-                <Scan className="h-4 w-4" />
-                Badge ID (scannez le badge ou saisissez l'ID)
-              </label>
+              <Label>Nom complet *</Label>
               <Input
-                value={badgeId}
-                onChange={(e) => setBadgeId(e.target.value)}
-                onKeyDown={handleBadgeInput}
-                placeholder="Scannez le badge RFID..."
-                autoFocus
+                value={form.full_name}
+                onChange={(e) => setForm({ ...form, full_name: e.target.value })}
+                placeholder="Jean Dupont"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Poste</Label>
+                <Input
+                  value={form.position || ''}
+                  onChange={(e) => setForm({ ...form, position: e.target.value })}
+                  placeholder="Boulanger"
+                />
+              </div>
+              <div>
+                <Label>Date d'embauche</Label>
+                <Input
+                  type="date"
+                  value={form.hire_date || ''}
+                  onChange={(e) => setForm({ ...form, hire_date: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label>Email (optionnel)</Label>
+              <Input
+                type="email"
+                value={form.email || ''}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                placeholder="jean@exemple.fr"
+              />
+            </div>
+
+            <div>
+              <Label className="flex items-center gap-2">
+                <Scan className="h-4 w-4" />
+                Badge RFID
+              </Label>
+              <Input
+                value={form.badge_id || ''}
+                onChange={(e) => setForm({ ...form, badge_id: e.target.value })}
+                placeholder="Scannez le badge..."
                 className="font-mono"
               />
-              <p className="text-xs text-muted-foreground mt-1">
-                Approchez le badge du lecteur RFID pour capturer l'ID automatiquement
-              </p>
+            </div>
+
+            <div>
+              <Label>Photo (URL)</Label>
+              <Input
+                value={form.photo_url || ''}
+                onChange={(e) => setForm({ ...form, photo_url: e.target.value })}
+                placeholder="https://..."
+              />
+            </div>
+
+            <div className="flex items-center justify-between rounded-md border p-3">
+              <div>
+                <Label>Employé actif</Label>
+                <p className="text-xs text-muted-foreground">Désactivez pour bloquer le pointage</p>
+              </div>
+              <Switch
+                checked={form.is_active}
+                onCheckedChange={(v) => setForm({ ...form, is_active: v })}
+              />
             </div>
           </div>
+
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowAssign(false)}>
-              Annuler
-            </Button>
+            <Button variant="outline" onClick={closeForm}>Annuler</Button>
             <Button
               onClick={() => {
-                if (!selectedUser || !badgeId.trim()) {
-                  toast.error('Sélectionnez un employé et scannez un badge');
+                if (!form.full_name.trim()) {
+                  toast.error('Le nom est obligatoire');
                   return;
                 }
-                assignBadge.mutate({ userId: selectedUser, badgeId: badgeId.trim() });
+                saveEmployee.mutate();
               }}
-              disabled={assignBadge.isPending}
+              disabled={saveEmployee.isPending}
             >
-              Assigner
+              {saveEmployee.isPending ? 'Enregistrement...' : 'Enregistrer'}
             </Button>
           </DialogFooter>
         </DialogContent>

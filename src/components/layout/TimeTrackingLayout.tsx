@@ -2,7 +2,7 @@ import {
   LayoutDashboard,
   Clock,
   FileEdit,
-  CreditCard,
+  Users,
   Scan,
   Download,
 } from 'lucide-react';
@@ -18,7 +18,7 @@ const fullNavigation = [
   { name: 'Pointeuse', href: '/time-clock', icon: Scan },
   { name: 'Mon historique', href: '/time-tracking/history', icon: Clock },
   { name: 'Corrections', href: '/time-tracking/corrections', icon: FileEdit },
-  { name: 'Badges', href: '/time-tracking/badges', icon: CreditCard },
+  { name: 'Employés', href: '/time-tracking/badges', icon: Users },
   { name: 'Export', href: '/time-tracking/export', icon: Download },
 ];
 

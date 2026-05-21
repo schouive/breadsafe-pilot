@@ -42,13 +42,14 @@ export function useEmployeeByBadge() {
   return useMutation({
     mutationFn: async (badgeId: string) => {
       const { data, error } = await supabase
-        .from('profiles_public')
-        .select('id, full_name, badge_id, photo_url, avatar_url')
+        .from('employees')
+        .select('id, full_name, badge_id, photo_url, is_active')
         .eq('badge_id', badgeId)
+        .eq('is_active', true)
         .maybeSingle();
 
       if (error) throw error;
-      return data;
+      return data ? { ...data, avatar_url: null as string | null } : null;
     },
   });
 }

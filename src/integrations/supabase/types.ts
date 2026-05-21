@@ -283,6 +283,48 @@ export type Database = {
           },
         ]
       }
+      employees: {
+        Row: {
+          badge_id: string | null
+          created_at: string
+          email: string | null
+          full_name: string
+          hire_date: string | null
+          id: string
+          is_active: boolean
+          photo_url: string | null
+          position: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          badge_id?: string | null
+          created_at?: string
+          email?: string | null
+          full_name: string
+          hire_date?: string | null
+          id?: string
+          is_active?: boolean
+          photo_url?: string | null
+          position?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          badge_id?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string
+          hire_date?: string | null
+          id?: string
+          is_active?: boolean
+          photo_url?: string | null
+          position?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       inco_change_logs: {
         Row: {
           action: string
@@ -2697,7 +2739,22 @@ export type Database = {
           recorded_at?: string
           scan_speed_ms?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "time_entries_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "time_entries_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees_public"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_module_access: {
         Row: {
@@ -2743,6 +2800,36 @@ export type Database = {
       }
     }
     Views: {
+      employees_public: {
+        Row: {
+          badge_id: string | null
+          full_name: string | null
+          id: string | null
+          is_active: boolean | null
+          photo_url: string | null
+          position: string | null
+          user_id: string | null
+        }
+        Insert: {
+          badge_id?: string | null
+          full_name?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          photo_url?: string | null
+          position?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          badge_id?: string | null
+          full_name?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          photo_url?: string | null
+          position?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       profiles_public: {
         Row: {
           avatar_url: string | null

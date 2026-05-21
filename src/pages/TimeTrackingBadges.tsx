@@ -43,6 +43,17 @@ export default function TimeTrackingBadges() {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState<Omit<Employee, 'id'>>(emptyForm);
 
+  // Capture RFID scans while the form dialog is open so the stored badge_id
+  // matches exactly what the OS keyboard layout produces at the kiosk.
+  useBadgeScan({
+    enabled: showForm,
+    cooldownMs: 500,
+    onScan: ({ badgeId }) => {
+      setForm((f) => ({ ...f, badge_id: badgeId }));
+      toast.success(`Badge capturé : ${badgeId}`);
+    },
+  });
+
   const { data: employees = [], isLoading } = useQuery({
     queryKey: ['employees'],
     queryFn: async () => {

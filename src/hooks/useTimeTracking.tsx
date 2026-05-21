@@ -154,19 +154,19 @@ export function useTimeEntries(options?: {
 
       // Enrich with employee names
       const employeeIds = [...new Set((data || []).map((e) => e.employee_id))];
-      const { data: profiles } = await supabase
-        .from('profiles_public')
-        .select('id, full_name, photo_url, avatar_url')
+      const { data: employees } = await supabase
+        .from('employees')
+        .select('id, full_name, photo_url')
         .in('id', employeeIds);
 
-      const profileMap = new Map(
-        (profiles || []).map((p) => [p.id, { name: p.full_name, photo: p.photo_url || p.avatar_url }])
+      const empMap = new Map(
+        (employees || []).map((p) => [p.id, { name: p.full_name, photo: p.photo_url }])
       );
 
       return (data || []).map((entry) => ({
         ...entry,
-        employee_name: profileMap.get(entry.employee_id)?.name || 'Inconnu',
-        employee_photo: profileMap.get(entry.employee_id)?.photo,
+        employee_name: empMap.get(entry.employee_id)?.name || 'Inconnu',
+        employee_photo: empMap.get(entry.employee_id)?.photo,
       })) as TimeEntry[];
     },
   });
@@ -178,14 +178,14 @@ export function useEmployeesWithBadges() {
     queryKey: ['employees-badges'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('profiles_public')
-        .select('id, full_name, badge_id, photo_url, avatar_url, is_active')
+        .from('employees')
+        .select('id, full_name, badge_id, photo_url, is_active')
         .not('badge_id', 'is', null)
         .eq('is_active', true)
         .order('full_name');
 
       if (error) throw error;
-      return data || [];
+      return (data || []).map((e) => ({ ...e, avatar_url: null as string | null }));
     },
   });
 }

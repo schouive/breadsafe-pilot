@@ -109,8 +109,10 @@ export default function PrintProgramRun() {
   }, [products]);
 
   const initialDate = todayIso();
+  // DDM par défaut = date de fabrication + 21 jours (modifiable manuellement).
   const [globalProductionDate, setGlobalProductionDate] = useState(initialDate);
-  const [globalDdm, setGlobalDdm] = useState('');
+  const [globalDdm, setGlobalDdm] = useState(() => computeDdm(initialDate, null));
+  const [globalDdmTouched, setGlobalDdmTouched] = useState(false);
   const [lines, setLines] = useState<Line[]>([]);
   const [rawQuantities, setRawQuantities] = useState<Record<string, string>>({});
   const [printingAll, setPrintingAll] = useState(false);

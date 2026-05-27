@@ -172,6 +172,10 @@ export default function PrintProgramRun() {
 
   const handleGlobalProductionDateChange = (val: string) => {
     setGlobalProductionDate(val);
+    // Auto-recalcule la DDM globale (+21j) tant que l'utilisateur n'y a pas touché.
+    if (!globalDdmTouched) {
+      setGlobalDdm(computeDdm(val, null));
+    }
     setLines(prev => prev.map(l =>
       l.status === 'printed'
         ? l
@@ -181,6 +185,7 @@ export default function PrintProgramRun() {
 
   const handleGlobalDdmChange = (val: string) => {
     setGlobalDdm(val);
+    setGlobalDdmTouched(true);
     setLines(prev => prev.map(l => l.status === 'printed' ? l : { ...l, ddm: val }));
   };
 

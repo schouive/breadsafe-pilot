@@ -109,8 +109,10 @@ export default function PrintProgramRun() {
   }, [products]);
 
   const initialDate = todayIso();
+  // DDM par défaut = date de fabrication + 21 jours (modifiable manuellement).
   const [globalProductionDate, setGlobalProductionDate] = useState(initialDate);
-  const [globalDdm, setGlobalDdm] = useState('');
+  const [globalDdm, setGlobalDdm] = useState(() => computeDdm(initialDate, null));
+  const [globalDdmTouched, setGlobalDdmTouched] = useState(false);
   const [lines, setLines] = useState<Line[]>([]);
   const [rawQuantities, setRawQuantities] = useState<Record<string, string>>({});
   const [printingAll, setPrintingAll] = useState(false);
@@ -170,6 +172,10 @@ export default function PrintProgramRun() {
 
   const handleGlobalProductionDateChange = (val: string) => {
     setGlobalProductionDate(val);
+    // Auto-recalcule la DDM globale (+21j) tant que l'utilisateur n'y a pas touché.
+    if (!globalDdmTouched) {
+      setGlobalDdm(computeDdm(val, null));
+    }
     setLines(prev => prev.map(l =>
       l.status === 'printed'
         ? l
@@ -179,6 +185,7 @@ export default function PrintProgramRun() {
 
   const handleGlobalDdmChange = (val: string) => {
     setGlobalDdm(val);
+    setGlobalDdmTouched(true);
     setLines(prev => prev.map(l => l.status === 'printed' ? l : { ...l, ddm: val }));
   };
 

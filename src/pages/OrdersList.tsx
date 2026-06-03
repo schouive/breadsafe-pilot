@@ -53,7 +53,8 @@ const STATUS_CONFIG: Record<string, { icon: typeof Clock; color: string; bg: str
 };
 
 function isOrderLate(order: { status: string; expected_delivery_date: string | null }) {
-  if (order.status === 'received') return false;
+  // Une commande dont la réception a été saisie (partielle ou complète) n'est plus "en retard"
+  if (order.status === 'received' || order.status === 'partially_received') return false;
   if (!order.expected_delivery_date) return false;
   return isPast(parseISO(order.expected_delivery_date));
 }

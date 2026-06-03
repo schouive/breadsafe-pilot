@@ -1091,7 +1091,7 @@ export type Database = {
             foreignKeyName: "print_history_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
-            referencedRelation: "print_products"
+            referencedRelation: "product_sheet_packagings"
             referencedColumns: ["id"]
           },
           {

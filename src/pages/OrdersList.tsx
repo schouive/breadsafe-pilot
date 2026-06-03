@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { format, addDays, startOfWeek, isSameDay, isToday, isPast, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight, ClipboardList, Eye, Mail, Loader2, Pencil, Save, X, Trash2, FileText, Send, Clock, CheckCircle2, AlertTriangle, Package } from 'lucide-react';
@@ -132,7 +132,7 @@ export default function OrdersList() {
   ).sort((a, b) => (a[1] || '').localeCompare(b[1] || ''));
 
   // Stats
-  const lateCount = filteredOrders?.filter(isOrderLate).length ?? 0;
+  const lateCount = filteredOrders?.filter((o) => isOrderLate(o, receivedOrderIds)).length ?? 0;
   const todayOrders = getOrdersForDay(new Date());
   const pendingToday = todayOrders.filter((o) => o.status !== 'received').length;
 

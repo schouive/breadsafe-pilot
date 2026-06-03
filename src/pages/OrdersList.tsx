@@ -52,9 +52,14 @@ const STATUS_CONFIG: Record<string, { icon: typeof Clock; color: string; bg: str
   received: { icon: CheckCircle2, color: 'text-[hsl(142,71%,35%)]', bg: 'bg-[hsl(var(--status-conforme-light))]' },
 };
 
-function isOrderLate(order: { status: string; expected_delivery_date: string | null }) {
+function isOrderLate(
+  order: { id: string; status: string; expected_delivery_date: string | null },
+  receivedOrderIds?: Set<string>
+) {
   // Une commande dont la réception a été saisie (partielle ou complète) n'est plus "en retard"
   if (order.status === 'received' || order.status === 'partially_received') return false;
+  // Ou si une réception HACCP (CP_RECEPTION) a déjà été enregistrée pour cette commande
+  if (receivedOrderIds?.has(order.id)) return false;
   if (!order.expected_delivery_date) return false;
   return isPast(parseISO(order.expected_delivery_date));
 }

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { format, addDays, startOfWeek, isSameDay, isToday, isPast, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight, ClipboardList, Eye, Mail, Loader2, Pencil, Save, X, Trash2, FileText, Send, Clock, CheckCircle2, AlertTriangle, Package } from 'lucide-react';
@@ -52,9 +52,14 @@ const STATUS_CONFIG: Record<string, { icon: typeof Clock; color: string; bg: str
   received: { icon: CheckCircle2, color: 'text-[hsl(142,71%,35%)]', bg: 'bg-[hsl(var(--status-conforme-light))]' },
 };
 
-function isOrderLate(order: { status: string; expected_delivery_date: string | null }) {
+function isOrderLate(
+  order: { id: string; status: string; expected_delivery_date: string | null },
+  receivedOrderIds?: Set<string>
+) {
   // Une commande dont la réception a été saisie (partielle ou complète) n'est plus "en retard"
   if (order.status === 'received' || order.status === 'partially_received') return false;
+  // Ou si une réception HACCP (CP_RECEPTION) a déjà été enregistrée pour cette commande
+  if (receivedOrderIds?.has(order.id)) return false;
   if (!order.expected_delivery_date) return false;
   return isPast(parseISO(order.expected_delivery_date));
 }
@@ -91,6 +96,20 @@ export default function OrdersList() {
   const { data: detailOrder } = useSupplierOrder(detailOrderId);
   const { data: rawMaterials } = useRawMaterials(detailOrder?.supplier_id);
 
+  // Fetch order_ids that already have a CP_RECEPTION control record (HACCP reception)
+  const { data: receivedOrderIds } = useQuery({
+    queryKey: ['cp_reception_order_ids'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('control_records')
+        .select('order_id')
+        .eq('control_point_code', 'CP_RECEPTION')
+        .not('order_id', 'is', null);
+      if (error) throw error;
+      return new Set<string>((data || []).map((r: any) => r.order_id));
+    },
+  });
+
   const [filterSupplierId, setFilterSupplierId] = useState<string>('all');
 
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(currentWeekStart, i));
@@ -113,7 +132,7 @@ export default function OrdersList() {
   ).sort((a, b) => (a[1] || '').localeCompare(b[1] || ''));
 
   // Stats
-  const lateCount = filteredOrders?.filter(isOrderLate).length ?? 0;
+  const lateCount = filteredOrders?.filter((o) => isOrderLate(o, receivedOrderIds)).length ?? 0;
   const todayOrders = getOrdersForDay(new Date());
   const pendingToday = todayOrders.filter((o) => o.status !== 'received').length;
 
@@ -297,7 +316,7 @@ export default function OrdersList() {
                     dayOrders.map((order) => {
                       const statusCfg = STATUS_CONFIG[order.status] || STATUS_CONFIG.draft;
                       const StatusIcon = statusCfg.icon;
-                      const late = isOrderLate(order);
+                      const late = isOrderLate(order, receivedOrderIds);
 
                       return (
                         <button
@@ -411,7 +430,7 @@ export default function OrdersList() {
                     )}>
                       {STATUS_LABELS[detailOrder.status]}
                     </Badge>
-                    {isOrderLate(detailOrder) && (
+                    {isOrderLate(detailOrder, receivedOrderIds) && (
                       <Badge variant="destructive">Retard</Badge>
                     )}
                   </div>

@@ -316,7 +316,7 @@ export default function OrdersList() {
                     dayOrders.map((order) => {
                       const statusCfg = STATUS_CONFIG[order.status] || STATUS_CONFIG.draft;
                       const StatusIcon = statusCfg.icon;
-                      const late = isOrderLate(order);
+                      const late = isOrderLate(order, receivedOrderIds);
 
                       return (
                         <button
@@ -430,7 +430,7 @@ export default function OrdersList() {
                     )}>
                       {STATUS_LABELS[detailOrder.status]}
                     </Badge>
-                    {isOrderLate(detailOrder) && (
+                    {isOrderLate(detailOrder, receivedOrderIds) && (
                       <Badge variant="destructive">Retard</Badge>
                     )}
                   </div>

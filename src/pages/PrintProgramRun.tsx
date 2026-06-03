@@ -68,7 +68,7 @@ const PRINT_CHUNK_SIZE = 25;
 const PRINT_DELAY_BASE_MS = 2000;
 const PRINT_DELAY_PER_LABEL_MS = 1000;
 // Pause supplémentaire entre deux lignes différentes (changement de produit).
-const PRINT_INTER_LINE_MS = 3000;
+const PRINT_INTER_LINE_MS = 500;
 
 function splitQuantityForPrinter(quantity: number): number[] {
   const safeQuantity = Math.max(0, Math.floor(quantity || 0));

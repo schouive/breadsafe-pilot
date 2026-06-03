@@ -96,6 +96,20 @@ export default function OrdersList() {
   const { data: detailOrder } = useSupplierOrder(detailOrderId);
   const { data: rawMaterials } = useRawMaterials(detailOrder?.supplier_id);
 
+  // Fetch order_ids that already have a CP_RECEPTION control record (HACCP reception)
+  const { data: receivedOrderIds } = useQuery({
+    queryKey: ['cp_reception_order_ids'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('control_records')
+        .select('order_id')
+        .eq('control_point_code', 'CP_RECEPTION')
+        .not('order_id', 'is', null);
+      if (error) throw error;
+      return new Set<string>((data || []).map((r: any) => r.order_id));
+    },
+  });
+
   const [filterSupplierId, setFilterSupplierId] = useState<string>('all');
 
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(currentWeekStart, i));

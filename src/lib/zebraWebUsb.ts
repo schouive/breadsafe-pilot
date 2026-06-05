@@ -100,7 +100,6 @@ export async function testPrintBridge(url: string): Promise<void> {
   }
 }
 
-const PREFERRED_PRINT_METHOD_STORAGE_KEY = 'breadshop_preferred_zebra_print_method';
 
 
 function getPreferredPrintMethod(): ZebraPrintMethod | null {

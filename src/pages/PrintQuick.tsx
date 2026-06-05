@@ -7,6 +7,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Zap, Search, Printer, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { usePrintProducts, type PrintProduct, useRecordPrint } from '@/hooks/usePrintLabels';
+import { PrintBridgeDialog } from '@/components/print/PrintBridgeDialog';
 import { buildProductZpl, computeFinalSku } from '@/lib/buildProductZpl';
 import { printZpl, pickZebraPrinter } from '@/lib/zebraWebUsb';
 

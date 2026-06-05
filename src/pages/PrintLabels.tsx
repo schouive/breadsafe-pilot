@@ -17,7 +17,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import {
-  usePrintProducts, usePrintHistory,
+  usePrintProducts,
   usePrintFavorites, useToggleFavorite, useRecordPrint,
   type PrintProduct,
 } from '@/hooks/usePrintLabels';

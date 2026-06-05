@@ -25,6 +25,7 @@ import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { fillZplTemplate, DEFAULT_PRODUCT_LABEL_ZPL } from '@/lib/zplLabelGenerator';
 import { printZpl, pickZebraPrinter } from '@/lib/zebraWebUsb';
+import { PrintBridgeDialog } from '@/components/print/PrintBridgeDialog';
 import { getPackCount } from '@/lib/buildProductZpl';
 import { computeDdm } from '@/lib/ddm';
 import labelLogoM from '@/assets/label-logo-m.png';
@@ -422,7 +423,8 @@ export default function PrintLabels() {
             Étape {step}/3 — {['Article', 'Lot & DDM', 'Confirmation'][step - 1]}
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          <PrintBridgeDialog />
           {step === 1 && (
             <Button variant="outline" size="lg" onClick={() => setAddOpen(true)}>
               <Plus className="h-5 w-5 mr-2" /> Ajouter une étiquette

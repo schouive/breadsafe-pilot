@@ -7,6 +7,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Zap, Search, Printer, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { usePrintProducts, type PrintProduct, useRecordPrint } from '@/hooks/usePrintLabels';
+import { PrintBridgeDialog } from '@/components/print/PrintBridgeDialog';
 import { buildProductZpl, computeFinalSku } from '@/lib/buildProductZpl';
 import { printZpl, pickZebraPrinter } from '@/lib/zebraWebUsb';
 
@@ -121,9 +122,12 @@ export default function PrintQuick() {
             Une étiquette, sans sauvegarde
           </p>
         </div>
-        <Button variant="outline" onClick={handlePickPrinter}>
-          <Printer className="h-4 w-4 mr-2" /> Imprimante
-        </Button>
+        <div className="flex gap-2">
+          <PrintBridgeDialog />
+          <Button variant="outline" onClick={handlePickPrinter}>
+            <Printer className="h-4 w-4 mr-2" /> Imprimante
+          </Button>
+        </div>
       </div>
 
       <Card>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,6 +16,10 @@ export function PrintBridgeDialog({ trigger }: PrintBridgeDialogProps) {
   const [url, setUrl] = useState(() => getPrintBridgeUrl() ?? '');
   const [testing, setTesting] = useState(false);
 
+  useEffect(() => {
+    if (open) setUrl(getPrintBridgeUrl() ?? '');
+  }, [open]);
+
   const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';
   const isHttpUrl = url.trim().toLowerCase().startsWith('http://');
   const mixedContent = isHttps && isHttpUrl;
@@ -31,9 +35,10 @@ export function PrintBridgeDialog({ trigger }: PrintBridgeDialogProps) {
     setTesting(true);
     try {
       await testPrintBridge(url.trim());
-      toast.success('Serveur joignable — étiquette vide envoyée');
-    } catch (e: any) {
-      toast.error(e?.message || 'Échec du test');
+      setPrintBridgeUrl(url.trim());
+      toast.success('Serveur joignable — URL enregistrée — étiquette vide envoyée');
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : 'Échec du test');
     } finally {
       setTesting(false);
     }

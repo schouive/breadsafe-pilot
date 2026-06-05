@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import {
-  Printer, Search, ArrowLeft, Star, History, Check, Loader2,
+  Printer, Search, ArrowLeft, Star, Check, Loader2,
   Download, Plus, Trash2,
 } from 'lucide-react';
 import { AddLabelToCatalogDialog } from '@/components/print/AddLabelToCatalogDialog';

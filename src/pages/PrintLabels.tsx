@@ -25,6 +25,7 @@ import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { fillZplTemplate, DEFAULT_PRODUCT_LABEL_ZPL } from '@/lib/zplLabelGenerator';
 import { printZpl, pickZebraPrinter } from '@/lib/zebraWebUsb';
+import { PrintBridgeDialog } from '@/components/print/PrintBridgeDialog';
 import { getPackCount } from '@/lib/buildProductZpl';
 import { computeDdm } from '@/lib/ddm';
 import labelLogoM from '@/assets/label-logo-m.png';

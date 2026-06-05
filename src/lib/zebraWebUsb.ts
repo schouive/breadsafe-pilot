@@ -108,7 +108,7 @@ export async function testPrintBridge(url: string): Promise<void> {
     }
     const msg = String(e?.message || e || '');
     if (msg.toLowerCase().includes("load failed")) {
-      throw new Error("Load failed = le navigateur n'arrive pas à lire la réponse. Le plus fréquent : CORS absent dans le script Python. Installez flask-cors puis ajoutez CORS(app) juste après app = Flask(__name__).");
+      throw new Error("Load failed = serveur/tunnel injoignable depuis le téléphone. Vérifiez que le script Python tourne encore, que le tunnel HTTPS est relancé, puis recopiez sa nouvelle URL si elle a changé.");
     }
     if (msg.toLowerCase().includes('failed to fetch')) {
       const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';

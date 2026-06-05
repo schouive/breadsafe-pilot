@@ -122,9 +122,12 @@ export default function PrintQuick() {
             Une étiquette, sans sauvegarde
           </p>
         </div>
-        <Button variant="outline" onClick={handlePickPrinter}>
-          <Printer className="h-4 w-4 mr-2" /> Imprimante
-        </Button>
+        <div className="flex gap-2">
+          <PrintBridgeDialog />
+          <Button variant="outline" onClick={handlePickPrinter}>
+            <Printer className="h-4 w-4 mr-2" /> Imprimante
+          </Button>
+        </div>
       </div>
 
       <Card>

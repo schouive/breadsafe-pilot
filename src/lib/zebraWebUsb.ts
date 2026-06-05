@@ -384,6 +384,18 @@ export async function printZpl(zpl: string, opts: { forcePicker?: boolean } = {}
   const hasUserActivation = typeof navigator !== 'undefined' && !!navigator.userActivation?.isActive;
   const methodPreference = getPreferredPrintMethod();
 
+  // 1) Bridge HTTP (serveur Python local/distant) — priorité si configuré
+  if (!opts.forcePicker && getPrintBridgeUrl()) {
+    try {
+      await printZplViaBridge(zpl);
+      return { method: 'browserprint' };
+    } catch (bridgeError) {
+      // Pas de fallback silencieux : on remonte l'erreur claire
+      throw bridgeError;
+    }
+  }
+
+
   if (!opts.forcePicker && methodPreference !== 'webusb' && shouldPreferBrowserPrint()) {
     try {
       await printZplWithBrowserPrint(zpl);

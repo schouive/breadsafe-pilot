@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import {
-  Printer, Search, ArrowLeft, Star, History, Check, Loader2,
+  Printer, Search, ArrowLeft, Star, Check, Loader2,
   Download, Plus, Trash2,
 } from 'lucide-react';
 import { AddLabelToCatalogDialog } from '@/components/print/AddLabelToCatalogDialog';
@@ -17,7 +17,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import {
-  usePrintProducts, usePrintHistory,
+  usePrintProducts,
   usePrintFavorites, useToggleFavorite, useRecordPrint,
   type PrintProduct,
 } from '@/hooks/usePrintLabels';
@@ -88,7 +88,6 @@ export default function PrintLabels() {
   };
 
   const { data: products = [], isLoading: loadingProducts } = usePrintProducts();
-  const { data: history = [] } = usePrintHistory(10);
   const { data: favorites = [] } = usePrintFavorites();
   const toggleFav = useToggleFavorite();
   const recordPrint = useRecordPrint();
@@ -155,20 +154,6 @@ export default function PrintLabels() {
     setTimeout(() => searchRef.current?.focus(), 50);
   };
 
-  const handleQuickReprint = (h: typeof history[number]) => {
-    const product = products.find(p => p.id === h.product_id);
-    if (!product) {
-      toast.error('Article ERP introuvable ou désactivé');
-      return;
-    }
-    setSelected(product);
-    setLot(h.lot_number);
-    setProductionDate('');
-    setDdm(h.ddm);
-    setQuantity(String(h.quantity));
-    setFallbackZpl(null);
-    setStep(3);
-  };
 
   const buildZpl = async () => {
     if (!selected) throw new Error('Article manquant');
@@ -454,28 +439,6 @@ export default function PrintLabels() {
       {/* ÉTAPE 1 */}
       {step === 1 && (
         <div className="space-y-4">
-          {history.length > 0 && (
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <History className="h-4 w-4" /> Réimpression rapide
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="flex flex-wrap gap-2">
-                {history.slice(0, 10).map(h => (
-                  <Button
-                    key={h.id}
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleQuickReprint(h)}
-                    className="font-mono text-xs"
-                  >
-                    {h.final_sku} · L:{h.lot_number}
-                  </Button>
-                ))}
-              </CardContent>
-            </Card>
-          )}
 
           <Card>
             <CardHeader>

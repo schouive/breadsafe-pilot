@@ -37,8 +37,8 @@ export function PrintBridgeDialog({ trigger }: PrintBridgeDialogProps) {
       await testPrintBridge(url.trim());
       setPrintBridgeUrl(url.trim());
       toast.success('Serveur joignable — URL enregistrée — étiquette vide envoyée');
-    } catch (e: any) {
-      toast.error(e?.message || 'Échec du test');
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : 'Échec du test');
     } finally {
       setTesting(false);
     }

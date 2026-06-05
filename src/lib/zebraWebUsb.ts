@@ -66,11 +66,11 @@ async function printZplViaBridge(zpl: string): Promise<void> {
       const text = await res.text().catch(() => '');
       throw new Error(`Serveur d'impression : HTTP ${res.status} ${text || ''}`.trim());
     }
-  } catch (e: any) {
-    if (e?.name === 'AbortError') {
+  } catch (e: unknown) {
+    if ((e as { name?: string })?.name === 'AbortError') {
       throw new Error("Serveur d'impression injoignable (timeout 8 s). Vérifiez l'IP, le pare-feu et le Wi-Fi.");
     }
-    const msg = String(e?.message || e || '');
+    const msg = String((e as { message?: string })?.message || e || '');
     if (msg.toLowerCase().includes('failed to fetch')) {
       throw new Error(
         "Impossible de joindre le serveur d'impression. " +
@@ -102,11 +102,11 @@ export async function testPrintBridge(url: string): Promise<void> {
       const text = await res.text().catch(() => '');
       throw new Error(`HTTP ${res.status} ${res.statusText}${text ? ' — ' + text.slice(0, 200) : ''}`);
     }
-  } catch (e: any) {
-    if (e?.name === 'AbortError') {
+  } catch (e: unknown) {
+    if ((e as { name?: string })?.name === 'AbortError') {
       throw new Error("Timeout 8 s — le serveur n'a pas répondu. Vérifiez que le script Python tourne et que le tunnel est actif.");
     }
-    const msg = String(e?.message || e || '');
+    const msg = String((e as { message?: string })?.message || e || '');
     if (msg.toLowerCase().includes("load failed")) {
       throw new Error("Load failed = serveur/tunnel injoignable depuis le téléphone. Vérifiez que le script Python tourne encore, que le tunnel HTTPS est relancé, puis recopiez sa nouvelle URL si elle a changé.");
     }
@@ -410,13 +410,8 @@ export async function printZpl(zpl: string, opts: { forcePicker?: boolean } = {}
 
   // 1) Bridge HTTP (serveur Python local/distant) — priorité si configuré
   if (!opts.forcePicker && getPrintBridgeUrl()) {
-    try {
-      await printZplViaBridge(zpl);
-      return { method: 'browserprint' };
-    } catch (bridgeError) {
-      // Pas de fallback silencieux : on remonte l'erreur claire
-      throw bridgeError;
-    }
+    await printZplViaBridge(zpl);
+    return { method: 'browserprint' };
   }
 
 

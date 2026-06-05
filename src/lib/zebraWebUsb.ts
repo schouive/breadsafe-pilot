@@ -86,7 +86,7 @@ async function printZplViaBridge(zpl: string): Promise<void> {
 
 export async function testPrintBridge(url: string): Promise<void> {
   const controller = new AbortController();
-  const t = setTimeout(() => controller.abort(), 5000);
+  const t = setTimeout(() => controller.abort(), 8000);
   try {
     const res = await fetch(url, {
       method: 'POST',
@@ -94,7 +94,24 @@ export async function testPrintBridge(url: string): Promise<void> {
       body: JSON.stringify({ zpl: '^XA^XZ' }),
       signal: controller.signal,
     });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    if (!res.ok) {
+      const text = await res.text().catch(() => '');
+      throw new Error(`HTTP ${res.status} ${res.statusText}${text ? ' — ' + text.slice(0, 200) : ''}`);
+    }
+  } catch (e: any) {
+    if (e?.name === 'AbortError') {
+      throw new Error("Timeout 8 s — le serveur n'a pas répondu. Vérifiez que le script Python tourne et que le tunnel est actif.");
+    }
+    const msg = String(e?.message || e || '');
+    if (msg.toLowerCase().includes('failed to fetch')) {
+      const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';
+      const isHttpUrl = url.toLowerCase().startsWith('http://');
+      if (isHttps && isHttpUrl) {
+        throw new Error("Mixed content : l'app est en HTTPS mais l'URL est en HTTP. Utilisez l'URL HTTPS du tunnel Cloudflare (https://...trycloudflare.com/print-label).");
+      }
+      throw new Error("Réseau injoignable. Causes possibles : (1) CORS non activé côté Python — ajoutez flask-cors, (2) tunnel arrêté, (3) URL incorrecte (vérifiez qu'elle finit bien par /print-label).");
+    }
+    throw new Error(msg || 'Échec inconnu');
   } finally {
     clearTimeout(t);
   }

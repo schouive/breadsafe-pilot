@@ -439,28 +439,6 @@ export default function PrintLabels() {
       {/* ÉTAPE 1 */}
       {step === 1 && (
         <div className="space-y-4">
-          {history.length > 0 && (
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <History className="h-4 w-4" /> Réimpression rapide
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="flex flex-wrap gap-2">
-                {history.slice(0, 10).map(h => (
-                  <Button
-                    key={h.id}
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleQuickReprint(h)}
-                    className="font-mono text-xs"
-                  >
-                    {h.final_sku} · L:{h.lot_number}
-                  </Button>
-                ))}
-              </CardContent>
-            </Card>
-          )}
 
           <Card>
             <CardHeader>

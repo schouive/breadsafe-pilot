@@ -154,20 +154,6 @@ export default function PrintLabels() {
     setTimeout(() => searchRef.current?.focus(), 50);
   };
 
-  const handleQuickReprint = (h: typeof history[number]) => {
-    const product = products.find(p => p.id === h.product_id);
-    if (!product) {
-      toast.error('Article ERP introuvable ou désactivé');
-      return;
-    }
-    setSelected(product);
-    setLot(h.lot_number);
-    setProductionDate('');
-    setDdm(h.ddm);
-    setQuantity(String(h.quantity));
-    setFallbackZpl(null);
-    setStep(3);
-  };
 
   const buildZpl = async () => {
     if (!selected) throw new Error('Article manquant');

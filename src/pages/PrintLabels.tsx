@@ -88,7 +88,6 @@ export default function PrintLabels() {
   };
 
   const { data: products = [], isLoading: loadingProducts } = usePrintProducts();
-  const { data: history = [] } = usePrintHistory(10);
   const { data: favorites = [] } = usePrintFavorites();
   const toggleFav = useToggleFavorite();
   const recordPrint = useRecordPrint();

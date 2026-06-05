@@ -88,8 +88,12 @@ export async function testPrintBridge(url: string): Promise<void> {
   const controller = new AbortController();
   const t = setTimeout(() => controller.abort(), 8000);
   try {
+    if (typeof window !== 'undefined' && window.location.protocol === 'https:' && url.toLowerCase().startsWith('http://')) {
+      throw new Error("L'app est en HTTPS mais l'URL est en HTTP. Utilisez l'URL HTTPS Cloudflare qui finit par /print-label.");
+    }
     const res = await fetch(url, {
       method: 'POST',
+      mode: 'cors',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ zpl: '^XA^XZ' }),
       signal: controller.signal,
@@ -103,6 +107,9 @@ export async function testPrintBridge(url: string): Promise<void> {
       throw new Error("Timeout 8 s — le serveur n'a pas répondu. Vérifiez que le script Python tourne et que le tunnel est actif.");
     }
     const msg = String(e?.message || e || '');
+    if (msg.toLowerCase().includes("load failed")) {
+      throw new Error("Load failed = le navigateur n'arrive pas à lire la réponse. Le plus fréquent : CORS absent dans le script Python. Installez flask-cors puis ajoutez CORS(app) juste après app = Flask(__name__).");
+    }
     if (msg.toLowerCase().includes('failed to fetch')) {
       const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';
       const isHttpUrl = url.toLowerCase().startsWith('http://');

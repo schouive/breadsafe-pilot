@@ -36,6 +36,7 @@ let selectedUsbDevice: USBDevice | null = null;
 let preferredPrintMethod: ZebraPrintMethod | null = null;
 
 const BROWSER_PRINT_SSL_ACCEPTED_MESSAGE = 'ssl certificate has been accepted. retry connection.';
+const PREFERRED_PRINT_METHOD_STORAGE_KEY = 'breadshop_preferred_zebra_print_method';
 const PRINT_BRIDGE_URL_STORAGE_KEY = 'breadshop_print_bridge_url';
 
 export function getPrintBridgeUrl(): string | null {

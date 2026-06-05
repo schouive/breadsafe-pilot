@@ -36,6 +36,69 @@ let selectedUsbDevice: USBDevice | null = null;
 let preferredPrintMethod: ZebraPrintMethod | null = null;
 
 const BROWSER_PRINT_SSL_ACCEPTED_MESSAGE = 'ssl certificate has been accepted. retry connection.';
+const PRINT_BRIDGE_URL_STORAGE_KEY = 'breadshop_print_bridge_url';
+
+export function getPrintBridgeUrl(): string | null {
+  if (typeof window === 'undefined') return null;
+  return window.localStorage.getItem(PRINT_BRIDGE_URL_STORAGE_KEY);
+}
+
+export function setPrintBridgeUrl(url: string | null) {
+  if (typeof window === 'undefined') return;
+  if (url && url.trim()) window.localStorage.setItem(PRINT_BRIDGE_URL_STORAGE_KEY, url.trim());
+  else window.localStorage.removeItem(PRINT_BRIDGE_URL_STORAGE_KEY);
+}
+
+async function printZplViaBridge(zpl: string): Promise<void> {
+  const url = getPrintBridgeUrl();
+  if (!url) throw new Error("Aucune URL de serveur d'impression configurée.");
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ zpl }),
+      signal: controller.signal,
+    });
+    if (!res.ok) {
+      const text = await res.text().catch(() => '');
+      throw new Error(`Serveur d'impression : HTTP ${res.status} ${text || ''}`.trim());
+    }
+  } catch (e: any) {
+    if (e?.name === 'AbortError') {
+      throw new Error("Serveur d'impression injoignable (timeout 8 s). Vérifiez l'IP, le pare-feu et le Wi-Fi.");
+    }
+    const msg = String(e?.message || e || '');
+    if (msg.toLowerCase().includes('failed to fetch')) {
+      throw new Error(
+        "Impossible de joindre le serveur d'impression. " +
+        "Si vous êtes en HTTPS (mobile), le navigateur bloque les appels HTTP locaux : " +
+        "exposez votre serveur Python en HTTPS (Cloudflare Tunnel, ngrok…) puis renseignez l'URL HTTPS."
+      );
+    }
+    throw e;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+export async function testPrintBridge(url: string): Promise<void> {
+  const controller = new AbortController();
+  const t = setTimeout(() => controller.abort(), 5000);
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ zpl: '^XA^XZ' }),
+      signal: controller.signal,
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  } finally {
+    clearTimeout(t);
+  }
+}
+
 const PREFERRED_PRINT_METHOD_STORAGE_KEY = 'breadshop_preferred_zebra_print_method';
 
 

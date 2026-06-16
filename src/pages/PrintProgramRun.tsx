@@ -149,6 +149,16 @@ export default function PrintProgramRun() {
   const updateLine = (itemId: string, patch: Partial<Line>) =>
     setLines(prev => prev.map(l => l.itemId === itemId ? { ...l, ...patch } : l));
 
+  const moveLine = (itemId: string, dir: -1 | 1) =>
+    setLines(prev => {
+      const idx = prev.findIndex(l => l.itemId === itemId);
+      const j = idx + dir;
+      if (idx < 0 || j < 0 || j >= prev.length) return prev;
+      const copy = [...prev];
+      [copy[idx], copy[j]] = [copy[j], copy[idx]];
+      return copy;
+    });
+
   const applyGlobalsToAll = () => {
     const lot = computeLotNumber(globalProductionDate);
     setLines(prev => prev.map(l => ({

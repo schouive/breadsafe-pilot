@@ -9,7 +9,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
 import {
-  ArrowLeft, Printer, Loader2, Check, X, Clock, Wand2, type LucideIcon,
+  ArrowLeft, Printer, Loader2, Check, X, Clock, Wand2, ArrowUp, ArrowDown, type LucideIcon,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { usePrintProgram, usePrintProgramItems } from '@/hooks/usePrintPrograms';
@@ -148,6 +148,16 @@ export default function PrintProgramRun() {
 
   const updateLine = (itemId: string, patch: Partial<Line>) =>
     setLines(prev => prev.map(l => l.itemId === itemId ? { ...l, ...patch } : l));
+
+  const moveLine = (itemId: string, dir: -1 | 1) =>
+    setLines(prev => {
+      const idx = prev.findIndex(l => l.itemId === itemId);
+      const j = idx + dir;
+      if (idx < 0 || j < 0 || j >= prev.length) return prev;
+      const copy = [...prev];
+      [copy[idx], copy[j]] = [copy[j], copy[idx]];
+      return copy;
+    });
 
   const applyGlobalsToAll = () => {
     const lot = computeLotNumber(globalProductionDate);
@@ -357,6 +367,7 @@ export default function PrintProgramRun() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-20">Ordre</TableHead>
                   <TableHead>Code ERP</TableHead>
                   <TableHead>Nom produit</TableHead>
                   <TableHead className="w-24">Qté</TableHead>
@@ -367,9 +378,21 @@ export default function PrintProgramRun() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {lines.map(l => {
+                {lines.map((l, idx) => {
                   return (
                     <TableRow key={l.itemId}>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          <Button size="icon" variant="ghost" className="h-7 w-7"
+                            onClick={() => moveLine(l.itemId, -1)} disabled={idx === 0 || printingAll}>
+                            <ArrowUp className="h-4 w-4" />
+                          </Button>
+                          <Button size="icon" variant="ghost" className="h-7 w-7"
+                            onClick={() => moveLine(l.itemId, 1)} disabled={idx === lines.length - 1 || printingAll}>
+                            <ArrowDown className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
                       <TableCell className="font-mono text-xs">{l.product.erp_code}</TableCell>
                       <TableCell className="text-sm">{l.product.erp_label}</TableCell>
                       <TableCell>

@@ -367,6 +367,7 @@ export default function PrintProgramRun() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-20">Ordre</TableHead>
                   <TableHead>Code ERP</TableHead>
                   <TableHead>Nom produit</TableHead>
                   <TableHead className="w-24">Qté</TableHead>
@@ -377,9 +378,21 @@ export default function PrintProgramRun() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {lines.map(l => {
+                {lines.map((l, idx) => {
                   return (
                     <TableRow key={l.itemId}>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          <Button size="icon" variant="ghost" className="h-7 w-7"
+                            onClick={() => moveLine(l.itemId, -1)} disabled={idx === 0 || printingAll}>
+                            <ArrowUp className="h-4 w-4" />
+                          </Button>
+                          <Button size="icon" variant="ghost" className="h-7 w-7"
+                            onClick={() => moveLine(l.itemId, 1)} disabled={idx === lines.length - 1 || printingAll}>
+                            <ArrowDown className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
                       <TableCell className="font-mono text-xs">{l.product.erp_code}</TableCell>
                       <TableCell className="text-sm">{l.product.erp_label}</TableCell>
                       <TableCell>

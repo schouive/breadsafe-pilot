@@ -9,7 +9,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
 import {
-  ArrowLeft, Printer, Loader2, Check, X, Clock, Wand2, type LucideIcon,
+  ArrowLeft, Printer, Loader2, Check, X, Clock, Wand2, ArrowUp, ArrowDown, type LucideIcon,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { usePrintProgram, usePrintProgramItems } from '@/hooks/usePrintPrograms';

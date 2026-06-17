@@ -213,14 +213,62 @@ export function CartonLabelDetailSheet({ open, onOpenChange, label }: CartonLabe
 
           <Separator />
 
-          {/* Storage */}
-          {label.snapshot_storage_instructions && (
-            <>
-              <section>
-                <h3 className="font-semibold mb-2">Mode de conservation</h3>
-                <p className="text-sm p-3 bg-muted/50 rounded-lg">{label.snapshot_storage_instructions}</p>
-              </section>
-              <Separator />
+          {/* Storage + Thawing (editable in draft) */}
+          <section>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="font-semibold">Consignes (conservation / décongélation)</h3>
+              {isDraft && textsDirty && (
+                <Button size="sm" onClick={handleSaveTexts} disabled={updateTexts.isPending}>
+                  {updateTexts.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+                  Enregistrer
+                </Button>
+              )}
+            </div>
+            {isDraft ? (
+              <div className="space-y-3">
+                <div>
+                  <UILabel htmlFor="storage" className="text-xs">{t.storage}</UILabel>
+                  <Textarea
+                    id="storage"
+                    value={storage}
+                    onChange={(e) => setStorage(e.target.value)}
+                    rows={2}
+                    placeholder={t.storage}
+                  />
+                </div>
+                <div>
+                  <UILabel htmlFor="thawing" className="text-xs">{t.thawing}</UILabel>
+                  <Textarea
+                    id="thawing"
+                    value={thawing}
+                    onChange={(e) => setThawing(e.target.value)}
+                    rows={2}
+                    placeholder={t.thawing}
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground italic">
+                  💡 Traduisez ces consignes dans la langue de l'étiquette puis enregistrez.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {label.snapshot_storage_instructions && (
+                  <div>
+                    <p className="text-xs text-muted-foreground">{t.storage}</p>
+                    <p className="text-sm p-3 bg-muted/50 rounded-lg">{label.snapshot_storage_instructions}</p>
+                  </div>
+                )}
+                {label.snapshot_thawing_instructions && (
+                  <div>
+                    <p className="text-xs text-muted-foreground">{t.thawing}</p>
+                    <p className="text-sm p-3 bg-muted/50 rounded-lg">{label.snapshot_thawing_instructions}</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </section>
+          <Separator />
+
             </>
           )}
 

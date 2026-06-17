@@ -191,7 +191,7 @@ export function fillZplTemplate(template: string, data: ZplLabelData): string {
   };
 
   // Titre Ingrédients
-  bodyParts.push(`^FO18,${y}^A0N,28,22^FH\\^FDIngredients :^FS`);
+  bodyParts.push(`^FO18,${y}^A0N,28,22^FH\\^FD${zplSafe(dict.ingredients)} :^FS`);
   y += 36;
   addBlock(ingredientsText, 14);
   if (tracesText) {
@@ -201,7 +201,7 @@ export function fillZplTemplate(template: string, data: ZplLabelData): string {
   y += SECTION_GAP;
   addBlock(storageText, 3);
   y += SECTION_GAP;
-  bodyParts.push(`^FO18,${y}^A0N,${FONT_H},${FONT_W}^FH\\^FDValeurs nutritionnelles pour 100g :^FS`);
+  bodyParts.push(`^FO18,${y}^A0N,${FONT_H},${FONT_W}^FH\\^FD${zplSafe(dict.nutrition100g)} :^FS`);
   y += LINE_GAP;
   for (const line of nutri) {
     bodyParts.push(`^FO18,${y}^A0N,${FONT_H},${FONT_W}^FH\\^FD${line}^FS`);

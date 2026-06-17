@@ -32,6 +32,7 @@ export interface PrintProduct {
     fiber?: number; protein?: number; salt?: number;
   } | null;
   inco_status: string | null;
+  language: string;
 }
 
 export interface PrintHistoryEntry {

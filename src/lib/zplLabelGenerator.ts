@@ -64,6 +64,7 @@ export interface ZplLabelData {
   quantity: number;
   storageInstructions?: string | null;
   thawingInstructions?: string | null;
+  language?: string | null;
 }
 
 function cleanHtml(html: string | null): string {

@@ -107,6 +107,44 @@ export function AddLabelToCatalogDialog({ open, onOpenChange }: Props) {
           .eq('id', already.id));
       } else {
         const langSuffix = language === 'fr' ? '' : `-${language.toUpperCase()}`;
+        let translated: Record<string, string | null> = {
+          translated_ingredients_html: null,
+          translated_allergen_statement: null,
+          translated_traces_statement: null,
+          translated_storage_instructions: null,
+          translated_thawing_instructions: null,
+          translated_at: null as any,
+        };
+        if (language !== 'fr') {
+          // Récupère les textes source de la FT
+          const { data: sheet, error: sErr } = await supabase
+            .from('product_sheets')
+            .select('inco_html, allergen_statement, snapshot_allergens, storage_instructions, thawing_instructions')
+            .eq('id', sheetId)
+            .single();
+          if (sErr) throw sErr;
+          const traces = (sheet as any)?.snapshot_allergens?.secondary?.join(', ') ?? '';
+          toast.info('Traduction en cours…');
+          const { data: tr, error: tErr } = await supabase.functions.invoke('translate-label', {
+            body: {
+              language,
+              ingredients_html: (sheet as any)?.inco_html ?? '',
+              allergen_statement: (sheet as any)?.allergen_statement ?? '',
+              traces_statement: traces,
+              storage_instructions: (sheet as any)?.storage_instructions ?? '',
+              thawing_instructions: (sheet as any)?.thawing_instructions ?? '',
+            },
+          });
+          if (tErr) throw new Error(`Traduction échouée : ${tErr.message}`);
+          translated = {
+            translated_ingredients_html: tr?.ingredients_html ?? null,
+            translated_allergen_statement: tr?.allergen_statement ?? null,
+            translated_traces_statement: tr?.traces_statement ?? null,
+            translated_storage_instructions: tr?.storage_instructions ?? null,
+            translated_thawing_instructions: tr?.thawing_instructions ?? null,
+            translated_at: new Date().toISOString() as any,
+          };
+        }
         ({ error } = await supabase
           .from('product_sheet_packagings')
           .insert({
@@ -119,6 +157,7 @@ export function AddLabelToCatalogDialog({ open, onOpenChange }: Props) {
             language,
             active: true,
             in_print_catalog: true,
+            ...translated,
           } as any));
       }
       if (error) throw error;

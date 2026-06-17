@@ -1419,6 +1419,12 @@ export type Database = {
           slicing_state: string
           temperature_state: string
           template_id: string | null
+          translated_allergen_statement: string | null
+          translated_at: string | null
+          translated_ingredients_html: string | null
+          translated_storage_instructions: string | null
+          translated_thawing_instructions: string | null
+          translated_traces_statement: string | null
           updated_at: string
         }
         Insert: {
@@ -1441,6 +1447,12 @@ export type Database = {
           slicing_state?: string
           temperature_state?: string
           template_id?: string | null
+          translated_allergen_statement?: string | null
+          translated_at?: string | null
+          translated_ingredients_html?: string | null
+          translated_storage_instructions?: string | null
+          translated_thawing_instructions?: string | null
+          translated_traces_statement?: string | null
           updated_at?: string
         }
         Update: {
@@ -1463,6 +1475,12 @@ export type Database = {
           slicing_state?: string
           temperature_state?: string
           template_id?: string | null
+          translated_allergen_statement?: string | null
+          translated_at?: string | null
+          translated_ingredients_html?: string | null
+          translated_storage_instructions?: string | null
+          translated_thawing_instructions?: string | null
+          translated_traces_statement?: string | null
           updated_at?: string
         }
         Relationships: [

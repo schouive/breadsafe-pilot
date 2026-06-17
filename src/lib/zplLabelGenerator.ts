@@ -162,19 +162,20 @@ export function fillZplTemplate(template: string, data: ZplLabelData): string {
     return Math.max(1, lines);
   };
 
+  const dict = getLabelDict(data.language);
   const ingredientsText = zplSafe(cleanHtml(data.ingredientsHtml));
-  const nutri = formatNutrition(data.nutrition);
+  const nutri = formatNutrition(data.nutrition, data.language);
   const { j, yy, fr } = computeJulianDay(data.ddm);
 
   const storageText = zplSafe([data.storageInstructions, data.thawingInstructions]
     .filter(Boolean)
-    .join(' — ') || 'A conserver dans le sachet a temperature ambiante de preference inferieure a 30 C')
+    .join(' — ') || '')
     .replace(/temperature/g, 'temp.');
 
   const lotValue = data.lotNumber.replace(/^L/i, '');
 
   const traceSource = normalizeTraceValue(data.traces) || extractTracesFromStatement(data.allergens);
-  const tracesText = traceSource ? `Peut contenir des traces : ${traceSource}` : '';
+  const tracesText = traceSource ? `${zplSafe(dict.mayContain)} : ${traceSource}` : '';
 
   // Construction dynamique du bloc gauche avec ^FB pour exploiter toute la largeur.
   const bodyParts: string[] = [];

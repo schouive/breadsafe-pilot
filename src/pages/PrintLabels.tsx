@@ -518,6 +518,7 @@ export default function PrintLabels() {
                           </div>
                           <div className="flex flex-wrap items-center gap-1">
                             <Badge variant="outline">{PACKAGING_LABELS[p.packaging] ?? p.packaging}</Badge>
+                            <Badge variant="secondary">{getLanguageBadge(p.language)}</Badge>
                           </div>
                           <div className="flex gap-2">
                             <Button

@@ -320,13 +320,15 @@ export function CartonLabelDetailSheet({ open, onOpenChange, label }: CartonLabe
 function generatePrintContent(label: CartonLabel): string {
   const nutrition = label.snapshot_nutrition as Record<string, number> | null;
   const secondaryAllergens = label.snapshot_allergens_secondary as string[] | null;
+  const t = getLabelDict(label.language);
+  const lang = label.language || 'fr';
 
   return `
     <!DOCTYPE html>
-    <html lang="fr">
+    <html lang="${lang}">
     <head>
       <meta charset="UTF-8">
-      <title>Étiquette - ${label.label_title}</title>
+      <title>${label.label_title}</title>
       <style>
         @page { size: 100mm 150mm; margin: 5mm; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -349,34 +351,35 @@ function generatePrintContent(label: CartonLabel): string {
     <body>
       <div class="title">${label.label_title}</div>
       <div class="section">
-        <div class="section-title">Ingrédients:</div>
+        <div class="section-title">${t.ingredients}:</div>
         <div class="ingredients">${label.snapshot_ingredients_html || 'N/A'}</div>
       </div>
       ${secondaryAllergens && secondaryAllergens.length > 0 ? `
-        <div class="allergens-warning">Peut contenir des traces de: ${secondaryAllergens.join(', ')}</div>
+        <div class="allergens-warning">${t.mayContain}: ${secondaryAllergens.join(', ')}</div>
       ` : ''}
       <div class="section">
-        <div class="section-title">Valeurs nutritionnelles moyennes pour 100g:</div>
+        <div class="section-title">${t.nutrition100g}:</div>
         ${nutrition ? `
           <table class="nutrition-table">
-            <tr><td class="label">Énergie</td><td class="value">${nutrition.per_100g_energy_kj?.toFixed(0) || '-'} kJ / ${nutrition.per_100g_energy_kcal?.toFixed(0) || '-'} kcal</td></tr>
-            <tr><td class="label">Matières grasses</td><td class="value">${nutrition.per_100g_fat?.toFixed(1) || '-'} g</td></tr>
-            <tr><td class="label">&nbsp;&nbsp;dont acides gras saturés</td><td class="value">${nutrition.per_100g_saturated_fat?.toFixed(1) || '-'} g</td></tr>
-            <tr><td class="label">Glucides</td><td class="value">${nutrition.per_100g_carbohydrates?.toFixed(1) || '-'} g</td></tr>
-            <tr><td class="label">&nbsp;&nbsp;dont sucres</td><td class="value">${nutrition.per_100g_sugars?.toFixed(1) || '-'} g</td></tr>
-            <tr><td class="label">Fibres alimentaires</td><td class="value">${nutrition.per_100g_fiber?.toFixed(1) || '-'} g</td></tr>
-            <tr><td class="label">Protéines</td><td class="value">${nutrition.per_100g_protein?.toFixed(1) || '-'} g</td></tr>
-            <tr><td class="label">Sel</td><td class="value">${nutrition.per_100g_salt?.toFixed(2) || '-'} g</td></tr>
+            <tr><td class="label">${t.energy}</td><td class="value">${nutrition.per_100g_energy_kj?.toFixed(0) || '-'} kJ / ${nutrition.per_100g_energy_kcal?.toFixed(0) || '-'} kcal</td></tr>
+            <tr><td class="label">${t.fat}</td><td class="value">${nutrition.per_100g_fat?.toFixed(1) || '-'} g</td></tr>
+            <tr><td class="label">&nbsp;&nbsp;${t.saturated}</td><td class="value">${nutrition.per_100g_saturated_fat?.toFixed(1) || '-'} g</td></tr>
+            <tr><td class="label">${t.carbs}</td><td class="value">${nutrition.per_100g_carbohydrates?.toFixed(1) || '-'} g</td></tr>
+            <tr><td class="label">&nbsp;&nbsp;${t.sugars}</td><td class="value">${nutrition.per_100g_sugars?.toFixed(1) || '-'} g</td></tr>
+            <tr><td class="label">${t.fiber}</td><td class="value">${nutrition.per_100g_fiber?.toFixed(1) || '-'} g</td></tr>
+            <tr><td class="label">${t.protein}</td><td class="value">${nutrition.per_100g_protein?.toFixed(1) || '-'} g</td></tr>
+            <tr><td class="label">${t.salt}</td><td class="value">${nutrition.per_100g_salt?.toFixed(2) || '-'} g</td></tr>
           </table>
         ` : '<p>N/A</p>'}
       </div>
       <div class="net-weight">${label.snapshot_net_weight || '-'} ${label.snapshot_net_weight_unit || 'kg'}</div>
-      ${label.snapshot_storage_instructions ? `<div class="section"><div class="section-title">Conservation:</div><div class="storage">${label.snapshot_storage_instructions}</div></div>` : ''}
-      ${label.snapshot_thawing_instructions ? `<div class="section"><div class="section-title">Décongélation:</div><div class="storage">${label.snapshot_thawing_instructions}</div></div>` : ''}
+      ${label.snapshot_storage_instructions ? `<div class="section"><div class="section-title">${t.storage}:</div><div class="storage">${label.snapshot_storage_instructions}</div></div>` : ''}
+      ${label.snapshot_thawing_instructions ? `<div class="section"><div class="section-title">${t.thawing}:</div><div class="storage">${label.snapshot_thawing_instructions}</div></div>` : ''}
       <div class="footer">
-        <div>BREADSHOP SAS - Fabriqué en France</div>
+        <div>${t.madeIn}</div>
       </div>
     </body>
     </html>
   `;
 }
+

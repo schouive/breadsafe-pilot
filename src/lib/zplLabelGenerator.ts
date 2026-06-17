@@ -122,13 +122,14 @@ function formatNetWeight(w: number | null, unit: string | null): string {
   return `${w} ${unit || 'kg'}`;
 }
 
-function formatNutrition(n: ZplLabelData['nutrition']): [string, string, string, string] {
+function formatNutrition(n: ZplLabelData['nutrition'], lang?: string | null): [string, string, string, string] {
+  const d = getLabelDict(lang);
   if (!n) return ['', '', '', ''];
   return [
-    `Energie ${Math.round(n.energyKj ?? 0)} kJ / ${Math.round(n.energyKcal ?? 0)} kcal`,
-    `Lipides ${(n.fat ?? 0).toFixed(1)} g dont satures ${(n.saturatedFat ?? 0).toFixed(1)} g`,
-    `Glucides ${(n.carbohydrates ?? 0).toFixed(1)} g dont sucres ${(n.sugars ?? 0).toFixed(1)} g`,
-    `Fibres ${(n.fiber ?? 0).toFixed(1)} g - Proteines ${(n.protein ?? 0).toFixed(1)} g - Sel ${(n.salt ?? 0).toFixed(2)} g`,
+    `${d.energy} ${Math.round(n.energyKj ?? 0)} kJ / ${Math.round(n.energyKcal ?? 0)} kcal`,
+    `${d.fat} ${(n.fat ?? 0).toFixed(1)} g ${d.saturated} ${(n.saturatedFat ?? 0).toFixed(1)} g`,
+    `${d.carbs} ${(n.carbohydrates ?? 0).toFixed(1)} g ${d.sugars} ${(n.sugars ?? 0).toFixed(1)} g`,
+    `${d.fiber} ${(n.fiber ?? 0).toFixed(1)} g - ${d.protein} ${(n.protein ?? 0).toFixed(1)} g - ${d.salt} ${(n.salt ?? 0).toFixed(2)} g`,
   ].map(removeAccents) as [string, string, string, string];
 }
 

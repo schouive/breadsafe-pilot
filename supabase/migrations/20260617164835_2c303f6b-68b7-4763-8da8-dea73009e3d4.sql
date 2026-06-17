@@ -1,0 +1,2 @@
+ALTER TABLE public.product_sheet_packagings ADD COLUMN IF NOT EXISTS translated_product_name text;
+UPDATE public.product_sheet_packagings SET translated_product_name = 'Burger Bun' WHERE id = 'd9931fae-1e50-4e8d-9c41-65b0dfb3bacc';

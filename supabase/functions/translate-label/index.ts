@@ -16,6 +16,7 @@ const LANG_NAMES: Record<string, string> = {
 
 interface Payload {
   language: string;
+  product_name?: string | null;
   ingredients_html?: string | null;
   allergen_statement?: string | null;
   traces_statement?: string | null;
@@ -38,6 +39,7 @@ Deno.serve(async (req) => {
     }
 
     const fields = {
+      product_name: payload.product_name ?? "",
       ingredients_html: payload.ingredients_html ?? "",
       allergen_statement: payload.allergen_statement ?? "",
       traces_statement: payload.traces_statement ?? "",
@@ -87,6 +89,7 @@ ${JSON.stringify(fields, null, 2)}`;
     try { parsed = JSON.parse(content); } catch { parsed = {}; }
 
     return new Response(JSON.stringify({
+      product_name: parsed.product_name ?? "",
       ingredients_html: parsed.ingredients_html ?? "",
       allergen_statement: parsed.allergen_statement ?? "",
       traces_statement: parsed.traces_statement ?? "",

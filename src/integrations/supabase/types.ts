@@ -1422,6 +1422,7 @@ export type Database = {
           translated_allergen_statement: string | null
           translated_at: string | null
           translated_ingredients_html: string | null
+          translated_product_name: string | null
           translated_storage_instructions: string | null
           translated_thawing_instructions: string | null
           translated_traces_statement: string | null
@@ -1450,6 +1451,7 @@ export type Database = {
           translated_allergen_statement?: string | null
           translated_at?: string | null
           translated_ingredients_html?: string | null
+          translated_product_name?: string | null
           translated_storage_instructions?: string | null
           translated_thawing_instructions?: string | null
           translated_traces_statement?: string | null
@@ -1478,6 +1480,7 @@ export type Database = {
           translated_allergen_statement?: string | null
           translated_at?: string | null
           translated_ingredients_html?: string | null
+          translated_product_name?: string | null
           translated_storage_instructions?: string | null
           translated_thawing_instructions?: string | null
           translated_traces_statement?: string | null

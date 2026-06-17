@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useValidatedProductSheets, useCreateCartonLabel, useUpdateCartonLabel, CartonLabel } from '@/hooks/useCartonLabels';
+import { CARTON_LABEL_LANGUAGES } from '@/lib/cartonLabelI18n';
 import { Loader2, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 

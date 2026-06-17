@@ -53,6 +53,7 @@ Rules:
 - Keep allergens in the same emphasis (e.g. <strong> stays <strong>) and translated.
 - Keep percentages, numbers, units (g, kg, °C, %), and proper nouns.
 - Use the standard ${targetName} food-label terminology.
+- For "product_name": translate the FULL commercial name literally, preserving every token (weight like 90G, state like CONGELE/FROZEN, descriptors, pack info). Do NOT shorten or summarize. Reorder tokens to natural ${targetName} word order (e.g. French "BUNS POTATOE 90G CONGELE" → English "POTATO BUNS 90G FROZEN"). Keep the original case style (UPPERCASE stays UPPERCASE). Fix obvious French spellings of English loanwords (POTATOE → POTATO).
 - Do not add commentary. Output JSON only.`;
 
     const user = `Translate each field below to ${targetName}. Return JSON with exactly the same keys.

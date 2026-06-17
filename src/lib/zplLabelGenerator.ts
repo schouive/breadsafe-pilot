@@ -246,6 +246,11 @@ export function fillZplTemplate(template: string, data: ZplLabelData): string {
     DDM_YY: yy,
     DDM_FR: fr,
     QTY: String(Math.max(1, data.quantity)),
+    LBL_NET_WEIGHT: zplSafe(dict.netWeightCaps),
+    LBL_BEST_BEFORE: zplSafe(dict.bestBefore),
+    LBL_LOT: zplSafe('Lot'),
+    LBL_RECYCLE_1: zplSafe(dict.recyclable),
+    LBL_RECYCLE_2: '',
   };
 
   // Compatibilité avec anciens templates utilisant des placeholders fixes.

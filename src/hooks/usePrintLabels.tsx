@@ -97,7 +97,7 @@ export function usePrintProducts() {
           template_name: p.template?.template_code ?? null,
           barcode_value: p.barcode_value,
           active: p.active,
-          product_name: sheet?.product_name ?? null,
+          product_name: p.translated_product_name ?? sheet?.product_name ?? null,
           net_weight: sheet?.net_weight ?? null,
           net_weight_unit: sheet?.net_weight_unit ?? null,
           ingredients_html: p.translated_ingredients_html ?? sheet?.inco_html ?? null,

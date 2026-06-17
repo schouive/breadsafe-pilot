@@ -1410,6 +1410,7 @@ export type Database = {
           erp_label: string
           id: string
           in_print_catalog: boolean
+          language: string
           layers_per_pallet: number | null
           packaging_code: string
           pieces_per_carton: number | null
@@ -1431,6 +1432,7 @@ export type Database = {
           erp_label: string
           id?: string
           in_print_catalog?: boolean
+          language?: string
           layers_per_pallet?: number | null
           packaging_code: string
           pieces_per_carton?: number | null
@@ -1452,6 +1454,7 @@ export type Database = {
           erp_label?: string
           id?: string
           in_print_catalog?: boolean
+          language?: string
           layers_per_pallet?: number | null
           packaging_code?: string
           pieces_per_carton?: number | null

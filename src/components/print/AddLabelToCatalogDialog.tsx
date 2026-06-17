@@ -13,10 +13,19 @@ interface Props {
   onOpenChange: (open: boolean) => void;
 }
 
+const LANGUAGES = [
+  { code: 'fr', label: 'Français' },
+  { code: 'en', label: 'English' },
+  { code: 'de', label: 'Deutsch' },
+  { code: 'es', label: 'Español' },
+  { code: 'it', label: 'Italiano' },
+];
+
 export function AddLabelToCatalogDialog({ open, onOpenChange }: Props) {
   const qc = useQueryClient();
   const [sheetId, setSheetId] = useState<string>('');
   const [packagingCode, setPackagingCode] = useState<string>('');
+  const [language, setLanguage] = useState<string>('fr');
   const [saving, setSaving] = useState(false);
 
   // Fiches techniques validées (INCO validé)
@@ -55,16 +64,16 @@ export function AddLabelToCatalogDialog({ open, onOpenChange }: Props) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('product_sheet_packagings')
-        .select('id, packaging_code, in_print_catalog')
+        .select('id, packaging_code, in_print_catalog, language')
         .eq('product_sheet_id', sheetId);
       if (error) throw error;
-      return data as { id: string; packaging_code: string; in_print_catalog: boolean }[];
+      return data as { id: string; packaging_code: string; in_print_catalog: boolean; language: string }[];
     },
   });
 
   const existingMap = useMemo(() => {
     const m = new Map<string, { id: string; in_print_catalog: boolean }>();
-    existing.forEach((r) => m.set(r.packaging_code, { id: r.id, in_print_catalog: r.in_print_catalog }));
+    existing.forEach((r) => m.set(`${r.packaging_code}::${r.language ?? 'fr'}`, { id: r.id, in_print_catalog: r.in_print_catalog }));
     return m;
   }, [existing]);
   const selectedSheet = sheets.find((s: any) => s.id === sheetId);
@@ -72,6 +81,7 @@ export function AddLabelToCatalogDialog({ open, onOpenChange }: Props) {
   const reset = () => {
     setSheetId('');
     setPackagingCode('');
+    setLanguage('fr');
   };
 
   const handleSubmit = async () => {
@@ -79,7 +89,7 @@ export function AddLabelToCatalogDialog({ open, onOpenChange }: Props) {
       toast.error('Sélectionnez une fiche technique et un conditionnement');
       return;
     }
-    const already = existingMap.get(packagingCode);
+    const already = existingMap.get(`${packagingCode}::${language}`);
     if (already?.in_print_catalog) {
       toast.error('Cette étiquette est déjà dans le catalogue');
       return;
@@ -96,18 +106,20 @@ export function AddLabelToCatalogDialog({ open, onOpenChange }: Props) {
           .update({ in_print_catalog: true, active: true })
           .eq('id', already.id));
       } else {
+        const langSuffix = language === 'fr' ? '' : `-${language.toUpperCase()}`;
         ({ error } = await supabase
           .from('product_sheet_packagings')
           .insert({
             product_sheet_id: sheetId,
             packaging_code: packagingCode,
-            erp_code: `${baseRef}-${packagingCode}`,
-            erp_label: `${baseName} ${packagingCode}`,
+            erp_code: `${baseRef}-${packagingCode}${langSuffix}`,
+            erp_label: `${baseName} ${packagingCode}${langSuffix}`,
             temperature_state: 'FR',
             slicing_state: 'WHO',
+            language,
             active: true,
             in_print_catalog: true,
-          }));
+          } as any));
       }
       if (error) throw error;
       toast.success('Étiquette ajoutée au catalogue');
@@ -163,7 +175,7 @@ export function AddLabelToCatalogDialog({ open, onOpenChange }: Props) {
               </SelectTrigger>
               <SelectContent>
                 {packagingTypes.map((t: any) => {
-                  const inCatalog = existingMap.get(t.code)?.in_print_catalog;
+                  const inCatalog = existingMap.get(`${t.code}::${language}`)?.in_print_catalog;
                   return (
                     <SelectItem key={t.code} value={t.code} disabled={!!inCatalog}>
                       {t.code} — {t.label}{inCatalog ? ' (déjà dans le catalogue)' : ''}
@@ -172,6 +184,25 @@ export function AddLabelToCatalogDialog({ open, onOpenChange }: Props) {
                 })}
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Langue *</Label>
+            <Select value={language} onValueChange={setLanguage}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {LANGUAGES.map((l) => (
+                  <SelectItem key={l.code} value={l.code}>
+                    {l.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Langue d'impression de l'étiquette. Une variante par langue est créée dans le catalogue.
+            </p>
           </div>
         </div>
 

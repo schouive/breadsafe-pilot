@@ -31,6 +31,7 @@ import { computeDdm } from '@/lib/ddm';
 import labelLogoM from '@/assets/label-logo-m.png';
 import labelWordmark from '@/assets/label-wordmark.png';
 import labelTriman from '@/assets/label-triman.png';
+import { getLabelDict, getLanguageBadge } from '@/lib/cartonLabelI18n';
 
 
 

@@ -13,10 +13,19 @@ interface Props {
   onOpenChange: (open: boolean) => void;
 }
 
+const LANGUAGES = [
+  { code: 'fr', label: 'Français' },
+  { code: 'en', label: 'English' },
+  { code: 'de', label: 'Deutsch' },
+  { code: 'es', label: 'Español' },
+  { code: 'it', label: 'Italiano' },
+];
+
 export function AddLabelToCatalogDialog({ open, onOpenChange }: Props) {
   const qc = useQueryClient();
   const [sheetId, setSheetId] = useState<string>('');
   const [packagingCode, setPackagingCode] = useState<string>('');
+  const [language, setLanguage] = useState<string>('fr');
   const [saving, setSaving] = useState(false);
 
   // Fiches techniques validées (INCO validé)

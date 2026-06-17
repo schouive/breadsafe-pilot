@@ -20,6 +20,7 @@
  */
 
 import { removeAccents, splitIntoLines } from './zebraLabelExport';
+import { getLabelDict } from './cartonLabelI18n';
 
 /**
  * Découpe un texte en lignes pleines en cassant uniquement sur les espaces (pas sur les virgules).

@@ -103,6 +103,7 @@ export function usePrintProducts() {
           thawing_instructions: sheet?.thawing_instructions ?? null,
           nutrition: sheet?.snapshot_nutrition ?? null,
           inco_status: sheet?.inco_status ?? null,
+          language: p.language ?? 'fr',
         } as PrintProduct;
       });
     },

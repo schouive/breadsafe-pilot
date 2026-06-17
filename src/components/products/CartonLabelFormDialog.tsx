@@ -128,6 +128,35 @@ export function CartonLabelFormDialog({
               </div>
             )}
 
+            {mode === 'create' && (
+              <div className="space-y-2">
+                <Label htmlFor="language">Langue *</Label>
+                <Select
+                  value={formData.language}
+                  onValueChange={(value) =>
+                    setFormData((prev) => ({ ...prev, language: value }))
+                  }
+                >
+                  <SelectTrigger id="language">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CARTON_LABEL_LANGUAGES.map((l) => (
+                      <SelectItem key={l.code} value={l.code}>
+                        {l.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {formData.language !== 'fr' && (
+                  <p className="text-xs text-muted-foreground">
+                    L'étiquette sera créée en <strong>brouillon</strong>. Vous pourrez traduire la liste INCO et les consignes avant de la valider.
+                  </p>
+                )}
+              </div>
+            )}
+
+
             <div className="space-y-2">
               <Label htmlFor="label_title">Titre de l'étiquette *</Label>
               <Input

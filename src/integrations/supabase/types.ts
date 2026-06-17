@@ -80,6 +80,7 @@ export type Database = {
           created_by: string | null
           id: string
           label_title: string
+          language: string
           product_sheet_id: string
           snapshot_allergens_secondary: Json | null
           snapshot_created_at: string | null
@@ -103,6 +104,7 @@ export type Database = {
           created_by?: string | null
           id?: string
           label_title: string
+          language?: string
           product_sheet_id: string
           snapshot_allergens_secondary?: Json | null
           snapshot_created_at?: string | null
@@ -126,6 +128,7 @@ export type Database = {
           created_by?: string | null
           id?: string
           label_title?: string
+          language?: string
           product_sheet_id?: string
           snapshot_allergens_secondary?: Json | null
           snapshot_created_at?: string | null

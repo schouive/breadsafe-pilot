@@ -88,7 +88,7 @@ export function usePrintProducts() {
           erp_code: p.erp_code,
           erp_label: p.erp_label,
           sku_base: sheet?.product_reference ?? p.erp_code,
-          label: sheet?.product_name ?? p.erp_label,
+          label: p.translated_product_name ?? sheet?.product_name ?? p.erp_label,
           family: sheet?.family?.code ?? '—',
           family_label: sheet?.family?.label ?? '—',
           temperature: p.temperature_state,

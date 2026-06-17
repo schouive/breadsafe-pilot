@@ -20,6 +20,7 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { downloadZebraCSV } from '@/lib/zebraLabelExport';
 import { toast } from 'sonner';
+import { getLanguageBadge } from '@/lib/cartonLabelI18n';
 
 export function CartonLabelManagement() {
   const { data: labels, isLoading } = useCartonLabels();

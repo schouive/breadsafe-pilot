@@ -64,16 +64,16 @@ export function AddLabelToCatalogDialog({ open, onOpenChange }: Props) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('product_sheet_packagings')
-        .select('id, packaging_code, in_print_catalog')
+        .select('id, packaging_code, in_print_catalog, language')
         .eq('product_sheet_id', sheetId);
       if (error) throw error;
-      return data as { id: string; packaging_code: string; in_print_catalog: boolean }[];
+      return data as { id: string; packaging_code: string; in_print_catalog: boolean; language: string }[];
     },
   });
 
   const existingMap = useMemo(() => {
     const m = new Map<string, { id: string; in_print_catalog: boolean }>();
-    existing.forEach((r) => m.set(r.packaging_code, { id: r.id, in_print_catalog: r.in_print_catalog }));
+    existing.forEach((r) => m.set(`${r.packaging_code}::${r.language ?? 'fr'}`, { id: r.id, in_print_catalog: r.in_print_catalog }));
     return m;
   }, [existing]);
   const selectedSheet = sheets.find((s: any) => s.id === sheetId);
@@ -81,6 +81,7 @@ export function AddLabelToCatalogDialog({ open, onOpenChange }: Props) {
   const reset = () => {
     setSheetId('');
     setPackagingCode('');
+    setLanguage('fr');
   };
 
   const handleSubmit = async () => {
@@ -88,7 +89,7 @@ export function AddLabelToCatalogDialog({ open, onOpenChange }: Props) {
       toast.error('Sélectionnez une fiche technique et un conditionnement');
       return;
     }
-    const already = existingMap.get(packagingCode);
+    const already = existingMap.get(`${packagingCode}::${language}`);
     if (already?.in_print_catalog) {
       toast.error('Cette étiquette est déjà dans le catalogue');
       return;

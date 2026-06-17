@@ -200,16 +200,21 @@ export function useCreateCartonLabel() {
       } : null;
 
       const { data: { user: currentUser } } = await supabase.auth.getUser();
+      const lang = label.language || 'fr';
+      const isFrench = lang === 'fr';
 
       const { data, error } = await supabase
         .from('carton_labels')
         .insert({
           product_sheet_id: label.product_sheet_id,
           label_title: label.label_title,
+          language: lang,
           created_by: user.id,
-          status: 'validated',
-          validated_at: new Date().toISOString(),
-          validated_by: user.id,
+          // French labels are validated immediately (snapshot from FT is FR).
+          // Other languages start as draft so the user can translate INCO and instructions.
+          status: isFrench ? 'validated' : 'draft',
+          validated_at: isFrench ? new Date().toISOString() : null,
+          validated_by: isFrench ? user.id : null,
           snapshot_product_sheet_version: sheet.version,
           snapshot_ingredients_html: ingredientsHtml || null,
           snapshot_ingredients_html_original: ingredientsHtml || null,

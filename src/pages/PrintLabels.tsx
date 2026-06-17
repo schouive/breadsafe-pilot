@@ -197,6 +197,7 @@ export default function PrintLabels() {
       quantity: Number(quantity),
       storageInstructions: selected.storage_instructions,
       thawingInstructions: selected.thawing_instructions,
+      language: selected.language,
     });
   };
 

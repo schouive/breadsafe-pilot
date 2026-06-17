@@ -269,8 +269,6 @@ export function CartonLabelDetailSheet({ open, onOpenChange, label }: CartonLabe
           </section>
           <Separator />
 
-            </>
-          )}
 
           {/* Mandatory elements */}
           <section>

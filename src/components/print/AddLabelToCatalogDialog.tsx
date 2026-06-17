@@ -106,18 +106,20 @@ export function AddLabelToCatalogDialog({ open, onOpenChange }: Props) {
           .update({ in_print_catalog: true, active: true })
           .eq('id', already.id));
       } else {
+        const langSuffix = language === 'fr' ? '' : `-${language.toUpperCase()}`;
         ({ error } = await supabase
           .from('product_sheet_packagings')
           .insert({
             product_sheet_id: sheetId,
             packaging_code: packagingCode,
-            erp_code: `${baseRef}-${packagingCode}`,
-            erp_label: `${baseName} ${packagingCode}`,
+            erp_code: `${baseRef}-${packagingCode}${langSuffix}`,
+            erp_label: `${baseName} ${packagingCode}${langSuffix}`,
             temperature_state: 'FR',
             slicing_state: 'WHO',
+            language,
             active: true,
             in_print_catalog: true,
-          }));
+          } as any));
       }
       if (error) throw error;
       toast.success('Étiquette ajoutée au catalogue');

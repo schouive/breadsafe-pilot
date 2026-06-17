@@ -16,6 +16,7 @@ const LANG_NAMES: Record<string, string> = {
 
 interface Payload {
   language: string;
+  product_name?: string | null;
   ingredients_html?: string | null;
   allergen_statement?: string | null;
   traces_statement?: string | null;

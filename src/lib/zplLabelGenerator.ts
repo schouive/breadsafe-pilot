@@ -20,6 +20,7 @@
  */
 
 import { removeAccents, splitIntoLines } from './zebraLabelExport';
+import { getLabelDict } from './cartonLabelI18n';
 
 /**
  * Découpe un texte en lignes pleines en cassant uniquement sur les espaces (pas sur les virgules).
@@ -63,6 +64,7 @@ export interface ZplLabelData {
   quantity: number;
   storageInstructions?: string | null;
   thawingInstructions?: string | null;
+  language?: string | null;
 }
 
 function cleanHtml(html: string | null): string {
@@ -120,13 +122,14 @@ function formatNetWeight(w: number | null, unit: string | null): string {
   return `${w} ${unit || 'kg'}`;
 }
 
-function formatNutrition(n: ZplLabelData['nutrition']): [string, string, string, string] {
+function formatNutrition(n: ZplLabelData['nutrition'], lang?: string | null): [string, string, string, string] {
+  const d = getLabelDict(lang);
   if (!n) return ['', '', '', ''];
   return [
-    `Energie ${Math.round(n.energyKj ?? 0)} kJ / ${Math.round(n.energyKcal ?? 0)} kcal`,
-    `Lipides ${(n.fat ?? 0).toFixed(1)} g dont satures ${(n.saturatedFat ?? 0).toFixed(1)} g`,
-    `Glucides ${(n.carbohydrates ?? 0).toFixed(1)} g dont sucres ${(n.sugars ?? 0).toFixed(1)} g`,
-    `Fibres ${(n.fiber ?? 0).toFixed(1)} g - Proteines ${(n.protein ?? 0).toFixed(1)} g - Sel ${(n.salt ?? 0).toFixed(2)} g`,
+    `${d.energy} ${Math.round(n.energyKj ?? 0)} kJ / ${Math.round(n.energyKcal ?? 0)} kcal`,
+    `${d.fat} ${(n.fat ?? 0).toFixed(1)} g ${d.saturated} ${(n.saturatedFat ?? 0).toFixed(1)} g`,
+    `${d.carbs} ${(n.carbohydrates ?? 0).toFixed(1)} g ${d.sugars} ${(n.sugars ?? 0).toFixed(1)} g`,
+    `${d.fiber} ${(n.fiber ?? 0).toFixed(1)} g - ${d.protein} ${(n.protein ?? 0).toFixed(1)} g - ${d.salt} ${(n.salt ?? 0).toFixed(2)} g`,
   ].map(removeAccents) as [string, string, string, string];
 }
 
@@ -159,19 +162,20 @@ export function fillZplTemplate(template: string, data: ZplLabelData): string {
     return Math.max(1, lines);
   };
 
+  const dict = getLabelDict(data.language);
   const ingredientsText = zplSafe(cleanHtml(data.ingredientsHtml));
-  const nutri = formatNutrition(data.nutrition);
+  const nutri = formatNutrition(data.nutrition, data.language);
   const { j, yy, fr } = computeJulianDay(data.ddm);
 
   const storageText = zplSafe([data.storageInstructions, data.thawingInstructions]
     .filter(Boolean)
-    .join(' — ') || 'A conserver dans le sachet a temperature ambiante de preference inferieure a 30 C')
+    .join(' — ') || '')
     .replace(/temperature/g, 'temp.');
 
   const lotValue = data.lotNumber.replace(/^L/i, '');
 
   const traceSource = normalizeTraceValue(data.traces) || extractTracesFromStatement(data.allergens);
-  const tracesText = traceSource ? `Peut contenir des traces : ${traceSource}` : '';
+  const tracesText = traceSource ? `${zplSafe(dict.mayContain)} : ${traceSource}` : '';
 
   // Construction dynamique du bloc gauche avec ^FB pour exploiter toute la largeur.
   const bodyParts: string[] = [];
@@ -187,7 +191,7 @@ export function fillZplTemplate(template: string, data: ZplLabelData): string {
   };
 
   // Titre Ingrédients
-  bodyParts.push(`^FO18,${y}^A0N,28,22^FH\\^FDIngredients :^FS`);
+  bodyParts.push(`^FO18,${y}^A0N,28,22^FH\\^FD${zplSafe(dict.ingredients)} :^FS`);
   y += 36;
   addBlock(ingredientsText, 14);
   if (tracesText) {
@@ -197,7 +201,7 @@ export function fillZplTemplate(template: string, data: ZplLabelData): string {
   y += SECTION_GAP;
   addBlock(storageText, 3);
   y += SECTION_GAP;
-  bodyParts.push(`^FO18,${y}^A0N,${FONT_H},${FONT_W}^FH\\^FDValeurs nutritionnelles pour 100g :^FS`);
+  bodyParts.push(`^FO18,${y}^A0N,${FONT_H},${FONT_W}^FH\\^FD${zplSafe(dict.nutrition100g)} :^FS`);
   y += LINE_GAP;
   for (const line of nutri) {
     bodyParts.push(`^FO18,${y}^A0N,${FONT_H},${FONT_W}^FH\\^FD${line}^FS`);
@@ -242,6 +246,11 @@ export function fillZplTemplate(template: string, data: ZplLabelData): string {
     DDM_YY: yy,
     DDM_FR: fr,
     QTY: String(Math.max(1, data.quantity)),
+    LBL_NET_WEIGHT: zplSafe(dict.netWeightCaps),
+    LBL_BEST_BEFORE: zplSafe(dict.bestBefore),
+    LBL_LOT: zplSafe('Lot'),
+    LBL_RECYCLE_1: zplSafe(dict.recyclable),
+    LBL_RECYCLE_2: '',
   };
 
   // Compatibilité avec anciens templates utilisant des placeholders fixes.
@@ -276,14 +285,14 @@ ${BREADSHOP_LABEL_LOGO_GFA}
 ^FO15,118^GB1170,0,6^FS
 {{BODY}}
 ^FO765,135^GB420,135,4^FS
-^FT765,171^A0N,27,27^FB420,1,0,C,0^FH\^FDPOIDS NET^FS
+^FT765,171^A0N,27,27^FB420,1,0,C,0^FH\^FD{{LBL_NET_WEIGHT}}^FS
 ^FT765,250^A0N,82,75^FB420,1,0,C,0^FH\^FD{{POIDS_NET}}^FS
 ^FO765,292^GB420,142,4^FS
-^FT780,330^A0N,30,27^FH\^FDA consommer de preference^FS
-^FT780,375^A0N,36,33^FH\^FDavant le : {{DDM_FR}}^FS
-^FT780,423^A0N,39,36^FH\^FDLot : L{{LOT}}^FS
-^FT780,474^A0N,27,27^FH\^FDCarton et sachet^FS
-^FT780,507^A0N,27,27^FH\^FDrecyclables^FS
+^FT780,330^A0N,30,27^FH\^FD{{LBL_BEST_BEFORE}}^FS
+^FT780,375^A0N,36,33^FH\^FD: {{DDM_FR}}^FS
+^FT780,423^A0N,39,36^FH\^FD{{LBL_LOT}} : L{{LOT}}^FS
+^FT780,474^A0N,27,27^FH\^FD{{LBL_RECYCLE_1}}^FS
+^FT780,507^A0N,27,27^FH\^FD{{LBL_RECYCLE_2}}^FS
 ^FO1080,448^GFA,968,968,11,00000000000000000000000000000003F8000000000000000001FFFFE0000000000000000FFFFFFC000000000000007FFFFFFF80000000000001FFFFFFFFE0000000000007FFFE1FFFF800000000000FFF00003FFE00000000003FF8000007FF00000000007FC0000001FFC000000001FF000000003FE000000003FE000000001FF000000007F80000000007F80000000FF001C0000003FC0000001FC007F0000000FE0000003F800FF80000007C0000007F001FFC00000038000000FE001FFC00000010000000FC003FFE00000000400001F8003FFE00000000E00003F8003FFE00000001F00003F0001FFC00000003F00007E0001FFC00000007F8000FC0000FF80000000FFC000FC00007F00000001FFE000F800001C00000003FFE001F800000000000007FFF001F00001C00000000FFFF803F00007F80000000FFFFC03E0001FFE00000001FFFC03E0003FFF80000001FFE007E0007FFFC0000001FFC007C0007FFFF0000001FFC007C000FFFFFC000001FFC007C000FFFFFE000003FFC007C000FFFFFF800003FFC00FC001FFFFFFC00003FF800F8001FFF83FF00003FF800F8001FFF807FC0007FF000F8001FFF001FE0007FF000F8001FFF0003F000FFE000F8003FFF0000E001FFC000F8003FFF00000001FF8000F8003FFF00000003FF0000F8003FFF00000007FE0000F8003FFF0000001FFC0000F8007FFF0000007FF00000FC007FFF000003FF803E00FC007FFF00000000003FE07C007FFF00004800001FFF7C007FFF80004400003FFF7C00FFFF8000C60000FFFE7E00FFFF8001C78003FFFE3E00FFFF8001C3F01FFFFE3E00FFFF8001C1FFFFFFFC3F00FE7F8003C1FFFFFFFC1F01FE7F8003E0FFFFFFF81F81FC3F8003E07FFFFFF81F81FC3FC003E03FFFFFF80FC1F83FC003F00FFFFFF00FC1F81FC007F007FFFFF007E3F81FC007F801FFFC7007E3F01FC007FC003FE02003F3F01FC003FE0000000001FFF00FC003FF0000000001FFE00FC003FF8100000000FFE00FC003FFE1800000007FE007E003FFF3800000003FC007E001FFFF800000003FC007E001FFFFC00000001FE007E000FFFFC00000000FF003E000FFFFC000000007FC03E0007FFFE000000001FF03E0003FFFE000000000FFC1E0081FFFE0000000007FF1F00E0FFFF0000000001FFFF00F07FFF0000000000FFFF00F81FFF80000000003FFFFFFC0FFF80000000000FFFFFFF0FFE000000000001FFFFFF1FC00000000000007FFFFE180000000000000003FFFC00000000000000000000780000000000000000000070000000000000000000004000000000000000000000000000000000000000000000000000000^FS
 ^BY3,2,135
 ^FO802,570^BCN,135,Y,N^FD>;{{BARCODE}}^FS

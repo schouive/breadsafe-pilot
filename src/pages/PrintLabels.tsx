@@ -31,6 +31,7 @@ import { computeDdm } from '@/lib/ddm';
 import labelLogoM from '@/assets/label-logo-m.png';
 import labelWordmark from '@/assets/label-wordmark.png';
 import labelTriman from '@/assets/label-triman.png';
+import { getLabelDict, getLanguageBadge } from '@/lib/cartonLabelI18n';
 
 
 
@@ -196,6 +197,7 @@ export default function PrintLabels() {
       quantity: Number(quantity),
       storageInstructions: selected.storage_instructions,
       thawingInstructions: selected.thawing_instructions,
+      language: selected.language,
     });
   };
 
@@ -516,6 +518,7 @@ export default function PrintLabels() {
                           </div>
                           <div className="flex flex-wrap items-center gap-1">
                             <Badge variant="outline">{PACKAGING_LABELS[p.packaging] ?? p.packaging}</Badge>
+                            <Badge variant="secondary">{getLanguageBadge(p.language)}</Badge>
                           </div>
                           <div className="flex gap-2">
                             <Button
@@ -784,13 +787,14 @@ function LabelMaskPreview({
   const ingredientsHtml = sanitizeIngredientsHtml(product.ingredients_html);
   const tracesFromStatement = extractTraces(product.allergen_statement);
   const traces = product.traces_statement || tracesFromStatement || '';
+  const dict = getLabelDict(product.language);
   const n = product.nutrition;
   const nutriLines = n ? [
-    `Energie ${Math.round(n.energyKj ?? 0)} kJ / ${Math.round(n.energyKcal ?? 0)} kcal`,
-    `Lipides ${(n.fat ?? 0).toFixed(1)} g dont satures ${(n.saturatedFat ?? 0).toFixed(1)} g`,
-    `Glucides ${(n.carbohydrates ?? 0).toFixed(1)} g dont sucres ${(n.sugars ?? 0).toFixed(1)} g`,
-    `Fibres ${(n.fiber ?? 0).toFixed(1)} g  -  Proteines ${(n.protein ?? 0).toFixed(1)} g  -  Sel ${(n.salt ?? 0).toFixed(2)} g`,
-  ] : ['Données nutritionnelles manquantes'];
+    `${dict.energy} ${Math.round(n.energyKj ?? 0)} kJ / ${Math.round(n.energyKcal ?? 0)} kcal`,
+    `${dict.fat} ${(n.fat ?? 0).toFixed(1)} g ${dict.saturated} ${(n.saturatedFat ?? 0).toFixed(1)} g`,
+    `${dict.carbs} ${(n.carbohydrates ?? 0).toFixed(1)} g ${dict.sugars} ${(n.sugars ?? 0).toFixed(1)} g`,
+    `${dict.fiber} ${(n.fiber ?? 0).toFixed(1)} g  -  ${dict.protein} ${(n.protein ?? 0).toFixed(1)} g  -  ${dict.salt} ${(n.salt ?? 0).toFixed(2)} g`,
+  ] : ['—'];
 
   return (
     <div className="w-full overflow-x-auto bg-muted/30 p-4 rounded-md">
@@ -835,23 +839,23 @@ function LabelMaskPreview({
             style={{ fontSize: '2.6cqw', display: 'flex', flexDirection: 'column', gap: '0.5cqw' }}
           >
             <div className="min-h-0 flex-1" style={{ overflow: 'hidden' }}>
-              <span className="font-bold">Ingrédients : </span>
+              <span className="font-bold">{dict.ingredients} : </span>
               {ingredientsHtml ? (
                 <span
                   className="break-words"
                   dangerouslySetInnerHTML={{ __html: ingredientsHtml }}
                 />
               ) : (
-                <span className="text-destructive">Manquant</span>
+                <span className="text-destructive">—</span>
               )}
             </div>
             {traces && (
               <div className="break-words shrink-0">
-                Peut contenir des traces : {traces}
+                {dict.mayContain} : {traces}
               </div>
             )}
             <div className="italic break-words shrink-0">
-              {product.storage_instructions || 'À conserver dans le sachet à température ambiante de préférence inférieure à 30°C'}
+              {product.storage_instructions || ''}
             </div>
             {product.thawing_instructions && (
               <div className="italic break-words shrink-0">
@@ -859,7 +863,7 @@ function LabelMaskPreview({
               </div>
             )}
             <div data-pdf-no-bottom-clip className="shrink-0" style={{ overflow: 'visible', lineHeight: 1.16, paddingBottom: '0.35cqw' }}>
-              <div className="font-bold">Valeurs nutritionnelles pour 100g :</div>
+              <div className="font-bold">{dict.nutrition100g} :</div>
               {nutriLines.map((l, i) => (
                 <div key={i} className="break-words">{l}</div>
               ))}
@@ -870,7 +874,7 @@ function LabelMaskPreview({
             <div data-pdf-no-bottom-clip className="flex flex-col shrink-0" style={{ width: '38%', gap: '0.7cqw', overflow: 'visible' }}>
             {/* Poids net box — 6mm minimum (≈5.9cqw of 101.6mm width) */}
             <div className="border-2 border-black relative flex flex-col items-center justify-center shrink-0" style={{ padding: '0.6cqw', minHeight: '12cqw' }}>
-              <div style={{ fontSize: '1.8cqw', position: 'absolute', top: '0.4cqw', right: '0.6cqw' }}>POIDS NET</div>
+              <div style={{ fontSize: '1.8cqw', position: 'absolute', top: '0.4cqw', right: '0.6cqw' }}>{dict.netWeightCaps}</div>
               <div className="font-extrabold leading-none text-center" style={{ fontSize: '7cqw', marginTop: '1.2cqw' }}>
                 {poidsNet}
               </div>
@@ -878,13 +882,13 @@ function LabelMaskPreview({
 
             {/* DDM + Lot box */}
             <div data-pdf-no-bottom-clip className="border-2 border-black leading-tight shrink-0" style={{ padding: '0.6cqw 0.6cqw 0.9cqw', fontSize: '2.2cqw', overflow: 'visible' }}>
-              <div data-pdf-no-bottom-clip style={{ display: 'block', minHeight: '3.6cqw', overflow: 'visible', textOverflow: 'clip', whiteSpace: 'nowrap', lineHeight: 1.55, paddingBottom: '0.65cqw' }}>À consommer de préférence</div>
+              <div data-pdf-no-bottom-clip style={{ display: 'block', minHeight: '3.6cqw', overflow: 'visible', textOverflow: 'clip', whiteSpace: 'nowrap', lineHeight: 1.55, paddingBottom: '0.65cqw' }}>{dict.bestBefore}</div>
               <div className="flex items-baseline" style={{ gap: '0.8cqw' }}>
-                <span>avant le :</span>
+                <span>:</span>
                 <span data-pdf-fit-width data-pdf-min-font="18" className="font-bold truncate" style={{ fontSize: '3.4cqw' }}>{ddmFr}</span>
               </div>
               <div className="flex items-baseline" style={{ gap: '0.8cqw', marginTop: '0.3cqw' }}>
-                <span>Lot :</span>
+                <span>{getLanguageBadge(product.language) === 'FR' ? 'Lot' : 'Lot'} :</span>
                 <span data-pdf-fit-width data-pdf-min-font="18" className="font-bold tracking-wider truncate" style={{ fontSize: '3.4cqw' }}>{lotDisplay}</span>
               </div>
             </div>
@@ -892,7 +896,7 @@ function LabelMaskPreview({
             {/* Recyclage + triman row */}
             <div className="flex items-center justify-center shrink-0" style={{ gap: '0.8cqw' }}>
               <div className="text-center italic" style={{ fontSize: '2cqw' }}>
-                Carton et sachet<br />recyclables
+                {dict.recyclable}
               </div>
               <img src={labelTriman} alt="Triman" style={{ height: '6cqw' }} className="w-auto object-contain" />
             </div>

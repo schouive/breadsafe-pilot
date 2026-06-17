@@ -64,6 +64,7 @@ export function buildProductZpl({ product, lot, ddm, quantity }: BuildProductZpl
     quantity: Math.max(1, quantity),
     storageInstructions: product.storage_instructions,
     thawingInstructions: product.thawing_instructions,
+    language: (product as any).language ?? 'fr',
   });
 }
 

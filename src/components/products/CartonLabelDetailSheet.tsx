@@ -107,6 +107,9 @@ export function CartonLabelDetailSheet({ open, onOpenChange, label }: CartonLabe
         <SheetHeader>
           <div className="flex items-center gap-2 flex-wrap">
             <SheetTitle className="text-xl">{label.label_title}</SheetTitle>
+            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30">
+              <Languages className="h-3 w-3 mr-1" /> {langBadge}
+            </Badge>
             {statusBadge()}
             <Badge variant="outline">v{label.version}</Badge>
           </div>

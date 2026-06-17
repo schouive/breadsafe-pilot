@@ -62,6 +62,7 @@ export function usePrintProducts() {
         .select(`
           id, erp_code, erp_label, temperature_state, slicing_state,
           packaging_code, barcode_value, active, language,
+          translated_product_name,
           translated_ingredients_html, translated_allergen_statement,
           translated_traces_statement, translated_storage_instructions,
           translated_thawing_instructions,

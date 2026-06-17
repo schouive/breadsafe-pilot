@@ -333,6 +333,51 @@ export function useUpdateIncoHtml() {
   });
 }
 
+// Update translatable instructions (storage / thawing) on drafts
+export function useUpdateCartonLabelTexts() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async ({
+      id,
+      storage,
+      thawing,
+    }: {
+      id: string;
+      storage: string | null;
+      thawing: string | null;
+    }) => {
+      const { data: label, error: labelError } = await supabase
+        .from('carton_labels')
+        .select('status')
+        .eq('id', id)
+        .single();
+      if (labelError) throw labelError;
+      if (label.status !== 'draft') throw new Error('Seuls les brouillons peuvent être modifiés');
+
+      const { data, error } = await supabase
+        .from('carton_labels')
+        .update({
+          snapshot_storage_instructions: storage,
+          snapshot_thawing_instructions: thawing,
+        })
+        .eq('id', id)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['carton-labels'] });
+      toast({ title: 'Consignes mises à jour' });
+    },
+    onError: (error) => {
+      toast({ title: 'Erreur', description: error.message, variant: 'destructive' });
+    },
+  });
+}
+
 // Archive a validated label (called when recipe changes)
 export function useArchiveCartonLabel() {
   const queryClient = useQueryClient();

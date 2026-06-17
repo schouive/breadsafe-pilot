@@ -1,0 +1,1 @@
+UPDATE public.product_sheet_packagings SET translated_product_name = 'POTATO BUNS 90G FROZEN' WHERE id = 'd9931fae-1e50-4e8d-9c41-65b0dfb3bacc';

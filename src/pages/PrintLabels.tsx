@@ -785,13 +785,14 @@ function LabelMaskPreview({
   const ingredientsHtml = sanitizeIngredientsHtml(product.ingredients_html);
   const tracesFromStatement = extractTraces(product.allergen_statement);
   const traces = product.traces_statement || tracesFromStatement || '';
+  const dict = getLabelDict(product.language);
   const n = product.nutrition;
   const nutriLines = n ? [
-    `Energie ${Math.round(n.energyKj ?? 0)} kJ / ${Math.round(n.energyKcal ?? 0)} kcal`,
-    `Lipides ${(n.fat ?? 0).toFixed(1)} g dont satures ${(n.saturatedFat ?? 0).toFixed(1)} g`,
-    `Glucides ${(n.carbohydrates ?? 0).toFixed(1)} g dont sucres ${(n.sugars ?? 0).toFixed(1)} g`,
-    `Fibres ${(n.fiber ?? 0).toFixed(1)} g  -  Proteines ${(n.protein ?? 0).toFixed(1)} g  -  Sel ${(n.salt ?? 0).toFixed(2)} g`,
-  ] : ['Données nutritionnelles manquantes'];
+    `${dict.energy} ${Math.round(n.energyKj ?? 0)} kJ / ${Math.round(n.energyKcal ?? 0)} kcal`,
+    `${dict.fat} ${(n.fat ?? 0).toFixed(1)} g ${dict.saturated} ${(n.saturatedFat ?? 0).toFixed(1)} g`,
+    `${dict.carbs} ${(n.carbohydrates ?? 0).toFixed(1)} g ${dict.sugars} ${(n.sugars ?? 0).toFixed(1)} g`,
+    `${dict.fiber} ${(n.fiber ?? 0).toFixed(1)} g  -  ${dict.protein} ${(n.protein ?? 0).toFixed(1)} g  -  ${dict.salt} ${(n.salt ?? 0).toFixed(2)} g`,
+  ] : ['—'];
 
   return (
     <div className="w-full overflow-x-auto bg-muted/30 p-4 rounded-md">

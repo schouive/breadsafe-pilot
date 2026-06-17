@@ -89,6 +89,7 @@ ${JSON.stringify(fields, null, 2)}`;
     try { parsed = JSON.parse(content); } catch { parsed = {}; }
 
     return new Response(JSON.stringify({
+      product_name: parsed.product_name ?? "",
       ingredients_html: parsed.ingredients_html ?? "",
       allergen_statement: parsed.allergen_statement ?? "",
       traces_statement: parsed.traces_statement ?? "",

@@ -108,6 +108,7 @@ export function AddLabelToCatalogDialog({ open, onOpenChange }: Props) {
       } else {
         const langSuffix = language === 'fr' ? '' : `-${language.toUpperCase()}`;
         let translated: Record<string, string | null> = {
+          translated_product_name: null,
           translated_ingredients_html: null,
           translated_allergen_statement: null,
           translated_traces_statement: null,

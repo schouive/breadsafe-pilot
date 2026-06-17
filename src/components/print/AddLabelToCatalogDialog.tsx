@@ -175,7 +175,7 @@ export function AddLabelToCatalogDialog({ open, onOpenChange }: Props) {
               </SelectTrigger>
               <SelectContent>
                 {packagingTypes.map((t: any) => {
-                  const inCatalog = existingMap.get(t.code)?.in_print_catalog;
+                  const inCatalog = existingMap.get(`${t.code}::${language}`)?.in_print_catalog;
                   return (
                     <SelectItem key={t.code} value={t.code} disabled={!!inCatalog}>
                       {t.code} — {t.label}{inCatalog ? ' (déjà dans le catalogue)' : ''}
@@ -184,6 +184,25 @@ export function AddLabelToCatalogDialog({ open, onOpenChange }: Props) {
                 })}
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Langue *</Label>
+            <Select value={language} onValueChange={setLanguage}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {LANGUAGES.map((l) => (
+                  <SelectItem key={l.code} value={l.code}>
+                    {l.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Langue d'impression de l'étiquette. Une variante par langue est créée dans le catalogue.
+            </p>
           </div>
         </div>
 

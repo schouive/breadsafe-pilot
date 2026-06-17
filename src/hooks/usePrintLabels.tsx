@@ -61,7 +61,7 @@ export function usePrintProducts() {
         .from('product_sheet_packagings')
         .select(`
           id, erp_code, erp_label, temperature_state, slicing_state,
-          packaging_code, barcode_value, active,
+          packaging_code, barcode_value, active, language,
           template:label_templates(template_code, template_name),
           sheet:product_sheets!inner(
             product_name, product_reference, net_weight, net_weight_unit,

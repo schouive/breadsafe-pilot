@@ -39,6 +39,7 @@ Deno.serve(async (req) => {
     }
 
     const fields = {
+      product_name: payload.product_name ?? "",
       ingredients_html: payload.ingredients_html ?? "",
       allergen_statement: payload.allergen_statement ?? "",
       traces_statement: payload.traces_statement ?? "",

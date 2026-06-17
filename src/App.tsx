@@ -305,13 +305,14 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         />
+        <Route path="/products/carton-labels" element={<Navigate to="/print/carton-labels" replace />} />
         <Route
-          path="/products/carton-labels"
+          path="/print/carton-labels"
           element={
             <ProtectedRoute>
-              <ProductsLayout>
+              <PrintLayout>
                 <CartonLabelManagement />
-              </ProductsLayout>
+              </PrintLayout>
             </ProtectedRoute>
           }
         />

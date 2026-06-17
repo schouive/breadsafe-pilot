@@ -154,6 +154,7 @@ export function useCreateCartonLabel() {
     mutationFn: async (label: {
       product_sheet_id: string;
       label_title: string;
+      language?: string;
     }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Utilisateur non connecté');

@@ -42,6 +42,7 @@ export function CartonLabelFormDialog({
   const [formData, setFormData] = useState({
     product_sheet_id: '',
     label_title: '',
+    language: 'fr',
   });
 
   useEffect(() => {
@@ -50,11 +51,13 @@ export function CartonLabelFormDialog({
         setFormData({
           product_sheet_id: label.product_sheet_id,
           label_title: label.label_title,
+          language: label.language || 'fr',
         });
       } else {
         setFormData({
           product_sheet_id: '',
           label_title: '',
+          language: 'fr',
         });
       }
     }

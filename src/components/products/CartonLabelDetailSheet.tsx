@@ -1,22 +1,26 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle,
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Textarea } from '@/components/ui/textarea';
+import { Label as UILabel } from '@/components/ui/label';
 import {
   CartonLabel,
   useRefreshCartonLabelSnapshot,
+  useUpdateCartonLabelTexts,
 } from '@/hooks/useCartonLabels';
 import { useOperatorNames } from '@/hooks/useOperatorNames';
 import {
   Check, RefreshCw, Printer, CheckCircle, AlertTriangle,
-  Recycle, Loader2, Eye, Edit3, Lock, Archive,
+  Recycle, Loader2, Eye, Edit3, Lock, Archive, Save, Languages,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { CartonLabelPreview } from './CartonLabelPreview';
+import { getLabelDict, getLanguageBadge } from '@/lib/cartonLabelI18n';
 
 interface CartonLabelDetailSheetProps {
   open: boolean;

@@ -30,6 +30,17 @@ interface CartonLabelDetailSheetProps {
 
 export function CartonLabelDetailSheet({ open, onOpenChange, label }: CartonLabelDetailSheetProps) {
   const refreshSnapshot = useRefreshCartonLabelSnapshot();
+  const updateTexts = useUpdateCartonLabelTexts();
+
+  const [storage, setStorage] = useState('');
+  const [thawing, setThawing] = useState('');
+
+  useEffect(() => {
+    if (label) {
+      setStorage(label.snapshot_storage_instructions || '');
+      setThawing(label.snapshot_thawing_instructions || '');
+    }
+  }, [label]);
 
   if (!label) return null;
 
@@ -38,14 +49,29 @@ export function CartonLabelDetailSheet({ open, onOpenChange, label }: CartonLabe
   const isDraft = label.status === 'draft';
   const isValidated = label.status === 'validated';
   const isArchived = label.status === 'archived';
+  const t = getLabelDict(label.language);
+  const langBadge = getLanguageBadge(label.language);
 
   const sheetVersion = label.product_sheets?.version;
   const snapshotVersion = label.snapshot_product_sheet_version;
   const isOutdated = sheetVersion && snapshotVersion && sheetVersion > snapshotVersion;
 
+  const textsDirty =
+    (storage || '') !== (label.snapshot_storage_instructions || '') ||
+    (thawing || '') !== (label.snapshot_thawing_instructions || '');
+
+  const handleSaveTexts = async () => {
+    await updateTexts.mutateAsync({
+      id: label.id,
+      storage: storage.trim() ? storage : null,
+      thawing: thawing.trim() ? thawing : null,
+    });
+  };
+
   const handleRefresh = async () => {
     await refreshSnapshot.mutateAsync(label.id);
   };
+
 
   const handlePrint = () => {
     const printContent = generatePrintContent(label);

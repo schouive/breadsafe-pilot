@@ -1,22 +1,26 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle,
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Textarea } from '@/components/ui/textarea';
+import { Label as UILabel } from '@/components/ui/label';
 import {
   CartonLabel,
   useRefreshCartonLabelSnapshot,
+  useUpdateCartonLabelTexts,
 } from '@/hooks/useCartonLabels';
 import { useOperatorNames } from '@/hooks/useOperatorNames';
 import {
   Check, RefreshCw, Printer, CheckCircle, AlertTriangle,
-  Recycle, Loader2, Eye, Edit3, Lock, Archive,
+  Recycle, Loader2, Eye, Edit3, Lock, Archive, Save, Languages,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { CartonLabelPreview } from './CartonLabelPreview';
+import { getLabelDict, getLanguageBadge } from '@/lib/cartonLabelI18n';
 
 interface CartonLabelDetailSheetProps {
   open: boolean;
@@ -26,6 +30,17 @@ interface CartonLabelDetailSheetProps {
 
 export function CartonLabelDetailSheet({ open, onOpenChange, label }: CartonLabelDetailSheetProps) {
   const refreshSnapshot = useRefreshCartonLabelSnapshot();
+  const updateTexts = useUpdateCartonLabelTexts();
+
+  const [storage, setStorage] = useState('');
+  const [thawing, setThawing] = useState('');
+
+  useEffect(() => {
+    if (label) {
+      setStorage(label.snapshot_storage_instructions || '');
+      setThawing(label.snapshot_thawing_instructions || '');
+    }
+  }, [label]);
 
   if (!label) return null;
 
@@ -34,14 +49,29 @@ export function CartonLabelDetailSheet({ open, onOpenChange, label }: CartonLabe
   const isDraft = label.status === 'draft';
   const isValidated = label.status === 'validated';
   const isArchived = label.status === 'archived';
+  const t = getLabelDict(label.language);
+  const langBadge = getLanguageBadge(label.language);
 
   const sheetVersion = label.product_sheets?.version;
   const snapshotVersion = label.snapshot_product_sheet_version;
   const isOutdated = sheetVersion && snapshotVersion && sheetVersion > snapshotVersion;
 
+  const textsDirty =
+    (storage || '') !== (label.snapshot_storage_instructions || '') ||
+    (thawing || '') !== (label.snapshot_thawing_instructions || '');
+
+  const handleSaveTexts = async () => {
+    await updateTexts.mutateAsync({
+      id: label.id,
+      storage: storage.trim() ? storage : null,
+      thawing: thawing.trim() ? thawing : null,
+    });
+  };
+
   const handleRefresh = async () => {
     await refreshSnapshot.mutateAsync(label.id);
   };
+
 
   const handlePrint = () => {
     const printContent = generatePrintContent(label);
@@ -77,6 +107,9 @@ export function CartonLabelDetailSheet({ open, onOpenChange, label }: CartonLabe
         <SheetHeader>
           <div className="flex items-center gap-2 flex-wrap">
             <SheetTitle className="text-xl">{label.label_title}</SheetTitle>
+            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30">
+              <Languages className="h-3 w-3 mr-1" /> {langBadge}
+            </Badge>
             {statusBadge()}
             <Badge variant="outline">v{label.version}</Badge>
           </div>
@@ -180,16 +213,62 @@ export function CartonLabelDetailSheet({ open, onOpenChange, label }: CartonLabe
 
           <Separator />
 
-          {/* Storage */}
-          {label.snapshot_storage_instructions && (
-            <>
-              <section>
-                <h3 className="font-semibold mb-2">Mode de conservation</h3>
-                <p className="text-sm p-3 bg-muted/50 rounded-lg">{label.snapshot_storage_instructions}</p>
-              </section>
-              <Separator />
-            </>
-          )}
+          {/* Storage + Thawing (editable in draft) */}
+          <section>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="font-semibold">Consignes (conservation / décongélation)</h3>
+              {isDraft && textsDirty && (
+                <Button size="sm" onClick={handleSaveTexts} disabled={updateTexts.isPending}>
+                  {updateTexts.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+                  Enregistrer
+                </Button>
+              )}
+            </div>
+            {isDraft ? (
+              <div className="space-y-3">
+                <div>
+                  <UILabel htmlFor="storage" className="text-xs">{t.storage}</UILabel>
+                  <Textarea
+                    id="storage"
+                    value={storage}
+                    onChange={(e) => setStorage(e.target.value)}
+                    rows={2}
+                    placeholder={t.storage}
+                  />
+                </div>
+                <div>
+                  <UILabel htmlFor="thawing" className="text-xs">{t.thawing}</UILabel>
+                  <Textarea
+                    id="thawing"
+                    value={thawing}
+                    onChange={(e) => setThawing(e.target.value)}
+                    rows={2}
+                    placeholder={t.thawing}
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground italic">
+                  💡 Traduisez ces consignes dans la langue de l'étiquette puis enregistrez.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {label.snapshot_storage_instructions && (
+                  <div>
+                    <p className="text-xs text-muted-foreground">{t.storage}</p>
+                    <p className="text-sm p-3 bg-muted/50 rounded-lg">{label.snapshot_storage_instructions}</p>
+                  </div>
+                )}
+                {label.snapshot_thawing_instructions && (
+                  <div>
+                    <p className="text-xs text-muted-foreground">{t.thawing}</p>
+                    <p className="text-sm p-3 bg-muted/50 rounded-lg">{label.snapshot_thawing_instructions}</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </section>
+          <Separator />
+
 
           {/* Mandatory elements */}
           <section>
@@ -241,13 +320,15 @@ export function CartonLabelDetailSheet({ open, onOpenChange, label }: CartonLabe
 function generatePrintContent(label: CartonLabel): string {
   const nutrition = label.snapshot_nutrition as Record<string, number> | null;
   const secondaryAllergens = label.snapshot_allergens_secondary as string[] | null;
+  const t = getLabelDict(label.language);
+  const lang = label.language || 'fr';
 
   return `
     <!DOCTYPE html>
-    <html lang="fr">
+    <html lang="${lang}">
     <head>
       <meta charset="UTF-8">
-      <title>Étiquette - ${label.label_title}</title>
+      <title>${label.label_title}</title>
       <style>
         @page { size: 100mm 150mm; margin: 5mm; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -270,34 +351,35 @@ function generatePrintContent(label: CartonLabel): string {
     <body>
       <div class="title">${label.label_title}</div>
       <div class="section">
-        <div class="section-title">Ingrédients:</div>
+        <div class="section-title">${t.ingredients}:</div>
         <div class="ingredients">${label.snapshot_ingredients_html || 'N/A'}</div>
       </div>
       ${secondaryAllergens && secondaryAllergens.length > 0 ? `
-        <div class="allergens-warning">Peut contenir des traces de: ${secondaryAllergens.join(', ')}</div>
+        <div class="allergens-warning">${t.mayContain}: ${secondaryAllergens.join(', ')}</div>
       ` : ''}
       <div class="section">
-        <div class="section-title">Valeurs nutritionnelles moyennes pour 100g:</div>
+        <div class="section-title">${t.nutrition100g}:</div>
         ${nutrition ? `
           <table class="nutrition-table">
-            <tr><td class="label">Énergie</td><td class="value">${nutrition.per_100g_energy_kj?.toFixed(0) || '-'} kJ / ${nutrition.per_100g_energy_kcal?.toFixed(0) || '-'} kcal</td></tr>
-            <tr><td class="label">Matières grasses</td><td class="value">${nutrition.per_100g_fat?.toFixed(1) || '-'} g</td></tr>
-            <tr><td class="label">&nbsp;&nbsp;dont acides gras saturés</td><td class="value">${nutrition.per_100g_saturated_fat?.toFixed(1) || '-'} g</td></tr>
-            <tr><td class="label">Glucides</td><td class="value">${nutrition.per_100g_carbohydrates?.toFixed(1) || '-'} g</td></tr>
-            <tr><td class="label">&nbsp;&nbsp;dont sucres</td><td class="value">${nutrition.per_100g_sugars?.toFixed(1) || '-'} g</td></tr>
-            <tr><td class="label">Fibres alimentaires</td><td class="value">${nutrition.per_100g_fiber?.toFixed(1) || '-'} g</td></tr>
-            <tr><td class="label">Protéines</td><td class="value">${nutrition.per_100g_protein?.toFixed(1) || '-'} g</td></tr>
-            <tr><td class="label">Sel</td><td class="value">${nutrition.per_100g_salt?.toFixed(2) || '-'} g</td></tr>
+            <tr><td class="label">${t.energy}</td><td class="value">${nutrition.per_100g_energy_kj?.toFixed(0) || '-'} kJ / ${nutrition.per_100g_energy_kcal?.toFixed(0) || '-'} kcal</td></tr>
+            <tr><td class="label">${t.fat}</td><td class="value">${nutrition.per_100g_fat?.toFixed(1) || '-'} g</td></tr>
+            <tr><td class="label">&nbsp;&nbsp;${t.saturated}</td><td class="value">${nutrition.per_100g_saturated_fat?.toFixed(1) || '-'} g</td></tr>
+            <tr><td class="label">${t.carbs}</td><td class="value">${nutrition.per_100g_carbohydrates?.toFixed(1) || '-'} g</td></tr>
+            <tr><td class="label">&nbsp;&nbsp;${t.sugars}</td><td class="value">${nutrition.per_100g_sugars?.toFixed(1) || '-'} g</td></tr>
+            <tr><td class="label">${t.fiber}</td><td class="value">${nutrition.per_100g_fiber?.toFixed(1) || '-'} g</td></tr>
+            <tr><td class="label">${t.protein}</td><td class="value">${nutrition.per_100g_protein?.toFixed(1) || '-'} g</td></tr>
+            <tr><td class="label">${t.salt}</td><td class="value">${nutrition.per_100g_salt?.toFixed(2) || '-'} g</td></tr>
           </table>
         ` : '<p>N/A</p>'}
       </div>
       <div class="net-weight">${label.snapshot_net_weight || '-'} ${label.snapshot_net_weight_unit || 'kg'}</div>
-      ${label.snapshot_storage_instructions ? `<div class="section"><div class="section-title">Conservation:</div><div class="storage">${label.snapshot_storage_instructions}</div></div>` : ''}
-      ${label.snapshot_thawing_instructions ? `<div class="section"><div class="section-title">Décongélation:</div><div class="storage">${label.snapshot_thawing_instructions}</div></div>` : ''}
+      ${label.snapshot_storage_instructions ? `<div class="section"><div class="section-title">${t.storage}:</div><div class="storage">${label.snapshot_storage_instructions}</div></div>` : ''}
+      ${label.snapshot_thawing_instructions ? `<div class="section"><div class="section-title">${t.thawing}:</div><div class="storage">${label.snapshot_thawing_instructions}</div></div>` : ''}
       <div class="footer">
-        <div>BREADSHOP SAS - Fabriqué en France</div>
+        <div>${t.madeIn}</div>
       </div>
     </body>
     </html>
   `;
 }
+

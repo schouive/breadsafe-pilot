@@ -1,0 +1,2 @@
+ALTER TABLE public.carton_labels ADD COLUMN IF NOT EXISTS language text NOT NULL DEFAULT 'fr';
+CREATE INDEX IF NOT EXISTS idx_carton_labels_sheet_lang ON public.carton_labels(product_sheet_id, language);

@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useValidatedProductSheets, useCreateCartonLabel, useUpdateCartonLabel, CartonLabel } from '@/hooks/useCartonLabels';
+import { CARTON_LABEL_LANGUAGES } from '@/lib/cartonLabelI18n';
 import { Loader2, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
@@ -41,6 +42,7 @@ export function CartonLabelFormDialog({
   const [formData, setFormData] = useState({
     product_sheet_id: '',
     label_title: '',
+    language: 'fr',
   });
 
   useEffect(() => {
@@ -49,11 +51,13 @@ export function CartonLabelFormDialog({
         setFormData({
           product_sheet_id: label.product_sheet_id,
           label_title: label.label_title,
+          language: label.language || 'fr',
         });
       } else {
         setFormData({
           product_sheet_id: '',
           label_title: '',
+          language: 'fr',
         });
       }
     }
@@ -123,6 +127,35 @@ export function CartonLabelFormDialog({
                 </Select>
               </div>
             )}
+
+            {mode === 'create' && (
+              <div className="space-y-2">
+                <Label htmlFor="language">Langue *</Label>
+                <Select
+                  value={formData.language}
+                  onValueChange={(value) =>
+                    setFormData((prev) => ({ ...prev, language: value }))
+                  }
+                >
+                  <SelectTrigger id="language">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CARTON_LABEL_LANGUAGES.map((l) => (
+                      <SelectItem key={l.code} value={l.code}>
+                        {l.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {formData.language !== 'fr' && (
+                  <p className="text-xs text-muted-foreground">
+                    L'étiquette sera créée en <strong>brouillon</strong>. Vous pourrez traduire la liste INCO et les consignes avant de la valider.
+                  </p>
+                )}
+              </div>
+            )}
+
 
             <div className="space-y-2">
               <Label htmlFor="label_title">Titre de l'étiquette *</Label>

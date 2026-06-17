@@ -20,6 +20,7 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { downloadZebraCSV } from '@/lib/zebraLabelExport';
 import { toast } from 'sonner';
+import { getLanguageBadge } from '@/lib/cartonLabelI18n';
 
 export function CartonLabelManagement() {
   const { data: labels, isLoading } = useCartonLabels();
@@ -141,6 +142,9 @@ export function CartonLabelManagement() {
                     <div className="space-y-1 min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
                         <p className="font-medium truncate">{label.label_title}</p>
+                        <Badge variant="outline" className="text-xs shrink-0 bg-primary/10 text-primary border-primary/30">
+                          {getLanguageBadge(label.language)}
+                        </Badge>
                         <Badge variant="outline" className="text-xs shrink-0">v{label.version}</Badge>
                         {isOutdated(label) && label.status !== 'archived' && (
                           <Badge variant="outline" className="text-xs shrink-0 bg-warning/10 text-warning border-warning/30">

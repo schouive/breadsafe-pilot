@@ -1,5 +1,6 @@
 import { CartonLabel } from '@/hooks/useCartonLabels';
 import logoImage from '@/assets/logo-breadshop.png';
+import { getLabelDict } from '@/lib/cartonLabelI18n';
 
 interface CartonLabelPreviewProps {
   label: CartonLabel;
@@ -8,6 +9,7 @@ interface CartonLabelPreviewProps {
 export function CartonLabelPreview({ label }: CartonLabelPreviewProps) {
   const nutrition = label.snapshot_nutrition as Record<string, number> | null;
   const secondaryAllergens = label.snapshot_allergens_secondary as string[] | null;
+  const t = getLabelDict(label.language);
 
   return (
     <div className="w-full flex justify-center">
@@ -39,7 +41,7 @@ export function CartonLabelPreview({ label }: CartonLabelPreviewProps) {
           <div className="flex-1 flex gap-2 min-h-0">
             {/* Column 1: Ingredients */}
             <div className="flex-1 overflow-hidden" style={{ minWidth: 0 }}>
-              <div style={{ fontSize: '6px', fontWeight: 'bold', marginBottom: '2px' }}>INGRÉDIENTS</div>
+              <div style={{ fontSize: '6px', fontWeight: 'bold', marginBottom: '2px' }}>{t.ingredientsCaps}</div>
               <div 
                 className="overflow-hidden"
                 style={{ fontSize: '5.5px', textAlign: 'justify' }}
@@ -49,7 +51,7 @@ export function CartonLabelPreview({ label }: CartonLabelPreviewProps) {
               />
               {secondaryAllergens && secondaryAllergens.length > 0 && (
                 <div style={{ fontSize: '5px', fontStyle: 'italic', marginTop: '2px' }}>
-                  Peut contenir: {secondaryAllergens.join(', ')}
+                  {t.mayContain}: {secondaryAllergens.join(', ')}
                 </div>
               )}
             </div>
@@ -57,40 +59,40 @@ export function CartonLabelPreview({ label }: CartonLabelPreviewProps) {
             {/* Column 2: Nutrition + Conservation */}
             <div className="flex flex-col gap-1" style={{ width: '130px' }}>
               <div>
-                <div style={{ fontSize: '6px', fontWeight: 'bold', marginBottom: '1px' }}>VALEURS NUTRITIONNELLES / 100g</div>
+                <div style={{ fontSize: '6px', fontWeight: 'bold', marginBottom: '1px' }}>{t.nutritionCaps}</div>
                 {nutrition ? (
                   <table className="w-full border-collapse" style={{ fontSize: '5px' }}>
                     <tbody>
                       <tr>
-                        <td className="border border-black/50 px-0.5">Énergie</td>
+                        <td className="border border-black/50 px-0.5">{t.energy}</td>
                         <td className="border border-black/50 px-0.5 text-right">{nutrition.per_100g_energy_kj?.toFixed(0)}kJ/{nutrition.per_100g_energy_kcal?.toFixed(0)}kcal</td>
                       </tr>
                       <tr>
-                        <td className="border border-black/50 px-0.5">Matières grasses</td>
+                        <td className="border border-black/50 px-0.5">{t.fat}</td>
                         <td className="border border-black/50 px-0.5 text-right">{nutrition.per_100g_fat?.toFixed(1)}g</td>
                       </tr>
                       <tr>
-                        <td className="border border-black/50 px-0.5 pl-2">dont AG saturés</td>
+                        <td className="border border-black/50 px-0.5 pl-2">{t.saturated}</td>
                         <td className="border border-black/50 px-0.5 text-right">{nutrition.per_100g_saturated_fat?.toFixed(1)}g</td>
                       </tr>
                       <tr>
-                        <td className="border border-black/50 px-0.5">Glucides</td>
+                        <td className="border border-black/50 px-0.5">{t.carbs}</td>
                         <td className="border border-black/50 px-0.5 text-right">{nutrition.per_100g_carbohydrates?.toFixed(1)}g</td>
                       </tr>
                       <tr>
-                        <td className="border border-black/50 px-0.5 pl-2">dont sucres</td>
+                        <td className="border border-black/50 px-0.5 pl-2">{t.sugars}</td>
                         <td className="border border-black/50 px-0.5 text-right">{nutrition.per_100g_sugars?.toFixed(1)}g</td>
                       </tr>
                       <tr>
-                        <td className="border border-black/50 px-0.5">Fibres</td>
+                        <td className="border border-black/50 px-0.5">{t.fiber}</td>
                         <td className="border border-black/50 px-0.5 text-right">{nutrition.per_100g_fiber?.toFixed(1)}g</td>
                       </tr>
                       <tr>
-                        <td className="border border-black/50 px-0.5">Protéines</td>
+                        <td className="border border-black/50 px-0.5">{t.protein}</td>
                         <td className="border border-black/50 px-0.5 text-right">{nutrition.per_100g_protein?.toFixed(1)}g</td>
                       </tr>
                       <tr>
-                        <td className="border border-black/50 px-0.5">Sel</td>
+                        <td className="border border-black/50 px-0.5">{t.salt}</td>
                         <td className="border border-black/50 px-0.5 text-right">{nutrition.per_100g_salt?.toFixed(2)}g</td>
                       </tr>
                     </tbody>
@@ -103,7 +105,7 @@ export function CartonLabelPreview({ label }: CartonLabelPreviewProps) {
               {/* Storage instructions */}
               {label.snapshot_storage_instructions && (
                 <div>
-                  <div style={{ fontSize: '5px', fontWeight: 'bold' }}>CONSERVATION</div>
+                  <div style={{ fontSize: '5px', fontWeight: 'bold' }}>{t.storageCaps}</div>
                   <div style={{ fontSize: '5px' }}>{label.snapshot_storage_instructions}</div>
                 </div>
               )}
@@ -111,7 +113,7 @@ export function CartonLabelPreview({ label }: CartonLabelPreviewProps) {
               {/* Thawing instructions */}
               {label.snapshot_thawing_instructions && (
                 <div>
-                  <div style={{ fontSize: '5px', fontWeight: 'bold' }}>DÉCONGÉLATION</div>
+                  <div style={{ fontSize: '5px', fontWeight: 'bold' }}>{t.thawingCaps}</div>
                   <div style={{ fontSize: '5px' }}>{label.snapshot_thawing_instructions}</div>
                 </div>
               )}
@@ -121,7 +123,7 @@ export function CartonLabelPreview({ label }: CartonLabelPreviewProps) {
             <div className="flex flex-col justify-between" style={{ width: '100px' }}>
               {/* Net weight - prominent */}
               <div className="border border-black p-1 text-center">
-                <div style={{ fontSize: '5px' }}>POIDS NET</div>
+                <div style={{ fontSize: '5px' }}>{t.netWeightCaps}</div>
                 <div style={{ fontSize: '14px', fontWeight: 'bold', lineHeight: '1' }}>
                   {label.snapshot_net_weight || '-'} {label.snapshot_net_weight_unit || 'kg'}
                 </div>
@@ -129,9 +131,9 @@ export function CartonLabelPreview({ label }: CartonLabelPreviewProps) {
 
               {/* DDM placeholder */}
               <div className="border border-dashed border-black/50 p-1 text-center" style={{ backgroundColor: '#f5f5f5' }}>
-                <div style={{ fontSize: '5px' }}>À CONSOMMER DE PRÉFÉRENCE AVANT</div>
-                <div style={{ fontSize: '10px', fontWeight: 'bold', color: '#999' }}>DDM</div>
-                <div style={{ fontSize: '4px', fontStyle: 'italic', color: '#666' }}>(à compléter)</div>
+                <div style={{ fontSize: '5px' }}>{t.bestBefore.toUpperCase()}</div>
+                <div style={{ fontSize: '10px', fontWeight: 'bold', color: '#999' }}>{t.bestBeforeShort}</div>
+                <div style={{ fontSize: '4px', fontStyle: 'italic', color: '#666' }}>{t.toComplete}</div>
               </div>
 
               {/* Barcode placeholder */}
@@ -146,7 +148,7 @@ export function CartonLabelPreview({ label }: CartonLabelPreviewProps) {
                     />
                   ))}
                 </div>
-                <div style={{ fontSize: '4px', fontStyle: 'italic', color: '#666' }}>Code-barres (à imprimer)</div>
+                <div style={{ fontSize: '4px', fontStyle: 'italic', color: '#666' }}>{t.barcodeToPrint}</div>
               </div>
 
               {/* Triman + Recyclable */}
@@ -158,7 +160,7 @@ export function CartonLabelPreview({ label }: CartonLabelPreviewProps) {
                   ♻️
                 </div>
                 <div style={{ fontSize: '5px' }}>
-                  Sac et carton<br/>recyclables
+                  {t.recyclable}
                 </div>
               </div>
             </div>
@@ -166,7 +168,7 @@ export function CartonLabelPreview({ label }: CartonLabelPreviewProps) {
 
           {/* Footer: Company info */}
           <div className="pt-1 border-t border-black/30 mt-1 text-center" style={{ fontSize: '5px' }}>
-            BREADSHOP SAS - Fabriqué en France
+            {t.madeIn}
           </div>
         </div>
       </div>

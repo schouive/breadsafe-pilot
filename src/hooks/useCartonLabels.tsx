@@ -27,6 +27,7 @@ export interface CartonLabel {
   id: string;
   product_sheet_id: string;
   label_title: string;
+  language: string;
   status: 'draft' | 'validated' | 'archived';
   validated_at: string | null;
   validated_by: string | null;
@@ -153,6 +154,7 @@ export function useCreateCartonLabel() {
     mutationFn: async (label: {
       product_sheet_id: string;
       label_title: string;
+      language?: string;
     }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Utilisateur non connecté');
@@ -198,16 +200,21 @@ export function useCreateCartonLabel() {
       } : null;
 
       const { data: { user: currentUser } } = await supabase.auth.getUser();
+      const lang = label.language || 'fr';
+      const isFrench = lang === 'fr';
 
       const { data, error } = await supabase
         .from('carton_labels')
         .insert({
           product_sheet_id: label.product_sheet_id,
           label_title: label.label_title,
+          language: lang,
           created_by: user.id,
-          status: 'validated',
-          validated_at: new Date().toISOString(),
-          validated_by: user.id,
+          // French labels are validated immediately (snapshot from FT is FR).
+          // Other languages start as draft so the user can translate INCO and instructions.
+          status: isFrench ? 'validated' : 'draft',
+          validated_at: isFrench ? new Date().toISOString() : null,
+          validated_by: isFrench ? user.id : null,
           snapshot_product_sheet_version: sheet.version,
           snapshot_ingredients_html: ingredientsHtml || null,
           snapshot_ingredients_html_original: ingredientsHtml || null,
@@ -322,6 +329,51 @@ export function useUpdateIncoHtml() {
         description: error.message,
         variant: 'destructive',
       });
+    },
+  });
+}
+
+// Update translatable instructions (storage / thawing) on drafts
+export function useUpdateCartonLabelTexts() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async ({
+      id,
+      storage,
+      thawing,
+    }: {
+      id: string;
+      storage: string | null;
+      thawing: string | null;
+    }) => {
+      const { data: label, error: labelError } = await supabase
+        .from('carton_labels')
+        .select('status')
+        .eq('id', id)
+        .single();
+      if (labelError) throw labelError;
+      if (label.status !== 'draft') throw new Error('Seuls les brouillons peuvent être modifiés');
+
+      const { data, error } = await supabase
+        .from('carton_labels')
+        .update({
+          snapshot_storage_instructions: storage,
+          snapshot_thawing_instructions: thawing,
+        })
+        .eq('id', id)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['carton-labels'] });
+      toast({ title: 'Consignes mises à jour' });
+    },
+    onError: (error) => {
+      toast({ title: 'Erreur', description: error.message, variant: 'destructive' });
     },
   });
 }

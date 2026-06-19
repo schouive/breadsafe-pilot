@@ -31,6 +31,8 @@ export function CartonLabelManagement() {
   const [editingLabel, setEditingLabel] = useState<CartonLabel | null>(null);
   const [viewingLabel, setViewingLabel] = useState<CartonLabel | null>(null);
   const [deletingLabel, setDeletingLabel] = useState<CartonLabel | null>(null);
+  const [search, setSearch] = useState('');
+  const [frozenFilter, setFrozenFilter] = useState<string>('all');
 
   const handleDelete = async () => {
     if (!deletingLabel) return;

@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useCartonLabels, useDeleteCartonLabel, CartonLabel } from '@/hooks/useCartonLabels';
+import { isFrozen } from '@/lib/ddm';
 import { CartonLabelFormDialog } from './CartonLabelFormDialog';
 import { CartonLabelDetailSheet } from './CartonLabelDetailSheet';
 import {

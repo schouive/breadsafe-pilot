@@ -52,13 +52,6 @@ export const EXPORTABLE_TABLES: ExportableTable[] = [
     relations: ['recipes'],
   },
   {
-    id: 'carton_labels',
-    name: 'Étiquettes carton',
-    description: 'Étiquettes avec snapshots de données',
-    tableName: 'carton_labels',
-    relations: ['product_sheets'],
-  },
-  {
     id: 'label_data',
     name: 'Données étiquettes',
     description: 'Données logistiques pour étiquetage',

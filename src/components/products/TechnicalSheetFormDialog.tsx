@@ -553,6 +553,11 @@ export function TechnicalSheetFormDialog({
         data.inco_html = editableIncoHtml || null;
         data.snapshot_allergens = snapshotAllergens;
         await updateSheet.mutateAsync({ id: sheet.id, ...data });
+        // Re-traduit toutes les étiquettes non-FR liées (fire-and-forget)
+        supabase.functions.invoke('retranslate-sheet-labels', { body: { sheet_id: sheet.id } })
+          .then(({ error }) => {
+            if (error) console.warn('Retranslation labels failed:', error);
+          });
       }
       
       onOpenChange(false);

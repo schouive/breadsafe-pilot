@@ -55,7 +55,7 @@ const normalizeAllergen = (a: string) => {
 
 const STORAGE_OPTIONS = [
   { value: 'ambient', label: 'À conserver à température ambiante, de préférence inférieure à 30°C' },
-  { value: 'frozen', label: 'À conserver à -18°C' },
+  { value: 'frozen', label: 'À conserver à -12°C' },
   { value: 'other', label: 'Autre (saisie manuelle)' },
 ];
 
@@ -70,7 +70,7 @@ const DEFAULT_THAWING_INSTRUCTIONS = 'Décongeler à température ambiante, ne p
 function determineStorageType(storageInstructions: string | null): 'ambient' | 'frozen' | 'other' {
   if (!storageInstructions) return 'ambient';
   const normalized = storageInstructions.toLowerCase();
-  if (normalized.includes('-18') || normalized.includes('congel')) return 'frozen';
+  if (normalized.includes('-18') || normalized.includes('-12') || normalized.includes('congel')) return 'frozen';
   if (normalized.includes('ambiante') && normalized.includes('30')) return 'ambient';
   return 'other';
 }

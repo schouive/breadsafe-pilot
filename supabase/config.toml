@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.translate-label]
 verify_jwt = true
+
+[functions.retranslate-sheet-labels]
+verify_jwt = true

@@ -42,6 +42,12 @@ export function CartonLabelManagement() {
     setDeletingLabel(null);
   };
 
+  // Sort: drafts first, then validated, then archived
+  const sortedLabels = labels?.slice().sort((a, b) => {
+    const order = { draft: 0, validated: 1, archived: 2 };
+    return (order[a.status] || 3) - (order[b.status] || 3);
+  });
+
   const filteredLabels = useMemo(() => {
     if (!sortedLabels) return [];
     const q = search.trim().toLowerCase();
@@ -64,47 +70,6 @@ export function CartonLabelManagement() {
   };
 
   const validatedCount = labels?.filter(l => l.status === 'validated').length || 0;
-
-  const handleExportCSV = () => {
-    if (!labels || labels.length === 0) {
-      toast.error('Aucune étiquette à exporter');
-      return;
-    }
-    
-    // Only validated labels can be exported
-    if (validatedCount === 0) {
-      toast.error('Aucune étiquette validée à exporter.');
-      return;
-    }
-
-    const result = downloadZebraCSV(labels);
-    if (result.success) {
-      toast.success('Export CSV généré', {
-        description: `${result.count} étiquette(s) validée(s) exportée(s)`,
-      });
-    } else {
-      toast.error(result.message);
-    }
-  };
-
-  const getStatusBadge = (label: CartonLabel) => {
-    if (label.status === 'archived') return (
-      <Badge variant="outline" className="shrink-0 bg-muted text-muted-foreground border-muted-foreground/30">
-        <Archive className="h-3 w-3 mr-1" /> Archivée
-      </Badge>
-    );
-    return (
-      <Badge variant="outline" className="shrink-0 bg-success/10 text-success border-success/30">
-        <Check className="h-3 w-3 mr-1" /> Validée
-      </Badge>
-    );
-  };
-
-  // Sort: drafts first, then validated, then archived
-  const sortedLabels = labels?.slice().sort((a, b) => {
-    const order = { draft: 0, validated: 1, archived: 2 };
-    return (order[a.status] || 3) - (order[b.status] || 3);
-  });
 
   return (
     <>

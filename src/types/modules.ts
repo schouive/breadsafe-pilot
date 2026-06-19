@@ -11,7 +11,7 @@ export type AppModule =
 export const ALL_MODULES: { id: AppModule; label: string; description: string }[] = [
   { id: 'haccp', label: 'HACCP', description: 'Contrôles, températures, non-conformités' },
   { id: 'products', label: 'Produits', description: 'Recettes et fiches techniques' },
-  { id: 'labeling', label: 'Étiquetage', description: 'Étiquettes carton et impression' },
+  { id: 'labeling', label: 'Étiquetage', description: 'Impression des étiquettes produits' },
   { id: 'orders', label: 'Commandes', description: 'Commandes fournisseurs et réceptions' },
   { id: 'time_tracking', label: 'Pointage', description: 'Pointeuse RFID et historique' },
   { id: 'rd', label: 'R&D', description: 'Essais boulangerie' },

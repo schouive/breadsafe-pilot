@@ -459,8 +459,6 @@ recipes ────┬──< recipe_ingredients
 raw_materials ──< recipe_ingredients
                   (utilisé dans)
 
-product_sheets ──< carton_labels
-                   (génère)
 
 cold_rooms ──< storage_temperature_records
                (relevés)

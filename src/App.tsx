@@ -32,7 +32,7 @@ const DataExport = lazy(() => import("./pages/DataExport"));
 const Auth = lazy(() => import("./pages/Auth"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const ProductSheetManagement = lazy(() => import("@/components/products/ProductSheetManagement").then(m => ({ default: m.ProductSheetManagement })));
-const CartonLabelManagement = lazy(() => import("@/components/products/CartonLabelManagement").then(m => ({ default: m.CartonLabelManagement })));
+
 const RecipeData = lazy(() => import("./pages/RecipeData"));
 const OrdersList = lazy(() => import("./pages/OrdersList"));
 const NewOrder = lazy(() => import("./pages/NewOrder"));
@@ -305,16 +305,7 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/products/carton-labels"
-          element={
-            <ProtectedRoute>
-              <ProductsLayout>
-                <CartonLabelManagement />
-              </ProductsLayout>
-            </ProtectedRoute>
-          }
-        />
+        <Route path="/products/carton-labels" element={<Navigate to="/print" replace />} />
         <Route path="/print/carton-labels" element={<Navigate to="/print" replace />} />
         <Route
           path="/products/rd-trials"

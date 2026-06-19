@@ -42,6 +42,21 @@ export function CartonLabelManagement() {
     setDeletingLabel(null);
   };
 
+  const filteredLabels = useMemo(() => {
+    if (!sortedLabels) return [];
+    const q = search.trim().toLowerCase();
+    return sortedLabels.filter((label) => {
+      if (frozenFilter === 'frozen' && !isFrozen(label.snapshot_storage_instructions)) return false;
+      if (frozenFilter === 'fresh' && isFrozen(label.snapshot_storage_instructions)) return false;
+      if (q) {
+        const hay = [label.label_title, label.product_sheets?.product_name]
+          .filter(Boolean).join(' ').toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    });
+  }, [sortedLabels, search, frozenFilter]);
+
   const isOutdated = (label: CartonLabel) => {
     const sheetVersion = label.product_sheets?.version;
     const snapshotVersion = label.snapshot_product_sheet_version;

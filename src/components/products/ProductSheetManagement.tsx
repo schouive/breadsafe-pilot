@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Plus, FileText, Edit2, Trash2, Eye, Check, X, FileCheck, Edit3, CheckCircle, Copy, Search, Filter } from 'lucide-react';
+import { Plus, FileText, Edit2, Trash2, Eye, Check, X, FileCheck, Edit3, CheckCircle, Copy, Search, Filter, Snowflake } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useProductSheets, useDeleteProductSheet, useDuplicateProductSheet } from '@/hooks/useRecipes';
 import { useFamilies } from '@/hooks/useProductCatalog';
+import { isFrozen } from '@/lib/ddm';
 import { TechnicalSheetFormDialog } from './TechnicalSheetFormDialog';
 import { TechnicalSheetDetailSheet } from './TechnicalSheetDetailSheet';
 import {
@@ -32,6 +33,7 @@ export function ProductSheetManagement() {
   const [search, setSearch] = useState('');
   const [familyFilter, setFamilyFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [frozenFilter, setFrozenFilter] = useState<string>('all');
 
   const handleDelete = async () => {
     if (!deletingSheet) return;
@@ -47,6 +49,8 @@ export function ProductSheetManagement() {
       if (familyFilter !== 'all' && familyFilter !== 'none' && s.family_id !== familyFilter) return false;
       if (statusFilter === 'published' && !s.is_published) return false;
       if (statusFilter === 'draft' && s.is_published) return false;
+      if (frozenFilter === 'frozen' && !isFrozen(s.storage_instructions)) return false;
+      if (frozenFilter === 'fresh' && isFrozen(s.storage_instructions)) return false;
       if (q) {
         const hay = [s.product_name, s.product_reference, s.snapshot_recipe_name, s.family?.label]
           .filter(Boolean).join(' ').toLowerCase();
@@ -54,7 +58,7 @@ export function ProductSheetManagement() {
       }
       return true;
     });
-  }, [sheets, search, familyFilter, statusFilter]);
+  }, [sheets, search, familyFilter, statusFilter, frozenFilter]);
 
   const grouped = useMemo(() => {
     const map = new Map<string, { key: string; label: string; items: any[] }>();
@@ -127,6 +131,17 @@ export function ProductSheetManagement() {
                 <SelectItem value="draft">Brouillon</SelectItem>
               </SelectContent>
             </Select>
+            <Select value={frozenFilter} onValueChange={setFrozenFilter}>
+              <SelectTrigger className="md:w-44">
+                <Snowflake className="h-4 w-4 mr-2 text-muted-foreground" />
+                <SelectValue placeholder="Conservation" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Toutes les conservations</SelectItem>
+                <SelectItem value="frozen">Congelé</SelectItem>
+                <SelectItem value="fresh">Frais / Ambiant</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           {families && families.length > 0 && (
@@ -154,6 +169,13 @@ export function ProductSheetManagement() {
                 onClick={() => setFamilyFilter('none')}
               >
                 Sans famille
+              </Badge>
+              <Badge
+                variant={frozenFilter === 'frozen' ? 'default' : 'outline'}
+                className="cursor-pointer"
+                onClick={() => setFrozenFilter(frozenFilter === 'frozen' ? 'all' : 'frozen')}
+              >
+                <Snowflake className="h-3 w-3 mr-1" /> Congelé
               </Badge>
             </div>
           )}

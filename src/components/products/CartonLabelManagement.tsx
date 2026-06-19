@@ -133,22 +133,59 @@ export function CartonLabelManagement() {
               </Button>
             </div>
           </div>
+
+          <div className="flex flex-col md:flex-row gap-2">
+            <div className="relative flex-1 min-w-0">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Rechercher par titre, FT…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <Select value={frozenFilter} onValueChange={setFrozenFilter}>
+              <SelectTrigger className="md:w-44">
+                <Snowflake className="h-4 w-4 mr-2 text-muted-foreground" />
+                <SelectValue placeholder="Conservation" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Toutes les conservations</SelectItem>
+                <SelectItem value="frozen">Congelé</SelectItem>
+                <SelectItem value="fresh">Frais / Ambiant</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <Badge
+              variant={frozenFilter === 'frozen' ? 'default' : 'outline'}
+              className="cursor-pointer"
+              onClick={() => setFrozenFilter(frozenFilter === 'frozen' ? 'all' : 'frozen')}
+            >
+              <Snowflake className="h-3 w-3 mr-1" /> Congelé
+            </Badge>
+          </div>
         </CardHeader>
         <CardContent>
           {isLoading ? (
             <p className="text-muted-foreground">Chargement...</p>
-          ) : sortedLabels?.length === 0 ? (
+          ) : filteredLabels.length === 0 ? (
             <div className="text-center py-12">
               <Package className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground mb-4">Aucune étiquette carton créée</p>
-              <Button variant="outline" onClick={() => setIsAddOpen(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Nouvelle étiquette
-              </Button>
+              <p className="text-muted-foreground mb-4">
+                {sortedLabels?.length === 0 ? 'Aucune étiquette carton créée' : 'Aucune étiquette ne correspond aux filtres'}
+              </p>
+              {sortedLabels?.length === 0 && (
+                <Button variant="outline" onClick={() => setIsAddOpen(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Nouvelle étiquette
+                </Button>
+              )}
             </div>
           ) : (
             <div className="space-y-3">
-              {sortedLabels?.map((label) => (
+              {filteredLabels.map((label) => (
                 <div
                   key={label.id}
                   className={`flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors ${

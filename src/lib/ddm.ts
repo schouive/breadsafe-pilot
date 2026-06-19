@@ -1,14 +1,14 @@
 /**
  * Calcule automatiquement la DDM à partir de la date de fabrication
  * et des conditions de conservation déclarées sur la fiche technique.
- * - Congelé (storage_instructions contient "-18", "-12" ou "congel") : +6 mois
+ * - Congelé (storage_instructions contient "-18" ou "congel") : +6 mois
  * - Sinon (frais / ambiant)                                          : +21 jours
  * Retourne une chaîne ISO yyyy-mm-dd (compatible <input type="date">).
  */
 export function isFrozen(storageInstructions: string | null | undefined): boolean {
   if (!storageInstructions) return false;
   const n = storageInstructions.toLowerCase();
-  return n.includes('-18') || n.includes('-12') || n.includes('congel');
+  return n.includes('-18') || n.includes('congel');
 }
 
 export function computeDdm(

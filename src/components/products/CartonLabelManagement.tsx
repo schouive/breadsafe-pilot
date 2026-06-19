@@ -1,9 +1,12 @@
-import { useState } from 'react';
-import { Plus, Package, Edit2, Trash2, Eye, Check, X, AlertTriangle, Download, Archive, Lock } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { Plus, Package, Edit2, Trash2, Eye, Check, X, AlertTriangle, Download, Archive, Lock, Snowflake, Search, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useCartonLabels, useDeleteCartonLabel, CartonLabel } from '@/hooks/useCartonLabels';
+import { isFrozen } from '@/lib/ddm';
 import { CartonLabelFormDialog } from './CartonLabelFormDialog';
 import { CartonLabelDetailSheet } from './CartonLabelDetailSheet';
 import {
@@ -30,12 +33,35 @@ export function CartonLabelManagement() {
   const [editingLabel, setEditingLabel] = useState<CartonLabel | null>(null);
   const [viewingLabel, setViewingLabel] = useState<CartonLabel | null>(null);
   const [deletingLabel, setDeletingLabel] = useState<CartonLabel | null>(null);
+  const [search, setSearch] = useState('');
+  const [frozenFilter, setFrozenFilter] = useState<string>('all');
 
   const handleDelete = async () => {
     if (!deletingLabel) return;
     await deleteLabel.mutateAsync(deletingLabel.id);
     setDeletingLabel(null);
   };
+
+  // Sort: drafts first, then validated, then archived
+  const sortedLabels = labels?.slice().sort((a, b) => {
+    const order = { draft: 0, validated: 1, archived: 2 };
+    return (order[a.status] || 3) - (order[b.status] || 3);
+  });
+
+  const filteredLabels = useMemo(() => {
+    if (!sortedLabels) return [];
+    const q = search.trim().toLowerCase();
+    return sortedLabels.filter((label) => {
+      if (frozenFilter === 'frozen' && !isFrozen(label.snapshot_storage_instructions)) return false;
+      if (frozenFilter === 'fresh' && isFrozen(label.snapshot_storage_instructions)) return false;
+      if (q) {
+        const hay = [label.label_title, label.product_sheets?.product_name]
+          .filter(Boolean).join(' ').toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    });
+  }, [sortedLabels, search, frozenFilter]);
 
   const isOutdated = (label: CartonLabel) => {
     const sheetVersion = label.product_sheets?.version;
@@ -50,7 +76,7 @@ export function CartonLabelManagement() {
       toast.error('Aucune étiquette à exporter');
       return;
     }
-    
+
     // Only validated labels can be exported
     if (validatedCount === 0) {
       toast.error('Aucune étiquette validée à exporter.');
@@ -80,12 +106,6 @@ export function CartonLabelManagement() {
     );
   };
 
-  // Sort: drafts first, then validated, then archived
-  const sortedLabels = labels?.slice().sort((a, b) => {
-    const order = { draft: 0, validated: 1, archived: 2 };
-    return (order[a.status] || 3) - (order[b.status] || 3);
-  });
-
   return (
     <>
       <Card>
@@ -113,22 +133,59 @@ export function CartonLabelManagement() {
               </Button>
             </div>
           </div>
+
+          <div className="flex flex-col md:flex-row gap-2">
+            <div className="relative flex-1 min-w-0">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Rechercher par titre, FT…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <Select value={frozenFilter} onValueChange={setFrozenFilter}>
+              <SelectTrigger className="md:w-44">
+                <Snowflake className="h-4 w-4 mr-2 text-muted-foreground" />
+                <SelectValue placeholder="Conservation" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Toutes les conservations</SelectItem>
+                <SelectItem value="frozen">Congelé</SelectItem>
+                <SelectItem value="fresh">Frais / Ambiant</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <Badge
+              variant={frozenFilter === 'frozen' ? 'default' : 'outline'}
+              className="cursor-pointer"
+              onClick={() => setFrozenFilter(frozenFilter === 'frozen' ? 'all' : 'frozen')}
+            >
+              <Snowflake className="h-3 w-3 mr-1" /> Congelé
+            </Badge>
+          </div>
         </CardHeader>
         <CardContent>
           {isLoading ? (
             <p className="text-muted-foreground">Chargement...</p>
-          ) : sortedLabels?.length === 0 ? (
+          ) : filteredLabels.length === 0 ? (
             <div className="text-center py-12">
               <Package className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground mb-4">Aucune étiquette carton créée</p>
-              <Button variant="outline" onClick={() => setIsAddOpen(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Nouvelle étiquette
-              </Button>
+              <p className="text-muted-foreground mb-4">
+                {sortedLabels?.length === 0 ? 'Aucune étiquette carton créée' : 'Aucune étiquette ne correspond aux filtres'}
+              </p>
+              {sortedLabels?.length === 0 && (
+                <Button variant="outline" onClick={() => setIsAddOpen(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Nouvelle étiquette
+                </Button>
+              )}
             </div>
           ) : (
             <div className="space-y-3">
-              {sortedLabels?.map((label) => (
+              {filteredLabels.map((label) => (
                 <div
                   key={label.id}
                   className={`flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors ${

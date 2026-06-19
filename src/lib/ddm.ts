@@ -8,7 +8,7 @@
 export function isFrozen(storageInstructions: string | null | undefined): boolean {
   if (!storageInstructions) return false;
   const n = storageInstructions.toLowerCase();
-  return n.includes('-18') || n.includes('congel');
+  return n.includes('-18') || n.includes('-12') || n.includes('congel');
 }
 
 export function computeDdm(

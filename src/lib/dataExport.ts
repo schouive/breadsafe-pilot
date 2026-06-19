@@ -190,13 +190,6 @@ export const TABLE_RELATIONS = {
       description: 'Une fiche produit est liée à une recette',
     },
     {
-      from: 'carton_labels',
-      to: 'product_sheets',
-      type: 'many-to-one',
-      foreignKey: 'product_sheet_id',
-      description: 'Une étiquette est liée à une fiche produit',
-    },
-    {
       from: 'label_data',
       to: 'recipes',
       type: 'one-to-one',

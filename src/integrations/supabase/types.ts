@@ -74,89 +74,6 @@ export type Database = {
         }
         Relationships: []
       }
-      carton_labels: {
-        Row: {
-          created_at: string
-          created_by: string | null
-          id: string
-          label_title: string
-          language: string
-          product_sheet_id: string
-          snapshot_allergens_secondary: Json | null
-          snapshot_created_at: string | null
-          snapshot_ingredients_html: string | null
-          snapshot_ingredients_html_original: string | null
-          snapshot_net_weight: number | null
-          snapshot_net_weight_unit: string | null
-          snapshot_nutrition: Json | null
-          snapshot_product_sheet_version: number | null
-          snapshot_storage_instructions: string | null
-          snapshot_thawing_instructions: string | null
-          status: string
-          updated_at: string
-          validated_at: string | null
-          validated_by: string | null
-          validation_comment: string | null
-          version: number
-        }
-        Insert: {
-          created_at?: string
-          created_by?: string | null
-          id?: string
-          label_title: string
-          language?: string
-          product_sheet_id: string
-          snapshot_allergens_secondary?: Json | null
-          snapshot_created_at?: string | null
-          snapshot_ingredients_html?: string | null
-          snapshot_ingredients_html_original?: string | null
-          snapshot_net_weight?: number | null
-          snapshot_net_weight_unit?: string | null
-          snapshot_nutrition?: Json | null
-          snapshot_product_sheet_version?: number | null
-          snapshot_storage_instructions?: string | null
-          snapshot_thawing_instructions?: string | null
-          status?: string
-          updated_at?: string
-          validated_at?: string | null
-          validated_by?: string | null
-          validation_comment?: string | null
-          version?: number
-        }
-        Update: {
-          created_at?: string
-          created_by?: string | null
-          id?: string
-          label_title?: string
-          language?: string
-          product_sheet_id?: string
-          snapshot_allergens_secondary?: Json | null
-          snapshot_created_at?: string | null
-          snapshot_ingredients_html?: string | null
-          snapshot_ingredients_html_original?: string | null
-          snapshot_net_weight?: number | null
-          snapshot_net_weight_unit?: string | null
-          snapshot_nutrition?: Json | null
-          snapshot_product_sheet_version?: number | null
-          snapshot_storage_instructions?: string | null
-          snapshot_thawing_instructions?: string | null
-          status?: string
-          updated_at?: string
-          validated_at?: string | null
-          validated_by?: string | null
-          validation_comment?: string | null
-          version?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "carton_labels_product_sheet_id_fkey"
-            columns: ["product_sheet_id"]
-            isOneToOne: false
-            referencedRelation: "product_sheets"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       cold_rooms: {
         Row: {
           created_at: string
@@ -332,7 +249,6 @@ export type Database = {
         Row: {
           action: string
           allergens_removed: string[] | null
-          carton_label_id: string | null
           created_at: string
           html_after: string | null
           html_before: string | null
@@ -343,7 +259,6 @@ export type Database = {
         Insert: {
           action: string
           allergens_removed?: string[] | null
-          carton_label_id?: string | null
           created_at?: string
           html_after?: string | null
           html_before?: string | null
@@ -354,7 +269,6 @@ export type Database = {
         Update: {
           action?: string
           allergens_removed?: string[] | null
-          carton_label_id?: string | null
           created_at?: string
           html_after?: string | null
           html_before?: string | null
@@ -363,13 +277,6 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "inco_change_logs_carton_label_id_fkey"
-            columns: ["carton_label_id"]
-            isOneToOne: false
-            referencedRelation: "carton_labels"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "inco_change_logs_product_sheet_id_fkey"
             columns: ["product_sheet_id"]

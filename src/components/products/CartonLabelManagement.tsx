@@ -3,6 +3,8 @@ import { Plus, Package, Edit2, Trash2, Eye, Check, X, AlertTriangle, Download, A
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useCartonLabels, useDeleteCartonLabel, CartonLabel } from '@/hooks/useCartonLabels';
 import { isFrozen } from '@/lib/ddm';
 import { CartonLabelFormDialog } from './CartonLabelFormDialog';

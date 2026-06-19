@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Plus, Package, Edit2, Trash2, Eye, Check, X, AlertTriangle, Download, Archive, Lock } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { Plus, Package, Edit2, Trash2, Eye, Check, X, AlertTriangle, Download, Archive, Lock, Snowflake, Search, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';

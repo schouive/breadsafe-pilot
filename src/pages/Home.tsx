@@ -5,7 +5,8 @@ import {
   Cog,
   ShoppingCart,
   Clock,
-  Printer
+  Printer,
+  ClipboardList
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';

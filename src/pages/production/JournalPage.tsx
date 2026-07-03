@@ -204,11 +204,14 @@ function BatchCard({
   batch,
   scheduledTime,
   status,
+  recipeId,
 }: {
   batch: ProductionBatch;
   scheduledTime?: string | null;
   status?: string;
+  recipeId?: string;
 }) {
+
   const [open, setOpen] = useState(true);
   const [chariots, setChariots] = useState(batch.chariots?.toString() ?? '');
   const [doughTemp, setDoughTemp] = useState(batch.dough_temperature?.toString() ?? '');

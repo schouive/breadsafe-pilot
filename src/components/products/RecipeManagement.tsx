@@ -1,10 +1,10 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, BookOpen, Edit2, Trash2, Eye, ChefHat, Scale, FlaskConical } from 'lucide-react';
+import { Plus, BookOpen, Edit2, Trash2, Eye, ChefHat, Scale, FlaskConical, Factory, FlaskRound } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { useRecipes, useDeleteRecipe, Recipe } from '@/hooks/useRecipes';
+import { useRecipes, useDeleteRecipe, useUpdateRecipe, Recipe } from '@/hooks/useRecipes';
 import { cn } from '@/lib/utils';
 import { RecipeDetailSheet } from './RecipeDetailSheet';
 import {

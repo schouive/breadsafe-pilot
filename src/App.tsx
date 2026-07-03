@@ -466,6 +466,12 @@ function AppRoutes() {
         <Route path="/planning" element={<Navigate to="/haccp/planning" replace />} />
         <Route path="/reports" element={<Navigate to="/haccp/reports" replace />} />
 
+        {/* Production Module Routes */}
+        <Route path="/production" element={<ProtectedRoute><ProductionLayout><ProductionPlanning /></ProductionLayout></ProtectedRoute>} />
+        <Route path="/production/dashboard" element={<ProtectedRoute><ProductionLayout><ProductionDashboard /></ProductionLayout></ProtectedRoute>} />
+        <Route path="/production/history" element={<ProtectedRoute><ProductionLayout><ProductionHistory /></ProductionLayout></ProtectedRoute>} />
+        <Route path="/production/journal/:planId" element={<ProtectedRoute><ProductionLayout><ProductionJournal /></ProductionLayout></ProtectedRoute>} />
+
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Suspense>

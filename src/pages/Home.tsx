@@ -114,6 +114,13 @@ export default function Home() {
       href: '/print',
     },
     {
+      title: 'Journal de Production',
+      description: 'Planning, suivi et traçabilité des productions',
+      icon: ClipboardList,
+      colorClass: 'bg-purple-500/10 text-purple-600 hover:bg-purple-500/20 border-purple-500/20',
+      href: '/production',
+    },
+    {
       title: 'Paramètres',
       description: 'Fournisseurs, matières premières et chambres froides',
       icon: Cog,

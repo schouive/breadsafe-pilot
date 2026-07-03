@@ -163,9 +163,10 @@ export default function PlanningPage() {
   );
 
   const filteredRecipes = useMemo(() => {
-    const s = search.trim().toLowerCase();
+    const norm = (v: string) => v.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    const s = norm(search.trim());
     if (!s) return recipes;
-    return recipes.filter((r) => r.name.toLowerCase().includes(s));
+    return recipes.filter((r) => norm(r.name).includes(s));
   }, [recipes, search]);
 
   useEffect(() => {

@@ -479,40 +479,65 @@ export default function PlanningPage() {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    filteredRecipes.map((r) => {
-                      const row = rows[r.id] ?? { quantity: '', unit: 'chariots' as ProductionQuantityUnit };
-                      const active = Number(row.quantity) > 0;
-                      return (
-                        <TableRow key={r.id} className={active ? 'bg-primary/5' : ''}>
-                          <TableCell className="font-medium">{r.name}</TableCell>
-                          <TableCell>
-                            <Input
-                              type="number"
-                              min={0}
-                              step="1"
-                              inputMode="numeric"
-                              placeholder="0"
-                              value={row.quantity}
-                              onChange={(e) => updateRow(r.id, { quantity: e.target.value })}
-                            />
+                    filteredRecipes.flatMap((r) => {
+                      const variants = variantsByRecipe.get(r.id) ?? [];
+
+                      const renderRow = (rowKey: string, label: string, indent: boolean) => {
+                        const row = rows[rowKey] ?? { quantity: '', unit: 'chariots' as ProductionQuantityUnit };
+                        const active = Number(row.quantity) > 0;
+                        return (
+                          <TableRow key={rowKey} className={active ? 'bg-primary/5' : ''}>
+                            <TableCell className={cn('font-medium', indent && 'pl-8 text-sm')}>
+                              {indent && <span className="text-muted-foreground mr-2">↳</span>}
+                              {label}
+                            </TableCell>
+                            <TableCell>
+                              <Input
+                                type="number"
+                                min={0}
+                                step="1"
+                                inputMode="numeric"
+                                placeholder="0"
+                                value={row.quantity}
+                                onChange={(e) => updateRow(rowKey, { quantity: e.target.value })}
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Select
+                                value={row.unit}
+                                onValueChange={(v) => updateRow(rowKey, { unit: v as ProductionQuantityUnit })}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="chariots">Chariots</SelectItem>
+                                  <SelectItem value="piece">Pièce</SelectItem>
+                                  <SelectItem value="run">Run</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      };
+
+                      if (variants.length === 0) {
+                        return [renderRow(r.id, r.name, false)];
+                      }
+
+                      return [
+                        <TableRow key={`${r.id}-header`} className="bg-muted/40">
+                          <TableCell colSpan={3} className="font-semibold text-foreground">
+                            {r.name}
+                            <span className="ml-2 text-xs text-muted-foreground font-normal">
+                              {variants.length} variante(s)
+                            </span>
                           </TableCell>
-                          <TableCell>
-                            <Select
-                              value={row.unit}
-                              onValueChange={(v) => updateRow(r.id, { unit: v as ProductionQuantityUnit })}
-                            >
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="chariots">Chariots</SelectItem>
-                                <SelectItem value="piece">Pièce</SelectItem>
-                                <SelectItem value="run">Run</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </TableCell>
-                        </TableRow>
-                      );
+                        </TableRow>,
+                        ...variants.map((v) =>
+                          renderRow(`${r.id}::${v.key}`, `${r.name} — ${v.label}`, true)
+                        ),
+                      ];
                     })
                   )}
                 </TableBody>

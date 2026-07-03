@@ -1574,6 +1574,54 @@ export type Database = {
           },
         ]
       }
+      production_batch_shapings: {
+        Row: {
+          batch_id: string
+          chariots: number
+          created_at: string
+          created_by: string | null
+          id: string
+          notes: string | null
+          product_sheet_id: string
+          updated_at: string
+        }
+        Insert: {
+          batch_id: string
+          chariots?: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          product_sheet_id: string
+          updated_at?: string
+        }
+        Update: {
+          batch_id?: string
+          chariots?: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          product_sheet_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "production_batch_shapings_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "production_batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "production_batch_shapings_product_sheet_id_fkey"
+            columns: ["product_sheet_id"]
+            isOneToOne: false
+            referencedRelation: "product_sheets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       production_batches: {
         Row: {
           batch_number: number

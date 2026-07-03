@@ -76,6 +76,24 @@ function RecipeRow({
         </div>
       </div>
       <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={onToggleProduction}
+          title="Cliquer pour changer le statut de production"
+        >
+          <Badge
+            variant="outline"
+            className={cn(
+              'cursor-pointer gap-1',
+              inProduction
+                ? 'bg-primary/10 text-primary border-primary/30 hover:bg-primary/20'
+                : 'bg-amber-100 text-amber-700 border-amber-300 hover:bg-amber-200'
+            )}
+          >
+            {inProduction ? <Factory className="h-3 w-3" /> : <FlaskRound className="h-3 w-3" />}
+            {inProduction ? 'En production' : 'En développement'}
+          </Badge>
+        </button>
         <Badge
           variant="outline"
           className={recipe.is_active ? 'bg-success/10 text-success border-success/30' : ''}

@@ -1,0 +1,1 @@
+ALTER TABLE public.recipes ADD COLUMN IF NOT EXISTS production_status TEXT NOT NULL DEFAULT 'in_production' CHECK (production_status IN ('in_development','in_production'));

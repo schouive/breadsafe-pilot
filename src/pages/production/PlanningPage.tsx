@@ -521,7 +521,7 @@ export default function PlanningPage() {
                         );
                       };
 
-                      if (variants.length === 0) {
+                      if (variants.length <= 1) {
                         return [renderRow(r.id, r.name, false)];
                       }
 

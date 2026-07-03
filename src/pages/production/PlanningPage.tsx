@@ -21,7 +21,7 @@ import {
   type ProductionPlan,
   type ProductionPriority,
 } from '@/hooks/useProductionPlans';
-import { useActiveRecipes } from '@/hooks/useRecipes';
+import { useFinishedRecipes } from '@/hooks/useRecipes';
 import { cn } from '@/lib/utils';
 
 const priorityLabels: Record<ProductionPriority, string> = {

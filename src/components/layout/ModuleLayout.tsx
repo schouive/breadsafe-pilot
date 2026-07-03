@@ -76,7 +76,7 @@ export function ModuleLayout({
   const isActiveRoute = (href: string) => {
     if (href === location.pathname) return true;
     // Handle sub-routes but exclude module root paths like /haccp, /products, /settings
-    const moduleRoots = ['/haccp', '/products', '/settings', '/orders', '/print'];
+    const moduleRoots = ['/haccp', '/products', '/settings', '/orders', '/print', '/production'];
     if (moduleRoots.includes(href)) return href === location.pathname;
     if (href !== '/' && location.pathname.startsWith(href)) return true;
     return false;

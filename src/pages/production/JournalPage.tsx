@@ -171,8 +171,10 @@ export default function JournalPage() {
               batch={batch}
               scheduledTime={plan?.scheduled_time}
               status={plan?.status}
+              recipeId={plan?.recipe_id ?? undefined}
             />
           ))}
+
         </div>
       )}
 

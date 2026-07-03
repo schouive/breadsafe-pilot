@@ -135,6 +135,7 @@ export default function Home() {
     if (module.href === '/orders') return canAccessModule('orders');
     if (module.href === '/products') return canAccessModule('products') || canAccessModule('rd');
     if (module.href === '/print') return canAccessModule('labeling');
+    if (module.href === '/production') return canAccessModule('production' as any) || hasRole('admin') || hasRole('bureau_methodes') || hasRole('operator');
     if (module.href === '/settings') return canAccessModule('settings');
     if (module.href === '/time-tracking') return canAccessModule('time_tracking');
     return true;

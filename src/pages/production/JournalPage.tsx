@@ -363,6 +363,10 @@ function BatchCard({
             </div>
           </div>
 
+          <ShapingRepartition batchId={batch.id} recipeId={recipeId} batchChariots={batch.chariots} />
+
+
+
           <div>
             <h3 className="font-semibold mb-2">Indicateurs</h3>
             <div className="grid grid-cols-2 md:grid-cols-5 gap-2">

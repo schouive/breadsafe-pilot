@@ -14,6 +14,11 @@ const ProductsLayout = lazy(() => import("@/components/layout/ProductsLayout").t
 const SettingsLayout = lazy(() => import("@/components/layout/SettingsLayout").then(m => ({ default: m.SettingsLayout })));
 const OrdersLayout = lazy(() => import("@/components/layout/OrdersLayout").then(m => ({ default: m.OrdersLayout })));
 const PrintLayout = lazy(() => import("@/components/layout/PrintLayout").then(m => ({ default: m.PrintLayout })));
+const ProductionLayout = lazy(() => import("@/components/layout/ProductionLayout").then(m => ({ default: m.ProductionLayout })));
+const ProductionPlanning = lazy(() => import("./pages/production/PlanningPage"));
+const ProductionJournal = lazy(() => import("./pages/production/JournalPage"));
+const ProductionDashboard = lazy(() => import("./pages/production/DashboardPage"));
+const ProductionHistory = lazy(() => import("./pages/production/HistoryPage"));
 
 // Lazy load pages
 const Home = lazy(() => import("./pages/Home"));

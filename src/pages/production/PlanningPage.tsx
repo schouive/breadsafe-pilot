@@ -1,5 +1,6 @@
 import { useMemo, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Play, Plus, Trash2, Pencil, ChevronLeft, ChevronRight, Search } from 'lucide-react';
@@ -13,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { supabase } from '@/integrations/supabase/client';
 import {
   useCreateProductionPlan,
   useDeleteProductionPlan,
@@ -26,6 +28,12 @@ import {
 import { useFinishedRecipes } from '@/hooks/useRecipes';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+
+interface Variant {
+  key: string; // weight+unit
+  label: string; // e.g. "90 g"
+  product_name: string;
+}
 
 const priorityLabels: Record<ProductionPriority, string> = {
   low: 'Basse',

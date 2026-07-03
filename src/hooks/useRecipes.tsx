@@ -70,7 +70,7 @@ export function useIntermediateRecipes() {
   });
 }
 
-// Get only finished product recipes
+// Get only finished product recipes available for production planning
 export function useFinishedRecipes() {
   return useQuery({
     queryKey: ['recipes', 'finished'],
@@ -80,6 +80,7 @@ export function useFinishedRecipes() {
         .select('*')
         .eq('recipe_type', 'finished')
         .eq('is_active', true)
+        .eq('production_status' as any, 'in_production')
         .order('name');
       
       if (error) throw error;

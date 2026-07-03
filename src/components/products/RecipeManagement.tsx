@@ -130,6 +130,13 @@ export function RecipeManagement() {
   const navigate = useNavigate();
   const { data: recipes, isLoading } = useRecipes();
   const deleteRecipe = useDeleteRecipe();
+  const updateRecipe = useUpdateRecipe();
+
+  const handleToggleProduction = (recipe: Recipe) => {
+    const current = ((recipe as any).production_status ?? 'in_production') as string;
+    const next = current === 'in_production' ? 'in_development' : 'in_production';
+    updateRecipe.mutate({ id: recipe.id, production_status: next } as any);
+  };
   
   const [viewingRecipe, setViewingRecipe] = useState<Recipe | null>(null);
   const [deletingRecipe, setDeletingRecipe] = useState<Recipe | null>(null);

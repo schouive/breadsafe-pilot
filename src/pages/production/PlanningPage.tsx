@@ -213,7 +213,7 @@ export default function PlanningPage() {
 
   const submitBatch = async () => {
     const entries = Object.entries(rows)
-      .map(([recipeId, r]) => ({ recipeId, qty: Number(r.quantity), unit: r.unit }))
+      .map(([key, r]) => ({ key, qty: Number(r.quantity), unit: r.unit }))
       .filter((e) => e.qty > 0 && !Number.isNaN(e.qty));
 
     if (entries.length === 0) {
@@ -222,12 +222,18 @@ export default function PlanningPage() {
     }
 
     for (const e of entries) {
-      const recipe = recipes.find((r) => r.id === e.recipeId);
+      const [recipeId, variantKey] = e.key.split('::');
+      const recipe = recipes.find((r) => r.id === recipeId);
       if (!recipe) continue;
+      let name = recipe.name;
+      if (variantKey) {
+        const v = variantsByRecipe.get(recipeId)?.find((vv) => vv.key === variantKey);
+        if (v) name = `${recipe.name} — ${v.label}`;
+      }
       await createPlan.mutateAsync({
         production_date: date,
         recipe_id: recipe.id,
-        recipe_name: recipe.name,
+        recipe_name: name,
         chariots: e.unit === 'chariots' ? e.qty : 1,
         quantity_total: e.qty,
         quantity_unit: e.unit,

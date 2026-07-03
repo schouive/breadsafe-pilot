@@ -4,7 +4,7 @@ import { Plus, BookOpen, Edit2, Trash2, Eye, ChefHat, Scale, FlaskConical, Facto
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { useRecipes, useDeleteRecipe, useUpdateRecipe, Recipe } from '@/hooks/useRecipes';
+import { useRecipes, useDeleteRecipe, Recipe } from '@/hooks/useRecipes';
 import { cn } from '@/lib/utils';
 import { RecipeDetailSheet } from './RecipeDetailSheet';
 import {
@@ -23,17 +23,15 @@ function RecipeRow({
   onView, 
   onEdit, 
   onDelete,
-  onToggleProduction,
 }: { 
   recipe: Recipe; 
   onView: () => void; 
   onEdit: () => void; 
   onDelete: () => void;
-  onToggleProduction: () => void;
 }) {
   const isIntermediate = recipe.recipe_type === 'intermediate';
-  const productionStatus = ((recipe as any).production_status ?? 'in_production') as 'in_development' | 'in_production';
-  const inProduction = productionStatus === 'in_production';
+  const inProduction = recipe.status === 'validated';
+
   
   return (
     <div

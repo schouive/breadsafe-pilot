@@ -1574,6 +1574,77 @@ export type Database = {
           },
         ]
       }
+      production_batches: {
+        Row: {
+          batch_number: number
+          chariots: number | null
+          comments: string | null
+          created_at: string
+          created_by: string | null
+          dough_temperature: number | null
+          id: string
+          kneading_end: string | null
+          kneading_start: string | null
+          line_start: string | null
+          oven_in: string | null
+          oven_out: string | null
+          plan_id: string
+          production_end: string | null
+          proofing_end: string | null
+          proofing_start: string | null
+          shaping_start: string | null
+          updated_at: string
+        }
+        Insert: {
+          batch_number: number
+          chariots?: number | null
+          comments?: string | null
+          created_at?: string
+          created_by?: string | null
+          dough_temperature?: number | null
+          id?: string
+          kneading_end?: string | null
+          kneading_start?: string | null
+          line_start?: string | null
+          oven_in?: string | null
+          oven_out?: string | null
+          plan_id: string
+          production_end?: string | null
+          proofing_end?: string | null
+          proofing_start?: string | null
+          shaping_start?: string | null
+          updated_at?: string
+        }
+        Update: {
+          batch_number?: number
+          chariots?: number | null
+          comments?: string | null
+          created_at?: string
+          created_by?: string | null
+          dough_temperature?: number | null
+          id?: string
+          kneading_end?: string | null
+          kneading_start?: string | null
+          line_start?: string | null
+          oven_in?: string | null
+          oven_out?: string | null
+          plan_id?: string
+          production_end?: string | null
+          proofing_end?: string | null
+          proofing_start?: string | null
+          shaping_start?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "production_batches_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "production_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       production_journals: {
         Row: {
           chariots: number | null

@@ -22,14 +22,18 @@ function RecipeRow({
   recipe, 
   onView, 
   onEdit, 
-  onDelete 
+  onDelete,
+  onToggleProduction,
 }: { 
   recipe: Recipe; 
   onView: () => void; 
   onEdit: () => void; 
   onDelete: () => void;
+  onToggleProduction: () => void;
 }) {
   const isIntermediate = recipe.recipe_type === 'intermediate';
+  const productionStatus = ((recipe as any).production_status ?? 'in_production') as 'in_development' | 'in_production';
+  const inProduction = productionStatus === 'in_production';
   
   return (
     <div

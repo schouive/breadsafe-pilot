@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 
 export type ProductionPriority = 'low' | 'normal' | 'high' | 'urgent';
 export type ProductionStatus = 'pending' | 'in_progress' | 'completed';
+export type ProductionQuantityUnit = 'chariots' | 'piece' | 'run';
 
 export interface ProductionPlan {
   id: string;
@@ -12,6 +13,7 @@ export interface ProductionPlan {
   recipe_name: string;
   chariots: number;
   quantity_total: number | null;
+  quantity_unit: ProductionQuantityUnit;
   scheduled_time: string;
   priority: ProductionPriority;
   manager_name: string | null;

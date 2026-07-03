@@ -376,8 +376,8 @@ export default function EditRecipe() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="draft">Brouillon</SelectItem>
-                    <SelectItem value="validated">Validée</SelectItem>
+                    <SelectItem value="draft">En développement</SelectItem>
+                    <SelectItem value="validated">En production</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

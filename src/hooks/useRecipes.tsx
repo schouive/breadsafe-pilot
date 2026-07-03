@@ -75,12 +75,12 @@ export function useFinishedRecipes() {
   return useQuery({
     queryKey: ['recipes', 'finished'],
     queryFn: async () => {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('recipes')
         .select('*')
         .eq('recipe_type', 'finished')
         .eq('is_active', true)
-        .eq('production_status', 'in_production')
+        .eq('status', 'validated')
         .order('name');
       
       if (error) throw error;

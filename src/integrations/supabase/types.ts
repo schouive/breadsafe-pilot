@@ -2511,7 +2511,6 @@ export type Database = {
           name: string
           process: string | null
           process_losses: number | null
-          production_status: string
           recipe_type: string
           status: string | null
           updated_at: string
@@ -2532,7 +2531,6 @@ export type Database = {
           name: string
           process?: string | null
           process_losses?: number | null
-          production_status?: string
           recipe_type?: string
           status?: string | null
           updated_at?: string
@@ -2553,7 +2551,6 @@ export type Database = {
           name?: string
           process?: string | null
           process_losses?: number | null
-          production_status?: string
           recipe_type?: string
           status?: string | null
           updated_at?: string

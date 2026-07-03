@@ -32,8 +32,14 @@ import {
   useDeleteProductionBatch,
   type ProductionBatch,
 } from '@/hooks/useProductionBatches';
+import {
+  useBatchShapings,
+  useCompatibleSheets,
+  useUpsertBatchShaping,
+} from '@/hooks/useProductionBatchShapings';
 import { computeAlerts, computeMetrics, formatDuration } from '@/lib/productionMetrics';
 import { cn } from '@/lib/utils';
+
 
 const STEPS: { key: keyof ProductionBatch; label: string }[] = [
   { key: 'kneading_start', label: 'Début pétrissage' },

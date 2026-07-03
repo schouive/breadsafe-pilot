@@ -80,7 +80,7 @@ export function useFinishedRecipes() {
         .select('*')
         .eq('recipe_type', 'finished')
         .eq('is_active', true)
-        .eq('production_status', 'in_production')
+        .eq('status', 'in_production')
         .order('name');
       
       if (error) throw error;
@@ -248,7 +248,7 @@ export function useDuplicateRecipe() {
           ...recipeData,
           name: `${originalRecipe.name} (copie)`,
           code: newCode,
-          status: 'draft',
+          status: 'in_development',
           created_by: user.id,
         })
         .select()

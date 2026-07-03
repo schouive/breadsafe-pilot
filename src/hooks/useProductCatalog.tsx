@@ -40,7 +40,7 @@ export function useCatalogRecipes() {
         .from('recipes')
         .select('id, name, code, is_active, status, recipe_type')
         .eq('is_active', true)
-        .eq('status', 'validated')
+        .eq('status', 'in_production')
         .eq('recipe_type', 'finished')
         .order('name');
       if (error) throw error;

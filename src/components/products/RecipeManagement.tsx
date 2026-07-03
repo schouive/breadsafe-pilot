@@ -32,7 +32,7 @@ function RecipeRow({
   onToggleProduction: () => void;
 }) {
   const isIntermediate = recipe.recipe_type === 'intermediate';
-  const productionStatus = ((recipe as any).production_status ?? 'in_production') as 'in_development' | 'in_production';
+  const productionStatus = (recipe.status ?? 'in_development') as 'in_development' | 'in_production';
   const inProduction = productionStatus === 'in_production';
   
   return (
@@ -133,9 +133,9 @@ export function RecipeManagement() {
   const updateRecipe = useUpdateRecipe();
 
   const handleToggleProduction = (recipe: Recipe) => {
-    const current = ((recipe as any).production_status ?? 'in_production') as string;
+    const current = (recipe.status ?? 'in_development') as string;
     const next = current === 'in_production' ? 'in_development' : 'in_production';
-    updateRecipe.mutate({ id: recipe.id, production_status: next } as any);
+    updateRecipe.mutate({ id: recipe.id, status: next } as any);
   };
   
   const [viewingRecipe, setViewingRecipe] = useState<Recipe | null>(null);

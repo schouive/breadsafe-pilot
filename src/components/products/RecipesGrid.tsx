@@ -52,20 +52,20 @@ export function RecipesGrid({
                   )}
                 </div>
                 <Badge 
-                  variant={recipe.status === 'validated' ? 'default' : 'secondary'}
+                  variant={recipe.status === 'in_production' ? 'default' : 'secondary'}
                   className={cn(
-                    recipe.status === 'validated' && "bg-success text-success-foreground"
+                    recipe.status === 'in_production' && "bg-success text-success-foreground"
                   )}
                 >
-                  {recipe.status === 'validated' ? (
+                  {recipe.status === 'in_production' ? (
                     <>
                       <CheckCircle className="h-3 w-3 mr-1" />
-                      Validée
+                      En production
                     </>
                   ) : (
                     <>
                       <FileEdit className="h-3 w-3 mr-1" />
-                      Brouillon
+                      En développement
                     </>
                   )}
                 </Badge>

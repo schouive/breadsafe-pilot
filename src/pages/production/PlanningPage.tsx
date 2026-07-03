@@ -1,8 +1,8 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Play, Plus, Trash2, Pencil, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Play, Plus, Trash2, Pencil, ChevronLeft, ChevronRight, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   useCreateProductionPlan,
   useDeleteProductionPlan,
@@ -20,9 +21,11 @@ import {
   useUpdateProductionPlan,
   type ProductionPlan,
   type ProductionPriority,
+  type ProductionQuantityUnit,
 } from '@/hooks/useProductionPlans';
 import { useFinishedRecipes } from '@/hooks/useRecipes';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 const priorityLabels: Record<ProductionPriority, string> = {
   low: 'Basse',
@@ -50,6 +53,12 @@ const statusColors = {
   completed: 'bg-green-100 text-green-700 border-green-200',
 } as const;
 
+const unitLabels: Record<ProductionQuantityUnit, string> = {
+  chariots: 'Chariots',
+  piece: 'Pièce',
+  run: 'Run',
+};
+
 function todayIso() {
   return new Date().toISOString().slice(0, 10);
 }
@@ -60,12 +69,12 @@ function addDaysIso(iso: string, delta: number) {
   return d.toISOString().slice(0, 10);
 }
 
-interface FormState {
-  id?: string;
-  recipe_id: string | null;
-  recipe_name: string;
-  chariots: number;
-  quantity_total: string;
+interface RowEntry {
+  quantity: string;
+  unit: ProductionQuantityUnit;
+}
+
+interface BatchShared {
   scheduled_time: string;
   priority: ProductionPriority;
   manager_name: string;
@@ -73,23 +82,35 @@ interface FormState {
   observations: string;
 }
 
-const emptyForm = (date: string): FormState => ({
-  recipe_id: null,
-  recipe_name: '',
-  chariots: 1,
-  quantity_total: '',
-  scheduled_time: `${date}T06:00`,
-  priority: 'normal',
-  manager_name: '',
-  operator_name: '',
-  observations: '',
-});
+interface EditState {
+  id: string;
+  recipe_id: string | null;
+  recipe_name: string;
+  quantity_total: string;
+  quantity_unit: ProductionQuantityUnit;
+  chariots: number;
+  scheduled_time: string;
+  priority: ProductionPriority;
+  manager_name: string;
+  operator_name: string;
+  observations: string;
+}
 
 export default function PlanningPage() {
   const navigate = useNavigate();
   const [date, setDate] = useState(todayIso());
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [form, setForm] = useState<FormState>(emptyForm(date));
+  const [newOpen, setNewOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editForm, setEditForm] = useState<EditState | null>(null);
+  const [search, setSearch] = useState('');
+  const [rows, setRows] = useState<Record<string, RowEntry>>({});
+  const [shared, setShared] = useState<BatchShared>({
+    scheduled_time: `${todayIso()}T06:00`,
+    priority: 'normal',
+    manager_name: '',
+    operator_name: '',
+    observations: '',
+  });
 
   const { data: plans = [], isLoading } = useProductionPlans(date);
   const { data: recipes = [] } = useFinishedRecipes();
@@ -103,53 +124,110 @@ export default function PlanningPage() {
     [plans]
   );
 
+  const filteredRecipes = useMemo(() => {
+    const s = search.trim().toLowerCase();
+    if (!s) return recipes;
+    return recipes.filter((r) => r.name.toLowerCase().includes(s));
+  }, [recipes, search]);
+
+  useEffect(() => {
+    if (newOpen) {
+      setShared((s) => ({ ...s, scheduled_time: `${date}T06:00` }));
+    }
+  }, [newOpen, date]);
+
   const openNew = () => {
-    setForm(emptyForm(date));
-    setDialogOpen(true);
+    setRows({});
+    setSearch('');
+    setShared({
+      scheduled_time: `${date}T06:00`,
+      priority: 'normal',
+      manager_name: '',
+      operator_name: '',
+      observations: '',
+    });
+    setNewOpen(true);
   };
 
   const openEdit = (plan: ProductionPlan) => {
-    setForm({
+    setEditForm({
       id: plan.id,
       recipe_id: plan.recipe_id,
       recipe_name: plan.recipe_name,
-      chariots: plan.chariots,
       quantity_total: plan.quantity_total?.toString() ?? '',
+      quantity_unit: plan.quantity_unit,
+      chariots: plan.chariots,
       scheduled_time: plan.scheduled_time.slice(0, 16),
       priority: plan.priority,
       manager_name: plan.manager_name ?? '',
       operator_name: plan.operator_name ?? '',
       observations: plan.observations ?? '',
     });
-    setDialogOpen(true);
+    setEditOpen(true);
   };
 
-  const submit = async () => {
-    if (!form.recipe_name) return;
-    const payload = {
-      production_date: date,
-      recipe_id: form.recipe_id,
-      recipe_name: form.recipe_name,
-      chariots: form.chariots,
-      quantity_total: form.quantity_total ? Number(form.quantity_total) : null,
-      scheduled_time: new Date(form.scheduled_time).toISOString(),
-      priority: form.priority,
-      manager_name: form.manager_name || null,
-      operator_name: form.operator_name || null,
-      observations: form.observations || null,
-    };
-    if (form.id) {
-      await updatePlan.mutateAsync({ id: form.id, ...payload });
-    } else {
-      await createPlan.mutateAsync(payload);
+  const updateRow = (recipeId: string, patch: Partial<RowEntry>) => {
+    setRows((prev) => {
+      const current: RowEntry = prev[recipeId] ?? { quantity: '', unit: 'chariots' };
+      return { ...prev, [recipeId]: { ...current, ...patch } };
+    });
+  };
+
+  const submitBatch = async () => {
+    const entries = Object.entries(rows)
+      .map(([recipeId, r]) => ({ recipeId, qty: Number(r.quantity), unit: r.unit }))
+      .filter((e) => e.qty > 0 && !Number.isNaN(e.qty));
+
+    if (entries.length === 0) {
+      toast.error('Renseigne au moins une quantité');
+      return;
     }
-    setDialogOpen(false);
+
+    for (const e of entries) {
+      const recipe = recipes.find((r) => r.id === e.recipeId);
+      if (!recipe) continue;
+      await createPlan.mutateAsync({
+        production_date: date,
+        recipe_id: recipe.id,
+        recipe_name: recipe.name,
+        chariots: e.unit === 'chariots' ? e.qty : 1,
+        quantity_total: e.qty,
+        quantity_unit: e.unit,
+        scheduled_time: new Date(shared.scheduled_time).toISOString(),
+        priority: shared.priority,
+        manager_name: shared.manager_name || null,
+        operator_name: shared.operator_name || null,
+        observations: shared.observations || null,
+      } as Partial<ProductionPlan>);
+    }
+    setNewOpen(false);
+  };
+
+  const submitEdit = async () => {
+    if (!editForm) return;
+    const qty = editForm.quantity_total ? Number(editForm.quantity_total) : null;
+    await updatePlan.mutateAsync({
+      id: editForm.id,
+      recipe_id: editForm.recipe_id,
+      recipe_name: editForm.recipe_name,
+      chariots: editForm.quantity_unit === 'chariots' && qty ? qty : editForm.chariots,
+      quantity_total: qty,
+      quantity_unit: editForm.quantity_unit,
+      scheduled_time: new Date(editForm.scheduled_time).toISOString(),
+      priority: editForm.priority,
+      manager_name: editForm.manager_name || null,
+      operator_name: editForm.operator_name || null,
+      observations: editForm.observations || null,
+    });
+    setEditOpen(false);
   };
 
   const launch = async (plan: ProductionPlan) => {
     await launchPlan.mutateAsync(plan);
     navigate(`/production/journal/${plan.id}`);
   };
+
+  const totalSelected = Object.values(rows).filter((r) => Number(r.quantity) > 0).length;
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -189,7 +267,6 @@ export default function PlanningPage() {
             <TableRow>
               <TableHead>Heure</TableHead>
               <TableHead>Recette</TableHead>
-              <TableHead>Chariots</TableHead>
               <TableHead>Quantité</TableHead>
               <TableHead>Priorité</TableHead>
               <TableHead>Responsable</TableHead>
@@ -200,13 +277,13 @@ export default function PlanningPage() {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                   Chargement…
                 </TableCell>
               </TableRow>
             ) : sortedPlans.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-12 text-muted-foreground">
+                <TableCell colSpan={7} className="text-center py-12 text-muted-foreground">
                   Aucune production planifiée pour ce jour.
                 </TableCell>
               </TableRow>
@@ -217,8 +294,12 @@ export default function PlanningPage() {
                     {format(parseISO(plan.scheduled_time), 'HH:mm')}
                   </TableCell>
                   <TableCell className="font-medium">{plan.recipe_name}</TableCell>
-                  <TableCell>{plan.chariots}</TableCell>
-                  <TableCell>{plan.quantity_total ?? '—'}</TableCell>
+                  <TableCell>
+                    {plan.quantity_total ?? '—'}{' '}
+                    <span className="text-muted-foreground text-sm">
+                      {unitLabels[plan.quantity_unit] ?? ''}
+                    </span>
+                  </TableCell>
                   <TableCell>
                     <span className={cn('px-2 py-1 rounded text-xs font-medium', priorityColors[plan.priority])}>
                       {priorityLabels[plan.priority]}
@@ -266,111 +347,265 @@ export default function PlanningPage() {
         </Table>
       </Card>
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-lg">
+      {/* NEW BATCH DIALOG */}
+      <Dialog open={newOpen} onOpenChange={setNewOpen}>
+        <DialogContent className="max-w-3xl">
           <DialogHeader>
-            <DialogTitle>{form.id ? 'Modifier la production' : 'Nouvelle production'}</DialogTitle>
+            <DialogTitle>Nouvelle production — saisie par produit</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
-              <Label>Recette *</Label>
+              <Label>Heure prévue *</Label>
+              <Input
+                type="datetime-local"
+                value={shared.scheduled_time}
+                onChange={(e) => setShared({ ...shared, scheduled_time: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label>Priorité</Label>
               <Select
-                value={form.recipe_id ?? ''}
-                onValueChange={(v) => {
-                  const rec = recipes.find((r) => r.id === v);
-                  setForm({ ...form, recipe_id: v, recipe_name: rec?.name ?? '' });
-                }}
+                value={shared.priority}
+                onValueChange={(v) => setShared({ ...shared, priority: v as ProductionPriority })}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Sélectionner une recette" />
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {recipes.map((r) => (
-                    <SelectItem key={r.id} value={r.id}>
-                      {r.name}
+                  {(Object.keys(priorityLabels) as ProductionPriority[]).map((p) => (
+                    <SelectItem key={p} value={p}>
+                      {priorityLabels[p]}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label>Chariots *</Label>
+            <div>
+              <Label>Responsable</Label>
+              <Input
+                value={shared.manager_name}
+                onChange={(e) => setShared({ ...shared, manager_name: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label>Opérateur</Label>
+              <Input
+                value={shared.operator_name}
+                onChange={(e) => setShared({ ...shared, operator_name: e.target.value })}
+              />
+            </div>
+            <div className="md:col-span-2">
+              <Label>Observations</Label>
+              <Textarea
+                rows={2}
+                value={shared.observations}
+                onChange={(e) => setShared({ ...shared, observations: e.target.value })}
+              />
+            </div>
+          </div>
+
+          <div className="mt-4 space-y-2">
+            <div className="flex items-center justify-between gap-3">
+              <Label className="text-base">Produits à fabriquer</Label>
+              <div className="relative w-64">
+                <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  type="number"
-                  min={1}
-                  value={form.chariots}
-                  onChange={(e) => setForm({ ...form, chariots: Number(e.target.value) })}
-                />
-              </div>
-              <div>
-                <Label>Quantité totale</Label>
-                <Input
-                  type="number"
-                  value={form.quantity_total}
-                  onChange={(e) => setForm({ ...form, quantity_total: e.target.value })}
+                  placeholder="Rechercher un produit…"
+                  className="pl-8"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
                 />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <ScrollArea className="h-[360px] rounded-md border">
+              <Table>
+                <TableHeader className="sticky top-0 bg-background z-10">
+                  <TableRow>
+                    <TableHead>Produit</TableHead>
+                    <TableHead className="w-32">Quantité</TableHead>
+                    <TableHead className="w-40">Unité</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredRecipes.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={3} className="text-center py-6 text-muted-foreground">
+                        Aucun produit
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filteredRecipes.map((r) => {
+                      const row = rows[r.id] ?? { quantity: '', unit: 'chariots' as ProductionQuantityUnit };
+                      const active = Number(row.quantity) > 0;
+                      return (
+                        <TableRow key={r.id} className={active ? 'bg-primary/5' : ''}>
+                          <TableCell className="font-medium">{r.name}</TableCell>
+                          <TableCell>
+                            <Input
+                              type="number"
+                              min={0}
+                              step="1"
+                              inputMode="numeric"
+                              placeholder="0"
+                              value={row.quantity}
+                              onChange={(e) => updateRow(r.id, { quantity: e.target.value })}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Select
+                              value={row.unit}
+                              onValueChange={(v) => updateRow(r.id, { unit: v as ProductionQuantityUnit })}
+                            >
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="chariots">Chariots</SelectItem>
+                                <SelectItem value="piece">Pièce</SelectItem>
+                                <SelectItem value="run">Run</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
+                  )}
+                </TableBody>
+              </Table>
+            </ScrollArea>
+          </div>
+
+          <DialogFooter className="items-center">
+            <span className="text-sm text-muted-foreground mr-auto">
+              {totalSelected} produit(s) sélectionné(s)
+            </span>
+            <Button variant="ghost" onClick={() => setNewOpen(false)}>
+              Annuler
+            </Button>
+            <Button onClick={submitBatch} disabled={totalSelected === 0 || createPlan.isPending}>
+              Créer les productions
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* EDIT DIALOG */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Modifier la production</DialogTitle>
+          </DialogHeader>
+          {editForm && (
+            <div className="space-y-4">
               <div>
-                <Label>Heure prévue *</Label>
-                <Input
-                  type="datetime-local"
-                  value={form.scheduled_time}
-                  onChange={(e) => setForm({ ...form, scheduled_time: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label>Priorité</Label>
+                <Label>Recette *</Label>
                 <Select
-                  value={form.priority}
-                  onValueChange={(v) => setForm({ ...form, priority: v as ProductionPriority })}
+                  value={editForm.recipe_id ?? ''}
+                  onValueChange={(v) => {
+                    const rec = recipes.find((r) => r.id === v);
+                    setEditForm({ ...editForm, recipe_id: v, recipe_name: rec?.name ?? editForm.recipe_name });
+                  }}
                 >
                   <SelectTrigger>
-                    <SelectValue />
+                    <SelectValue placeholder="Sélectionner une recette" />
                   </SelectTrigger>
                   <SelectContent>
-                    {(Object.keys(priorityLabels) as ProductionPriority[]).map((p) => (
-                      <SelectItem key={p} value={p}>
-                        {priorityLabels[p]}
+                    {recipes.map((r) => (
+                      <SelectItem key={r.id} value={r.id}>
+                        {r.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label>Responsable</Label>
-                <Input
-                  value={form.manager_name}
-                  onChange={(e) => setForm({ ...form, manager_name: e.target.value })}
-                />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>Quantité</Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={editForm.quantity_total}
+                    onChange={(e) => setEditForm({ ...editForm, quantity_total: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label>Unité</Label>
+                  <Select
+                    value={editForm.quantity_unit}
+                    onValueChange={(v) => setEditForm({ ...editForm, quantity_unit: v as ProductionQuantityUnit })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="chariots">Chariots</SelectItem>
+                      <SelectItem value="piece">Pièce</SelectItem>
+                      <SelectItem value="run">Run</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>Heure prévue *</Label>
+                  <Input
+                    type="datetime-local"
+                    value={editForm.scheduled_time}
+                    onChange={(e) => setEditForm({ ...editForm, scheduled_time: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label>Priorité</Label>
+                  <Select
+                    value={editForm.priority}
+                    onValueChange={(v) => setEditForm({ ...editForm, priority: v as ProductionPriority })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(Object.keys(priorityLabels) as ProductionPriority[]).map((p) => (
+                        <SelectItem key={p} value={p}>
+                          {priorityLabels[p]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>Responsable</Label>
+                  <Input
+                    value={editForm.manager_name}
+                    onChange={(e) => setEditForm({ ...editForm, manager_name: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label>Opérateur</Label>
+                  <Input
+                    value={editForm.operator_name}
+                    onChange={(e) => setEditForm({ ...editForm, operator_name: e.target.value })}
+                  />
+                </div>
               </div>
               <div>
-                <Label>Opérateur</Label>
-                <Input
-                  value={form.operator_name}
-                  onChange={(e) => setForm({ ...form, operator_name: e.target.value })}
+                <Label>Observations</Label>
+                <Textarea
+                  rows={2}
+                  value={editForm.observations}
+                  onChange={(e) => setEditForm({ ...editForm, observations: e.target.value })}
                 />
               </div>
             </div>
-            <div>
-              <Label>Observations</Label>
-              <Textarea
-                rows={2}
-                value={form.observations}
-                onChange={(e) => setForm({ ...form, observations: e.target.value })}
-              />
-            </div>
-          </div>
+          )}
           <DialogFooter>
-            <Button variant="ghost" onClick={() => setDialogOpen(false)}>
+            <Button variant="ghost" onClick={() => setEditOpen(false)}>
               Annuler
             </Button>
-            <Button onClick={submit} disabled={!form.recipe_name}>
-              {form.id ? 'Enregistrer' : 'Créer'}
+            <Button onClick={submitEdit} disabled={!editForm?.recipe_name}>
+              Enregistrer
             </Button>
           </DialogFooter>
         </DialogContent>

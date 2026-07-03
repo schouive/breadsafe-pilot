@@ -1759,6 +1759,7 @@ export type Database = {
           priority: Database["public"]["Enums"]["production_priority"]
           production_date: string
           quantity_total: number | null
+          quantity_unit: string
           recipe_id: string | null
           recipe_name: string
           scheduled_time: string
@@ -1778,6 +1779,7 @@ export type Database = {
           priority?: Database["public"]["Enums"]["production_priority"]
           production_date?: string
           quantity_total?: number | null
+          quantity_unit?: string
           recipe_id?: string | null
           recipe_name: string
           scheduled_time: string
@@ -1797,6 +1799,7 @@ export type Database = {
           priority?: Database["public"]["Enums"]["production_priority"]
           production_date?: string
           quantity_total?: number | null
+          quantity_unit?: string
           recipe_id?: string | null
           recipe_name?: string
           scheduled_time?: string

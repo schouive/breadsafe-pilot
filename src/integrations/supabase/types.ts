@@ -1574,6 +1574,189 @@ export type Database = {
           },
         ]
       }
+      production_journals: {
+        Row: {
+          chariots: number | null
+          comments: string | null
+          created_at: string
+          created_by: string | null
+          dough_temperature: number | null
+          id: string
+          kneading_end: string | null
+          kneading_start: string | null
+          line_start: string | null
+          manager_name: string | null
+          operator_name: string | null
+          oven_in: string | null
+          oven_out: string | null
+          plan_id: string
+          production_end: string | null
+          proofing_end: string | null
+          proofing_start: string | null
+          recipe_id: string | null
+          recipe_name: string
+          shaping_start: string | null
+          updated_at: string
+        }
+        Insert: {
+          chariots?: number | null
+          comments?: string | null
+          created_at?: string
+          created_by?: string | null
+          dough_temperature?: number | null
+          id?: string
+          kneading_end?: string | null
+          kneading_start?: string | null
+          line_start?: string | null
+          manager_name?: string | null
+          operator_name?: string | null
+          oven_in?: string | null
+          oven_out?: string | null
+          plan_id: string
+          production_end?: string | null
+          proofing_end?: string | null
+          proofing_start?: string | null
+          recipe_id?: string | null
+          recipe_name: string
+          shaping_start?: string | null
+          updated_at?: string
+        }
+        Update: {
+          chariots?: number | null
+          comments?: string | null
+          created_at?: string
+          created_by?: string | null
+          dough_temperature?: number | null
+          id?: string
+          kneading_end?: string | null
+          kneading_start?: string | null
+          line_start?: string | null
+          manager_name?: string | null
+          operator_name?: string | null
+          oven_in?: string | null
+          oven_out?: string | null
+          plan_id?: string
+          production_end?: string | null
+          proofing_end?: string | null
+          proofing_start?: string | null
+          recipe_id?: string | null
+          recipe_name?: string
+          shaping_start?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "production_journals_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: true
+            referencedRelation: "production_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "production_journals_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipe_baker_nutrition"
+            referencedColumns: ["recipe_id"]
+          },
+          {
+            foreignKeyName: "production_journals_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipe_nutrition"
+            referencedColumns: ["recipe_id"]
+          },
+          {
+            foreignKeyName: "production_journals_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      production_plans: {
+        Row: {
+          chariots: number
+          completed_at: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          manager_name: string | null
+          observations: string | null
+          operator_name: string | null
+          priority: Database["public"]["Enums"]["production_priority"]
+          production_date: string
+          quantity_total: number | null
+          recipe_id: string | null
+          recipe_name: string
+          scheduled_time: string
+          started_at: string | null
+          status: Database["public"]["Enums"]["production_status"]
+          updated_at: string
+        }
+        Insert: {
+          chariots?: number
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          manager_name?: string | null
+          observations?: string | null
+          operator_name?: string | null
+          priority?: Database["public"]["Enums"]["production_priority"]
+          production_date?: string
+          quantity_total?: number | null
+          recipe_id?: string | null
+          recipe_name: string
+          scheduled_time: string
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["production_status"]
+          updated_at?: string
+        }
+        Update: {
+          chariots?: number
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          manager_name?: string | null
+          observations?: string | null
+          operator_name?: string | null
+          priority?: Database["public"]["Enums"]["production_priority"]
+          production_date?: string
+          quantity_total?: number | null
+          recipe_id?: string | null
+          recipe_name?: string
+          scheduled_time?: string
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["production_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "production_plans_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipe_baker_nutrition"
+            referencedColumns: ["recipe_id"]
+          },
+          {
+            foreignKeyName: "production_plans_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipe_nutrition"
+            referencedColumns: ["recipe_id"]
+          },
+          {
+            foreignKeyName: "production_plans_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -2876,6 +3059,7 @@ export type Database = {
         | "time_tracking"
         | "rd"
         | "settings"
+        | "production"
       app_role:
         | "operator"
         | "quality_assistant"
@@ -2894,6 +3078,8 @@ export type Database = {
       nc_severity: "minor" | "major" | "critical"
       nc_status: "open" | "in_progress" | "resolved" | "validated"
       order_status: "draft" | "sent" | "partially_received" | "received"
+      production_priority: "low" | "normal" | "high" | "urgent"
+      production_status: "pending" | "in_progress" | "completed"
       rd_trial_decision: "redo" | "adjust" | "validated"
       rd_trial_status:
         | "preparation"
@@ -3036,6 +3222,7 @@ export const Constants = {
         "time_tracking",
         "rd",
         "settings",
+        "production",
       ],
       app_role: [
         "operator",
@@ -3057,6 +3244,8 @@ export const Constants = {
       nc_severity: ["minor", "major", "critical"],
       nc_status: ["open", "in_progress", "resolved", "validated"],
       order_status: ["draft", "sent", "partially_received", "received"],
+      production_priority: ["low", "normal", "high", "urgent"],
+      production_status: ["pending", "in_progress", "completed"],
       rd_trial_decision: ["redo", "adjust", "validated"],
       rd_trial_status: [
         "preparation",

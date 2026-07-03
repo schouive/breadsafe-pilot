@@ -5,7 +5,8 @@ import {
   Cog,
   ShoppingCart,
   Clock,
-  Printer
+  Printer,
+  ClipboardList
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -113,6 +114,13 @@ export default function Home() {
       href: '/print',
     },
     {
+      title: 'Journal de Production',
+      description: 'Planning, suivi et traçabilité des productions',
+      icon: ClipboardList,
+      colorClass: 'bg-purple-500/10 text-purple-600 hover:bg-purple-500/20 border-purple-500/20',
+      href: '/production',
+    },
+    {
       title: 'Paramètres',
       description: 'Fournisseurs, matières premières et chambres froides',
       icon: Cog,
@@ -127,6 +135,7 @@ export default function Home() {
     if (module.href === '/orders') return canAccessModule('orders');
     if (module.href === '/products') return canAccessModule('products') || canAccessModule('rd');
     if (module.href === '/print') return canAccessModule('labeling');
+    if (module.href === '/production') return canAccessModule('production' as any) || hasRole('admin') || hasRole('bureau_methodes') || hasRole('operator');
     if (module.href === '/settings') return canAccessModule('settings');
     if (module.href === '/time-tracking') return canAccessModule('time_tracking');
     return true;

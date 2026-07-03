@@ -14,6 +14,11 @@ const ProductsLayout = lazy(() => import("@/components/layout/ProductsLayout").t
 const SettingsLayout = lazy(() => import("@/components/layout/SettingsLayout").then(m => ({ default: m.SettingsLayout })));
 const OrdersLayout = lazy(() => import("@/components/layout/OrdersLayout").then(m => ({ default: m.OrdersLayout })));
 const PrintLayout = lazy(() => import("@/components/layout/PrintLayout").then(m => ({ default: m.PrintLayout })));
+const ProductionLayout = lazy(() => import("@/components/layout/ProductionLayout").then(m => ({ default: m.ProductionLayout })));
+const ProductionPlanning = lazy(() => import("./pages/production/PlanningPage"));
+const ProductionJournal = lazy(() => import("./pages/production/JournalPage"));
+const ProductionDashboard = lazy(() => import("./pages/production/DashboardPage"));
+const ProductionHistory = lazy(() => import("./pages/production/HistoryPage"));
 
 // Lazy load pages
 const Home = lazy(() => import("./pages/Home"));
@@ -460,6 +465,12 @@ function AppRoutes() {
         <Route path="/storage-temperatures" element={<Navigate to="/haccp/temperatures" replace />} />
         <Route path="/planning" element={<Navigate to="/haccp/planning" replace />} />
         <Route path="/reports" element={<Navigate to="/haccp/reports" replace />} />
+
+        {/* Production Module Routes */}
+        <Route path="/production" element={<ProtectedRoute><ProductionLayout><ProductionPlanning /></ProductionLayout></ProtectedRoute>} />
+        <Route path="/production/dashboard" element={<ProtectedRoute><ProductionLayout><ProductionDashboard /></ProductionLayout></ProtectedRoute>} />
+        <Route path="/production/history" element={<ProtectedRoute><ProductionLayout><ProductionHistory /></ProductionLayout></ProtectedRoute>} />
+        <Route path="/production/journal/:planId" element={<ProtectedRoute><ProductionLayout><ProductionJournal /></ProductionLayout></ProtectedRoute>} />
 
         <Route path="*" element={<NotFound />} />
       </Routes>

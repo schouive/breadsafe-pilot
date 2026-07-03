@@ -47,7 +47,7 @@ export default function EditRecipe() {
     process: '',
     recipeType: 'finished' as 'finished' | 'intermediate',
     calculationMode: 'flour_based' as 'flour_based' | 'total_weight',
-    status: 'draft' as 'draft' | 'validated',
+    status: 'in_development' as 'in_development' | 'in_production',
     bakingRatio: '0.90',
     processLosses: '0',
     // INCO fields for PI
@@ -72,7 +72,7 @@ export default function EditRecipe() {
         process: (recipe as any).process || '',
         recipeType: ((recipe as any).recipe_type as 'finished' | 'intermediate') || 'finished',
         calculationMode: ((recipe as any).calculation_mode as 'flour_based' | 'total_weight') || 'flour_based',
-        status: (recipe.status as 'draft' | 'validated') || 'draft',
+        status: (recipe.status as 'in_development' | 'in_production') || 'in_development',
         bakingRatio: String(recipe.baking_ratio || 0.90),
         processLosses: String(recipe.process_losses || 0),
         // INCO fields
@@ -368,7 +368,7 @@ export default function EditRecipe() {
                 <Label htmlFor="status">Statut</Label>
                 <Select 
                   value={formData.status} 
-                  onValueChange={(value: 'draft' | 'validated') => 
+                  onValueChange={(value: 'in_development' | 'in_production') => 
                     setFormData({ ...formData, status: value })
                   }
                 >
@@ -376,10 +376,13 @@ export default function EditRecipe() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="draft">Brouillon</SelectItem>
-                    <SelectItem value="validated">Validée</SelectItem>
+                    <SelectItem value="in_development">En développement</SelectItem>
+                    <SelectItem value="in_production">En production</SelectItem>
                   </SelectContent>
                 </Select>
+                <p className="text-xs text-muted-foreground">
+                  Seules les recettes "En production" apparaissent dans les plannings.
+                </p>
               </div>
 
               <div className="space-y-2">

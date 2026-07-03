@@ -42,7 +42,7 @@ export default function NewRecipe() {
     process: '',
     recipeType: 'finished' as 'finished' | 'intermediate',
     calculationMode: 'flour_based' as 'flour_based' | 'total_weight',
-    status: 'draft' as 'draft' | 'validated',
+    status: 'in_development' as 'in_development' | 'in_production',
     bakingRatio: '0.90',
     processLosses: '0',
     // INCO fields for PI
@@ -410,7 +410,7 @@ export default function NewRecipe() {
                 <Label htmlFor="status">Statut</Label>
                 <Select 
                   value={formData.status} 
-                  onValueChange={(value: 'draft' | 'validated') => 
+                  onValueChange={(value: 'in_development' | 'in_production') => 
                     setFormData({ ...formData, status: value })
                   }
                 >
@@ -418,10 +418,13 @@ export default function NewRecipe() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="draft">Brouillon</SelectItem>
-                    <SelectItem value="validated">Validée</SelectItem>
+                    <SelectItem value="in_development">En développement</SelectItem>
+                    <SelectItem value="in_production">En production</SelectItem>
                   </SelectContent>
                 </Select>
+                <p className="text-xs text-muted-foreground">
+                  Seules les recettes "En production" apparaissent dans les plannings.
+                </p>
               </div>
 
               <div className="space-y-2">

@@ -198,7 +198,6 @@ export function RecipeManagement() {
                         onView={() => setViewingRecipe(recipe)}
                         onEdit={() => navigate(`/products/recipes/edit/${recipe.id}`)}
                         onDelete={() => setDeletingRecipe(recipe)}
-                        onToggleProduction={() => handleToggleProduction(recipe)}
                       />
                     ))}
                   </div>
@@ -223,7 +222,6 @@ export function RecipeManagement() {
                         onView={() => setViewingRecipe(recipe)}
                         onEdit={() => navigate(`/products/recipes/edit/${recipe.id}`)}
                         onDelete={() => setDeletingRecipe(recipe)}
-                        onToggleProduction={() => handleToggleProduction(recipe)}
                       />
                     ))}
                   </div>

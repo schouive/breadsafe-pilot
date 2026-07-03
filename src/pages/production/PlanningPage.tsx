@@ -122,10 +122,40 @@ export default function PlanningPage() {
 
   const { data: plans = [], isLoading } = useProductionPlans(date);
   const { data: recipes = [] } = useFinishedRecipes();
+  const { data: sheets = [] } = useQuery({
+    queryKey: ['product_sheets', 'planning-variants'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('product_sheets')
+        .select('recipe_id, product_name, net_weight, net_weight_unit, is_published');
+      if (error) throw error;
+      return (data ?? []) as { recipe_id: string | null; product_name: string; net_weight: number | null; net_weight_unit: string | null; is_published: boolean }[];
+    },
+  });
   const createPlan = useCreateProductionPlan();
   const updatePlan = useUpdateProductionPlan();
   const deletePlan = useDeleteProductionPlan();
   const launchPlan = useLaunchProductionPlan();
+
+  // Group variants by recipe_id, dedupe by weight+unit
+  const variantsByRecipe = useMemo(() => {
+    const map = new Map<string, Variant[]>();
+    for (const s of sheets) {
+      if (!s.recipe_id || !s.is_published || s.net_weight == null) continue;
+      const unit = s.net_weight_unit ?? 'g';
+      const key = `${s.net_weight}${unit}`;
+      const list = map.get(s.recipe_id) ?? [];
+      if (!list.some((v) => v.key === key)) {
+        list.push({ key, label: `${s.net_weight} ${unit}`, product_name: s.product_name });
+        map.set(s.recipe_id, list);
+      }
+    }
+    for (const [k, list] of map) {
+      list.sort((a, b) => parseFloat(a.label) - parseFloat(b.label));
+      map.set(k, list);
+    }
+    return map;
+  }, [sheets]);
 
   const sortedPlans = useMemo(
     () => [...plans].sort((a, b) => a.scheduled_time.localeCompare(b.scheduled_time)),

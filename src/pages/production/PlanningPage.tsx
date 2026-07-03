@@ -407,38 +407,6 @@ export default function PlanningPage() {
                 onChange={(e) => setShared({ ...shared, scheduled_time: e.target.value })}
               />
             </div>
-            <div>
-              <Label>Priorité</Label>
-              <Select
-                value={shared.priority}
-                onValueChange={(v) => setShared({ ...shared, priority: v as ProductionPriority })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {(Object.keys(priorityLabels) as ProductionPriority[]).map((p) => (
-                    <SelectItem key={p} value={p}>
-                      {priorityLabels[p]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>Responsable</Label>
-              <Input
-                value={shared.manager_name}
-                onChange={(e) => setShared({ ...shared, manager_name: e.target.value })}
-              />
-            </div>
-            <div>
-              <Label>Opérateur</Label>
-              <Input
-                value={shared.operator_name}
-                onChange={(e) => setShared({ ...shared, operator_name: e.target.value })}
-              />
-            </div>
             <div className="md:col-span-2">
               <Label>Observations</Label>
               <Textarea

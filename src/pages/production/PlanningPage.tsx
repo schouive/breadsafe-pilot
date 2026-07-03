@@ -1,5 +1,6 @@
 import { useMemo, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Play, Plus, Trash2, Pencil, ChevronLeft, ChevronRight, Search } from 'lucide-react';
@@ -13,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { supabase } from '@/integrations/supabase/client';
 import {
   useCreateProductionPlan,
   useDeleteProductionPlan,
@@ -26,6 +28,12 @@ import {
 import { useFinishedRecipes } from '@/hooks/useRecipes';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+
+interface Variant {
+  key: string; // weight+unit
+  label: string; // e.g. "90 g"
+  product_name: string;
+}
 
 const priorityLabels: Record<ProductionPriority, string> = {
   low: 'Basse',
@@ -114,10 +122,40 @@ export default function PlanningPage() {
 
   const { data: plans = [], isLoading } = useProductionPlans(date);
   const { data: recipes = [] } = useFinishedRecipes();
+  const { data: sheets = [] } = useQuery({
+    queryKey: ['product_sheets', 'planning-variants'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('product_sheets')
+        .select('recipe_id, product_name, net_weight, net_weight_unit, is_published');
+      if (error) throw error;
+      return (data ?? []) as { recipe_id: string | null; product_name: string; net_weight: number | null; net_weight_unit: string | null; is_published: boolean }[];
+    },
+  });
   const createPlan = useCreateProductionPlan();
   const updatePlan = useUpdateProductionPlan();
   const deletePlan = useDeleteProductionPlan();
   const launchPlan = useLaunchProductionPlan();
+
+  // Group variants by recipe_id, dedupe by weight+unit
+  const variantsByRecipe = useMemo(() => {
+    const map = new Map<string, Variant[]>();
+    for (const s of sheets) {
+      if (!s.recipe_id || !s.is_published || s.net_weight == null) continue;
+      const unit = s.net_weight_unit ?? 'g';
+      const key = `${s.net_weight}${unit}`;
+      const list = map.get(s.recipe_id) ?? [];
+      if (!list.some((v) => v.key === key)) {
+        list.push({ key, label: `${s.net_weight} ${unit}`, product_name: s.product_name });
+        map.set(s.recipe_id, list);
+      }
+    }
+    for (const [k, list] of map) {
+      list.sort((a, b) => parseFloat(a.label) - parseFloat(b.label));
+      map.set(k, list);
+    }
+    return map;
+  }, [sheets]);
 
   const sortedPlans = useMemo(
     () => [...plans].sort((a, b) => a.scheduled_time.localeCompare(b.scheduled_time)),
@@ -175,7 +213,7 @@ export default function PlanningPage() {
 
   const submitBatch = async () => {
     const entries = Object.entries(rows)
-      .map(([recipeId, r]) => ({ recipeId, qty: Number(r.quantity), unit: r.unit }))
+      .map(([key, r]) => ({ key, qty: Number(r.quantity), unit: r.unit }))
       .filter((e) => e.qty > 0 && !Number.isNaN(e.qty));
 
     if (entries.length === 0) {
@@ -184,12 +222,18 @@ export default function PlanningPage() {
     }
 
     for (const e of entries) {
-      const recipe = recipes.find((r) => r.id === e.recipeId);
+      const [recipeId, variantKey] = e.key.split('::');
+      const recipe = recipes.find((r) => r.id === recipeId);
       if (!recipe) continue;
+      let name = recipe.name;
+      if (variantKey) {
+        const v = variantsByRecipe.get(recipeId)?.find((vv) => vv.key === variantKey);
+        if (v) name = `${recipe.name} — ${v.label}`;
+      }
       await createPlan.mutateAsync({
         production_date: date,
         recipe_id: recipe.id,
-        recipe_name: recipe.name,
+        recipe_name: name,
         chariots: e.unit === 'chariots' ? e.qty : 1,
         quantity_total: e.qty,
         quantity_unit: e.unit,
@@ -435,40 +479,65 @@ export default function PlanningPage() {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    filteredRecipes.map((r) => {
-                      const row = rows[r.id] ?? { quantity: '', unit: 'chariots' as ProductionQuantityUnit };
-                      const active = Number(row.quantity) > 0;
-                      return (
-                        <TableRow key={r.id} className={active ? 'bg-primary/5' : ''}>
-                          <TableCell className="font-medium">{r.name}</TableCell>
-                          <TableCell>
-                            <Input
-                              type="number"
-                              min={0}
-                              step="1"
-                              inputMode="numeric"
-                              placeholder="0"
-                              value={row.quantity}
-                              onChange={(e) => updateRow(r.id, { quantity: e.target.value })}
-                            />
+                    filteredRecipes.flatMap((r) => {
+                      const variants = variantsByRecipe.get(r.id) ?? [];
+
+                      const renderRow = (rowKey: string, label: string, indent: boolean) => {
+                        const row = rows[rowKey] ?? { quantity: '', unit: 'chariots' as ProductionQuantityUnit };
+                        const active = Number(row.quantity) > 0;
+                        return (
+                          <TableRow key={rowKey} className={active ? 'bg-primary/5' : ''}>
+                            <TableCell className={cn('font-medium', indent && 'pl-8 text-sm')}>
+                              {indent && <span className="text-muted-foreground mr-2">↳</span>}
+                              {label}
+                            </TableCell>
+                            <TableCell>
+                              <Input
+                                type="number"
+                                min={0}
+                                step="1"
+                                inputMode="numeric"
+                                placeholder="0"
+                                value={row.quantity}
+                                onChange={(e) => updateRow(rowKey, { quantity: e.target.value })}
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Select
+                                value={row.unit}
+                                onValueChange={(v) => updateRow(rowKey, { unit: v as ProductionQuantityUnit })}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="chariots">Chariots</SelectItem>
+                                  <SelectItem value="piece">Pièce</SelectItem>
+                                  <SelectItem value="run">Run</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      };
+
+                      if (variants.length === 0) {
+                        return [renderRow(r.id, r.name, false)];
+                      }
+
+                      return [
+                        <TableRow key={`${r.id}-header`} className="bg-muted/40">
+                          <TableCell colSpan={3} className="font-semibold text-foreground">
+                            {r.name}
+                            <span className="ml-2 text-xs text-muted-foreground font-normal">
+                              {variants.length} variante(s)
+                            </span>
                           </TableCell>
-                          <TableCell>
-                            <Select
-                              value={row.unit}
-                              onValueChange={(v) => updateRow(r.id, { unit: v as ProductionQuantityUnit })}
-                            >
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="chariots">Chariots</SelectItem>
-                                <SelectItem value="piece">Pièce</SelectItem>
-                                <SelectItem value="run">Run</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </TableCell>
-                        </TableRow>
-                      );
+                        </TableRow>,
+                        ...variants.map((v) =>
+                          renderRow(`${r.id}::${v.key}`, `${r.name} — ${v.label}`, true)
+                        ),
+                      ];
                     })
                   )}
                 </TableBody>

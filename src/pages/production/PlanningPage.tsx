@@ -21,7 +21,7 @@ import {
   type ProductionPlan,
   type ProductionPriority,
 } from '@/hooks/useProductionPlans';
-import { useActiveRecipes } from '@/hooks/useRecipes';
+import { useFinishedRecipes } from '@/hooks/useRecipes';
 import { cn } from '@/lib/utils';
 
 const priorityLabels: Record<ProductionPriority, string> = {
@@ -92,7 +92,7 @@ export default function PlanningPage() {
   const [form, setForm] = useState<FormState>(emptyForm(date));
 
   const { data: plans = [], isLoading } = useProductionPlans(date);
-  const { data: recipes = [] } = useActiveRecipes();
+  const { data: recipes = [] } = useFinishedRecipes();
   const createPlan = useCreateProductionPlan();
   const updatePlan = useUpdateProductionPlan();
   const deletePlan = useDeleteProductionPlan();

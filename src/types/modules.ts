@@ -6,6 +6,7 @@ export type AppModule =
   | 'orders'
   | 'time_tracking'
   | 'rd'
+  | 'production'
   | 'settings';
 
 export const ALL_MODULES: { id: AppModule; label: string; description: string }[] = [
@@ -15,6 +16,7 @@ export const ALL_MODULES: { id: AppModule; label: string; description: string }[
   { id: 'orders', label: 'Commandes', description: 'Commandes fournisseurs et réceptions' },
   { id: 'time_tracking', label: 'Pointage', description: 'Pointeuse RFID et historique' },
   { id: 'rd', label: 'R&D', description: 'Essais boulangerie' },
+  { id: 'production', label: 'Journal de Production', description: 'Planning, suivi et traçabilité des productions' },
   { id: 'settings', label: 'Paramètres', description: 'Référentiels et configuration' },
 ];
 

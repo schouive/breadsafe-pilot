@@ -32,14 +32,8 @@ import {
   useDeleteProductionBatch,
   type ProductionBatch,
 } from '@/hooks/useProductionBatches';
-import {
-  useBatchShapings,
-  useCompatibleSheets,
-  useUpsertBatchShaping,
-} from '@/hooks/useProductionBatchShapings';
 import { computeAlerts, computeMetrics, formatDuration } from '@/lib/productionMetrics';
 import { cn } from '@/lib/utils';
-
 
 const STEPS: { key: keyof ProductionBatch; label: string }[] = [
   { key: 'kneading_start', label: 'Début pétrissage' },
@@ -171,10 +165,8 @@ export default function JournalPage() {
               batch={batch}
               scheduledTime={plan?.scheduled_time}
               status={plan?.status}
-              recipeId={plan?.recipe_id ?? undefined}
             />
           ))}
-
         </div>
       )}
 
@@ -204,14 +196,11 @@ function BatchCard({
   batch,
   scheduledTime,
   status,
-  recipeId,
 }: {
   batch: ProductionBatch;
   scheduledTime?: string | null;
   status?: string;
-  recipeId?: string;
 }) {
-
   const [open, setOpen] = useState(true);
   const [chariots, setChariots] = useState(batch.chariots?.toString() ?? '');
   const [doughTemp, setDoughTemp] = useState(batch.dough_temperature?.toString() ?? '');
@@ -363,10 +352,6 @@ function BatchCard({
             </div>
           </div>
 
-          <ShapingRepartition batchId={batch.id} recipeId={recipeId} batchChariots={batch.chariots} />
-
-
-
           <div>
             <h3 className="font-semibold mb-2">Indicateurs</h3>
             <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
@@ -392,100 +377,6 @@ function BatchCard({
     </Card>
   );
 }
-
-function ShapingRepartition({
-  batchId,
-  recipeId,
-  batchChariots,
-}: {
-  batchId: string;
-  recipeId?: string;
-  batchChariots: number | null;
-}) {
-  const { data: sheets = [], isLoading } = useCompatibleSheets(recipeId);
-  const { data: shapings = [] } = useBatchShapings(batchId);
-  const upsert = useUpsertBatchShaping();
-  const [drafts, setDrafts] = useState<Record<string, string>>({});
-
-  useEffect(() => {
-    const initial: Record<string, string> = {};
-    for (const s of shapings) initial[s.product_sheet_id] = String(s.chariots ?? '');
-    setDrafts(initial);
-  }, [shapings.length, batchId]);
-
-  if (!recipeId) return null;
-
-  const total = Object.values(drafts).reduce((sum, v) => sum + (Number(v) || 0), 0);
-  const target = batchChariots ?? 0;
-  const diff = target ? total - target : 0;
-
-  const save = (sheetId: string, value: string) => {
-    const n = value === '' ? 0 : Number(value);
-    if (Number.isNaN(n)) return;
-    upsert.mutate({ batchId, productSheetId: sheetId, chariots: n });
-  };
-
-  return (
-    <div>
-      <h3 className="font-semibold mb-2">Répartition par produit fini (façonnage)</h3>
-      {isLoading ? (
-        <div className="text-sm text-muted-foreground">Chargement des fiches techniques…</div>
-      ) : sheets.length === 0 ? (
-        <div className="text-sm text-muted-foreground rounded-lg border border-dashed p-3">
-          Aucune fiche technique publiée n'est rattachée à cette recette.
-        </div>
-      ) : (
-        <div className="space-y-2">
-          {sheets.map((s) => (
-            <div
-              key={s.id}
-              className="flex items-center gap-3 rounded-lg border p-2 bg-muted/20"
-            >
-              <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium truncate">{s.product_name}</div>
-                <div className="text-xs text-muted-foreground truncate">
-                  {[s.product_reference, s.net_weight && `${s.net_weight}${s.net_weight_unit ?? 'g'}`]
-                    .filter(Boolean)
-                    .join(' · ')}
-                </div>
-              </div>
-              <Input
-                type="number"
-                inputMode="decimal"
-                step="0.5"
-                className="h-9 w-24 text-right"
-                placeholder="0"
-                value={drafts[s.id] ?? ''}
-                onChange={(e) => setDrafts((d) => ({ ...d, [s.id]: e.target.value }))}
-                onBlur={(e) => save(s.id, e.target.value)}
-              />
-              <span className="text-xs text-muted-foreground w-14">chariot(s)</span>
-            </div>
-          ))}
-          <div className="flex items-center justify-between text-sm pt-1">
-            <span className="text-muted-foreground">
-              Total réparti : <strong className="text-foreground">{total}</strong>
-              {target ? ` / ${target} pétri(s)` : ''}
-            </span>
-            {target ? (
-              diff === 0 ? (
-                <Badge className="bg-green-100 text-green-700 hover:bg-green-100">Équilibré</Badge>
-              ) : diff > 0 ? (
-                <Badge variant="destructive">+{diff} en trop</Badge>
-              ) : (
-                <Badge className="bg-orange-100 text-orange-700 hover:bg-orange-100">
-                  {diff} à répartir
-                </Badge>
-              )
-            ) : null}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-
 
 function Metric({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
   return (

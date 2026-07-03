@@ -1,1 +1,0 @@
-ALTER TABLE public.recipes DROP COLUMN IF EXISTS production_status;

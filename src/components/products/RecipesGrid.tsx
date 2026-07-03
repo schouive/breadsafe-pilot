@@ -60,12 +60,12 @@ export function RecipesGrid({
                   {recipe.status === 'validated' ? (
                     <>
                       <CheckCircle className="h-3 w-3 mr-1" />
-                      En production
+                      Validée
                     </>
                   ) : (
                     <>
                       <FileEdit className="h-3 w-3 mr-1" />
-                      En développement
+                      Brouillon
                     </>
                   )}
                 </Badge>

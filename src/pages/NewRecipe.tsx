@@ -418,8 +418,8 @@ export default function NewRecipe() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="draft">En développement</SelectItem>
-                    <SelectItem value="validated">En production</SelectItem>
+                    <SelectItem value="draft">Brouillon</SelectItem>
+                    <SelectItem value="validated">Validée</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

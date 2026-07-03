@@ -4,7 +4,7 @@ import { Plus, BookOpen, Edit2, Trash2, Eye, ChefHat, Scale, FlaskConical, Facto
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { useRecipes, useDeleteRecipe, Recipe } from '@/hooks/useRecipes';
+import { useRecipes, useDeleteRecipe, useUpdateRecipe, Recipe } from '@/hooks/useRecipes';
 import { cn } from '@/lib/utils';
 import { RecipeDetailSheet } from './RecipeDetailSheet';
 import {
@@ -23,15 +23,17 @@ function RecipeRow({
   onView, 
   onEdit, 
   onDelete,
+  onToggleProduction,
 }: { 
   recipe: Recipe; 
   onView: () => void; 
   onEdit: () => void; 
   onDelete: () => void;
+  onToggleProduction: () => void;
 }) {
   const isIntermediate = recipe.recipe_type === 'intermediate';
-  const inProduction = recipe.status === 'validated';
-
+  const productionStatus = ((recipe as any).production_status ?? 'in_production') as 'in_development' | 'in_production';
+  const inProduction = productionStatus === 'in_production';
   
   return (
     <div
@@ -74,18 +76,24 @@ function RecipeRow({
         </div>
       </div>
       <div className="flex items-center gap-2">
-        <Badge
-          variant="outline"
-          className={cn(
-            'gap-1',
-            inProduction
-              ? 'bg-primary/10 text-primary border-primary/30'
-              : 'bg-amber-100 text-amber-700 border-amber-300'
-          )}
+        <button
+          type="button"
+          onClick={onToggleProduction}
+          title="Cliquer pour changer le statut de production"
         >
-          {inProduction ? <Factory className="h-3 w-3" /> : <FlaskRound className="h-3 w-3" />}
-          {inProduction ? 'En production' : 'En développement'}
-        </Badge>
+          <Badge
+            variant="outline"
+            className={cn(
+              'cursor-pointer gap-1',
+              inProduction
+                ? 'bg-primary/10 text-primary border-primary/30 hover:bg-primary/20'
+                : 'bg-amber-100 text-amber-700 border-amber-300 hover:bg-amber-200'
+            )}
+          >
+            {inProduction ? <Factory className="h-3 w-3" /> : <FlaskRound className="h-3 w-3" />}
+            {inProduction ? 'En production' : 'En développement'}
+          </Badge>
+        </button>
         <Badge
           variant="outline"
           className={recipe.is_active ? 'bg-success/10 text-success border-success/30' : ''}
@@ -122,7 +130,13 @@ export function RecipeManagement() {
   const navigate = useNavigate();
   const { data: recipes, isLoading } = useRecipes();
   const deleteRecipe = useDeleteRecipe();
+  const updateRecipe = useUpdateRecipe();
 
+  const handleToggleProduction = (recipe: Recipe) => {
+    const current = ((recipe as any).production_status ?? 'in_production') as string;
+    const next = current === 'in_production' ? 'in_development' : 'in_production';
+    updateRecipe.mutate({ id: recipe.id, production_status: next } as any);
+  };
   
   const [viewingRecipe, setViewingRecipe] = useState<Recipe | null>(null);
   const [deletingRecipe, setDeletingRecipe] = useState<Recipe | null>(null);
@@ -198,6 +212,7 @@ export function RecipeManagement() {
                         onView={() => setViewingRecipe(recipe)}
                         onEdit={() => navigate(`/products/recipes/edit/${recipe.id}`)}
                         onDelete={() => setDeletingRecipe(recipe)}
+                        onToggleProduction={() => handleToggleProduction(recipe)}
                       />
                     ))}
                   </div>
@@ -222,6 +237,7 @@ export function RecipeManagement() {
                         onView={() => setViewingRecipe(recipe)}
                         onEdit={() => navigate(`/products/recipes/edit/${recipe.id}`)}
                         onDelete={() => setDeletingRecipe(recipe)}
+                        onToggleProduction={() => handleToggleProduction(recipe)}
                       />
                     ))}
                   </div>

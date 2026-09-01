@@ -59,10 +59,14 @@ export default function TimeTrackingCorrections() {
   const reviewMutation = useReviewCorrection();
   const createMutation = useCreateCorrection();
   const { data: employees = [] } = useEmployeesWithBadges();
+  // Fenêtre de correction : les 2 derniers mois
+  const correctionWindowStart = useMemo(() => subMonths(new Date(), 2).toISOString(), []);
   const { data: recentEntries = [] } = useTimeEntries({
     employeeId: createForm.employeeId || undefined,
-    limit: 20,
+    dateFrom: correctionWindowStart,
+    limit: 2000,
   });
+
 
   const handleReview = async (correctionId: string, status: 'approved' | 'rejected') => {
     if (!user) return;

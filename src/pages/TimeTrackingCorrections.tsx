@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -16,7 +16,7 @@ import {
   useEmployeesWithBadges,
   TimeCorrection,
 } from '@/hooks/useTimeTracking';
-import { format } from 'date-fns';
+import { format, subMonths } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { CheckCircle2, XCircle, Plus, FileEdit } from 'lucide-react';
 import { toast } from 'sonner';
@@ -59,10 +59,14 @@ export default function TimeTrackingCorrections() {
   const reviewMutation = useReviewCorrection();
   const createMutation = useCreateCorrection();
   const { data: employees = [] } = useEmployeesWithBadges();
+  // Fenêtre de correction : les 2 derniers mois
+  const correctionWindowStart = useMemo(() => subMonths(new Date(), 2).toISOString(), []);
   const { data: recentEntries = [] } = useTimeEntries({
     employeeId: createForm.employeeId || undefined,
-    limit: 20,
+    dateFrom: correctionWindowStart,
+    limit: 2000,
   });
+
 
   const handleReview = async (correctionId: string, status: 'approved' | 'rejected') => {
     if (!user) return;
@@ -264,16 +268,26 @@ export default function TimeTrackingCorrections() {
                   <SelectTrigger>
                     <SelectValue placeholder="Sélectionner un événement" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="max-h-72">
                     {recentEntries.map((e) => (
                       <SelectItem key={e.id} value={e.id}>
-                        {format(new Date(e.recorded_at), 'dd/MM HH:mm')} - {EVENT_LABELS[e.event_type]}
+                        {format(new Date(e.recorded_at), 'EEE dd/MM/yyyy HH:mm', { locale: fr })} —{' '}
+                        {EVENT_LABELS[e.event_type]}
                       </SelectItem>
                     ))}
+                    {recentEntries.length === 0 && (
+                      <div className="px-2 py-3 text-sm text-muted-foreground">
+                        Aucun pointage sur les 2 derniers mois
+                      </div>
+                    )}
                   </SelectContent>
                 </Select>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Pointages des 2 derniers mois
+                </p>
               </div>
             )}
+
 
             <div>
               <label className="text-sm font-medium">Nouveau type (optionnel)</label>

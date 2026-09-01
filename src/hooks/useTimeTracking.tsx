@@ -269,7 +269,7 @@ export function useReviewCorrection() {
 
       if (error) throw error;
 
-      // If approved, insert a corrected entry
+      // If approved, apply the correction on the original entry (no duplicate)
       if (status === 'approved') {
         const { data: correction } = await supabase
           .from('time_corrections')
@@ -278,24 +278,18 @@ export function useReviewCorrection() {
           .single();
 
         if (correction && (correction.corrected_event_type || correction.corrected_recorded_at)) {
-          const { data: originalEntry } = await supabase
-            .from('time_entries')
-            .select('*')
-            .eq('id', correction.time_entry_id)
-            .single();
+          const update: Record<string, unknown> = { is_manual_correction: true };
+          if (correction.corrected_event_type) update.event_type = correction.corrected_event_type;
+          if (correction.corrected_recorded_at) update.recorded_at = correction.corrected_recorded_at;
 
-          if (originalEntry) {
-            await supabase.from('time_entries').insert({
-              employee_id: originalEntry.employee_id,
-              badge_id: originalEntry.badge_id,
-              event_type: correction.corrected_event_type || originalEntry.event_type,
-              recorded_at: correction.corrected_recorded_at || originalEntry.recorded_at,
-              device_id: 'correction',
-              is_manual_correction: true,
-            });
-          }
+          const { error: updErr } = await supabase
+            .from('time_entries')
+            .update(update)
+            .eq('id', correction.time_entry_id);
+          if (updErr) throw updErr;
         }
       }
+
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['time-corrections'] });

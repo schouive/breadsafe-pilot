@@ -476,7 +476,7 @@ export default function TimeTrackingExport() {
                       Salarié
                     </TableHead>
                     {days.map((d) => (
-                      <TableHead key={d.toISOString()} className="text-center min-w-[70px]">
+                      <TableHead key={d.toISOString()} className="text-center min-w-[100px]">
                         <div className="text-[10px] uppercase text-muted-foreground">
                           {format(d, 'EEE', { locale: fr })}
                         </div>

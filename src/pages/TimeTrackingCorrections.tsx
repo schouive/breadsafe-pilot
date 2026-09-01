@@ -268,16 +268,26 @@ export default function TimeTrackingCorrections() {
                   <SelectTrigger>
                     <SelectValue placeholder="Sélectionner un événement" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="max-h-72">
                     {recentEntries.map((e) => (
                       <SelectItem key={e.id} value={e.id}>
-                        {format(new Date(e.recorded_at), 'dd/MM HH:mm')} - {EVENT_LABELS[e.event_type]}
+                        {format(new Date(e.recorded_at), 'EEE dd/MM/yyyy HH:mm', { locale: fr })} —{' '}
+                        {EVENT_LABELS[e.event_type]}
                       </SelectItem>
                     ))}
+                    {recentEntries.length === 0 && (
+                      <div className="px-2 py-3 text-sm text-muted-foreground">
+                        Aucun pointage sur les 2 derniers mois
+                      </div>
+                    )}
                   </SelectContent>
                 </Select>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Pointages des 2 derniers mois
+                </p>
               </div>
             )}
+
 
             <div>
               <label className="text-sm font-medium">Nouveau type (optionnel)</label>

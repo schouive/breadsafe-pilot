@@ -162,10 +162,13 @@ export default function TimeTrackingExport() {
   }, [fromDate]);
 
   const dateToIso = useMemo(() => {
+    // +1 jour : permet de récupérer la sortie d'un poste de nuit démarré le dernier jour
     const d = new Date(toDate);
+    d.setDate(d.getDate() + 1);
     d.setHours(23, 59, 59, 999);
     return d.toISOString();
   }, [toDate]);
+
 
   const { data: entries = [], isLoading: loadingEntries } = useTimeEntries({
     dateFrom: dateFromIso,

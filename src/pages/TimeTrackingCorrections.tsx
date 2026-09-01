@@ -265,7 +265,16 @@ export default function TimeTrackingCorrections() {
                 <label className="text-sm font-medium">Événement à corriger</label>
                 <Select
                   value={createForm.entryId}
-                  onValueChange={(v) => setCreateForm((p) => ({ ...p, entryId: v }))}
+                  onValueChange={(v) => {
+                    const sel = recentEntries.find((e) => e.id === v);
+                    setCreateForm((p) => ({
+                      ...p,
+                      entryId: v,
+                      correctedDateTime: sel
+                        ? format(new Date(sel.recorded_at), "yyyy-MM-dd'T'HH:mm")
+                        : p.correctedDateTime,
+                    }));
+                  }}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Sélectionner un événement" />

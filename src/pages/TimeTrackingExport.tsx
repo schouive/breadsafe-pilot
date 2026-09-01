@@ -243,24 +243,40 @@ export default function TimeTrackingExport() {
     wsSummary['!cols'] = [{ wch: 28 }, { wch: 14 }, { wch: 18 }, { wch: 14 }, { wch: 14 }];
     XLSX.utils.book_append_sheet(wb, wsSummary, 'Récapitulatif');
 
-    // Sheet 2: Détail jour par jour (matrice)
-    const header = ['Salarié', ...days.map((d) => format(d, 'dd/MM EEE', { locale: fr })), 'Total'];
-    const matrix: (string | number)[][] = [header];
+    // Sheet 2: Détail jour par jour (entrée / sortie / total)
+    const headerTop: string[] = ['Salarié'];
+    const headerSub: string[] = [''];
+    for (const d of days) {
+      headerTop.push(format(d, 'dd/MM EEE', { locale: fr }), '', '');
+      headerSub.push('Entrée', 'Sortie', 'Total');
+    }
+    headerTop.push('Total période');
+    headerSub.push('');
+    const matrix: (string | number)[][] = [headerTop, headerSub];
     for (const r of report) {
       const row: (string | number)[] = [r.employeeName];
       for (const day of r.days) {
-        row.push(day.workMs > 0 ? msToHHMM(day.workMs) : '');
+        row.push(
+          day.firstIn ? format(day.firstIn, 'HH:mm') : '',
+          day.lastOut ? format(day.lastOut, 'HH:mm') : '',
+          day.workMs > 0 ? msToHHMM(day.workMs) : '',
+        );
       }
       row.push(msToHHMM(r.totalWorkMs));
       matrix.push(row);
     }
     const wsDetail = XLSX.utils.aoa_to_sheet(matrix);
+    wsDetail['!merges'] = days.map((_, i) => ({
+      s: { r: 0, c: 1 + i * 3 },
+      e: { r: 0, c: 3 + i * 3 },
+    }));
     wsDetail['!cols'] = [
       { wch: 28 },
-      ...days.map(() => ({ wch: 12 })),
-      { wch: 10 },
+      ...days.flatMap(() => [{ wch: 8 }, { wch: 8 }, { wch: 8 }]),
+      { wch: 14 },
     ];
     XLSX.utils.book_append_sheet(wb, wsDetail, 'Détail par jour');
+
 
     // Sheet 3: Lignes détaillées
     const detailRows = [

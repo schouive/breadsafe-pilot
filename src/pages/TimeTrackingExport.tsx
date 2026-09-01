@@ -496,13 +496,21 @@ export default function TimeTrackingExport() {
                       </TableCell>
                       {r.days.map((d) => (
                         <TableCell key={d.date} className="text-center text-xs tabular-nums">
-                          {d.workMs > 0 ? (
-                            <span className="text-foreground">{msToHHMM(d.workMs)}</span>
+                          {d.workMs > 0 || d.firstIn ? (
+                            <div className="leading-tight">
+                              <div className="text-[10px] text-muted-foreground">
+                                {d.firstIn ? format(d.firstIn, 'HH:mm') : '--:--'}
+                                {' → '}
+                                {d.lastOut ? format(d.lastOut, 'HH:mm') : '--:--'}
+                              </div>
+                              <div className="font-medium text-foreground">{msToHHMM(d.workMs)}</div>
+                            </div>
                           ) : (
                             <span className="text-muted-foreground/40">—</span>
                           )}
                         </TableCell>
                       ))}
+
                       <TableCell className="text-right font-bold tabular-nums sticky right-0 bg-background">
                         {msToHHMM(r.totalWorkMs)}
                       </TableCell>

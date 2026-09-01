@@ -95,7 +95,9 @@ export default function TimeTrackingCorrections() {
       original_event_type: entry.event_type,
       corrected_event_type: createForm.correctedEventType || undefined,
       original_recorded_at: entry.recorded_at,
-      corrected_recorded_at: createForm.correctedDateTime || undefined,
+      corrected_recorded_at: createForm.correctedDateTime
+        ? new Date(createForm.correctedDateTime).toISOString()
+        : undefined,
       reason: createForm.reason,
     });
 
@@ -263,7 +265,16 @@ export default function TimeTrackingCorrections() {
                 <label className="text-sm font-medium">Événement à corriger</label>
                 <Select
                   value={createForm.entryId}
-                  onValueChange={(v) => setCreateForm((p) => ({ ...p, entryId: v }))}
+                  onValueChange={(v) => {
+                    const sel = recentEntries.find((e) => e.id === v);
+                    setCreateForm((p) => ({
+                      ...p,
+                      entryId: v,
+                      correctedDateTime: sel
+                        ? format(new Date(sel.recorded_at), "yyyy-MM-dd'T'HH:mm")
+                        : p.correctedDateTime,
+                    }));
+                  }}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Sélectionner un événement" />

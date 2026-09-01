@@ -72,65 +72,70 @@ function computeReport(
       dayMap.set(day, { date: day, workMs: 0, breakMs: 0 });
     }
 
-    // Group by day and compute
-    const byDay = new Map<string, TimeEntry[]>();
-    for (const entry of empEntries) {
-      const day = format(parseISO(entry.recorded_at), 'yyyy-MM-dd');
-      if (!dayMap.has(day)) continue;
-      if (!byDay.has(day)) byDay.set(day, []);
-      byDay.get(day)!.push(entry);
-    }
-
+    // Parcours chronologique global : une vacation est rattachée au jour de son
+    // entrée, même si la sortie a lieu après minuit (postes de nuit).
     let totalWork = 0;
     let totalBreak = 0;
 
-    for (const [day, dayEntries] of byDay) {
-      let workMs = 0;
-      let breakMs = 0;
-      let clockIn: Date | null = null;
-      let breakStart: Date | null = null;
-      let firstIn: Date | undefined;
-      let lastOut: Date | undefined;
+    let clockIn: Date | null = null;
+    let breakStart: Date | null = null;
+    let shiftDay: string | null = null;
 
-      for (const e of dayEntries) {
-        const t = parseISO(e.recorded_at);
-        switch (e.event_type) {
-          case 'clock_in':
-            clockIn = t;
-            if (!firstIn) firstIn = t;
-            break;
-          case 'break_start':
-            if (clockIn) {
-              workMs += t.getTime() - clockIn.getTime();
-              clockIn = null;
-            }
-            breakStart = t;
-            break;
-          case 'break_end':
-            if (breakStart) {
-              breakMs += t.getTime() - breakStart.getTime();
-              breakStart = null;
-            }
-            clockIn = t;
-            break;
-          case 'clock_out':
-            if (clockIn) {
-              workMs += t.getTime() - clockIn.getTime();
-              clockIn = null;
-            }
-            lastOut = t;
-            break;
+    const addWork = (ms: number) => {
+      if (ms <= 0 || ms > 24 * 3600000) return;
+      const stats = shiftDay ? dayMap.get(shiftDay) : undefined;
+      if (!stats) return;
+      stats.workMs += ms;
+      totalWork += ms;
+    };
+    const addBreak = (ms: number) => {
+      if (ms <= 0 || ms > 24 * 3600000) return;
+      const stats = shiftDay ? dayMap.get(shiftDay) : undefined;
+      if (!stats) return;
+      stats.breakMs += ms;
+      totalBreak += ms;
+    };
+
+    for (const e of empEntries) {
+      const t = parseISO(e.recorded_at);
+      switch (e.event_type) {
+        case 'clock_in': {
+          if (!clockIn && !breakStart) {
+            shiftDay = format(t, 'yyyy-MM-dd');
+            const stats = dayMap.get(shiftDay);
+            if (stats && !stats.firstIn) stats.firstIn = t;
+          }
+          clockIn = t;
+          break;
+        }
+        case 'break_start':
+          if (clockIn) {
+            addWork(t.getTime() - clockIn.getTime());
+            clockIn = null;
+          }
+          breakStart = t;
+          break;
+        case 'break_end':
+          if (breakStart) {
+            addBreak(t.getTime() - breakStart.getTime());
+            breakStart = null;
+          }
+          clockIn = t;
+          break;
+        case 'clock_out': {
+          if (clockIn) {
+            addWork(t.getTime() - clockIn.getTime());
+            clockIn = null;
+          }
+          breakStart = null;
+          const stats = shiftDay ? dayMap.get(shiftDay) : undefined;
+          if (stats) stats.lastOut = t;
+          shiftDay = null;
+          break;
         }
       }
-
-      const stats = dayMap.get(day)!;
-      stats.workMs = workMs;
-      stats.breakMs = breakMs;
-      stats.firstIn = firstIn;
-      stats.lastOut = lastOut;
-      totalWork += workMs;
-      totalBreak += breakMs;
     }
+
 
     return {
       employeeId: emp.id,
@@ -157,10 +162,13 @@ export default function TimeTrackingExport() {
   }, [fromDate]);
 
   const dateToIso = useMemo(() => {
+    // +1 jour : permet de récupérer la sortie d'un poste de nuit démarré le dernier jour
     const d = new Date(toDate);
+    d.setDate(d.getDate() + 1);
     d.setHours(23, 59, 59, 999);
     return d.toISOString();
   }, [toDate]);
+
 
   const { data: entries = [], isLoading: loadingEntries } = useTimeEntries({
     dateFrom: dateFromIso,

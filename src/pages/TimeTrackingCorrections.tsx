@@ -95,7 +95,9 @@ export default function TimeTrackingCorrections() {
       original_event_type: entry.event_type,
       corrected_event_type: createForm.correctedEventType || undefined,
       original_recorded_at: entry.recorded_at,
-      corrected_recorded_at: createForm.correctedDateTime || undefined,
+      corrected_recorded_at: createForm.correctedDateTime
+        ? new Date(createForm.correctedDateTime).toISOString()
+        : undefined,
       reason: createForm.reason,
     });
 

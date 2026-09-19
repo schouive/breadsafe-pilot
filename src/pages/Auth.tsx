@@ -11,8 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import logo from '@/assets/logo-breadshop.png';
-import authImage from '@/assets/breadshop-auth.jpg';
-import { ArrowRight, Loader2, ShieldCheck } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 
 const loginSchema = z.object({
   email: z.string().email('Email invalide'),
@@ -94,44 +93,18 @@ export default function Auth() {
   }
 
   return (
-    <div className="min-h-screen bg-background lg:grid lg:grid-cols-[minmax(0,1.08fr)_minmax(440px,0.92fr)]">
-      <section className="relative hidden min-h-screen overflow-hidden lg:block">
-        <img src={authImage} alt="Pain burger Bread Shop" className="absolute inset-0 h-full w-full object-cover" />
-        <div className="absolute inset-0 bg-foreground/60" />
-        <div className="relative z-10 flex h-full max-w-2xl flex-col justify-between p-12 xl:p-16">
-          <div className="inline-flex w-fit items-center gap-4 rounded-lg bg-card/95 px-5 py-4 shadow-elevated">
-            <img src={logo} alt="Bread Shop" className="h-14 w-auto" />
-            <div>
-              <p className="text-sm font-bold uppercase text-primary">Bread Shop</p>
-              <p className="text-xs text-muted-foreground">Street Food Bakery</p>
-            </div>
-          </div>
-          <div className="max-w-xl text-primary-foreground">
-            <p className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase">
-              <ShieldCheck className="h-5 w-5 text-gold" /> Qualité & sécurité alimentaire
-            </p>
-            <h1 className="font-heading text-5xl font-semibold leading-tight xl:text-6xl">
-              La maîtrise HACCP,<br />au quotidien.
-            </h1>
-            <p className="mt-6 max-w-lg text-lg leading-8 text-primary-foreground/80">
-              Contrôles, traçabilité et production réunis dans un espace conçu pour les équipes Bread Shop.
-            </p>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-background to-muted p-4">
+      <div className="w-full max-w-md space-y-8">
+        {/* Logo */}
+        <div className="flex flex-col items-center gap-4">
+          <img src={logo} alt="Breadshop" className="h-20 w-auto" />
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-primary">HACCP Manager</h1>
+            <p className="text-muted-foreground">Gestion Qualité Breadshop SAS</p>
           </div>
         </div>
-      </section>
 
-      <section className="flex min-h-screen items-center justify-center px-4 py-8 sm:px-8 lg:px-12">
-        <div className="w-full max-w-md space-y-7">
-          <div className="flex flex-col items-center gap-3 lg:items-start">
-            <img src={logo} alt="Bread Shop" className="h-16 w-auto lg:hidden" />
-            <p className="text-xs font-semibold uppercase text-muted-foreground">Espace professionnel</p>
-            <div className="text-center lg:text-left">
-              <h2 className="font-heading text-3xl font-semibold text-foreground">Bienvenue sur BreadSafe</h2>
-              <p className="mt-2 text-muted-foreground">Gestion qualité Bread Shop SAS</p>
-            </div>
-          </div>
-
-        <Card className="border-border shadow-card">
+        <Card className="shadow-xl border-border/50">
           <Tabs defaultValue="login" className="w-full">
             <CardHeader className="pb-2">
               <TabsList className="grid w-full grid-cols-2">
@@ -174,14 +147,14 @@ export default function Auth() {
                       </p>
                     )}
                   </div>
-                  <Button type="submit" className="w-full touch-target justify-between" disabled={isSubmitting}>
+                  <Button type="submit" className="w-full touch-target" disabled={isSubmitting}>
                     {isSubmitting ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         Connexion...
                       </>
                     ) : (
-                      <><span>Se connecter</span><ArrowRight className="h-4 w-4" /></>
+                      'Se connecter'
                     )}
                   </Button>
                 </form>
@@ -247,14 +220,14 @@ export default function Auth() {
                       </p>
                     )}
                   </div>
-                  <Button type="submit" className="w-full touch-target justify-between" disabled={isSubmitting}>
+                  <Button type="submit" className="w-full touch-target" disabled={isSubmitting}>
                     {isSubmitting ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         Création...
                       </>
                     ) : (
-                      <><span>Créer mon compte</span><ArrowRight className="h-4 w-4" /></>
+                      "Créer mon compte"
                     )}
                   </Button>
                 </form>
@@ -263,11 +236,10 @@ export default function Auth() {
           </Tabs>
         </Card>
 
-        <p className="text-center text-xs text-muted-foreground">
-          Accès réservé aux équipes Bread Shop
+        <p className="text-center text-sm text-muted-foreground">
+          © 2025 Breadshop SAS - Tous droits réservés
         </p>
       </div>
-      </section>
     </div>
   );
 }

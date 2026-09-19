@@ -36,24 +36,23 @@ function ModuleCard({ title, description, icon: Icon, colorClass, href }: Module
   const navigate = useNavigate();
   
   return (
-    <Button
-      variant="outline"
+    <button
       onClick={() => navigate(href)}
       className={cn(
-        "group h-auto min-h-40 whitespace-normal flex-col items-start justify-between gap-5 p-5 text-left",
-        "rounded-lg border bg-card shadow-card transition-all duration-200",
-        "hover:-translate-y-0.5 hover:border-primary/30 hover:bg-card hover:shadow-elevated active:translate-y-0",
+        "aspect-square flex flex-col items-center justify-center gap-3 p-4",
+        "rounded-2xl border-2 transition-all duration-200",
+        "hover:scale-105 hover:shadow-lg active:scale-95",
         "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
+        colorClass
       )}
     >
-      <div className={cn("flex h-12 w-12 items-center justify-center rounded-lg", colorClass)}>
-        <Icon className="h-6 w-6" />
+      <div className="p-3 rounded-xl bg-background/50">
+        <Icon className="h-8 w-8" />
       </div>
-      <div className="w-full">
-        <span className="font-heading block text-lg font-semibold leading-tight text-foreground">{title}</span>
-        <span className="mt-1.5 line-clamp-2 block text-xs font-normal leading-5 text-muted-foreground">{description}</span>
-      </div>
-    </Button>
+      <span className="text-sm font-semibold text-center leading-tight">
+        {title}
+      </span>
+    </button>
   );
 }
 
@@ -83,49 +82,49 @@ export default function Home() {
       title: 'HACCP',
       description: 'Contrôles qualité, températures, non-conformités et traçabilité des points critiques',
       icon: Shield,
-      colorClass: 'bg-primary/10 text-primary',
+      colorClass: 'bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 border-blue-500/20',
       href: '/haccp',
     },
     {
       title: 'Commandes',
       description: 'Création, suivi et gestion des commandes fournisseurs',
       icon: ShoppingCart,
-      colorClass: 'bg-success/10 text-success',
+      colorClass: 'bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 border-emerald-500/20',
       href: '/orders',
     },
     {
       title: 'Recettes & Étiquetage',
       description: 'Gestion des recettes, calcul nutritionnel et fiches techniques',
       icon: Tag,
-      colorClass: 'bg-gold/15 text-gold-foreground',
+      colorClass: 'bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 border-amber-500/20',
       href: '/products',
     },
     {
       title: 'Pointage',
       description: 'Suivi des heures, badgeuse RFID et gestion du temps',
       icon: Clock,
-      colorClass: 'bg-secondary text-secondary-foreground',
+      colorClass: 'bg-indigo-500/10 text-indigo-600 hover:bg-indigo-500/20 border-indigo-500/20',
       href: '/time-tracking',
     },
     {
       title: 'Impression',
       description: 'Impression étiquettes Zebra production',
       icon: Printer,
-      colorClass: 'bg-destructive/10 text-destructive',
+      colorClass: 'bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 border-rose-500/20',
       href: '/print',
     },
     {
       title: 'Journal de Production',
       description: 'Planning, suivi et traçabilité des productions',
       icon: ClipboardList,
-      colorClass: 'bg-accent text-accent-foreground',
+      colorClass: 'bg-purple-500/10 text-purple-600 hover:bg-purple-500/20 border-purple-500/20',
       href: '/production',
     },
     {
       title: 'Paramètres',
       description: 'Fournisseurs, matières premières et chambres froides',
       icon: Cog,
-      colorClass: 'bg-muted text-muted-foreground',
+      colorClass: 'bg-slate-500/10 text-slate-600 hover:bg-slate-500/20 border-slate-500/20',
       href: '/settings',
     },
   ];
@@ -145,13 +144,13 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-30 border-b border-border bg-card/95 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
+      <header className="sticky top-0 z-30 bg-card/95 backdrop-blur border-b border-border">
+        <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img src={logo} alt="Bread Shop" className="h-11 w-auto" />
+            <img src={logo} alt="Breadshop" className="h-10 w-auto" />
             <div className="flex flex-col">
-              <span className="text-sm font-bold uppercase text-primary">Bread Shop</span>
-              <span className="text-[11px] text-muted-foreground">Qualité & Sécurité</span>
+              <span className="font-bold text-primary text-lg leading-tight">BreadSafe</span>
+              <span className="text-xs text-muted-foreground">Qualité & Sécurité</span>
             </div>
           </div>
           
@@ -189,20 +188,19 @@ export default function Home() {
       </header>
 
       {/* Main Content */}
-      <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 md:py-12">
+      <main className="max-w-5xl mx-auto px-4 py-8 md:py-12">
         {/* Welcome Section */}
-        <div className="brand-rule mb-8 pl-5 md:mb-10">
-          <p className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Tableau de bord</p>
-          <h1 className="font-heading text-3xl font-semibold text-foreground md:text-4xl">
-            Bonjour, {profile?.full_name?.split(' ')[0] || 'Utilisateur'}
+        <div className="mb-8 md:mb-12">
+          <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">
+            Bonjour, {profile?.full_name?.split(' ')[0] || 'Utilisateur'} 👋
           </h1>
-          <p className="mt-2 text-base text-muted-foreground">
+          <p className="text-muted-foreground text-lg">
             Sélectionnez un module pour commencer
           </p>
         </div>
 
         {/* Module Cards */}
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-4">
           {modules.map((module) => (
             <ModuleCard key={module.href} {...module} />
           ))}

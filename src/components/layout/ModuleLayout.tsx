@@ -95,20 +95,20 @@ export function ModuleLayout({
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 w-72 bg-card border-r border-border transform transition-transform duration-300 ease-in-out lg:translate-x-0",
+          "fixed inset-y-0 left-0 z-50 w-72 border-r border-border bg-card shadow-soft transform transition-transform duration-300 ease-in-out lg:translate-x-0",
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="flex items-center justify-between h-16 px-4 border-b border-border">
+          <div className="flex h-20 items-center justify-between border-b border-border px-4">
             <Link to="/" className="flex items-center gap-3">
-              <img src={logo} alt="Breadshop" className="h-10 w-auto" />
+              <img src={logo} alt="Bread Shop" className="h-11 w-auto" />
               <div className="flex flex-col">
-                <span className={cn("font-bold text-lg leading-tight", moduleColor)}>
+                <span className={cn("font-heading text-lg font-semibold leading-tight", moduleColor)}>
                   {moduleName}
                 </span>
-                <span className="text-xs text-muted-foreground">Breadshop</span>
+                <span className="text-[10px] font-semibold uppercase text-muted-foreground">Bread Shop</span>
               </div>
             </Link>
             <Button
@@ -157,9 +157,9 @@ export function ModuleLayout({
                   to={item.href}
                   onClick={() => setSidebarOpen(false)}
                   className={cn(
-                    "flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-all duration-200 touch-target",
+                    "flex items-center gap-3 rounded-lg border-l-2 border-transparent px-3 py-3 text-sm font-medium transition-all duration-200 touch-target",
                     isActive
-                      ? "bg-primary text-primary-foreground shadow-md"
+                      ? "border-gold bg-primary text-primary-foreground shadow-soft"
                       : "text-foreground/70 hover:bg-accent hover:text-accent-foreground"
                   )}
                 >
@@ -179,7 +179,7 @@ export function ModuleLayout({
           <div className="p-4 border-t border-border">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-3 px-3 py-2 rounded-lg bg-muted/50 w-full hover:bg-muted transition-colors">
+                <button className="flex w-full items-center gap-3 rounded-lg border border-border bg-background px-3 py-2 transition-colors hover:bg-muted">
                   <Avatar className="h-10 w-10">
                     <AvatarImage src={profile?.avatar_url || ''} />
                     <AvatarFallback className="bg-primary/10 text-primary">
@@ -219,7 +219,7 @@ export function ModuleLayout({
       {/* Main content */}
       <div className="lg:pl-72">
         {/* Header */}
-        <header className="sticky top-0 z-30 flex items-center justify-between h-16 px-4 bg-card/95 backdrop-blur border-b border-border">
+        <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-card/95 px-4 backdrop-blur md:px-6">
           <Button
             variant="ghost"
             size="icon"
@@ -240,7 +240,7 @@ export function ModuleLayout({
         </header>
 
         {/* Page content */}
-        <main className="p-4 md:p-6 lg:p-8">
+        <main className="mx-auto w-full max-w-[1440px] p-4 md:p-6 lg:p-8">
           {children}
         </main>
       </div>

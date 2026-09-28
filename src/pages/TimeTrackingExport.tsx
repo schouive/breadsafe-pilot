@@ -278,35 +278,38 @@ export default function TimeTrackingExport() {
     XLSX.utils.book_append_sheet(wb, wsDetail, 'Détail par jour');
 
 
-    // Sheet 3: Lignes détaillées
-    const detailRows = [
-      ['Salarié', 'Date', 'Jour', 'Première entrée', 'Dernière sortie', 'Travail', 'Pauses'],
+    // Sheet 3: Détail jour par jour (une ligne par jour, tous les jours de la période)
+    const detailRows: (string | number)[][] = [
+      ['Salarié', 'Date', 'Jour', 'Entrée', 'Sortie', 'Travail', 'H. décimales', 'Pauses'],
     ];
     for (const r of report) {
       for (const d of r.days) {
-        if (d.workMs === 0 && !d.firstIn) continue;
+        const dt = parseISO(d.date + 'T00:00:00');
         detailRows.push([
           r.employeeName,
-          format(parseISO(d.date + 'T00:00:00'), 'dd/MM/yyyy'),
-          format(parseISO(d.date + 'T00:00:00'), 'EEEE', { locale: fr }),
+          format(dt, 'dd/MM/yyyy'),
+          format(dt, 'EEEE', { locale: fr }),
           d.firstIn ? format(d.firstIn, 'HH:mm') : '',
           d.lastOut ? format(d.lastOut, 'HH:mm') : '',
-          msToHHMM(d.workMs),
-          msToHHMM(d.breakMs),
+          d.workMs > 0 ? msToHHMM(d.workMs) : '',
+          d.workMs > 0 ? msToHoursDecimal(d.workMs) : '',
+          d.breakMs > 0 ? msToHHMM(d.breakMs) : '',
         ]);
       }
+      detailRows.push([
+        `TOTAL ${r.employeeName}`, '', '', '', '',
+        msToHHMM(r.totalWorkMs),
+        msToHoursDecimal(r.totalWorkMs),
+        msToHHMM(r.totalBreakMs),
+      ]);
+      detailRows.push([]);
     }
     const wsLines = XLSX.utils.aoa_to_sheet(detailRows);
     wsLines['!cols'] = [
-      { wch: 28 },
-      { wch: 12 },
-      { wch: 12 },
-      { wch: 16 },
-      { wch: 16 },
-      { wch: 10 },
-      { wch: 10 },
+      { wch: 28 }, { wch: 12 }, { wch: 12 }, { wch: 10 },
+      { wch: 10 }, { wch: 10 }, { wch: 12 }, { wch: 10 },
     ];
-    XLSX.utils.book_append_sheet(wb, wsLines, 'Pointages');
+    XLSX.utils.book_append_sheet(wb, wsLines, 'Jour par jour');
 
     const filename = `pointage_${format(fromDate, 'yyyy-MM-dd')}_${format(toDate, 'yyyy-MM-dd')}.xlsx`;
     XLSX.writeFile(wb, filename);

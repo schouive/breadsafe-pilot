@@ -20,6 +20,8 @@ import { format, subMonths } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { CheckCircle2, XCircle, Plus, FileEdit } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
 
 const EVENT_LABELS: Record<string, string> = {
   clock_in: 'Entrée',
@@ -54,6 +56,10 @@ export default function TimeTrackingCorrections() {
     correctedEventType: '',
     correctedDateTime: '',
   });
+  const queryClient = useQueryClient();
+  const [showAdd, setShowAdd] = useState(false);
+  const [adding, setAdding] = useState(false);
+  const [addForm, setAddForm] = useState({ employeeId: '', eventType: '', dateTime: '', reason: '' });
 
   const { data: corrections = [], isLoading } = useTimeCorrections(filter === 'all' ? undefined : filter);
   const reviewMutation = useReviewCorrection();
@@ -105,6 +111,32 @@ export default function TimeTrackingCorrections() {
     setCreateForm({ employeeId: '', entryId: '', reason: '', correctedEventType: '', correctedDateTime: '' });
   };
 
+  const handleAdd = async () => {
+    const emp = employees.find((e) => e.id === addForm.employeeId);
+    if (!emp || !addForm.eventType || !addForm.dateTime) {
+      toast.error('Remplissez tous les champs obligatoires');
+      return;
+    }
+    setAdding(true);
+    const { error } = await supabase.from('time_entries').insert({
+      employee_id: emp.id,
+      badge_id: emp.badge_id as string,
+      event_type: addForm.eventType,
+      recorded_at: new Date(addForm.dateTime).toISOString(),
+      is_manual_correction: true,
+      device_id: addForm.reason ? `manuel: ${addForm.reason}`.slice(0, 200) : 'manuel',
+    });
+    setAdding(false);
+    if (error) {
+      toast.error(`Erreur : ${error.message}`);
+      return;
+    }
+    toast.success('Pointage ajouté');
+    queryClient.invalidateQueries({ queryKey: ['time-entries'] });
+    setShowAdd(false);
+    setAddForm({ employeeId: '', eventType: '', dateTime: '', reason: '' });
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -125,10 +157,16 @@ export default function TimeTrackingCorrections() {
             </SelectContent>
           </Select>
           {isManager && (
-            <Button onClick={() => setShowCreate(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Nouvelle correction
-            </Button>
+            <>
+              <Button variant="outline" onClick={() => setShowAdd(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Ajouter un pointage
+              </Button>
+              <Button onClick={() => setShowCreate(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Nouvelle correction
+              </Button>
+            </>
           )}
         </div>
       </div>
@@ -343,6 +381,60 @@ export default function TimeTrackingCorrections() {
             <Button onClick={handleCreate} disabled={createMutation.isPending}>
               Créer
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add manual entry Dialog */}
+      <Dialog open={showAdd} onOpenChange={setShowAdd}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Ajouter un pointage manuel</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium">Employé *</label>
+              <Select value={addForm.employeeId} onValueChange={(v) => setAddForm((p) => ({ ...p, employeeId: v }))}>
+                <SelectTrigger><SelectValue placeholder="Sélectionner un employé" /></SelectTrigger>
+                <SelectContent>
+                  {employees.map((emp) => (
+                    <SelectItem key={emp.id} value={emp.id}>{emp.full_name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-sm font-medium">Type *</label>
+              <Select value={addForm.eventType} onValueChange={(v) => setAddForm((p) => ({ ...p, eventType: v }))}>
+                <SelectTrigger><SelectValue placeholder="Type de pointage" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="clock_in">Entrée</SelectItem>
+                  <SelectItem value="clock_out">Sortie</SelectItem>
+                  <SelectItem value="break_start">Début pause</SelectItem>
+                  <SelectItem value="break_end">Fin pause</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-sm font-medium">Date et heure *</label>
+              <Input
+                type="datetime-local"
+                value={addForm.dateTime}
+                onChange={(e) => setAddForm((p) => ({ ...p, dateTime: e.target.value }))}
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium">Motif (optionnel)</label>
+              <Textarea
+                placeholder="Ex : oubli de badge"
+                value={addForm.reason}
+                onChange={(e) => setAddForm((p) => ({ ...p, reason: e.target.value }))}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAdd(false)}>Annuler</Button>
+            <Button onClick={handleAdd} disabled={adding}>Ajouter</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

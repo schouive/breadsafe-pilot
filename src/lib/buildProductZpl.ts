@@ -1,4 +1,4 @@
-import { fillZplTemplate, DEFAULT_PRODUCT_LABEL_ZPL } from '@/lib/zplLabelGenerator';
+import { fillZplTemplate, DEFAULT_PRODUCT_LABEL_ZPL, BREADSHOP_LABEL_LOGO_GFA } from '@/lib/zplLabelGenerator';
 import type { PrintProduct } from '@/hooks/usePrintLabels';
 
 const PACK_COUNT_MAP: Record<string, number> = { U01: 1, C04: 4, C05: 5, C18: 18, C24: 24, C45: 45, PAL: 1 };
@@ -24,13 +24,15 @@ export interface BuildProductZplInput {
   lot: string;
   ddm: string;
   quantity: number;
+  /** Logo ZPL (^FO..^GFA..^FS) remplaçant le logo Breadshop */
+  logoGfa?: string;
 }
 
 /**
  * Génère le ZPL prêt à imprimer pour un article ERP donné, à partir
  * de son lot/DDM/quantité. Réutilise exactement la logique de PrintLabels.
  */
-export function buildProductZpl({ product, lot, ddm, quantity }: BuildProductZplInput): string {
+export function buildProductZpl({ product, lot, ddm, quantity, logoGfa }: BuildProductZplInput): string {
   const packQty = getPackCount(product.packaging);
   const totalNetWeight = product.net_weight != null ? product.net_weight * packQty : null;
 
@@ -50,7 +52,10 @@ export function buildProductZpl({ product, lot, ddm, quantity }: BuildProductZpl
         : `${baseN} ${fmtUnit(unitW, unitU)}`)
     : baseN;
 
-  return fillZplTemplate(DEFAULT_PRODUCT_LABEL_ZPL, {
+  const template = logoGfa
+    ? DEFAULT_PRODUCT_LABEL_ZPL.replace(BREADSHOP_LABEL_LOGO_GFA, logoGfa)
+    : DEFAULT_PRODUCT_LABEL_ZPL;
+  return fillZplTemplate(template, {
     designation: designationFull,
     barcode: `${(product.erp_code || '').replace(/\D/g, '')}${(lot || '').replace(/\D/g, '')}`,
     netWeight: totalNetWeight,

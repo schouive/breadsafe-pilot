@@ -1,3 +1,4 @@
+import { HOMER_LABEL_LOGO_GFA } from '@/lib/zplLabelGenerator';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -251,6 +252,7 @@ export default function PrintProgramRun() {
           const chunkQuantity = chunks[ci];
           const zpl = buildProductZpl({
             product: l.product, lot, ddm: l.ddm, quantity: chunkQuantity,
+            logoGfa: program?.name?.trim().toUpperCase() === 'HOMER' ? HOMER_LABEL_LOGO_GFA : undefined,
           });
           await printZpl(zpl);
 

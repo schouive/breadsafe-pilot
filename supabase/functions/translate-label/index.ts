@@ -12,6 +12,7 @@ const LANG_NAMES: Record<string, string> = {
   es: "Spanish",
   it: "Italian",
   fr: "French",
+  da: "Danish",
 };
 
 interface Payload {

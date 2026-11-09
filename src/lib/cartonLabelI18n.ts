@@ -1,4 +1,4 @@
-export type CartonLabelLanguage = 'fr' | 'en' | 'de' | 'es' | 'it';
+export type CartonLabelLanguage = 'fr' | 'en' | 'de' | 'es' | 'it' | 'da';
 
 export const CARTON_LABEL_LANGUAGES: { code: CartonLabelLanguage; label: string; badge: string }[] = [
   { code: 'fr', label: 'Français', badge: 'FR' },
@@ -6,6 +6,7 @@ export const CARTON_LABEL_LANGUAGES: { code: CartonLabelLanguage; label: string;
   { code: 'de', label: 'Deutsch', badge: 'DE' },
   { code: 'es', label: 'Español', badge: 'ES' },
   { code: 'it', label: 'Italiano', badge: 'IT' },
+  { code: 'da', label: 'Dansk', badge: 'DA' },
 ];
 
 type Dict = {
@@ -177,6 +178,34 @@ const DICTS: Record<CartonLabelLanguage, Dict> = {
     madeIn: 'BREADSHOP SAS - Prodotto in Francia',
     toComplete: '(da completare)',
     barcodeToPrint: 'Codice a barre (da stampare)',
+  },
+  da: {
+    ingredients: 'Ingredienser',
+    ingredientsCaps: 'INGREDIENSER',
+    mayContain: 'Kan indeholde spor af',
+    nutrition100g: 'Gennemsnitligt næringsindhold pr. 100g',
+    nutritionCaps: 'NÆRINGSINDHOLD / 100g',
+    energy: 'Energi',
+    fat: 'Fedt',
+    saturated: 'heraf mættede fedtsyrer',
+    carbs: 'Kulhydrat',
+    sugars: 'heraf sukkerarter',
+    fiber: 'Kostfibre',
+    protein: 'Protein',
+    salt: 'Salt',
+    netWeight: 'Nettovægt',
+    netWeightCaps: 'NETTOVÆGT',
+    storage: 'Opbevaring',
+    storageCaps: 'OPBEVARING',
+    thawing: 'Optøning',
+    thawingCaps: 'OPTØNING',
+    bestBefore: 'Bedst før',
+    bestBeforeShort: 'BBF',
+    barcodeNote: 'Stregkode (skal printes)',
+    recyclable: 'Genanvendelig pose og karton',
+    madeIn: 'BREADSHOP SAS - Fremstillet i Frankrig',
+    toComplete: '(skal udfyldes)',
+    barcodeToPrint: 'Stregkode (skal printes)',
   },
 };
 

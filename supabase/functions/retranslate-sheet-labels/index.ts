@@ -9,7 +9,7 @@ const corsHeaders = {
 };
 
 const LANG_NAMES: Record<string, string> = {
-  en: "English", de: "German", es: "Spanish", it: "Italian", fr: "French",
+  en: "English", de: "German", es: "Spanish", it: "Italian", fr: "French", da: "Danish",
 };
 
 async function translate(language: string, fields: Record<string, string>, apiKey: string) {

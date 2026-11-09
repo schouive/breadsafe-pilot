@@ -49,7 +49,7 @@ async function loadImageAsBase64WithDimensions(src: string): Promise<{ base64: s
 
   return new Promise((resolve, reject) => {
     const img = new Image();
-    img.crossOrigin = 'Anonymous';
+    img.crossOrigin = 'anonymous';
     img.onload = () => {
       const canvas = document.createElement('canvas');
       canvas.width = img.naturalWidth;

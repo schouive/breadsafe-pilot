@@ -22,11 +22,15 @@ import {
   CheckCircle2,
   ArrowLeft,
   Scan,
+  Maximize2,
+  Minimize2,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
+import logo from '@/assets/logo-breadshop.png';
 
 type KioskState = 'idle' | 'identified' | 'confirmed' | 'error';
 
@@ -73,6 +77,10 @@ export default function TimeClock() {
   const [confirmMessage, setConfirmMessage] = useState('');
   const [currentTime, setCurrentTime] = useState(new Date());
   const [captureTrigger, setCaptureTrigger] = useState(false);
+  const [isKioskMode, setIsKioskMode] = useState(
+    () => localStorage.getItem('time-clock-kiosk-mode') === 'true'
+  );
+  const [isFullscreen, setIsFullscreen] = useState(Boolean(document.fullscreenElement));
   const pendingActionRef = useRef<{ eventType: TimeEventType } | null>(null);
 
   const findEmployee = useEmployeeByBadge();
@@ -83,6 +91,12 @@ export default function TimeClock() {
   useEffect(() => {
     const interval = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    const handleFullscreenChange = () => setIsFullscreen(Boolean(document.fullscreenElement));
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
 
   // Auto-reset to idle after confirmation
@@ -153,6 +167,33 @@ export default function TimeClock() {
     }
   }, [scanError]);
 
+  const enterKioskMode = async () => {
+    setIsKioskMode(true);
+    setManualMode(false);
+    setManualBadgeId('');
+    localStorage.setItem('time-clock-kiosk-mode', 'true');
+
+    try {
+      if (!document.fullscreenElement) {
+        await document.documentElement.requestFullscreen({ navigationUI: 'hide' });
+      }
+    } catch {
+      toast.info('Mode kiosque activé. Pour masquer aussi la barre du navigateur, ouvrez l’application depuis l’écran d’accueil.');
+    }
+  };
+
+  const exitKioskMode = async () => {
+    setIsKioskMode(false);
+    localStorage.removeItem('time-clock-kiosk-mode');
+    if (document.fullscreenElement) {
+      try {
+        await document.exitFullscreen();
+      } catch {
+        // Le navigateur peut déjà avoir quitté le plein écran.
+      }
+    }
+  };
+
   const getAvailableActions = (): TimeEventType[] => {
     if (!lastEvent) return ['clock_in'];
     switch (lastEvent.event_type) {
@@ -206,43 +247,99 @@ export default function TimeClock() {
       .slice(0, 2);
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div
+      className={cn(
+        'bg-background flex flex-col',
+        isKioskMode
+          ? 'fixed inset-0 z-[100] h-[100dvh] overflow-hidden select-none touch-manipulation overscroll-none'
+          : 'min-h-screen'
+      )}
+    >
       {/* Silent camera for automatic photo capture */}
       <SilentCamera trigger={captureTrigger} onCapture={handlePhotoCaptured} />
       {/* Header */}
-      <header className="bg-card border-b border-border px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => navigate('/')}>
-            <ArrowLeft className="h-5 w-5" />
+      <header className={cn(
+        'bg-card border-b border-border flex items-center justify-between gap-4',
+        isKioskMode ? 'px-4 sm:px-8 py-4 sm:py-5' : 'px-4 sm:px-6 py-4'
+      )}>
+        {isKioskMode ? (
+          <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+            <img src={logo} alt="Breadshop" className="h-9 sm:h-11 w-auto" />
+            <div className="hidden sm:block h-9 w-px bg-border" />
+            <div className="hidden sm:block">
+              <h1 className="text-xl font-bold text-foreground">Pointage</h1>
+              <p className="text-sm text-muted-foreground">Badgeuse</p>
+            </div>
+          </div>
+        ) : (
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" size="icon" onClick={() => navigate('/')} aria-label="Retour à l’accueil">
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <div>
+              <h1 className="text-xl font-bold text-foreground">Pointage</h1>
+              <p className="text-sm text-muted-foreground">Badgeuse RFID</p>
+            </div>
+          </div>
+        )}
+
+        <div className="flex items-center gap-2 sm:gap-5">
+          <div className="text-right">
+            <div className={cn(
+              'font-mono font-bold text-foreground tabular-nums',
+              isKioskMode ? 'text-2xl sm:text-4xl' : 'text-2xl sm:text-3xl'
+            )}>
+              {format(currentTime, 'HH:mm:ss')}
+            </div>
+            <div className="text-xs sm:text-sm text-muted-foreground capitalize">
+              {format(currentTime, 'EEEE d MMMM yyyy', { locale: fr })}
+            </div>
+          </div>
+          {isKioskMode && !isFullscreen && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={enterKioskMode}
+              aria-label="Réactiver le plein écran"
+              className="shrink-0"
+            >
+              <Maximize2 className="h-4 w-4" />
+              <span className="hidden lg:inline ml-2">Plein écran</span>
+            </Button>
+          )}
+          <Button
+            variant={isKioskMode ? 'ghost' : 'outline'}
+            size={isKioskMode ? 'icon' : 'default'}
+            onClick={isKioskMode ? exitKioskMode : enterKioskMode}
+            aria-label={isKioskMode ? 'Quitter le mode kiosque' : 'Activer le mode kiosque'}
+            title={isKioskMode ? 'Quitter le mode kiosque' : 'Mode kiosque plein écran'}
+            className="shrink-0"
+          >
+            {isKioskMode ? <Minimize2 className="h-5 w-5" /> : <Maximize2 className="h-4 w-4" />}
+            {!isKioskMode && <span className="hidden md:inline ml-2">Mode kiosque</span>}
           </Button>
-          <div>
-            <h1 className="text-xl font-bold text-foreground">Pointage</h1>
-            <p className="text-sm text-muted-foreground">Badgeuse RFID</p>
-          </div>
-        </div>
-        <div className="text-right">
-          <div className="text-3xl font-mono font-bold text-foreground tabular-nums">
-            {format(currentTime, 'HH:mm:ss')}
-          </div>
-          <div className="text-sm text-muted-foreground">
-            {format(currentTime, 'EEEE d MMMM yyyy', { locale: fr })}
-          </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 flex items-center justify-center p-6">
+      <main className={cn(
+        'flex-1 flex items-center justify-center overflow-y-auto',
+        isKioskMode ? 'p-5 sm:p-10' : 'p-6'
+      )}>
         {/* IDLE STATE */}
         {state === 'idle' && (
-          <div className="text-center space-y-8 max-w-lg">
-            <div className="mx-auto w-32 h-32 rounded-full bg-primary/10 flex items-center justify-center animate-pulse">
-              <Scan className="h-16 w-16 text-primary" />
+          <div className={cn('text-center space-y-8 w-full', isKioskMode ? 'max-w-2xl' : 'max-w-lg')}>
+            <div className={cn(
+              'mx-auto rounded-full bg-primary/10 flex items-center justify-center animate-pulse',
+              isKioskMode ? 'w-36 h-36 sm:w-44 sm:h-44' : 'w-32 h-32'
+            )}>
+              <Scan className={cn('text-primary', isKioskMode ? 'h-20 w-20 sm:h-24 sm:w-24' : 'h-16 w-16')} />
             </div>
             <div>
-              <h2 className="text-3xl font-bold text-foreground mb-2">
+              <h2 className={cn('font-bold text-foreground mb-2', isKioskMode ? 'text-3xl sm:text-5xl' : 'text-3xl')}>
                 Scannez votre badge
               </h2>
-              <p className="text-lg text-muted-foreground">
+              <p className={cn('text-muted-foreground', isKioskMode ? 'text-lg sm:text-2xl' : 'text-lg')}>
                 Approchez votre badge RFID du lecteur
               </p>
             </div>
@@ -252,14 +349,16 @@ export default function TimeClock() {
                   <Clock className="h-4 w-4" />
                   <span className="text-sm">En attente de scan...</span>
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setManualMode(true)}
-                  className="text-xs"
-                >
-                  Mode test : saisie manuelle
-                </Button>
+                {!isKioskMode && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setManualMode(true)}
+                    className="text-xs"
+                  >
+                    Mode test : saisie manuelle
+                  </Button>
+                )}
               </>
             ) : (
               <div className="space-y-3 w-full max-w-xs mx-auto">
